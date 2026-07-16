@@ -38,7 +38,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npm run start:ci',
+    command: process.env.SATGLOBE_E2E ? 'npm run start:satglobe' : 'npm run start:ci',
     url: 'http://localhost:5544',
     reuseExistingServer: !process.env.CI,
     timeout: 30_000,

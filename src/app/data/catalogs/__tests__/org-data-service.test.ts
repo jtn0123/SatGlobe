@@ -21,6 +21,19 @@ describe('OrgDataService (before remote load)', () => {
   it('getOrg returns undefined before the database loads', () => {
     expect(orgDataService.getOrg('NASA')).toBeUndefined();
   });
+
+  it('does not request organization metadata in offline mode', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).settingsManager = settingsManager;
+    settingsManager.offlineMode = true;
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+
+    orgDataService.init();
+
+    expect(fetchSpy).not.toHaveBeenCalled();
+    settingsManager.offlineMode = false;
+    fetchSpy.mockRestore();
+  });
 });
 
 describe('OrgDataService (after remote load)', () => {

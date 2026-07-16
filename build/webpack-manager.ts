@@ -127,7 +127,7 @@ export class WebpackManager {
   private static createBaseConfig_(dirName: string): Configuration {
     return {
       resolve: {
-        extensions: ['.ts', '.js'],
+        extensions: ['.ts', '.tsx', '.js'],
         alias: {
           '@app': `${dirName}/../src`,
           '@engine': `${dirName}/../src/engine`,

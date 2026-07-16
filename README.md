@@ -1,4 +1,12 @@
-![Latest Version](https://img.shields.io/badge/version-13.4.0-darkgreen?style=flat-square) ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/thkruz/keeptrack.space?style=flat-square) ![language](https://img.shields.io/github/languages/top/thkruz/keeptrack.space?style=flat-square) ![Languages](https://img.shields.io/github/languages/count/thkruz/keeptrack.space?style=flat-square) ![GitHub issues](https://img.shields.io/github/issues/thkruz/keeptrack.space?style=flat-square) ![License](https://img.shields.io/github/license/thkruz/keeptrack.space?style=flat-square)
+# SatGlobe
+
+SatGlobe is a local-first orbital workshop and storytelling interface maintained as a source fork of KeepTrack v13.4.0. The SatGlobe product layer is isolated under `src/satglobe`; the renderer, propagation workers, catalog, camera, and time systems remain KeepTrack. Start with [SATGLOBE.md](SATGLOBE.md) for local use, data refresh, architecture, attribution, and upstream-sync instructions.
+
+This modified work remains licensed under AGPL-3.0. KeepTrack and ThingsInSpace attribution is preserved in [NOTICE-SATGLOBE.md](NOTICE-SATGLOBE.md).
+
+---
+
+![Latest Version](https://img.shields.io/badge/upstream-13.4.0-darkgreen?style=flat-square) ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/thkruz/keeptrack.space?style=flat-square) ![language](https://img.shields.io/github/languages/top/thkruz/keeptrack.space?style=flat-square) ![Languages](https://img.shields.io/github/languages/count/thkruz/keeptrack.space?style=flat-square) ![GitHub issues](https://img.shields.io/github/issues/thkruz/keeptrack.space?style=flat-square) ![License](https://img.shields.io/github/license/thkruz/keeptrack.space?style=flat-square)
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="./public/img/logo.png">

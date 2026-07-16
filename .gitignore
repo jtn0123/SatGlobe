@@ -115,6 +115,7 @@ key.pem
 .dccache
 .dcignore
 .cache/server.pem
+.cache/satglobe/
 
 # TLE History
 public/analysis/sathist/*.json

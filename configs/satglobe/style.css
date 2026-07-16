@@ -1,0 +1,55 @@
+@import url('../../public/css/style.css');
+
+:root {
+  --sg-ink: #f5f1e8;
+  --sg-ink-muted: #b9c0bd;
+  --sg-night: #03080b;
+  --sg-panel: rgba(6, 15, 19, 0.84);
+  --sg-panel-solid: #081217;
+  --sg-line: rgba(176, 208, 202, 0.18);
+  --sg-accent: #e9c97f;
+  --sg-cyan: #8ad5cf;
+  --sg-danger: #ef8d78;
+  --sg-radius: 3px;
+}
+
+html,
+body,
+#keeptrack-root {
+  background: var(--sg-night);
+}
+
+#keeptrack-header,
+#nav-footer,
+#logo-primary,
+#logo-secondary,
+#ui-wrapper,
+#info-overlays,
+#plugin-drawer,
+#kt-tour-root,
+#sat-infobox,
+#loading-screen,
+#loading-overlay {
+  display: none !important;
+}
+
+#canvas-holder,
+#keeptrack-canvas {
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+#keeptrack-canvas {
+  filter: saturate(0.82) contrast(1.06);
+}
+
+body.sg-presentation #satglobe-root .sg-side-panel,
+body.sg-presentation #satglobe-root .sg-topbar-center,
+body.sg-presentation #satglobe-root .sg-time-tools,
+body.sg-story #satglobe-root .sg-side-panel,
+body.sg-story #satglobe-root .sg-time-dock {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(10px);
+}

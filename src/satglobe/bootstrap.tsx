@@ -1,0 +1,26 @@
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import { SatGlobeApp } from './app/satglobe-app';
+import { SatGlobeEngineAdapter } from './engine/satglobe-engine-adapter';
+import './app/satglobe-app.css';
+
+/** Mounts the React product shell over KeepTrack's initialized canvas. */
+export function mountSatGlobe(): void {
+  if (document.getElementById('satglobe-root')) {
+    return;
+  }
+
+  const root = document.createElement('div');
+
+  root.id = 'satglobe-root';
+  document.body.append(root);
+
+  const adapter = new SatGlobeEngineAdapter();
+
+  window.satGlobe = adapter;
+  createRoot(root).render(
+    <StrictMode>
+      <SatGlobeApp adapter={adapter} />
+    </StrictMode>,
+  );
+}

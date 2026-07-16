@@ -44,7 +44,9 @@ class OrgDataService {
    * Kick off the fetch. Safe to call multiple times — only fetches once.
    */
   init(): void {
-    if (this.loadPromise_) {
+    // Offline profiles rely on the bundled owner-code maps. Do not issue a
+    // speculative remote request merely to improve display names.
+    if (window.settingsManager?.offlineMode || this.loadPromise_) {
       return;
     }
     this.loadPromise_ = this.fetchOrgData_();

@@ -10,6 +10,7 @@ declare global {
 
   interface Window {
     keepTrack: KeepTrack;
+    satGlobe?: import('./satglobe/engine/satglobe-engine-adapter').SatGlobeEngineAdapter;
     zaraz?: {
       consent?: {
         get: (key: string) => boolean;
@@ -22,4 +23,3 @@ declare global {
 }
 
 export { };
-

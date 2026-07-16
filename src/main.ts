@@ -22,6 +22,7 @@
 
 import { KeepTrack } from './keeptrack';
 import { registerServiceWorker } from './pwa/service-worker-registration';
+import { mountSatGlobe } from './satglobe/bootstrap';
 
 /*
  * Materialize v2 themes its components via Material Design 3 tokens that default
@@ -43,6 +44,11 @@ window.keepTrack = keepTrackInstance;
 // Initialize the website
 KeepTrack.initCss().then(() => {
   keepTrackInstance.run();
+  if (__EDITION__ === 'satglobe') {
+    mountSatGlobe();
+  }
 });
 
-registerServiceWorker();
+if (__EDITION__ !== 'satglobe') {
+  registerServiceWorker();
+}
