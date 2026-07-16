@@ -3,7 +3,7 @@ import { PluginRegistry } from '@app/engine/core/plugin-registry';
 import { EventBus } from '@app/engine/events/event-bus';
 import { EventBusEvent } from '@app/engine/events/event-bus-events';
 import { SelectSatManager } from '@app/plugins/select-sat-manager/select-sat-manager';
-import { BaseObject, PayloadStatus, Satellite, SpaceObjectType } from '@ootk/src/main';
+import { BaseObject, PayloadStatus, Satellite } from '@ootk/src/main';
 import { classifyOrbit, tleEpochToIso } from '../domain/orbits';
 import {
   DEFAULT_CAMERA,
@@ -11,13 +11,12 @@ import {
   type CameraPose,
   type EngineState,
   type FilterState,
-  type ObjectKind,
   type SpaceObjectView,
   type ScaleMode,
   type VisualEncoding,
 } from '../domain/types';
 import { SatGlobeColorScheme } from './satglobe-color-scheme';
-import { isKnownActivePayloadStatus } from './satglobe-object-state';
+import { isKnownActivePayloadStatus, objectKindFromSpaceObjectType } from './satglobe-object-state';
 
 export type EngineStateListener = (state: EngineState) => void;
 
@@ -31,21 +30,6 @@ const statusLabels: Record<PayloadStatus, string> = {
   [PayloadStatus.DECAYED]: 'Decayed',
   [PayloadStatus.UNKNOWN]: 'Unknown',
 };
-
-/** Maps an engine object to the type vocabulary exposed to product code. */
-function objectKind(obj: BaseObject): ObjectKind {
-  if (obj.type === SpaceObjectType.PAYLOAD) {
-    return 'payload';
-  }
-  if (obj.type === SpaceObjectType.ROCKET_BODY) {
-    return 'rocket-body';
-  }
-  if (obj.type === SpaceObjectType.DEBRIS) {
-    return 'debris';
-  }
-
-  return 'other';
-}
 
 export class SatGlobeEngineAdapter {
   private state_: EngineState = {
@@ -234,7 +218,11 @@ export class SatGlobeEngineAdapter {
       this.objects_ = catalog.getSats().filter((sat) => sat.active).map((sat) => this.toView_(sat));
       this.objectsByCatalogId_ = new Map(this.objects_.map((obj) => [obj.catalogId, obj]));
       this.state_.objectCount = this.objects_.length;
-      const newestEpochMs = Math.max(...this.objects_.map((obj) => new Date(obj.epoch).getTime()).filter(Number.isFinite));
+      const newestEpochMs = this.objects_.reduce((newest, obj) => {
+        const epoch = new Date(obj.epoch).getTime();
+
+        return Number.isFinite(epoch) ? Math.max(newest, epoch) : newest;
+      }, Number.NEGATIVE_INFINITY);
 
       this.state_.newestElementEpoch = Number.isFinite(newestEpochMs) ? new Date(newestEpochMs).toISOString() : '';
       this.state_.ready = true;
@@ -305,7 +293,7 @@ export class SatGlobeEngineAdapter {
       engineId: obj.id,
       catalogId: isSatellite ? String(sat.sccNum) : String(obj.id),
       name: obj.name || 'Unnamed object',
-      kind: objectKind(obj),
+      kind: objectKindFromSpaceObjectType(obj.type),
       active: isSatellite ? isKnownActivePayloadStatus(sat.status) : false,
       status: isSatellite ? statusLabels[sat.status] ?? 'Unknown' : 'Unknown',
       internationalDesignator: isSatellite ? sat.intlDes || '' : '',

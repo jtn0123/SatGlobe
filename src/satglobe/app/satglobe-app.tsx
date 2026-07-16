@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { SatGlobeEngineAdapter } from '../engine/satglobe-engine-adapter';
+import { matchesSatGlobeFilters } from '../domain/filters';
 import { downloadSavedView, importSavedView } from '../domain/saved-view';
 import {
   DEFAULT_FILTERS,
@@ -516,14 +517,10 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
     adapter.setEncoding(encoding);
   };
 
-  const visibleEstimate = useMemo(() => adapter.getObjects().filter((obj) => {
-    const statusMatches = filters.status === 'all' || (filters.status === 'active' ? obj.active : !obj.active);
-
-    return filters.objectKinds.includes(obj.kind) && filters.regimes.includes(obj.regime) && statusMatches &&
-      obj.perigeeKm >= filters.altitudeKm.min && obj.apogeeKm <= filters.altitudeKm.max &&
-      obj.inclinationDeg >= filters.inclinationDeg.min && obj.inclinationDeg <= filters.inclinationDeg.max &&
-      (!filters.constellation || obj.name.toLocaleLowerCase().includes(filters.constellation.toLocaleLowerCase()));
-  }).length, [adapter, engine.objectCount, filters]);
+  const visibleEstimate = useMemo(
+    () => adapter.getObjects().filter((object) => matchesSatGlobeFilters(object, filters)).length,
+    [adapter, engine.objectCount, filters],
+  );
   const newestElementAge = ageInDays(engine.newestElementEpoch);
   const openStory = () => {
     switchMode('story');
@@ -630,7 +627,7 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
         <details className="sg-legal">
           <summary>Data, source & legal</summary>
           <p>SatGlobe is a modified KeepTrack source fork. KeepTrack © Kruczek Labs LLC and contributors; earlier ThingsInSpace work © James Yoder. AGPL-3.0, without warranty.</p>
-          <div><a href="https://github.com/thkruz/keeptrack.space" rel="noreferrer" target="_blank">Upstream source ↗</a><a href="https://www.gnu.org/licenses/agpl-3.0.html" rel="noreferrer" target="_blank">View license ↗</a></div>
+          <div><a href="https://github.com/jtn0123/SatGlobe" rel="noreferrer" target="_blank">SatGlobe source ↗</a><a href="https://github.com/thkruz/keeptrack.space" rel="noreferrer" target="_blank">Upstream ↗</a><a href="https://www.gnu.org/licenses/agpl-3.0.html" rel="noreferrer" target="_blank">License ↗</a></div>
         </details>
       </aside>
 

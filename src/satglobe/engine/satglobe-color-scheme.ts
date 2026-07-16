@@ -1,14 +1,15 @@
 import { ColorInformation, Pickable, rgbaArray } from '@app/engine/core/interfaces';
-import { BaseObject, Satellite, SpaceObjectType } from '@ootk/src/main';
+import { BaseObject, Satellite } from '@ootk/src/main';
 import { ColorScheme, ColorSchemeParams } from '@app/engine/rendering/color-schemes/color-scheme';
 import { GpAgeColorScheme } from '@app/engine/rendering/color-schemes/gp-age-color-scheme';
 import { MissionColorScheme } from '@app/engine/rendering/color-schemes/mission-color-scheme';
 import { ObjectTypeColorScheme } from '@app/engine/rendering/color-schemes/object-type-color-scheme';
 import { OrbitalPlaneDensityColorScheme } from '@app/engine/rendering/color-schemes/orbital-plane-density-color-scheme';
 import { StarlinkColorScheme } from '@app/engine/rendering/color-schemes/starlink-color-scheme';
+import { matchesSatGlobeFilters } from '../domain/filters';
 import { classifyOrbit } from '../domain/orbits';
 import type { FilterState, ObjectKind, OrbitRegime, VisualEncoding } from '../domain/types';
-import { isKnownActivePayloadStatus } from './satglobe-object-state';
+import { isKnownActivePayloadStatus, objectKindFromSpaceObjectType } from './satglobe-object-state';
 
 const regimeColors: Record<OrbitRegime, rgbaArray> = {
   leo: [0.54, 0.84, 0.81, 0.9],
@@ -24,21 +25,6 @@ const objectColors: Record<ObjectKind, rgbaArray> = {
   debris: [0.62, 0.66, 0.64, 0.42],
   other: [0.72, 0.72, 0.69, 0.5],
 };
-
-/** Maps KeepTrack object types to SatGlobe's stable public filter vocabulary. */
-function kindOf(obj: BaseObject): ObjectKind {
-  if (obj.type === SpaceObjectType.PAYLOAD) {
-    return 'payload';
-  }
-  if (obj.type === SpaceObjectType.ROCKET_BODY) {
-    return 'rocket-body';
-  }
-  if (obj.type === SpaceObjectType.DEBRIS) {
-    return 'debris';
-  }
-
-  return 'other';
-}
 
 export class SatGlobeColorScheme extends ColorScheme {
   readonly id = 'SatGlobeColorScheme';
@@ -99,7 +85,7 @@ export class SatGlobeColorScheme extends ColorScheme {
     }
 
     if (this.encoding_ === 'object-type') {
-      return { color: objectColors[kindOf(obj)], pickable: Pickable.Yes };
+      return { color: objectColors[objectKindFromSpaceObjectType(obj.type)], pickable: Pickable.Yes };
     }
 
     if (this.encoding_ === 'starlink') {
@@ -124,23 +110,18 @@ export class SatGlobeColorScheme extends ColorScheme {
   }
 
   private matches_(sat: Satellite, regime: OrbitRegime): boolean {
-    const filters = this.filters_;
-    const text = `${sat.country} ${sat.owner}`.toLocaleLowerCase();
-    const launchCohort = filters.launchCohort.trim().toLocaleLowerCase();
-    const constellation = filters.constellation.trim().toLocaleLowerCase();
-    const countryOrOperator = filters.countryOrOperator.trim().toLocaleLowerCase();
-    const isKnownActive = isKnownActivePayloadStatus(sat.status);
-    const statusMatches = filters.status === 'all' || (filters.status === 'active' ? isKnownActive : !isKnownActive);
-
-    return filters.objectKinds.includes(kindOf(sat)) &&
-      statusMatches &&
-      filters.regimes.includes(regime) &&
-      Number(sat.perigee) >= filters.altitudeKm.min &&
-      Number(sat.apogee) <= filters.altitudeKm.max &&
-      Number(sat.inclination) >= filters.inclinationDeg.min &&
-      Number(sat.inclination) <= filters.inclinationDeg.max &&
-      (!launchCohort || `${sat.intlDes} ${sat.launchDate}`.toLocaleLowerCase().includes(launchCohort)) &&
-      (!constellation || sat.name.toLocaleLowerCase().includes(constellation)) &&
-      (!countryOrOperator || text.includes(countryOrOperator));
+    return matchesSatGlobeFilters({
+      kind: objectKindFromSpaceObjectType(sat.type),
+      active: isKnownActivePayloadStatus(sat.status),
+      regime,
+      perigeeKm: Number(sat.perigee),
+      apogeeKm: Number(sat.apogee),
+      inclinationDeg: Number(sat.inclination),
+      name: sat.name,
+      internationalDesignator: sat.intlDes,
+      launchDate: sat.launchDate,
+      country: sat.country,
+      owner: sat.owner,
+    }, this.filters_);
   }
 }

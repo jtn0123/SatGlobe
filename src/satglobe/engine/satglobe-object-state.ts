@@ -1,4 +1,5 @@
-import { PayloadStatus } from '@ootk/src/main';
+import { PayloadStatus, SpaceObjectType } from '@ootk/src/main';
+import type { ObjectKind } from '../domain/types';
 
 const KNOWN_ACTIVE_STATUSES = new Set<PayloadStatus>([
   PayloadStatus.OPERATIONAL,
@@ -15,4 +16,19 @@ const KNOWN_ACTIVE_STATUSES = new Set<PayloadStatus>([
  */
 export function isKnownActivePayloadStatus(status: PayloadStatus): boolean {
   return KNOWN_ACTIVE_STATUSES.has(status);
+}
+
+/** Maps KeepTrack object types to SatGlobe's stable public vocabulary. */
+export function objectKindFromSpaceObjectType(type: SpaceObjectType): ObjectKind {
+  if (type === SpaceObjectType.PAYLOAD) {
+    return 'payload';
+  }
+  if (type === SpaceObjectType.ROCKET_BODY) {
+    return 'rocket-body';
+  }
+  if (type === SpaceObjectType.DEBRIS) {
+    return 'debris';
+  }
+
+  return 'other';
 }

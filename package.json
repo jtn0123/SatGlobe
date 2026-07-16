@@ -1,8 +1,9 @@
 {
-  "name": "keeptrack.space",
+  "name": "satglobe",
   "version": "13.4.0",
+  "private": true,
   "type": "module",
-  "description": "Complex astrodynamics tools designed for non-engineers to make learning about orbital mechanics and satellite operations more accessible.",
+  "description": "A local-first orbital visualization and storytelling workshop built on KeepTrack.",
   "author": "Theodore Kruczek",
   "contributors": [
     {
@@ -18,13 +19,9 @@
     }
   ],
   "license": "AGPL-3.0",
-  "homepage": "https://keeptrack.space",
+  "homepage": "https://github.com/jtn0123/SatGlobe",
   "bugs": {
-    "url": "https://github.com/thkruz/keeptrack.space/issues",
-    "email": "theodore.kruczek@gmail.com"
-  },
-  "publishConfig": {
-    "access": "public"
+    "url": "https://github.com/jtn0123/SatGlobe/issues"
   },
   "main": "lib/index.js",
   "module": "lib/index.js",
@@ -110,7 +107,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/thkruz/keeptrack.space.git"
+    "url": "git+https://github.com/jtn0123/SatGlobe.git"
   },
   "devDependencies": {
     "@babel/core": "^7.23.0",
