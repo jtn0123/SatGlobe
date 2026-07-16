@@ -1,373 +1,45 @@
 ---
-name: Build Pipeline
+name: SatGlobe CI
 
 "on":
-  workflow_dispatch:
+  push:
+    branches:
+      - main
   pull_request:
     branches:
       - main
-      - develop
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
-  lint-yml:
-    name: Yaml Lint
+  verify:
+    name: Typecheck, lint, test, and build
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
+    timeout-minutes: 30
     steps:
-      - name: Checkout Code
+      - name: Check out source
         uses: actions/checkout@v6
-      - name: YAML Lint
-        uses: ibiqlik/action-yamllint@v3.1.1
-        with:
-          file_or_dir: .github/workflows/build-pipeline.yml
-        continue-on-error: true
-  compliance:
-    needs: lint-yml
-    name: NPM Audit Report
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      issues: write
-      pull-requests: write
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v6
-      - name: NPM Audit Action
-        uses: oke-py/npm-audit-action@main
-        with:
-          issue_assignees: thkruz
-          issue_labels: Security
-          dedupe_issues: true
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-        continue-on-error: true
-  lint-and-test:
-    needs: compliance
-    if: github.event.pull_request.head.repo.full_name == github.repository || github.event_name == 'workflow_dispatch'
-    name: Lint and Unit Tests
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    strategy:
-      fail-fast: false
-      matrix:
-        task: [eslint, unit-test, typecheck]
-    steps:
-      - uses: actions/checkout@v6
 
-      - name: Setup Node.js
+      - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
           node-version: '24'
+          cache: npm
 
-      - name: Cache node modules
-        uses: actions/cache@v5
-        with:
-          path: ~/.npm
-          key: >-
-            ${{ runner.os }}-build-node-modules-${{
-            hashFiles('**/package-lock.json') }}
-          restore-keys: >-
-            ${{ runner.os }}-build-node-modules-${{
-            runner.os }}-
+      - name: Initialize public orbital toolkit
+        run: git submodule update --init src/engine/ootk
 
-      - name: Set up SSH
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.ACTIONS_DEPLOY_KEY }}
-      - name: Update submodules
-        run: git submodule update --init --recursive
-
-      - name: Install Dependencies
+      - name: Install dependencies
         run: npm ci --ignore-scripts
 
-      - name: Set Timezone (only for tests)
-        if: matrix.task == 'unit-test'
-        uses: szenius/set-timezone@v1.2
-        with:
-          timezoneLinux: 'America/New_York'
+      - name: Generate translation types
+        run: npm run generate-t7e
 
-      - name: Run ESLint
-        if: matrix.task == 'eslint'
-        run: |
-          echo "Running ESLint..."
-          npm run lint
-          echo '### ESLint Passed' >> $GITHUB_STEP_SUMMARY
-
-      - name: Run Unit Tests
-        if: matrix.task == 'unit-test'
-        run: |
-          echo "Creating tranlation files..."
-          npm run generate-t7e
-          echo "Running Unit Tests (with coverage gate)..."
-          npm run test:coverage
-          echo '### Unit Tests Passed' >> $GITHUB_STEP_SUMMARY
-
-      - name: Upload coverage report
-        if: matrix.task == 'unit-test' && always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: coverage/
-          retention-days: 7
-
-      - name: Run Type Check
-        if: matrix.task == 'typecheck'
-        run: |
-          echo "Creating translation files..."
-          npm run generate-t7e
-          echo "Running Type Check..."
-          npm run typecheck
-          echo '### Type Check Passed' >> $GITHUB_STEP_SUMMARY
-  lint-and-test-oss:
-    needs: compliance
-    name: Lint and Unit Tests (OSS, no plugins-pro)
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    strategy:
-      fail-fast: false
-      matrix:
-        task: [eslint, unit-test, typecheck]
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: '24'
-
-      - name: Cache node modules
-        uses: actions/cache@v5
-        with:
-          path: ~/.npm
-          key: >-
-            ${{ runner.os }}-build-node-modules-${{
-            hashFiles('**/package-lock.json') }}
-          restore-keys: >-
-            ${{ runner.os }}-build-node-modules-${{
-            runner.os }}-
-
-      # No "Set up SSH" — OSS contributors do not have SSH access.
-      # Initialize ONLY the public ootk submodule (HTTPS, required for builds).
-      - name: Update public submodules only
-        run: git submodule update --init --recursive -- src/engine/ootk
-
-      - name: Verify plugins-pro is absent
-        run: |
-          if [ -n "$(ls -A src/plugins-pro 2>/dev/null)" ]; then
-            echo "ERROR: src/plugins-pro is populated; this job must simulate"
-            echo "an OSS contributor without access."
-            exit 1
-          fi
-          echo "Confirmed src/plugins-pro is empty"
-
-      - name: Install Dependencies
-        run: npm ci --ignore-scripts
-
-      - name: Set Timezone (only for tests)
-        if: matrix.task == 'unit-test'
-        uses: szenius/set-timezone@v1.2
-        with:
-          timezoneLinux: 'America/New_York'
-
-      - name: Run ESLint
-        if: matrix.task == 'eslint'
-        run: |
-          echo "Running ESLint (OSS)..."
-          npm run lint
-          echo '### ESLint (OSS) Passed' >> $GITHUB_STEP_SUMMARY
-
-      - name: Run Unit Tests
-        if: matrix.task == 'unit-test'
-        run: |
-          echo "Creating translation files..."
-          npm run generate-t7e
-          echo "Running Unit Tests (OSS)..."
-          npm test
-          echo '### Unit Tests (OSS) Passed' >> $GITHUB_STEP_SUMMARY
-
-      - name: Run Type Check
-        if: matrix.task == 'typecheck'
-        run: |
-          echo "Creating translation files..."
-          npm run generate-t7e
-          echo "Running Type Check (OSS)..."
-          npm run typecheck
-          echo '### Type Check (OSS) Passed' >> $GITHUB_STEP_SUMMARY
-  build:
-    needs: [lint-and-test, lint-and-test-oss]
-    if: always() && needs.lint-and-test-oss.result == 'success' && (needs.lint-and-test.result == 'success' || needs.lint-and-test.result == 'skipped')
-    name: Build (${{ matrix.profile }})
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    strategy:
-      fail-fast: false
-      matrix:
-        profile: [oss, pro, celestrak, embed, epfl, offline]
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v6
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: '24'
-
-      - name: Cache node modules
-        uses: actions/cache@v5
-        with:
-          path: ~/.npm
-          key: >-
-            ${{ runner.os }}-build-node-modules-${{
-            hashFiles('**/package-lock.json') }}
-          restore-keys: >-
-            ${{ runner.os }}-build-node-modules-${{
-            runner.os }}-
-
-      # OSS profile: no SSH, only the public ootk submodule.
-      - name: Update public submodules only (OSS)
-        if: matrix.profile == 'oss'
-        run: git submodule update --init --recursive -- src/engine/ootk
-
-      - name: Verify plugins-pro absence (OSS only)
-        if: matrix.profile == 'oss'
-        run: |
-          if [ -n "$(ls -A src/plugins-pro 2>/dev/null)" ]; then
-            echo "ERROR: OSS build sees plugins-pro contents"; exit 1
-          fi
-
-      # Non-OSS profiles: SSH + full submodules (pro included).
-      - name: Set up SSH
-        if: matrix.profile != 'oss' && github.event.pull_request.head.repo.full_name == github.repository
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.ACTIONS_DEPLOY_KEY }}
-      - name: Update submodules
-        if: matrix.profile != 'oss' && github.event.pull_request.head.repo.full_name == github.repository
-        run: git submodule update --init --recursive
-
-      - name: Install Dependencies
-        run: npm ci --ignore-scripts
-
-      - name: Build
-        run: |
-          npx tsx ./build/generate-translation.ts
-          PROFILE=${{ matrix.profile }}
-          npx tsx ./build/build-manager.ts production \
-            --profile="$PROFILE" --skip-locales
-
-      - name: Verify output
-        run: |
-          test -f dist/index.html
-          test -f dist/settings/settingsOverride.js
-          MSG="### Build (${{ matrix.profile }}) Passed"
-          echo "$MSG" >> $GITHUB_STEP_SUMMARY
-
-  boot-smoke:
-    needs: [lint-and-test, lint-and-test-oss]
-    if: always() && needs.lint-and-test-oss.result == 'success' && (needs.lint-and-test.result == 'success' || needs.lint-and-test.result == 'skipped')
-    name: Boot Smoke Test
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v6
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: '24'
-
-      - name: Cache node modules
-        uses: actions/cache@v5
-        with:
-          path: ~/.npm
-          key: >-
-            ${{ runner.os }}-build-node-modules-${{
-            hashFiles('**/package-lock.json') }}
-          restore-keys: >-
-            ${{ runner.os }}-build-node-modules-${{
-            runner.os }}-
-
-      # boot-smoke only ever builds the oss profile, so skip SSH entirely.
-      - name: Update public submodules only
-        run: git submodule update --init --recursive -- src/engine/ootk
-
-      - name: Install Dependencies
-        run: npm ci --ignore-scripts
-
-      - name: Cache Playwright browsers
-        uses: actions/cache@v5
-        with:
-          path: ~/.cache/ms-playwright
-          key: >-
-            ${{ runner.os }}-playwright-${{
-            hashFiles('**/package-lock.json') }}
-          restore-keys: >-
-            ${{ runner.os }}-playwright-
-
-      - name: Install Playwright Chromium
-        run: npx playwright install --with-deps chromium
-
-      - name: Build (oss)
-        run: |
-          npx tsx ./build/generate-translation.ts
-          npx tsx ./build/build-manager.ts production --profile=oss --skip-locales
-
-      - name: Run Boot Smoke Test
-        run: |
-          echo "Running app boot smoke tests..."
-          npm run test:e2e:smoke
-          echo '### Boot Smoke Test Passed' >> $GITHUB_STEP_SUMMARY
-
-      - name: Upload Playwright report on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-report-boot-smoke
-          path: playwright-report/
-          retention-days: 7
-
-  trufflehog:
-    needs: build
-    name: TruffleHog Secrets Scan
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-
-      - name: Run TruffleHog
-        uses: trufflesecurity/trufflehog@v3.82.6
-
-  pipeline-complete:
-    if: always()
-    needs:
-      - lint-and-test
-      - lint-and-test-oss
-      - boot-smoke
-      - build
-      - trufflehog
-    name: Build Pipeline Complete
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check job results
-        run: |
-          if [[ ("${{ needs.lint-and-test.result }}" == "failure") || \
-                "${{ needs.lint-and-test-oss.result }}" == "failure" || \
-                "${{ needs.boot-smoke.result }}" == "failure" || \
-                "${{ needs.build.result }}" == "failure" ]]; then
-            echo "One or more required jobs failed"
-            exit 1
-          fi
-          echo "All required jobs passed"
+      - name: Verify SatGlobe
+        run: npm run verify:satglobe
