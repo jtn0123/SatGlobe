@@ -58,7 +58,38 @@ const STARLINK_URL = 'https://celestrak.org/NORAD/elements/gp.php?GROUP=STARLINK
 const SOURCE_CACHE_MAX_AGE_MS = 2 * 60 * 60 * 1_000;
 const SOURCE_CACHE_DIRECTORY = path.resolve('.cache/satglobe');
 
-function parseArgs(argv: string[]): RefreshOptions {
+const USAGE = `Usage: catalog-refresh [--verify-only] [--output <file>] [--active-input <file>] [--starlink-input <file>]
+
+  --verify-only            Validate and report without installing anything
+  --output <file>          Catalog to update (default: public/tle/tle.json)
+  --active-input <file>    Use a local CSV instead of downloading the active group
+  --starlink-input <file>  Use a local CSV instead of downloading the Starlink group
+`;
+
+export function parseArgs(argv: string[]): RefreshOptions {
+  const booleanFlags = new Set(['--verify-only']);
+  const valueFlags = new Set(['--output', '--active-input', '--starlink-input']);
+
+  // A typo'd flag silently ignored could turn an intended dry run into a real
+  // install, so anything unrecognized is a hard error.
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index];
+
+    if (booleanFlags.has(arg)) {
+      continue;
+    }
+    if (valueFlags.has(arg)) {
+      const value = argv[index + 1];
+
+      if (value === undefined || value.startsWith('--')) {
+        throw new Error(`Missing value for ${arg}\n\n${USAGE}`);
+      }
+      index += 1;
+      continue;
+    }
+    throw new Error(`Unknown argument: ${arg}\n\n${USAGE}`);
+  }
+
   const valueAfter = (flag: string) => {
     const index = argv.indexOf(flag);
 
@@ -286,17 +317,47 @@ function mergeSource(
   return { added, updated, unchanged };
 }
 
-async function readFreshSourceCache(cacheFile: string): Promise<string | null> {
+const SOURCE_FETCH_TIMEOUT_MS = 30_000;
+const SOURCE_FETCH_RETRY_DELAY_MS = 2_000;
+
+async function readFreshSourceCache(cacheFile: string): Promise<{ contents: string; ageMinutes: number } | null> {
   try {
     const cacheStat = await stat(cacheFile);
+    const ageMs = Date.now() - cacheStat.mtimeMs;
 
-    if (Date.now() - cacheStat.mtimeMs > SOURCE_CACHE_MAX_AGE_MS) {
+    if (ageMs > SOURCE_CACHE_MAX_AGE_MS) {
       return null;
     }
 
-    return readFile(cacheFile, 'utf8');
+    return { contents: await readFile(cacheFile, 'utf8'), ageMinutes: Math.max(0, Math.round(ageMs / 60_000)) };
   } catch {
     return null;
+  }
+}
+
+async function fetchWithRetry(url: string, fetchSource: typeof fetch): Promise<Response> {
+  const request = () => fetchSource(url, {
+    headers: { 'user-agent': 'SatGlobe catalog refresh (manual local command)' },
+    signal: AbortSignal.timeout(SOURCE_FETCH_TIMEOUT_MS),
+  });
+
+  try {
+    const response = await request();
+
+    // Retry once on server-side errors; client errors (403 rate limit text, etc.)
+    // carry a provider message the caller should surface immediately.
+    if (response.status >= 500) {
+      await new Promise((resolveDelay) => { setTimeout(resolveDelay, SOURCE_FETCH_RETRY_DELAY_MS); });
+
+      return await request();
+    }
+
+    return response;
+  } catch (error) {
+    process.stderr.write(`Catalog source request failed (${error instanceof Error ? error.message : String(error)}); retrying once...\n`);
+    await new Promise((resolveDelay) => { setTimeout(resolveDelay, SOURCE_FETCH_RETRY_DELAY_MS); });
+
+    return request();
   }
 }
 
@@ -312,9 +373,11 @@ export async function loadSource(
   const cached = await readFreshSourceCache(cacheFile);
 
   if (cached !== null) {
-    return cached;
+    process.stdout.write(`Using cached download from ${cached.ageMinutes} minute${cached.ageMinutes === 1 ? '' : 's'} ago for ${url}\n  (delete .cache/satglobe to force a fresh provider request)\n`);
+
+    return cached.contents;
   }
-  const response = await fetchSource(url, { headers: { 'user-agent': 'SatGlobe catalog refresh (manual local command)' } });
+  const response = await fetchWithRetry(url, fetchSource);
 
   if (!response.ok) {
     const providerMessage = (await response.text()).trim();
