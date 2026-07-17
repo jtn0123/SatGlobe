@@ -40,6 +40,15 @@ npm run start:satglobe:static
 
 The application reads bundled catalogs, imagery, fonts, and story data. It has no account, backend, analytics dependency, or runtime third-party API requirement.
 
+## Keyboard shortcuts
+
+| Key | Action |
+| --- | --- |
+| `F` | Toggle the quiet presentation view |
+| `Escape` | Return to the Workshop |
+| `←` / `→` | Previous / next story beat (Story mode) |
+| `Space` | Play / pause the story (Story mode) |
+
 ## Quality gates
 
 ```bash
