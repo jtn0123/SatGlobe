@@ -258,8 +258,11 @@ export class CatalogLoader {
             errorManagerInstance.error(error, 'tleManagerInstance.loadCatalog');
           });
       } else if (settingsManager.offlineMode) {
-        await fetch(`${settingsManager.installDirectory}tle/tle.json`)
-          .then((response) => response.json())
+        // The offline edition starts this fetch at module evaluation (main.ts)
+        // so it overlaps engine init; fall back to a fresh fetch if it failed.
+        await (window.satGlobeCatalogPrefetch ?? Promise.reject(new Error('no prefetch')))
+          .catch(() => fetch(`${settingsManager.installDirectory}tle/tle.json`).then((response) => response.json()))
+          .then((data) => data as KeepTrackTLEFile[])
           .then((data) => CatalogLoader.parse({
             keepTrackTle: data,
             keepTrackExtra: extraSats,
