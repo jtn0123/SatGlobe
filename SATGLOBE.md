@@ -4,9 +4,10 @@ SatGlobe turns the KeepTrack orbital engine into a local-first, presentation-rea
 
 ## Start locally
 
-Requirements: Node.js 24, npm, Git, and a browser with WebGL 2.
+Requirements: Node.js 24, npm, Git with Git LFS, and a browser with WebGL 2.
 
 ```bash
+git lfs install
 git submodule update --init src/engine/ootk
 npm ci
 npm run generate-t7e
@@ -46,7 +47,7 @@ The command starts with KeepTrack’s enriched catalog and merges CelesTrak OMM-
 
 CelesTrak updates group downloads every two hours and rejects repeat requests inside that window. SatGlobe caches successful manual downloads in the ignored `.cache/satglobe` directory for two hours, so `catalog:verify` followed by `catalog:refresh` validates and installs the exact same inputs without a second provider request. Delete that directory only when a genuinely fresh download is required. A successful install writes:
 
-- `public/tle/tle.json`
+- `public/tle/tle.json` (stored via Git LFS — each refresh rewrites ~20 MB, and LFS keeps those revisions out of the base git history)
 - `public/tle/satglobe/manifest.json`
 - `public/tle/satglobe/catalog.sha256`
 - `public/tle/satglobe/rejected-rows.json`

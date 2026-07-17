@@ -18,11 +18,12 @@ SatGlobe does not call predicted positions live telemetry. Browser positions are
 
 ## Run locally
 
-Requirements: Node.js 24, npm, Git, and a browser with WebGL 2.
+Requirements: Node.js 24, npm, Git with Git LFS, and a browser with WebGL 2.
 
 ```bash
 git clone https://github.com/jtn0123/SatGlobe.git
 cd SatGlobe
+git lfs install
 git submodule update --init src/engine/ootk
 npm ci
 npm run generate-t7e
