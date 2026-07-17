@@ -74,8 +74,7 @@ export class SatGlobeEngineAdapter {
     sizes.maxSize = 1;
   };
   private readonly onSelection_ = (obj: BaseObject) => {
-    this.state_.selectedObject = this.toView_(obj);
-    this.emit_();
+    this.patchState_({ selectedObject: this.toView_(obj) });
   };
 
   constructor() {
@@ -86,8 +85,14 @@ export class SatGlobeEngineAdapter {
     this.interval_ = window.setInterval(() => this.poll_(), 600);
   }
 
+  /**
+   * Returns the current state snapshot. Snapshots are immutable by contract:
+   * every change produces a new state object, and unchanged slices (filters,
+   * selectedObject, camera) keep reference identity so React.memo consumers
+   * can skip re-rendering. Do not mutate the returned object.
+   */
   getState(): EngineState {
-    return structuredClone(this.state_);
+    return this.state_;
   }
 
   getObjects(): readonly SpaceObjectView[] {
@@ -122,14 +127,12 @@ export class SatGlobeEngineAdapter {
       return;
     }
     PluginRegistry.getPlugin(SelectSatManager)?.selectSat(engineId);
-    this.state_.selectedObject = obj;
-    this.emit_();
+    this.patchState_({ selectedObject: obj });
   }
 
   clearSelection(): void {
     PluginRegistry.getPlugin(SelectSatManager)?.selectSat(-1);
-    this.state_.selectedObject = null;
-    this.emit_();
+    this.patchState_({ selectedObject: null });
   }
 
   setSimulationTime(iso: string): void {
@@ -142,8 +145,7 @@ export class SatGlobeEngineAdapter {
 
     timeManager.changeStaticOffset(date.getTime() - Date.now());
     timeManager.setSelectedDate(date);
-    this.state_.simulationTime = date.toISOString();
-    this.emit_();
+    this.patchState_({ simulationTime: date.toISOString() });
   }
 
   setPlaybackRate(rate: number): void {
@@ -156,17 +158,16 @@ export class SatGlobeEngineAdapter {
     state.camPitchTarget = pose.pitch as typeof state.camPitchTarget;
     state.camYawTarget = pose.yaw as typeof state.camYawTarget;
     state.zoomTarget = pose.zoom;
-    this.state_.camera = pose;
-    this.emit_();
+    this.patchState_({ camera: pose });
   }
 
   setFilters(filters: FilterState): void {
-    this.state_.filters = structuredClone(filters);
+    this.patchState_({ filters: structuredClone(filters) }, false);
     this.applyVisualState_();
   }
 
   setEncoding(encoding: VisualEncoding): void {
-    this.state_.encoding = encoding;
+    this.patchState_({ encoding }, false);
     this.applyVisualState_();
   }
 
@@ -233,25 +234,26 @@ export class SatGlobeEngineAdapter {
       this.objects_ = sats.map((sat) => this.toView_(sat));
       this.objectsByCatalogId_ = new Map(this.objects_.map((obj) => [obj.catalogId, obj]));
       this.engineIdByCatalogId_ = new Map(sats.map((sat, index) => [this.objects_[index].catalogId, sat.id]));
-      this.state_.objectCount = this.objects_.length;
       const newestEpochMs = this.objects_.reduce((newest, obj) => {
         const epoch = new Date(obj.epoch).getTime();
 
         return Number.isFinite(epoch) ? Math.max(newest, epoch) : newest;
       }, Number.NEGATIVE_INFINITY);
 
-      this.state_.newestElementEpoch = Number.isFinite(newestEpochMs) ? new Date(newestEpochMs).toISOString() : '';
-      this.state_.ready = true;
-      this.state_.error = null;
+      this.patchState_({
+        objectCount: this.objects_.length,
+        newestElementEpoch: Number.isFinite(newestEpochMs) ? new Date(newestEpochMs).toISOString() : '',
+        ready: true,
+        error: null,
+      }, false);
       this.installColorScheme_();
       this.poll_();
     } catch (error) {
       // A populated catalog that fails to map is a real defect, not a startup race.
-      const message = error instanceof Error ? error.message : String(error);
+      const message = `Catalog hydration failed: ${error instanceof Error ? error.message : String(error)}`;
 
-      this.state_.error = `Catalog hydration failed: ${message}`;
-      errorManagerInstance.warn(`SatGlobe adapter: ${this.state_.error}`);
-      this.emit_();
+      errorManagerInstance.warn(`SatGlobe adapter: ${message}`);
+      this.patchState_({ error: message });
     }
   }
 
@@ -269,15 +271,42 @@ export class SatGlobeEngineAdapter {
       // Time and camera services register in phases during startup; retry next tick.
       return;
     }
-    this.state_.simulationTime = simulationTimeIso;
-    this.state_.camera = {
-      pitch: Number(camera.camPitchTarget),
-      yaw: Number(camera.camYawTarget),
-      zoom: camera.zoomTarget,
-    };
-    if (!this.state_.ready && this.engineReady_) {
+    const pitch = Number(camera.camPitchTarget);
+    const yaw = Number(camera.camYawTarget);
+    const zoom = camera.zoomTarget;
+    const current = this.state_;
+    const timeChanged = current.simulationTime !== simulationTimeIso;
+    const cameraChanged = current.camera.pitch !== pitch || current.camera.yaw !== yaw || current.camera.zoom !== zoom;
+
+    if (!current.ready && this.engineReady_) {
+      if (timeChanged || cameraChanged) {
+        this.patchState_({
+          simulationTime: timeChanged ? simulationTimeIso : current.simulationTime,
+          camera: cameraChanged ? { pitch, yaw, zoom } : current.camera,
+        }, false);
+      }
       this.hydrate_();
-    } else {
+
+      return;
+    }
+    // Emit only when something observable moved — an idle scene produces zero
+    // notifications and therefore zero React re-renders (ADR 0002 idle budget).
+    if (timeChanged || cameraChanged) {
+      this.patchState_({
+        simulationTime: timeChanged ? simulationTimeIso : current.simulationTime,
+        camera: cameraChanged ? { pitch, yaw, zoom } : current.camera,
+      });
+    }
+  }
+
+  /**
+   * Replaces the state with a new immutable snapshot; unchanged slices keep
+   * reference identity. Emits to subscribers unless emit is false (callers
+   * that batch further changes emit themselves).
+   */
+  private patchState_(partial: Partial<EngineState>, emit = true): void {
+    this.state_ = { ...this.state_, ...partial };
+    if (emit) {
       this.emit_();
     }
   }
@@ -334,7 +363,7 @@ export class SatGlobeEngineAdapter {
   }
 
   private emit_(): void {
-    const snapshot = this.getState();
+    const snapshot = this.state_;
 
     this.listeners_.forEach((listener) => listener(snapshot));
   }
