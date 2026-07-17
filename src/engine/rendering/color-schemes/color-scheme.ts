@@ -94,6 +94,13 @@ export abstract class ColorScheme {
   static readonly id: string = 'ColorScheme';
   isOptionInColorMenu: boolean = true;
   isOptionInRmbMenu: boolean = true;
+  /**
+   * True when the scheme's colors depend only on the catalog and explicitly
+   * applied state (no per-frame inputs like sensor FOV or sunlight). The
+   * manager skips the periodic progressive recolor for static schemes and
+   * repaints only on forced recolors plus selection/hover overlay changes.
+   */
+  readonly isStaticColorScheme: boolean = false;
 
   constructor(uniqueColorTheme: Record<string, rgbaArray>) {
     // Ensure that settingsManager.colors are all defined

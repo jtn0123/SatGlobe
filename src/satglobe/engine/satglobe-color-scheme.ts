@@ -31,6 +31,12 @@ export class SatGlobeColorScheme extends ColorScheme {
   readonly label = 'SatGlobe';
   isOptionInColorMenu = false;
   isOptionInRmbMenu = false;
+  /*
+   * Colors derive from catalog data plus filters/encoding applied through
+   * setState (always followed by a forced recolor), so the manager's periodic
+   * per-frame sweep adds nothing but main-thread cost.
+   */
+  override readonly isStaticColorScheme = true;
   private encoding_: VisualEncoding;
   private matcher_: FilterMatcher;
   /*
