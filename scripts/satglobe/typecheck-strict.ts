@@ -11,8 +11,13 @@
  */
 
 import { spawnSync } from 'node:child_process';
+import { createRequire } from 'node:module';
 
-const result = spawnSync('npx', ['tsc', '-p', 'tsconfig.satglobe.json', '--pretty', 'false'], { encoding: 'utf8', shell: false });
+// Resolve the repo-local tsc entry point and run it with the current Node binary
+// instead of shelling out through npx, so nothing is resolved via PATH.
+const require = createRequire(import.meta.url);
+const tscPath = require.resolve('typescript/bin/tsc');
+const result = spawnSync(process.execPath, [tscPath, '-p', 'tsconfig.satglobe.json', '--pretty', 'false'], { encoding: 'utf8', shell: false });
 const output = `${result.stdout ?? ''}${result.stderr ?? ''}`;
 const errorLines = output.split('\n').filter((line) => line.includes('error TS'));
 const satglobeErrors = errorLines.filter((line) => line.startsWith('src/satglobe/'));
