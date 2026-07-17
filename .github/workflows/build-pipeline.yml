@@ -25,8 +25,13 @@ jobs:
     steps:
       - name: Check out source
         uses: actions/checkout@v6
-        with:
-          lfs: true
+
+      # Scoped LFS pull: fetch only the catalog snapshot. Two pre-existing
+      # astroux png pointers have no blobs in this fork's LFS storage (GitHub
+      # does not copy LFS objects on fork), so a blanket lfs:true checkout
+      # fails on them.
+      - name: Fetch LFS catalog snapshot
+        run: git lfs pull --include="public/tle/tle.json"
 
       - name: Set up Node.js
         uses: actions/setup-node@v6
@@ -53,8 +58,13 @@ jobs:
     steps:
       - name: Check out source
         uses: actions/checkout@v6
-        with:
-          lfs: true
+
+      # Scoped LFS pull: fetch only the catalog snapshot. Two pre-existing
+      # astroux png pointers have no blobs in this fork's LFS storage (GitHub
+      # does not copy LFS objects on fork), so a blanket lfs:true checkout
+      # fails on them.
+      - name: Fetch LFS catalog snapshot
+        run: git lfs pull --include="public/tle/tle.json"
 
       - name: Set up Node.js
         uses: actions/setup-node@v6
@@ -89,8 +99,13 @@ jobs:
     steps:
       - name: Check out source
         uses: actions/checkout@v6
-        with:
-          lfs: true
+
+      # Scoped LFS pull: fetch only the catalog snapshot. Two pre-existing
+      # astroux png pointers have no blobs in this fork's LFS storage (GitHub
+      # does not copy LFS objects on fork), so a blanket lfs:true checkout
+      # fails on them.
+      - name: Fetch LFS catalog snapshot
+        run: git lfs pull --include="public/tle/tle.json"
 
       - name: Set up Node.js
         uses: actions/setup-node@v6
@@ -134,8 +149,13 @@ jobs:
     steps:
       - name: Check out source
         uses: actions/checkout@v6
-        with:
-          lfs: true
+
+      # Scoped LFS pull: fetch only the catalog snapshot. Two pre-existing
+      # astroux png pointers have no blobs in this fork's LFS storage (GitHub
+      # does not copy LFS objects on fork), so a blanket lfs:true checkout
+      # fails on them.
+      - name: Fetch LFS catalog snapshot
+        run: git lfs pull --include="public/tle/tle.json"
 
       - name: Set up Node.js
         uses: actions/setup-node@v6
