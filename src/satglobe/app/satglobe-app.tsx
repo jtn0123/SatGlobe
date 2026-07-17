@@ -14,6 +14,7 @@ import { starlinkBuildoutStory } from '../stories/starlink-buildout';
 import { DiscoverPanel, getQuickLensState, type QuickLens } from './discover-panel';
 import { Icon } from './icon';
 import { Inspector } from './inspector';
+import { KeyboardLegend } from './keyboard-legend';
 import { ageInDays } from './labels';
 import { PresentationTitle } from './presentation-title';
 import { ScaleDisclosure } from './scale-disclosure';
@@ -38,6 +39,7 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
   const [savedViews, setSavedViews] = useState<SavedViewV1[]>([]);
   const [notice, setNotice] = useState('');
   const [webglMissing, setWebglMissing] = useState(false);
+  const [showShortcuts, setShowShortcuts] = useState(false);
   const story = starlinkBuildoutStory;
 
   useEffect(() => adapter.subscribe(setEngine), [adapter]);
@@ -94,17 +96,34 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
       if (event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement) {
         return;
       }
-      if (event.key === 'f') {
+      /*
+       * The shell owns these keys. stopPropagation keeps KeepTrack's own
+       * global input manager from double-handling them (C6); the handled
+       * flag also gates preventDefault for keys with browser defaults.
+       */
+      let handled = true;
+
+      if (event.key === '/') {
+        document.querySelector<HTMLInputElement>('[data-testid="catalog-search"]')?.focus();
+      } else if (event.key === '?') {
+        setShowShortcuts((show) => !show);
+      } else if (event.key === 'f') {
         switchMode(mode === 'presentation' ? 'workshop' : 'presentation');
       } else if (event.key === 'Escape') {
+        setShowShortcuts(false);
         switchMode('workshop');
       } else if (mode === 'story' && event.key === 'ArrowRight') {
         applyBeat(playback.beatIndex + 1);
       } else if (mode === 'story' && event.key === 'ArrowLeft') {
         applyBeat(playback.beatIndex - 1);
       } else if (mode === 'story' && event.key === ' ') {
-        event.preventDefault();
         dispatch({ type: 'togglePlaying' });
+      } else {
+        handled = false;
+      }
+      if (handled) {
+        event.preventDefault();
+        event.stopPropagation();
       }
     };
 
@@ -216,6 +235,7 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
 
       {mode === 'story' && <StoryDeck beatIndex={playback.beatIndex} onAuthoredView={() => adapter.setCamera(beat.camera)} onBeatChange={applyBeat} onOpenWorkshop={openWorkshop} onPlayingChange={togglePlaying} onSourcesChange={toggleSources} playing={playback.playing} progress={playback.progress} showSources={playback.showSources} story={story} />}
 
+      {showShortcuts && <KeyboardLegend onClose={() => setShowShortcuts(false)} />}
       {notice && <button aria-live="polite" className="sg-notice" onClick={() => setNotice('')} role="status" type="button">{notice}<Icon name="close" size={14} /></button>}
       {(webglMissing || engine.error) && (
         <div className="sg-engine-loading sg-engine-error" data-testid="engine-error" role="alert">
