@@ -303,9 +303,36 @@
   "overrides": [
     {
       "files": [
-        "**/src/**/*.{js,ts}"
+        "**/src/**/*.{js,ts,tsx}"
       ],
       "extends": "./.eslintrc.src.json"
+    },
+    {
+      // ADR 0001 engine boundary: only src/satglobe/engine may import KeepTrack or
+      // OOTK internals. Everything else under src/satglobe stays engine-agnostic.
+      "files": [
+        "**/src/satglobe/**/*.{js,ts,tsx}"
+      ],
+      "excludedFiles": [
+        "**/src/satglobe/engine/**"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@app/*", "@engine/*", "@ootk", "@ootk/*"],
+                "message": "ADR 0001: only src/satglobe/engine may import KeepTrack/OOTK internals. Route engine access through the adapter."
+              },
+              {
+                "group": ["**/keepTrackApi", "**/keepTrackApi.ts"],
+                "message": "ADR 0001: the keepTrackApi facade is off-limits to SatGlobe product code. Use the adapter in src/satglobe/engine."
+              }
+            ]
+          }
+        ]
+      }
     },
     {
       "files": [

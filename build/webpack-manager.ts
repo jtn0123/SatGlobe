@@ -70,6 +70,17 @@ export class WebpackManager {
         ...baseConfig,
         ...{
           devtool: 'hidden-source-map',
+          /*
+           * ADR 0002 bundle budget: fail the production build if any JS asset or
+           * entrypoint grows past the limit (baseline: main.js 7.42 MiB at v13.4.0).
+           * Non-JS assets (textures, fonts, icons) are budgeted separately, not here.
+           */
+          performance: {
+            hints: 'error' as const,
+            assetFilter: (assetFilename: string) => assetFilename.endsWith('.js'),
+            maxAssetSize: 8 * 1024 * 1024,
+            maxEntrypointSize: 8 * 1024 * 1024,
+          },
           optimization: {
             minimizer: [
               new SwcJsMinimizerRspackPlugin({
@@ -97,6 +108,8 @@ export class WebpackManager {
     if (process.env.COVERAGE === '1') {
       baseConfig.devtool = 'inline-source-map';
       baseConfig.optimization = { ...baseConfig.optimization, minimize: false };
+      // Unminified coverage output would trip the ADR 0002 budget; it is not a shipped artifact.
+      baseConfig.performance = false;
     }
 
     // split entry points of main and webworkers
@@ -218,7 +231,6 @@ export class WebpackManager {
           },
         ],
       },
-      ignoreWarnings: [/asset size limit/u, /combined asset size exceeds the recommended limit/u],
       stats: 'errors-warnings',
       plugins: [],
     };

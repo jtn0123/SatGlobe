@@ -38,7 +38,15 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: process.env.SATGLOBE_E2E ? 'npm run start:satglobe' : 'npm run start:ci',
+    /*
+     * In CI the satglobe journey serves a prebuilt production bundle statically
+     * (the workflow builds first). start:satglobe's watch build reports the port
+     * ready before the first cold build finishes, so tests race an empty dist —
+     * always on a fresh runner, reproducibly locally after a clean checkout.
+     */
+    command: process.env.SATGLOBE_E2E
+      ? (process.env.CI ? 'npm run start:satglobe:static' : 'npm run start:satglobe')
+      : 'npm run start:ci',
     url: 'http://localhost:5544',
     reuseExistingServer: !process.env.CI,
     timeout: 30_000,

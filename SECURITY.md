@@ -1,27 +1,24 @@
 # Security Policy
 
-## Reporting Security Vulnerabilities
+SatGlobe is a local-first fork of KeepTrack. The browser runtime is designed to make no external network requests, load only the bundled catalog, and run without accounts — most classic web attack surface is intentionally absent, and the offline contract is enforced by configuration, CSP, and an end-to-end test.
 
-We take the security of our project seriously. If you believe you've found a security vulnerability in our project, we encourage you to let us know right away. We will investigate
-all legitimate reports and do our best to quickly fix the problem.
+## Reporting a vulnerability
 
-### Guidelines for Reporting
+Please do not report security vulnerabilities through public GitHub issues.
 
-1. **Private Disclosure**: Please do not report security vulnerabilities through public GitHub issues. Instead, contact [admin@keeptrack.space](mailto:admin@keeptrack.space).
+- **Preferred**: use GitHub's private vulnerability reporting on this repository — [Security → Report a vulnerability](https://github.com/jtn0123/SatGlobe/security/advisories/new).
+- Include steps to reproduce, the potential impact, and any known mitigations.
 
-2. **Provide Details**: Please provide as much detail as possible, including:
-   - Steps to reproduce the vulnerability.
-   - Potential impact if exploited.
-   - Any potential solutions or mitigations, if known.
+If the issue lives in the inherited KeepTrack engine (anything outside `src/satglobe`, `configs/satglobe`, and `scripts/satglobe`), please also report it upstream to the KeepTrack maintainers at [admin@keeptrack.space](mailto:admin@keeptrack.space) so the fix can land at the source.
 
-3. **Stay Updated**: After reporting, please monitor your email for any additional questions or updates on the resolution.
+## What to expect
 
-### Our Commitment
+1. Acknowledgement of your report.
+2. An investigation and severity assessment.
+3. A fix or documented mitigation, and credit if you'd like it.
 
-1. **Confirmation**: We will acknowledge receipt of your vulnerability report.
+## Scope notes
 
-2. **Investigation**: We will investigate the report and determine the risk associated with the reported vulnerability.
-
-3. **Notification**: We will provide an estimated time for the vulnerability fix and notify you when the issue is resolved.
-
-We appreciate responsible disclosure and will acknowledge your contribution once the vulnerability is confirmed and resolved.
+- The catalog refresh pipeline (`scripts/satglobe/catalog-refresh.ts`) runs only as a manual local Node command, never in the browser.
+- Saved-view JSON import is schema-validated (`.strict()` zod schemas); reports of validation bypasses are very welcome.
+- The Docker image serves static files through nginx with the CSP in `configs/satglobe/nginx.conf`.
