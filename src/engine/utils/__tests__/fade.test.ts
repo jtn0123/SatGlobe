@@ -172,7 +172,7 @@ describe('fadeOut_function', () => {
   });
 
   // Skip if the element is not visible
-  it.skip('test_element_not_visible', () => {
+  it('test_element_not_visible', () => {
     const el = document.createElement('div');
 
     el.style.display = 'none';

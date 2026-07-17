@@ -8,7 +8,6 @@ import * as Ootk from '@ootk/src/main';
 import { DetailedSensor } from '@app/app/sensors/DetailedSensor';
 import { TemeVec3, SatelliteRecord, Sgp4 } from '@ootk/src/main';
 import { defaultSat, defaultSensor } from '@test/environment/apiMocks';
-import { disableConsoleErrors, enableConsoleErrors } from '@test/environment/standard-env';
 
 describe('altitudeCheck_method', () => {
   // Tests that valid input TLE strings and date return a valid altitude value.
@@ -56,14 +55,10 @@ describe('altitudeCheck_method', () => {
 describe('getAngleBetweenTwoSatellites_method', () => {
   // Tests that the method returns the correct azimuth and elevation for two valid satellite objects with position and velocity defined
   it('test_valid_satellites', () => {
-    const sat1 = {
-      position: { x: -1000, y: -1000, z: -1000 },
-      velocity: { x: -7, y: 0, z: 0 },
-    } as Ootk.Satellite;
-    const sat2 = {
-      position: { x: 1000, y: 1000, z: 1000 },
-      velocity: { x: 7, y: 0, z: 0 },
-    } as Ootk.Satellite;
+    const sat1 = {position: { x: -1000, y: -1000, z: -1000 },
+      velocity: { x: -7, y: 0, z: 0 } } as Ootk.Satellite;
+    const sat2 = {position: { x: 1000, y: 1000, z: 1000 },
+      velocity: { x: 7, y: 0, z: 0 } } as Ootk.Satellite;
     const result = SatMath.getAngleBetweenTwoSatellites(sat1, sat2);
 
     expect(result.az).toBeCloseTo(90.0);
@@ -72,14 +67,10 @@ describe('getAngleBetweenTwoSatellites_method', () => {
 
   // Tests that the method returns 0 for azimuth and elevation for two identical satellite objects
   it('test_identical_satellites', () => {
-    const sat1 = {
-      position: { x: 0, y: 0, z: 0 },
-      velocity: { x: 0, y: 0, z: 0 },
-    } as Ootk.Satellite;
-    const sat2 = {
-      position: { x: 0, y: 0, z: 0 },
-      velocity: { x: 0, y: 0, z: 0 },
-    } as Ootk.Satellite;
+    const sat1 = {position: { x: 0, y: 0, z: 0 },
+      velocity: { x: 0, y: 0, z: 0 } } as Ootk.Satellite;
+    const sat2 = {position: { x: 0, y: 0, z: 0 },
+      velocity: { x: 0, y: 0, z: 0 } } as Ootk.Satellite;
     const result = SatMath.getAngleBetweenTwoSatellites(sat1, sat2);
 
     expect(result.az).toBeCloseTo(0.0);
@@ -88,14 +79,10 @@ describe('getAngleBetweenTwoSatellites_method', () => {
 
   // Tests that the method returns the correct azimuth and elevation for two satellite objects with same position but different velocities
   it('test_same_position_different_velocity', () => {
-    const sat1 = {
-      position: { x: 0, y: 0, z: 0 },
-      velocity: { x: 0, y: 0, z: 0 },
-    } as Ootk.Satellite;
-    const sat2 = {
-      position: { x: 0, y: 0, z: 0 },
-      velocity: { x: 1000, y: 1000, z: 1000 },
-    } as Ootk.Satellite;
+    const sat1 = {position: { x: 0, y: 0, z: 0 },
+      velocity: { x: 0, y: 0, z: 0 } } as Ootk.Satellite;
+    const sat2 = {position: { x: 0, y: 0, z: 0 },
+      velocity: { x: 1000, y: 1000, z: 1000 } } as Ootk.Satellite;
     const result = SatMath.getAngleBetweenTwoSatellites(sat1, sat2);
 
     expect(result.az).toBeCloseTo(0);
@@ -104,14 +91,10 @@ describe('getAngleBetweenTwoSatellites_method', () => {
 
   // Tests that the method returns the correct azimuth and elevation for two satellite objects with same velocity but different positions
   it('test_same_velocity_different_position', () => {
-    const sat1 = {
-      position: { x: -100, y: 2000, z: 5000 },
-      velocity: { x: 20, y: 20, z: 20 },
-    } as Ootk.Satellite;
-    const sat2 = {
-      position: { x: 1000, y: 1000, z: 1000 },
-      velocity: { x: 10, y: 10, z: 10 },
-    } as Ootk.Satellite;
+    const sat1 = {position: { x: -100, y: 2000, z: 5000 },
+      velocity: { x: 20, y: 20, z: 20 } } as Ootk.Satellite;
+    const sat2 = {position: { x: 1000, y: 1000, z: 1000 },
+      velocity: { x: 10, y: 10, z: 10 } } as Ootk.Satellite;
     const result = SatMath.getAngleBetweenTwoSatellites(sat1, sat2);
 
     expect(result.az).toBeCloseTo(120.465, 2);
@@ -120,85 +103,13 @@ describe('getAngleBetweenTwoSatellites_method', () => {
 
   // Tests that the method throws an error when one of the satellite objects has undefined velocity
   it('test_undefined_velocity', () => {
-    const sat1 = {
-      position: { x: 0, y: 0, z: 0 },
-      velocity: { x: 0, y: 0, z: 0 },
-    } as Ootk.Satellite;
-    const sat2 = {
-      position: { x: 1000, y: 1000, z: 1000 },
-    } as Ootk.Satellite;
+    const sat1 = {position: { x: 0, y: 0, z: 0 },
+      velocity: { x: 0, y: 0, z: 0 } } as Ootk.Satellite;
+    const sat2 = {position: { x: 1000, y: 1000, z: 1000 } } as Ootk.Satellite;
 
     expect(() => {
       SatMath.getAngleBetweenTwoSatellites(sat1, sat2);
     }).toThrow('Sat2 velocity is undefined');
-  });
-});
-
-describe('getDirection_method', () => {
-  // Tests that the method returns 'N' if the latitude of the satellite is increasing
-  it.skip('test_north_direction', () => {
-    // TODO: Generate a satellite/time pair that is North
-    const sat = null as unknown as Ootk.Satellite;
-    const simulationTime = new Date();
-    const direction = SatMath.getDirection(sat, simulationTime);
-
-    expect(direction).toBe('N');
-  });
-
-  // Tests that the method returns 'S' if the latitude of the satellite is decreasing
-  it.skip('test_south_direction', () => {
-    // TODO: Generate a satellite/time pair that is South
-    const sat = null as unknown as Ootk.Satellite;
-    const simulationTime = new Date();
-    const direction = SatMath.getDirection(sat, simulationTime);
-
-    expect(direction).toBe('S');
-  });
-
-  // Tests that the method returns 'Error' if the latitude of the satellite is the same in the current and future positions
-  it.skip('test_same_latitude', () => {
-    // TODO: Generate a satellite/time pair that isn't moving
-    const sat = null as unknown as Ootk.Satellite;
-    const simulationTime = new Date();
-
-    disableConsoleErrors();
-    const direction = SatMath.getDirection(sat, simulationTime);
-
-    enableConsoleErrors();
-    expect(direction).toBe('Error');
-  });
-
-  // Tests that the method returns 'Error' if there is an error in the calculation
-  it.skip('test_error', () => {
-    // TODO: Generate a satellite/time pair that causes an error
-    const sat = null as unknown as Ootk.Satellite;
-    const simulationTime = new Date();
-
-    disableConsoleErrors();
-    const direction = SatMath.getDirection(sat, simulationTime);
-
-    enableConsoleErrors();
-    expect(direction).toBe('Error');
-  });
-
-  // Tests that the method handles cases where the satellite is at the North pole
-  it.skip('test_north_pole', () => {
-    // TODO: Generate a satellite/time pair that is very close to North Pole
-    const sat = null as unknown as Ootk.Satellite;
-    const simulationTime = new Date();
-    const direction = SatMath.getDirection(sat, simulationTime);
-
-    expect(direction).toBe('N');
-  });
-
-  // Tests that the method handles cases where the satellite is at the South pole
-  it.skip('test_south_pole', () => {
-    // TODO: Generate a satellite/time pair that is very close to South Pole
-    const sat = null as unknown as Ootk.Satellite;
-    const simulationTime = new Date();
-    const direction = SatMath.getDirection(sat, simulationTime);
-
-    expect(direction).toBe('S');
   });
 });
 
@@ -330,13 +241,9 @@ describe('getLlaOfCurrentOrbit_method', () => {
 
 describe('getRicOfCurrentOrbit_method', () => {
   const sat = defaultSat.clone();
-  const sat2 = new Ootk.Satellite({
-    ...defaultSat,
-    ...{
-      tle1: '1 25544U 98067A   21203.40407588  .00003453  00000-0  71172-4 0  9991' as Ootk.TleLine1,
-      tle2: '2 25544  51.6423 168.5744 0001475 184.3976 304.3642 15.48839820294053' as Ootk.TleLine2,
-    },
-  });
+  const sat2 = new Ootk.Satellite({...defaultSat,
+    ...{tle1: '1 25544U 98067A   21203.40407588  .00003453  00000-0  71172-4 0  9991' as Ootk.TleLine1,
+      tle2: '2 25544  51.6423 168.5744 0001475 184.3976 304.3642 15.48839820294053' as Ootk.TleLine2 } });
 
   sat2.satrec = Sgp4.createSatrec(sat2.tle1, sat2.tle2);
 
@@ -370,13 +277,9 @@ describe('getRicOfCurrentOrbit_method', () => {
   // Tests that the methods handles bad eci calculations
   it('test_bad_eci_calculation', () => {
     const points = 10;
-    const sat = new Ootk.Satellite({
-      ...defaultSat,
-      ...{
-        tle1: '1 25544U 98067A   21268.51782528  .00002182  00000-0  50870-4 0  9993' as Ootk.TleLine1,
-        tle2: '2 25544  51.6443  98.5701 0001669  95.6847 264.4655 14.48978703297420' as Ootk.TleLine2,
-      },
-    });
+    const sat = new Ootk.Satellite({...defaultSat,
+      ...{tle1: '1 25544U 98067A   21268.51782528  .00002182  00000-0  50870-4 0  9993' as Ootk.TleLine1,
+        tle2: '2 25544  51.6443  98.5701 0001669  95.6847 264.4655 14.48978703297420' as Ootk.TleLine2 } });
 
     expect(() => SatMath.getRicOfCurrentOrbit(sat, sat2, points, () => new Date(2023, 1, 1), 1)).not.toThrow();
     expect(() => SatMath.getRicOfCurrentOrbit(sat2, sat, points, () => new Date(2023, 1, 1), 1)).not.toThrow();
@@ -511,16 +414,12 @@ describe('calculateIsInSun_method', () => {
   it('test_happy_path_1', () => {
     const sat = defaultSat.clone();
 
-    sat.position = {
-      x: 10000 as Ootk.Kilometers,
+    sat.position = {x: 10000 as Ootk.Kilometers,
       y: 10000 as Ootk.Kilometers,
-      z: 10000 as Ootk.Kilometers,
-    };
-    const sunECI = {
-      x: DISTANCE_TO_SUN,
+      z: 10000 as Ootk.Kilometers };
+    const sunECI = {x: DISTANCE_TO_SUN,
       y: DISTANCE_TO_SUN,
-      z: DISTANCE_TO_SUN,
-    } as TemeVec3;
+      z: DISTANCE_TO_SUN } as TemeVec3;
 
     expect(SatMath.calculateIsInSun(sat, sunECI)).toBe(SunStatus.SUN);
   });
@@ -529,16 +428,12 @@ describe('calculateIsInSun_method', () => {
   it('test_happy_path_2', () => {
     const sat = defaultSat.clone();
 
-    sat.position = {
-      x: -10000 as Ootk.Kilometers,
+    sat.position = {x: -10000 as Ootk.Kilometers,
       y: -10000 as Ootk.Kilometers,
-      z: -10000 as Ootk.Kilometers,
-    };
-    const sunECI = {
-      x: DISTANCE_TO_SUN,
+      z: -10000 as Ootk.Kilometers };
+    const sunECI = {x: DISTANCE_TO_SUN,
       y: DISTANCE_TO_SUN,
-      z: DISTANCE_TO_SUN,
-    } as TemeVec3;
+      z: DISTANCE_TO_SUN } as TemeVec3;
 
     expect(SatMath.calculateIsInSun(sat, sunECI)).toBe(SunStatus.UMBRAL);
   });
@@ -547,16 +442,12 @@ describe('calculateIsInSun_method', () => {
   it('test_happy_path_3', () => {
     const sat = defaultSat.clone();
 
-    sat.position = {
-      x: (-RADIUS_OF_EARTH - 7800) as Ootk.Kilometers,
+    sat.position = {x: (-RADIUS_OF_EARTH - 7800) as Ootk.Kilometers,
       y: -RADIUS_OF_EARTH as Ootk.Kilometers,
-      z: -RADIUS_OF_EARTH as Ootk.Kilometers,
-    };
-    const sunECI = {
-      x: DISTANCE_TO_SUN,
+      z: -RADIUS_OF_EARTH as Ootk.Kilometers };
+    const sunECI = {x: DISTANCE_TO_SUN,
       y: DISTANCE_TO_SUN,
-      z: DISTANCE_TO_SUN,
-    } as TemeVec3;
+      z: DISTANCE_TO_SUN } as TemeVec3;
 
     expect(SatMath.calculateIsInSun(sat, sunECI)).toBe(SunStatus.PENUMBRAL);
   });
@@ -564,11 +455,9 @@ describe('calculateIsInSun_method', () => {
   // Tests that SunStatus.UNKNOWN is returned when Ootk.Satellite has an undefined position
   it('test_edge_case_1', () => {
     const sat = null as unknown as Ootk.Satellite;
-    const sunECI = {
-      x: DISTANCE_TO_SUN,
+    const sunECI = {x: DISTANCE_TO_SUN,
       y: DISTANCE_TO_SUN,
-      z: DISTANCE_TO_SUN,
-    } as TemeVec3;
+      z: DISTANCE_TO_SUN } as TemeVec3;
 
     expect(SatMath.calculateIsInSun(sat, sunECI)).toBe(SunStatus.UNKNOWN);
   });
@@ -577,11 +466,9 @@ describe('calculateIsInSun_method', () => {
   it('test_edge_case_2', () => {
     const sat = defaultSat.clone();
 
-    sat.position = {
-      x: -1000 as Ootk.Kilometers,
+    sat.position = {x: -1000 as Ootk.Kilometers,
       y: -1000 as Ootk.Kilometers,
-      z: -1000 as Ootk.Kilometers,
-    };
+      z: -1000 as Ootk.Kilometers };
     expect(SatMath.calculateIsInSun(sat, null as unknown as TemeVec3)).toBe(SunStatus.UNKNOWN);
   });
 });
@@ -605,21 +492,17 @@ describe('calculateVisMag_method', () => {
   it('test_valid_satellite_and_sensor', () => {
     const sat = defaultSat.clone();
 
-    sat.position = {
-      x: 15000 as Ootk.Kilometers,
+    sat.position = {x: 15000 as Ootk.Kilometers,
       y: 10000 as Ootk.Kilometers,
-      z: 15000 as Ootk.Kilometers,
-    };
+      z: 15000 as Ootk.Kilometers };
     sat.vmag = 5;
     const sensor = defaultSensor;
     const propTime = new Date();
     const sun = new Sun();
 
-    sun.eci = {
-      x: DISTANCE_TO_SUN,
+    sun.eci = {x: DISTANCE_TO_SUN,
       y: DISTANCE_TO_SUN,
-      z: DISTANCE_TO_SUN,
-    } as TemeVec3;
+      z: DISTANCE_TO_SUN } as TemeVec3;
     const visMag = SatMath.calculateVisMag(sat, sensor, propTime, sun);
 
     expect(visMag).toBeGreaterThan(0);
@@ -629,21 +512,17 @@ describe('calculateVisMag_method', () => {
   it('test_satellite_eclipsing_sun', () => {
     const sat = defaultSat.clone();
 
-    sat.position = {
-      x: 15000 as Ootk.Kilometers,
+    sat.position = {x: 15000 as Ootk.Kilometers,
       y: 15000 as Ootk.Kilometers,
-      z: 15000 as Ootk.Kilometers,
-    };
+      z: 15000 as Ootk.Kilometers };
     sat.vmag = 5;
     const sensor = defaultSensor;
     const propTime = new Date();
     const sun = new Sun();
 
-    sun.eci = {
-      x: DISTANCE_TO_SUN,
+    sun.eci = {x: DISTANCE_TO_SUN,
       y: DISTANCE_TO_SUN,
-      z: DISTANCE_TO_SUN,
-    } as TemeVec3;
+      z: DISTANCE_TO_SUN } as TemeVec3;
     const visMag = SatMath.calculateVisMag(sat, sensor, propTime, sun);
 
     expect(visMag).toBe(30);
@@ -653,21 +532,17 @@ describe('calculateVisMag_method', () => {
   it('test_satellite_with_vmag_property', () => {
     const sat = defaultSat.clone();
 
-    sat.position = {
-      x: 7000 as Ootk.Kilometers,
+    sat.position = {x: 7000 as Ootk.Kilometers,
       y: 10000 as Ootk.Kilometers,
-      z: 7000 as Ootk.Kilometers,
-    };
+      z: 7000 as Ootk.Kilometers };
     sat.vmag = -25;
     const sensor = defaultSensor;
     const propTime = new Date();
     const sun = new Sun();
 
-    sun.eci = {
-      x: DISTANCE_TO_SUN,
+    sun.eci = {x: DISTANCE_TO_SUN,
       y: DISTANCE_TO_SUN,
-      z: DISTANCE_TO_SUN,
-    } as TemeVec3;
+      z: DISTANCE_TO_SUN } as TemeVec3;
     const visMag = SatMath.calculateVisMag(sat, sensor, propTime, sun);
 
     expect(visMag).toBeLessThan(0);
@@ -677,20 +552,16 @@ describe('calculateVisMag_method', () => {
   it('test_satellite_without_vmag_property', () => {
     const sat = defaultSat.clone();
 
-    sat.position = {
-      x: 7000 as Ootk.Kilometers,
+    sat.position = {x: 7000 as Ootk.Kilometers,
       y: 10000 as Ootk.Kilometers,
-      z: 7000 as Ootk.Kilometers,
-    };
+      z: 7000 as Ootk.Kilometers };
     const sensor = defaultSensor;
     const propTime = new Date();
     const sun = new Sun();
 
-    sun.eci = {
-      x: DISTANCE_TO_SUN,
+    sun.eci = {x: DISTANCE_TO_SUN,
       y: DISTANCE_TO_SUN,
-      z: DISTANCE_TO_SUN,
-    } as TemeVec3;
+      z: DISTANCE_TO_SUN } as TemeVec3;
     const visMag = SatMath.calculateVisMag(sat, sensor, propTime, sun);
 
     expect(visMag).toBeGreaterThan(0);

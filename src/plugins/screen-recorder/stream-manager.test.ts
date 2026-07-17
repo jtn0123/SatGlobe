@@ -69,7 +69,7 @@ describe('StreamManager', () => {
     });
   });
 
-  describe.skip('handleError', () => {
+  describe('handleError', () => {
     it('should warn about permission denied', () => {
       const error = new Error('Permission denied');
 
@@ -96,7 +96,7 @@ describe('StreamManager', () => {
       expect(onErrorMock).toHaveBeenCalled();
     });
 
-    it.skip('should call getDisplayMedia if available on navigator', async () => {
+    it('should call getDisplayMedia if available on navigator', async () => {
       const mockGetDisplayMedia = vi.fn().mockResolvedValue(mockStream);
 
       (global.navigator as any).getDisplayMedia = mockGetDisplayMedia;
@@ -105,7 +105,7 @@ describe('StreamManager', () => {
       expect(mockGetDisplayMedia).toHaveBeenCalled();
     });
 
-    it.skip('should call getDisplayMedia on mediaDevices if available', async () => {
+    it('should call getDisplayMedia on mediaDevices if available', async () => {
       const mockGetDisplayMedia = vi.fn().mockResolvedValue(mockStream);
 
       (global.navigator as any).mediaDevices = { getDisplayMedia: mockGetDisplayMedia };
@@ -160,7 +160,7 @@ describe('StreamManager', () => {
     });
   });
 
-  describe.skip('save', () => {
+  describe('save', () => {
     it('should not save if no mediaRecorder', () => {
       streamManager.save('test.webm');
       expect(document.createElement).not.toHaveBeenCalled();
