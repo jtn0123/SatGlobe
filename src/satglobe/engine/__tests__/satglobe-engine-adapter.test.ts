@@ -10,27 +10,49 @@ import { SatGlobeEngineAdapter } from '../satglobe-engine-adapter';
  * precomputed search text, selection routing, and diff-emit semantics.
  */
 
-const busHandlers = new Map<string, Set<(...args: unknown[]) => void>>();
-const fakeBus = {
-  on: vi.fn((event: string, handler: (...args: unknown[]) => void) => {
-    if (!busHandlers.has(event)) {
-      busHandlers.set(event, new Set());
-    }
-    busHandlers.get(event)!.add(handler);
-  }),
-  unregister: vi.fn((event: string, handler: (...args: unknown[]) => void) => {
-    busHandlers.get(event)?.delete(handler);
-  }),
-  emit: (event: string, ...args: unknown[]) => {
-    busHandlers.get(event)?.forEach((handler) => handler(...args));
-  },
-};
+interface FakeServices {
+  catalog: { objectCache: unknown[]; getSats: () => unknown[] };
+  time: { simulationTimeObj: Date; changeStaticOffset: ReturnType<typeof vi.fn>; setSelectedDate: ReturnType<typeof vi.fn>; changePropRate: ReturnType<typeof vi.fn> };
+  camera: { state: { camPitchTarget: number; camYawTarget: number; zoomTarget: number }; satShaderSizes: { minSize: number | null; maxSize: number | null } };
+  colorSchemes: { registerScheme: ReturnType<typeof vi.fn>; setColorScheme: ReturnType<typeof vi.fn> };
+  orbits: { addInViewOrbit: ReturnType<typeof vi.fn>; clearInViewOrbit: ReturnType<typeof vi.fn> };
+}
+
+/*
+ * vi.mock factories are hoisted above module-level consts, so any state they
+ * close over must come from vi.hoisted() — a plain const hits the temporal
+ * dead zone whenever a mocked module is imported before this file's body runs
+ * (order-dependent: it passed in PR CI and failed on main).
+ */
+const { busHandlers, fakeBus, selectSat, warn, log, services } = vi.hoisted(() => {
+  const handlers = new Map<string, Set<(...args: unknown[]) => void>>();
+
+  return {
+    busHandlers: handlers,
+    fakeBus: {
+      on: (event: string, handler: (...args: unknown[]) => void) => {
+        if (!handlers.has(event)) {
+          handlers.set(event, new Set());
+        }
+        handlers.get(event)!.add(handler);
+      },
+      unregister: (event: string, handler: (...args: unknown[]) => void) => {
+        handlers.get(event)?.delete(handler);
+      },
+      emit: (event: string, ...args: unknown[]) => {
+        handlers.get(event)?.forEach((handler) => handler(...args));
+      },
+    },
+    selectSat: vi.fn(),
+    warn: vi.fn(),
+    log: vi.fn(),
+    services: {} as FakeServices,
+  };
+});
 
 vi.mock('@app/engine/events/event-bus', () => ({
   EventBus: { getInstance: () => fakeBus },
 }));
-
-const selectSat = vi.fn();
 
 vi.mock('@app/engine/core/plugin-registry', () => ({
   PluginRegistry: { getPlugin: () => ({ selectSat }) },
@@ -40,25 +62,12 @@ vi.mock('@app/plugins/select-sat-manager/select-sat-manager', () => ({
   SelectSatManager: class SelectSatManager {},
 }));
 
-const warn = vi.fn();
-const log = vi.fn();
-
 vi.mock('@app/engine/utils/errorManager', () => ({
   errorManagerInstance: {
     warn: (...args: unknown[]) => warn(...args),
     log: (...args: unknown[]) => log(...args),
   },
 }));
-
-interface FakeServices {
-  catalog: { objectCache: unknown[]; getSats: () => unknown[] };
-  time: { simulationTimeObj: Date; changeStaticOffset: ReturnType<typeof vi.fn>; setSelectedDate: ReturnType<typeof vi.fn>; changePropRate: ReturnType<typeof vi.fn> };
-  camera: { state: { camPitchTarget: number; camYawTarget: number; zoomTarget: number }; satShaderSizes: { minSize: number | null; maxSize: number | null } };
-  colorSchemes: { registerScheme: ReturnType<typeof vi.fn>; setColorScheme: ReturnType<typeof vi.fn> };
-  orbits: { addInViewOrbit: ReturnType<typeof vi.fn>; clearInViewOrbit: ReturnType<typeof vi.fn> };
-}
-
-const services: FakeServices = {} as FakeServices;
 
 vi.mock('@app/engine/core/service-locator', () => ({
   ServiceLocator: {
