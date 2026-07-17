@@ -125,6 +125,8 @@ describe('OrbitGuardMenuPlugin behavior', () => {
   it('parseManeuverData_ fetches, populates and renders the table', async () => {
     const list = manyEvents(2);
 
+    // The endpoint ships empty (no committed credential); configure one for the fetch path.
+    p().maneuverDataSrc = 'https://orbitguard.example.test/orbitguard';
     vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve(list) })));
 
     p().parseManeuverData_();
@@ -134,11 +136,20 @@ describe('OrbitGuardMenuPlugin behavior', () => {
   });
 
   it('parseManeuverData_ warns on a non-ok response', async () => {
+    p().maneuverDataSrc = 'https://orbitguard.example.test/orbitguard';
     vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({ ok: false, status: 500, json: () => Promise.resolve([]) })));
 
     p().parseManeuverData_();
 
     // Should not throw; the catch handler logs a warning.
     await vi.waitFor(() => expect((globalThis.fetch as ReturnType<typeof vi.fn>)).toHaveBeenCalled());
+  });
+
+  it('parseManeuverData_ makes no network call when no endpoint is configured', () => {
+    vi.stubGlobal('fetch', vi.fn());
+
+    p().parseManeuverData_();
+
+    expect(globalThis.fetch).not.toHaveBeenCalled();
   });
 });
