@@ -8,6 +8,7 @@ import {
   epochFromCatalog,
   loadSource,
   ommToCatalogRow,
+  parseArgs,
   summarizeRejections,
   type OmmRow,
 } from './catalog-refresh';
@@ -84,5 +85,30 @@ describe('SatGlobe catalog refresh', () => {
 
     temporaryDirectories.push(directory);
     await expect(loadSource(undefined, 'https://example.test/active.csv', cacheFile, fetchSource)).rejects.toThrow('Data is updated once every 2 hours.');
+  });
+
+  it('retries once when the provider request fails outright', async () => {
+    // The retry delay uses a real setTimeout; the suite's fake clock would park it forever.
+    vi.useRealTimers();
+    try {
+      const directory = await mkdtemp(path.join(tmpdir(), 'satglobe-catalog-'));
+      const cacheFile = path.join(directory, 'active.csv');
+      const fetchSource = vi.fn()
+        .mockRejectedValueOnce(new Error('socket hang up'))
+        .mockResolvedValueOnce(new Response('fresh after retry', { status: 200 }));
+
+      temporaryDirectories.push(directory);
+      await expect(loadSource(undefined, 'https://example.test/active.csv', cacheFile, fetchSource)).resolves.toBe('fresh after retry');
+      expect(fetchSource).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useFakeTimers();
+    }
+  });
+
+  it('rejects unknown CLI flags instead of silently ignoring them', () => {
+    expect(() => parseArgs(['--verify-onIy'])).toThrow(/Unknown argument: --verify-onIy/u);
+    expect(() => parseArgs(['--output'])).toThrow(/Missing value for --output/u);
+    expect(parseArgs(['--verify-only']).verifyOnly).toBe(true);
+    expect(parseArgs(['--output', 'out.json', '--active-input', 'a.csv']).activeInput).toBe('a.csv');
   });
 });
