@@ -261,9 +261,15 @@ export class CatalogLoader {
         // The offline edition starts this fetch at module evaluation (main.ts)
         // so it overlaps engine init; fall back to a fresh fetch if it failed.
         // Both use the page-relative URL: offline builds serve from their own root.
+        // The measure now captures residual wait on the prefetch, not raw fetch time.
+        performance.mark('catalog:fetch-start');
         await (window.satGlobeCatalogPrefetch ?? Promise.reject(new Error('no prefetch')))
           .catch(() => fetch('./tle/tle.json').then((response) => response.json()))
-          .then((data) => data as KeepTrackTLEFile[])
+          .then((data) => {
+            performance.measure('catalog:fetch+decode', 'catalog:fetch-start');
+
+            return data as KeepTrackTLEFile[];
+          })
           .then((data) => CatalogLoader.parse({
             keepTrackTle: data,
             keepTrackExtra: extraSats,
@@ -355,7 +361,9 @@ export class CatalogLoader {
        * Filter TLEs
        * Sets catalogManagerInstance.satData internally to reduce memory usage
        */
+      performance.mark('catalog:build-start');
       CatalogLoader.filterTLEDatabase(resp, extraSats, asciiCatalog, jsCatalog);
+      performance.measure('catalog:build', 'catalog:build-start');
 
       const catalogManagerInstance = ServiceLocator.getCatalogManager();
 

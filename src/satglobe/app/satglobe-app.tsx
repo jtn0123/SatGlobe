@@ -185,9 +185,15 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
   const quickLens = useCallback((lens: QuickLens) => {
     const { filters: next, encoding } = getQuickLensState(lens);
 
-    setFilters(next);
+    /*
+     * Discrete clicks apply immediately, like story beats and saved views do.
+     * The 120 ms trailing debounce in useWorkshopFilters exists to coalesce
+     * slider drags; routing lens buttons through it just delays the response.
+     */
+    setFiltersState(next);
+    adapter.setFilters(next);
     adapter.setEncoding(encoding);
-  }, [adapter, setFilters]);
+  }, [adapter, setFiltersState]);
 
   const newestElementAge = ageInDays(engine.newestElementEpoch);
   const openStory = useCallback(() => {
