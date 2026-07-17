@@ -78,8 +78,9 @@ export class SatGlobeEngineAdapter {
     sizes.minSize = 0.25;
     sizes.maxSize = 1;
   };
-  private readonly onSelection_ = (obj: BaseObject) => {
-    this.patchState_({ selectedObject: this.toView_(obj) });
+  private readonly onSelection_ = (obj: BaseObject | null) => {
+    // Clicking empty space emits a null selection (deselect), not an object.
+    this.patchState_({ selectedObject: obj ? this.toView_(obj) : null });
   };
 
   constructor() {

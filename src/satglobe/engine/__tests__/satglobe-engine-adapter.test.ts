@@ -184,6 +184,18 @@ describe('SatGlobeEngineAdapter', () => {
     expect(selectSat).not.toHaveBeenCalled();
   });
 
+  it('treats a null selection event as deselect instead of crashing', () => {
+    adapter = bootAdapter([fakeSat({ id: 7 })]);
+    adapter.selectObject('44714');
+    expect(adapter.getState().selectedObject).not.toBeNull();
+
+    // Clicking empty space makes SelectSatManager emit selectSatData with null.
+    fakeBus.emit(EventBusEvent.selectSatData, null);
+
+    expect(adapter.getState().selectedObject).toBeNull();
+    expect(warn).not.toHaveBeenCalled();
+  });
+
   it('emits nothing while the scene is idle and keeps slice identity on time ticks', () => {
     adapter = bootAdapter([fakeSat()]);
     const listener = vi.fn();
