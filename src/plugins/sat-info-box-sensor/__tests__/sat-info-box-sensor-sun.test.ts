@@ -13,7 +13,7 @@ import { vi } from 'vitest';
 
 describe('SatInfoBoxSensor sun status', () => {
   let plugin: SatInfoBoxSensor;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = () => plugin as any;
 
   const sunEl = () => getEl('sat-sun', true) as HTMLElement | null;

@@ -9,7 +9,7 @@ import { vi } from 'vitest';
 
 describe('NewLaunch (base) bottomIconCallback', () => {
   let plugin: NewLaunch;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = () => plugin as any;
 
   beforeEach(() => {

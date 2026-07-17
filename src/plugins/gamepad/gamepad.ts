@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-/* eslint-disable class-methods-use-this */
+
 import { CameraType } from '@app/engine/camera/camera-type';
 import { ToastMsgType } from '@app/engine/core/interfaces';
 import { PluginRegistry } from '@app/engine/core/plugin-registry';

@@ -119,7 +119,7 @@ const addEventsHeight_ = (edgeEl: HTMLDivElement, el: HTMLElement, callback?: ()
     document.removeEventListener('mouseup', onMouseUp);
 
     if (callback) {
-      // eslint-disable-next-line callback-return
+
       callback();
     }
   };

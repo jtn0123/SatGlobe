@@ -1,4 +1,4 @@
-/* eslint-disable max-lines */
+
 import { SatMath, SunStatus } from '@app/app/analysis/sat-math';
 import { MissileObject } from '@app/app/data/catalog-manager/MissileObject';
 import { OemSatellite } from '@app/app/objects/oem-satellite';
@@ -229,7 +229,7 @@ export class SatInfoBoxSensor extends KeepTrackPlugin {
     }
   }
 
-  // eslint-disable-next-line max-statements, complexity
+  // eslint-disable-next-line complexity
   private updateSelectBox_(obj: BaseObject) {
     if (!KeepTrack.getInstance().isInitialized) {
       return;

@@ -23,7 +23,6 @@ describe('SensorListPlugin', () => {
   standardChangeTests(SensorListPlugin);
 });
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 describe('SensorListPlugin', () => {
   let plugin: SensorListPlugin;

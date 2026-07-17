@@ -523,7 +523,7 @@ export class OrbitManager {
           colorData[id * 4 + 1] <= 0 &&
           colorData[id * 4 + 2] <= 0
         ) {
-          // eslint-disable-next-line no-debugger
+
           // debugger;
           // if (this.isCalculateColorLocked) {
           //   /*

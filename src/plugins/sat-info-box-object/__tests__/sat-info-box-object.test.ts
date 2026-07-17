@@ -22,7 +22,7 @@ describe('SatInfoBoxObject', () => {
 
 describe('SatInfoBoxObject data population', () => {
   let plugin: SatInfoBoxObject;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = () => plugin as any;
 
   beforeEach(() => {

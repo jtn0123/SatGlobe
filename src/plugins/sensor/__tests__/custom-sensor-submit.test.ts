@@ -30,7 +30,7 @@ const VALID = {
  * file only confirms the form is read and routed correctly.
  */
 describe('CustomSensorPlugin.processCustomSensorSubmit_', () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const C = CustomSensorPlugin as any;
   let addSpy: ReturnType<typeof vi.spyOn>;
   let warnSpy: ReturnType<typeof vi.spyOn>;

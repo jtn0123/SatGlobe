@@ -1,4 +1,4 @@
-/* eslint-disable class-methods-use-this */
+
 import { MissileParams } from '@app/engine/core/interfaces';
 import { ServiceLocator } from '@app/engine/core/service-locator';
 import type { ClassicalElements } from '@app/engine/ootk/src/coordinate/ClassicalElements';

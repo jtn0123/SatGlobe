@@ -310,7 +310,7 @@ export class WebGLRenderer {
    * - If the satellite label mode is off or the camera type is not planetarium and there are no satellites in the watchlist in view,
    *   the method clears the satellite mini boxes and returns.
    */
-  // eslint-disable-next-line max-statements
+
   orbitsAbove() {
     const timeManagerInstance = ServiceLocator.getTimeManager();
     const sensorManagerInstance = ServiceLocator.getSensorManager();

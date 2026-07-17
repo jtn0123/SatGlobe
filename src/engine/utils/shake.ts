@@ -15,7 +15,7 @@ export const shake = (el: HTMLElement | HTMLDivElement | null, duration?: number
   setTimeout(() => {
     el.classList.remove('shake');
     if (callback) {
-      // eslint-disable-next-line callback-return
+
       callback();
     }
   }, duration);

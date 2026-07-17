@@ -8,7 +8,7 @@ import { A } from '@app/engine/utils/external/meuusjs';
  * main computational cascades and assert the outputs are finite and in range.
  */
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 const Ax = A as any;
 
 const refDate = new Date(Date.UTC(2022, 5, 21, 12, 0, 0));

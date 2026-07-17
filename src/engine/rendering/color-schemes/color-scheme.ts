@@ -133,7 +133,7 @@ export abstract class ColorScheme {
 
   abstract update(obj: BaseObject, params?: ColorSchemeParams): ColorInformation;
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
   updateGroup(obj: BaseObject, _params?): ColorInformation {
     if (!ServiceLocator.getGroupsManager().selectedGroup?.hasObject(obj.id)) {
       // Hide Everything Else

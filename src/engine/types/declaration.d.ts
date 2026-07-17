@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { SettingsManager } from '@app/settings/settings';
 
 interface HTMLDivElement {

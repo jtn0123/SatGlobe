@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-/* eslint-disable max-lines-per-function */
+
 import { ToastMsgType } from '@app/engine/core/interfaces';
 import { ServiceLocator } from '@app/engine/core/service-locator';
 import { EventBus } from '@app/engine/events/event-bus';

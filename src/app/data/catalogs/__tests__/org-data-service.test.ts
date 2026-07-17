@@ -23,7 +23,7 @@ describe('OrgDataService (before remote load)', () => {
   });
 
   it('does not request organization metadata in offline mode', () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     (window as any).settingsManager = settingsManager;
     settingsManager.offlineMode = true;
     const fetchSpy = vi.spyOn(globalThis, 'fetch');
@@ -40,7 +40,7 @@ describe('OrgDataService (after remote load)', () => {
   it('loads the database and resolves codes from it', async () => {
     // fetchOrgData_ reads window.settingsManager.dataSources.orgs outside its
     // try/catch; the global env setup is async, so wire it up explicitly.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     (window as any).settingsManager = settingsManager;
     settingsManager.dataSources.orgs = 'https://test.local/orgs.json';
 
@@ -55,7 +55,7 @@ describe('OrgDataService (after remote load)', () => {
     } as Response);
 
     orgDataService.init();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     await (orgDataService as any).loadPromise_;
 
     expect(orgDataService.isLoaded).toBe(true);
@@ -68,11 +68,11 @@ describe('OrgDataService (after remote load)', () => {
 
   it('init kicks off a fetch that falls back to bundled data on an HTTP error', async () => {
     // The singleton load-state is global; reset it so init() actually re-fetches here.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, dot-notation
+
     (orgDataService as any).loadPromise_ = null;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, dot-notation
+
     (orgDataService as any).loaded_ = false;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     (window as any).settingsManager = settingsManager;
     settingsManager.dataSources.orgs = 'https://test.local/orgs.json';
 
@@ -81,7 +81,7 @@ describe('OrgDataService (after remote load)', () => {
     orgDataService.init();
     // A second init() short-circuits because a load is already in flight.
     orgDataService.init();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, dot-notation
+
     await (orgDataService as any).loadPromise_;
 
     expect(orgDataService.isLoaded).toBe(false);

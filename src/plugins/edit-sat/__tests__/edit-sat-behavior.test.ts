@@ -12,7 +12,7 @@ vi.mock('file-saver', () => ({ __esModule: true, default: vi.fn(), saveAs: vi.fn
 
 describe('EditSat behavior', () => {
   let plugin: EditSat;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = () => plugin as any;
 
   beforeEach(() => {

@@ -1,4 +1,4 @@
-/* eslint-disable camelcase */
+
 import { vec3, vec4 } from 'gl-matrix';
 import { GlUtils } from '../gl-utils';
 import { LineManager } from '../line-manager';

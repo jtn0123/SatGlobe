@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-/* eslint-disable max-lines-per-function */
+
 /* eslint-disable dot-notation */
 /* eslint-disable no-new */
 import { MenuMode } from '@app/engine/core/interfaces';
@@ -169,7 +169,7 @@ describe('ReportsPlugin_class', () => {
 
 describe('ReportsPlugin report generation', () => {
   let plugin: ReportsPlugin;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = () => plugin as any;
   const startTime = new Date('2022-01-01T00:00:00Z');
 

@@ -6,7 +6,7 @@ import { mat4 } from 'gl-matrix';
 import { vi } from 'vitest';
 
 describe('FrustumMesh', () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const gl = () => global.mocks.glMock as any;
 
   const settings = (over: Record<string, unknown> = {}) => ({
@@ -33,9 +33,9 @@ describe('FrustumMesh', () => {
 
     pos.set([7000, 0, 0], 0);
     pos.set([7000, 200, 50], 3);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     (dots as any).positionData = pos;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     (dots as any).velocityData = new Float32Array([0, 7.5, 0, 0, 7.5, 0]);
     vi.clearAllMocks();
   });
@@ -44,7 +44,7 @@ describe('FrustumMesh', () => {
 
   it('init compiles the program and builds 8 vertices / 36 indices', () => {
     const mesh = build();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const m = mesh as any;
 
     expect(m.isLoaded_).toBe(true);
@@ -60,7 +60,7 @@ describe('FrustumMesh', () => {
       mesh.update();
 
       expect(subSpy).toHaveBeenCalled();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       expect((mesh as any).vertices_.some((v: number) => v !== 0)).toBe(true);
     });
 
@@ -100,7 +100,7 @@ describe('FrustumMesh', () => {
     });
 
     it('falls back to an arbitrary up vector when velocity data is unavailable', () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       (ServiceLocator.getDotsManager() as any).velocityData = null;
       const mesh = build();
 
@@ -124,7 +124,7 @@ describe('FrustumMesh', () => {
       const mesh = build();
 
       mesh.update();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       const cam = ServiceLocator.getMainCamera() as any;
 
       cam.cameraType = CameraType.FLAT_MAP;

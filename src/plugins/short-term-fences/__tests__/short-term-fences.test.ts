@@ -86,7 +86,7 @@ describe('ShortTermFences_class', () => {
 
 describe('ShortTermFences behavior', () => {
   let stf: ShortTermFences;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = () => stf as any;
 
   beforeEach(() => {

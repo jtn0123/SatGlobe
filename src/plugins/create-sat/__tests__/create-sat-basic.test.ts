@@ -8,9 +8,9 @@ import { vi } from 'vitest';
 
 describe('CreateSat basic tab', () => {
   let plugin: CreateSat;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = () => plugin as any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const C = CreateSat as any;
 
   const setBasic = (inc: string, apogee: string, perigee: string) => {

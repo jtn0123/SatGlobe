@@ -14,7 +14,7 @@ import { setupStandardEnvironment } from '@test/environment/standard-env';
  */
 describe('ColorSchemeManager logic', () => {
   let csm: ColorSchemeManager;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   let csmAny: any;
 
   beforeEach(() => {

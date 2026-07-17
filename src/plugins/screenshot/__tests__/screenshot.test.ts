@@ -66,7 +66,7 @@ const mockCtx = () => ({
 
 describe('Screenshot behavior', () => {
   let plugin: Screenshot;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const priv = () => plugin as any;
 
   beforeEach(() => {
@@ -76,7 +76,7 @@ describe('Screenshot behavior', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     delete (HTMLCanvasElement.prototype as any).toDataURL;
   });
 
@@ -137,7 +137,7 @@ describe('Screenshot behavior', () => {
   it('watermarkedDataUrl_ crops to square, draws both logos and classification text', () => {
     // jsdom canvases return null for getContext('2d'); use fake canvases with a mock 2D context.
     const fakeCanvas = () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       const c: any = { width: 0, height: 0, getContext: () => mockCtx(), toDataURL: () => 'data:image/png;base64,AAA' };
 
       c.parentNode = { removeChild: vi.fn() };
@@ -147,14 +147,14 @@ describe('Screenshot behavior', () => {
 
     vi.spyOn(document, 'createElement').mockImplementation(((tag: string) => (tag === 'canvas' ? fakeCanvas() : ({})))as unknown as typeof document.createElement);
     KeepTrack.getInstance().containerRoot.appendChild = vi.fn();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     ServiceLocator.getRenderer().domElement = { width: 3840, height: 2160 } as any;
     EventBus.getInstance().methods.screenshotShouldCropSquare = () => true;
 
     settingsManager.isShowSecondaryLogo = true;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     plugin.logo = { width: 100, height: 50 } as any;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     plugin.secondaryLogo = { width: 100, height: 50 } as any;
     settingsManager.classificationStr = 'Unclassified';
 
@@ -164,7 +164,7 @@ describe('Screenshot behavior', () => {
   it('calculateClassificationText_ returns empty fields when there is no classification', () => {
     settingsManager.classificationStr = '';
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const result = (Screenshot as any).calculateClassificationText_();
 
     expect(result.classificationstr).toBe('');

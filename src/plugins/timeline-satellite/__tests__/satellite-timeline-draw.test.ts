@@ -1,4 +1,4 @@
-/* eslint-disable dot-notation */
+
 import { ServiceLocator } from '@app/engine/core/service-locator';
 import { getEl } from '@app/engine/utils/get-el';
 import { SatelliteTimeline } from '@app/plugins/timeline-satellite/satellite-timeline';
@@ -23,7 +23,7 @@ const satPass = (sccNum: string, id: number, passes: { start: Date; end: Date }[
 
 describe('SatelliteTimeline drawing and canvas interactions', () => {
   let plugin: SatelliteTimeline;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = () => plugin as any;
 
   beforeEach(() => {
@@ -38,7 +38,7 @@ describe('SatelliteTimeline drawing and canvas interactions', () => {
 
     clone.getContext = vi.fn(() => mockCtx()) as never;
     p().canvas_.cloneNode = vi.fn(() => clone) as never;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     (p().canvasStatic_ as any).getContext = vi.fn(() => mockCtx());
 
     const tm = ServiceLocator.getTimeManager();

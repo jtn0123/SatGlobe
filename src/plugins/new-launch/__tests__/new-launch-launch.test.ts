@@ -1,4 +1,4 @@
-/* eslint-disable dot-notation */
+
 import { ServiceLocator } from '@app/engine/core/service-locator';
 import { errorManagerInstance } from '@app/engine/utils/errorManager';
 import { getEl } from '@app/engine/utils/get-el';
@@ -12,7 +12,7 @@ import { vi } from 'vitest';
 
 describe('NewLaunch launch flow', () => {
   let plugin: NewLaunch;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = () => plugin as any;
 
   beforeEach(() => {
@@ -27,9 +27,9 @@ describe('NewLaunch launch flow', () => {
       document.body.insertAdjacentHTML('beforeend', '<input id="nl-updown" value="N" />');
     }
     (getEl('nl-facility') as HTMLInputElement).value = 'DLS';
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     (ServiceLocator.getCatalogManager() as any).launchSites = { DLS: { lat: 51, lon: 60 } };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     (ServiceLocator.getColorSchemeManager() as any).calculateColorBuffers = vi.fn();
     vi.spyOn(ServiceLocator.getTimeManager(), 'changeStaticOffset').mockImplementation(() => undefined as never);
     // errorManagerInstance.error re-throws in the test env; the code calls it on TLE-gen failure.

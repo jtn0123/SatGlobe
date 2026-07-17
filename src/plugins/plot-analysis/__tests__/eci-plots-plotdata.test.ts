@@ -1,4 +1,4 @@
-/* eslint-disable dot-notation */
+
 import { ServiceLocator } from '@app/engine/core/service-locator';
 import { SatMathApi } from '@app/engine/math/sat-math-api';
 import { EciPlot } from '@app/plugins/plot-analysis/eci-plots';
@@ -11,7 +11,7 @@ const NOW = Date.UTC(2026, 4, 31);
 
 describe('EciPlot getPlotData / createPlot', () => {
   let plugin: EciPlot;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = () => plugin as any;
 
   const fakeSat = { name: 'SAT-A', period: 90 };

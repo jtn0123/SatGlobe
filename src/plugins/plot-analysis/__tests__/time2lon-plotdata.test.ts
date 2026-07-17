@@ -1,4 +1,4 @@
-/* eslint-disable dot-notation */
+
 import { ServiceLocator } from '@app/engine/core/service-locator';
 import { SatMathApi } from '@app/engine/math/sat-math-api';
 import { Time2LonPlots } from '@app/plugins/plot-analysis/time2lon';
@@ -43,7 +43,7 @@ const geoSat = (over: Record<string, unknown> = {}) => ({
 
 describe('Time2LonPlots getPlotDataAsync_', () => {
   let plugin: Time2LonPlots;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = () => plugin as any;
 
   const stubCatalog = (sats: unknown[]) => {
@@ -134,7 +134,7 @@ describe('Time2LonPlots getPlotDataAsync_', () => {
 
 describe('Time2LonPlots onBottomIconDeselect', () => {
   let plugin: Time2LonPlots;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = () => plugin as any;
 
   beforeEach(() => {

@@ -24,7 +24,7 @@ const testFuncWithAllCameraTypes = (testFunc: () => void, cameraInstance: Camera
 
 describe('Camera.setFieldOfView', () => {
   let cameraInstance: Camera;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const priv = () => cameraInstance as any;
 
   beforeEach(() => {

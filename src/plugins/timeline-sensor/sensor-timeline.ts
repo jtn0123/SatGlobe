@@ -1,5 +1,5 @@
 /* eslint-disable max-statements */
-/* eslint-disable max-lines-per-function */
+
 /* eslint-disable max-lines */
 
 import { MenuMode } from '@app/engine/core/interfaces';

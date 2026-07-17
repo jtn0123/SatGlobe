@@ -1,5 +1,5 @@
-/* eslint-disable max-lines-per-function */
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
+
 /* eslint-disable dot-notation */
 import { vi } from 'vitest';
 import { ServiceLocator } from '@app/engine/core/service-locator';

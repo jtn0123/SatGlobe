@@ -1,4 +1,4 @@
-/* eslint-disable max-classes-per-file */
+
 import { EventBusEvent } from '@app/engine/events/event-bus-events';
 import { RADIUS_OF_EARTH } from '@app/engine/utils/constants';
 import { Degrees, Kilometers, Milliseconds } from '@ootk/src/main';

@@ -1,5 +1,5 @@
-/* eslint-disable dot-notation */
-/* eslint-disable max-lines-per-function */
+
+
 import { ServiceLocator } from '@app/engine/core/service-locator';
 import { OrbitManager } from '@app/app/rendering/orbit-manager';
 import { SelectSatManager } from '@app/plugins/select-sat-manager/select-sat-manager';
@@ -16,13 +16,13 @@ const fakeLineManager = () => ({
 
 describe('OrbitManager', () => {
   let om: OrbitManager;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const o = () => om as any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   let gl: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   let catalog: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   let lineMgr: any;
 
   beforeEach(() => {

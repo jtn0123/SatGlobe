@@ -1,4 +1,4 @@
-/* eslint-disable dot-notation */
+
 import { ServiceLocator } from '@app/engine/core/service-locator';
 import { SatMathApi } from '@app/engine/math/sat-math-api';
 import { errorManagerInstance } from '@app/engine/utils/errorManager';
@@ -12,7 +12,7 @@ const NOW = Date.UTC(2026, 4, 31);
 
 describe('RicPlot getPlotData / createPlot', () => {
   let plugin: RicPlot;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = () => plugin as any;
 
   const satP = { name: 'PRIMARY', period: 90 };

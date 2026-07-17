@@ -8,7 +8,7 @@
  * are recomputed on subsequent UPDATE_TIME messages.
  */
 
-/* eslint-disable complexity */
+
 /* eslint-disable no-unmodified-loop-condition, no-await-in-loop, no-promise-executor-return */
 
 import { DetailedSensor } from '@app/app/sensors/DetailedSensor';

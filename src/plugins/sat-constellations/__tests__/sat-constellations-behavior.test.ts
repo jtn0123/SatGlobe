@@ -10,9 +10,9 @@ import { vi } from 'vitest';
 
 describe('SatConstellations behavior', () => {
   let plugin: SatConstellations;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = () => plugin as any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   let gm: any;
 
   beforeEach(() => {

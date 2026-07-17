@@ -1,6 +1,6 @@
 import { vi } from 'vitest';
-/* eslint-disable max-lines-per-function */
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
+
 /* eslint-disable dot-notation */
 import { MenuMode } from '@app/engine/core/interfaces';
 import { ServiceLocator } from '@app/engine/core/service-locator';

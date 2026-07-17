@@ -331,7 +331,7 @@ describe('SearchManager', () => {
         id: 4, name: 'RV_4', active: true, desc: 'Test (TST)',
         latList: [0, 0], lonList: [0, 0], altList: [100, 200],
         timeList: [0, 1000], startTime: 0, maxAlt: 200, country: 'USA', launchVehicle: 'TST',
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       } as any);
 
       objects.push(rv);
@@ -353,7 +353,7 @@ describe('SearchManager', () => {
 
 describe('SearchManager interactions', () => {
   let mgr: SearchManager;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = () => mgr as any;
 
   beforeEach(() => {

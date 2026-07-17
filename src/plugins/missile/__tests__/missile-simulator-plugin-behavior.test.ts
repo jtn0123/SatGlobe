@@ -12,7 +12,7 @@ const setVal = (id: string, value: string) => {
 
 describe('MissileSimulatorPlugin behavior', () => {
   let plugin: MissileSimulatorPlugin;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = () => plugin as any;
 
   beforeEach(() => {

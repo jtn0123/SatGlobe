@@ -54,7 +54,7 @@ describe('SatInfoBoxOrbital - update before DOM ready', () => {
     };
 
     expect(() => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       EventBus.getInstance().emit(EventBusEvent.updateSelectBox, fakeMissile as any);
     }).not.toThrow();
   });
@@ -62,7 +62,7 @@ describe('SatInfoBoxOrbital - update before DOM ready', () => {
 
 describe('SatInfoBoxOrbital data population', () => {
   let plugin: SatInfoBoxOrbital;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = () => plugin as any;
 
   beforeEach(() => {

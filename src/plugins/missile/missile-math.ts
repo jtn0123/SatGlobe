@@ -1,9 +1,8 @@
 /* eslint-disable max-params */
 /* eslint-disable max-lines */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable complexity */
-/* eslint-disable max-statements */
-/* eslint-disable max-lines-per-function */
+
+
 import { ToastMsgType } from '@app/engine/core/interfaces';
 import { RADIUS_OF_EARTH } from '@app/engine/utils/constants';
 import { Degrees, Kilometers, Meters, SpaceObjectType } from '@ootk/src/main';
@@ -944,7 +943,7 @@ export class Missile {
        * `next > d` because they differ when the neighbour is undefined/NaN, which
        * changes which path samples are emitted. Keep both variants distinct.
        */
-      // eslint-disable-next-line no-unsafe-negation
+
       const nextBeyond = useStrictUpper ? EstDistanceList[i + 1] > distanceKm : !(EstDistanceList[i + 1] <= distanceKm);
 
       if (EstDistanceList[i] <= distanceKm && nextBeyond) {
@@ -1225,7 +1224,7 @@ export class Missile {
     const FuelArea1 = 0.25 * Math.PI * (Diameter - Thickness) ** 2; // (m^2)
     const FuelArea2 = 0.25 * Math.PI * (Diameter * 0.75 - Thickness) ** 2; // (m^2)
     const FuelVolume = FuelArea1 * (Length * 0.651) + FuelArea2 * (Length * 0.178); // (m^3)
-    // eslint-disable-next-line max-len
+
     // http://www.lr.tudelft.nl/en/organisation/departments/space-engineering/space-systems-engineering/expertise-areas/space-propulsion/design-of-elements/rocket-propellants/solids/
     const FuelMass = FuelDensity * FuelVolume;
 

@@ -8,7 +8,7 @@ import { StorageKey } from '@app/engine/persistence/storage-key';
  * for isolation.
  */
 describe('PersistenceManager', () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   let pm: any;
 
   beforeEach(() => {

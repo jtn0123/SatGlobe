@@ -260,13 +260,13 @@ describe('ModelResolver satellite model selection', () => {
       warheadCount,
       getTimeInTrajectory: () => t,
       getApogeeIndex: () => apogeeIndexOf(altList),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     }) as any;
 
     // With apogee at index 100 the deploy window spans max(2, round(100*0.05)) = 5
     // samples: misl3 at [95,97), misl4 at [97,100), then rv from apogee down.
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const resolveMisl = (misl: any) => (resolver as any).resolveMislModelName_(misl);
 
     it('shows the full boost stack while ascending low', () => {
@@ -317,7 +317,7 @@ describe('ModelResolver satellite model selection', () => {
     });
 
     it('falls back to the boost model when the trajectory is empty', () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       expect(resolveMisl({ altList: [], maxAlt: 1200 } as any)).toBe(SatelliteModels.misl);
     });
   });

@@ -313,7 +313,7 @@ export abstract class UrlManager {
    * @param isMaxData When true, include extended/heavy params (date, external TLEs, etc.).
    * @returns The full shareable URL string.
    */
-  // eslint-disable-next-line complexity
+
   static getShareUrl(isMaxData: boolean = true): string {
     const timeManagerInstance = ServiceLocator.getTimeManager();
     const mainCamera = ServiceLocator.getMainCamera();

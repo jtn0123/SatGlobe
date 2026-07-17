@@ -1,4 +1,4 @@
-/* eslint-disable dot-notation */
+
 import { ServiceLocator } from '@app/engine/core/service-locator';
 import { SatMathApi } from '@app/engine/math/sat-math-api';
 import { Lat2LonPlots } from '@app/plugins/plot-analysis/lat2lon';
@@ -86,7 +86,7 @@ describe('Lat2LonPlots.getPlotData', () => {
 
 describe('Lat2LonPlots.createPlot', () => {
   let plugin: Lat2LonPlots;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = () => plugin as any;
 
   beforeEach(() => {

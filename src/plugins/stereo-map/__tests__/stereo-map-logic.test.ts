@@ -1,4 +1,4 @@
-/* eslint-disable dot-notation */
+
 import { ServiceLocator } from '@app/engine/core/service-locator';
 import { getEl } from '@app/engine/utils/get-el';
 import { StereoMap } from '@app/plugins/stereo-map/stereo-map';
@@ -15,7 +15,7 @@ HTMLCanvasElement.prototype.getContext = vi.fn(() => ({
   restore: vi.fn(), translate: vi.fn(), scale: vi.fn(), rotate: vi.fn(),
 })) as never;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 const SM = StereoMap as any;
 
 describe('StereoMap.getMapPoints_', () => {
@@ -52,7 +52,7 @@ describe('StereoMap.getMapPoints_', () => {
 
 describe('StereoMap input synchronization', () => {
   let plugin: StereoMap;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = () => plugin as any;
 
   beforeEach(() => {

@@ -1,4 +1,4 @@
-/* eslint-disable complexity */
+
 import { buildCatalogRcsStats, CatalogRcsStats, EMPTY_CATALOG_RCS_STATS, estimateRcs } from '@app/app/analysis/rcs-estimator';
 import { ColorInformation, Pickable, rgbaArray } from '@app/engine/core/interfaces';
 import { ServiceLocator } from '@app/engine/core/service-locator';

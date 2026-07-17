@@ -130,7 +130,7 @@ describe('ObjectGroup', () => {
   });
 
   it('throws on an unknown group type', () => {
-    // eslint-disable-next-line no-new
+
     expect(() => new ObjectGroup(999 as GroupType, null)).toThrow('Unknown group type');
   });
 
@@ -153,7 +153,7 @@ describe('ObjectGroup', () => {
         lonList: [],
         altList: [],
         timeList: [],
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       } as any);
 
       catalogStub.objectCache = [sat0, missile];

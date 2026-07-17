@@ -32,7 +32,7 @@ describe('ObjectGroup_SCC_NUM_mixedFormResolution', () => {
     vi.spyOn(ServiceLocator, 'getCatalogManager').mockReturnValue({
       objectCache: [],
       sccNum2Id: sccNumSpy,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     } as any);
   });
 

@@ -10,7 +10,7 @@ import { SettingsManager } from '@app/settings/settings';
 import { DEG2RAD } from '@ootk/src/main';
 import { mat3, mat4 } from 'gl-matrix';
 import { DepthManager } from '../depth-manager';
-/* eslint-disable no-useless-escape */
+
 /* eslint-disable camelcase */
 
 export enum MilkyWayTextureQuality {

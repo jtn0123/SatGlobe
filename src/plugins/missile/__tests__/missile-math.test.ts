@@ -9,7 +9,7 @@ import { vi } from 'vitest';
  * the catalog, but its atmosphere/aero helpers are pure piecewise physics
  * models. They're private statics, reached here via a typed cast.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 const M = Missile as any;
 
 const baseCreateArgs = () => ({
