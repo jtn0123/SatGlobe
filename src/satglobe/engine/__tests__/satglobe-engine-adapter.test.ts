@@ -42,6 +42,11 @@ const { busHandlers, fakeBus, selectSat, warn, log, services } = vi.hoisted(() =
       emit: (event: string, ...args: unknown[]) => {
         handlers.get(event)?.forEach((handler) => handler(...args));
       },
+      // vitest-setup's async standard-env cleanup calls this on whatever
+      // EventBus module resolves to - which is this mock inside this file.
+      unregisterAllEvents: () => {
+        handlers.clear();
+      },
     },
     selectSat: vi.fn(),
     warn: vi.fn(),
@@ -55,7 +60,7 @@ vi.mock('@app/engine/events/event-bus', () => ({
 }));
 
 vi.mock('@app/engine/core/plugin-registry', () => ({
-  PluginRegistry: { getPlugin: () => ({ selectSat }) },
+  PluginRegistry: { getPlugin: () => ({ selectSat }), unregisterAllPlugins: () => undefined },
 }));
 
 vi.mock('@app/plugins/select-sat-manager/select-sat-manager', () => ({

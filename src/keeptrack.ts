@@ -454,6 +454,7 @@ theodore.kruczek at gmail dot com.
 
       this.isInitialized = true;
 
+      performance.mark('engine:ready');
       EventBus.getInstance().emit(EventBusEvent.onKeepTrackReady);
 
       // Register runtime internet connectivity detection
