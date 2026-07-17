@@ -183,3 +183,7 @@ Procfile          text
 # Ignore files (like .npmignore or .gitignore)
 *.*ignore         text
 *.xcf filter=lfs diff=lfs merge=lfs -text
+
+# SatGlobe catalog snapshots are ~20MB and rewritten by every catalog refresh;
+# LFS keeps those revisions out of the base git history (go-forward only).
+public/tle/tle.json filter=lfs diff=lfs merge=lfs -text
