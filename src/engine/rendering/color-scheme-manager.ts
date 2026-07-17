@@ -85,6 +85,15 @@ export class ColorSchemeManager {
     SmallSatColorScheme: new SmallSatColorScheme(),
     VisualMagnitudeColorScheme: new VisualMagnitudeColorScheme(),
   };
+
+  /**
+   * Registers an addon color scheme at runtime — the seam for schemes that live
+   * outside this manifest (e.g. edition-specific schemes such as SatGlobe's).
+   * Registering under an existing id replaces that scheme.
+   */
+  registerScheme(scheme: ColorScheme): void {
+    (this.colorSchemeInstances as Record<string, ColorScheme>)[scheme.id] = scheme;
+  }
   private readonly DOTS_PER_CALC = 350;
   private gl_: WebGL2RenderingContext;
   currentColorScheme: ColorScheme = this.colorSchemeInstances[settingsManager.defaultColorScheme] ?? Object.values(this.colorSchemeInstances)[0];

@@ -91,7 +91,6 @@ export interface CatalogSnapshotV1 {
 }
 
 export interface SpaceObjectView {
-  engineId: number;
   catalogId: string;
   name: string;
   kind: ObjectKind;
@@ -155,6 +154,8 @@ export interface StoryManifestV1 {
 
 export interface EngineState {
   ready: boolean;
+  /** Non-null when the engine failed to hydrate; the UI surfaces it instead of loading forever. */
+  error: string | null;
   objectCount: number;
   newestElementEpoch: string;
   simulationTime: string;

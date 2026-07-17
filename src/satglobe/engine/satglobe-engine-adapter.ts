@@ -2,6 +2,7 @@ import { ServiceLocator } from '@app/engine/core/service-locator';
 import { PluginRegistry } from '@app/engine/core/plugin-registry';
 import { EventBus } from '@app/engine/events/event-bus';
 import { EventBusEvent } from '@app/engine/events/event-bus-events';
+import { errorManagerInstance } from '@app/engine/utils/errorManager';
 import { SelectSatManager } from '@app/plugins/select-sat-manager/select-sat-manager';
 import { BaseObject, PayloadStatus, Satellite } from '@ootk/src/main';
 import { classifyOrbit, tleEpochToIso } from '../domain/orbits';
@@ -34,6 +35,7 @@ const statusLabels: Record<PayloadStatus, string> = {
 export class SatGlobeEngineAdapter {
   private state_: EngineState = {
     ready: false,
+    error: null,
     objectCount: 0,
     simulationTime: new Date().toISOString(),
     selectedObject: null,
@@ -44,6 +46,8 @@ export class SatGlobeEngineAdapter {
   };
   private objects_: SpaceObjectView[] = [];
   private objectsByCatalogId_ = new Map<string, SpaceObjectView>();
+  // Engine-allocated dot indices stay adapter-private; the domain model speaks catalog ids only.
+  private engineIdByCatalogId_ = new Map<string, number>();
   private readonly listeners_ = new Set<EngineStateListener>();
   private colorScheme_: SatGlobeColorScheme | null = null;
   private interval_: number | null = null;
@@ -112,11 +116,12 @@ export class SatGlobeEngineAdapter {
 
   selectObject(catalogId: string): void {
     const obj = this.objectsByCatalogId_.get(catalogId);
+    const engineId = this.engineIdByCatalogId_.get(catalogId);
 
-    if (!obj) {
+    if (!obj || engineId === undefined) {
       return;
     }
-    PluginRegistry.getPlugin(SelectSatManager)?.selectSat(obj.engineId);
+    PluginRegistry.getPlugin(SelectSatManager)?.selectSat(engineId);
     this.state_.selectedObject = obj;
     this.emit_();
   }
@@ -179,10 +184,10 @@ export class SatGlobeEngineAdapter {
   }
 
   drawOrbit(catalogId: string): void {
-    const obj = this.objectsByCatalogId_.get(catalogId);
+    const engineId = this.engineIdByCatalogId_.get(catalogId);
 
-    if (obj) {
-      ServiceLocator.getOrbitManager().addInViewOrbit(obj.engineId);
+    if (engineId !== undefined) {
+      ServiceLocator.getOrbitManager().addInViewOrbit(engineId);
     }
   }
 
@@ -206,17 +211,28 @@ export class SatGlobeEngineAdapter {
     if (this.disposed_) {
       return;
     }
-    try {
-      const catalog = ServiceLocator.getCatalogManager();
+    let catalog: ReturnType<typeof ServiceLocator.getCatalogManager>;
 
-      if (!catalog?.objectCache?.length) {
-        return;
-      }
-      // KeepTrack reserves inactive Satellite instances as propagation slots.
-      // Exclude those placeholders here; operational status is derived separately
-      // in toView_ and must never reuse this engine-allocation flag.
-      this.objects_ = catalog.getSats().filter((sat) => sat.active).map((sat) => this.toView_(sat));
+    try {
+      catalog = ServiceLocator.getCatalogManager();
+    } catch {
+      // The catalog service registers in phases during startup; the polling loop retries.
+      return;
+    }
+    if (!catalog?.objectCache?.length) {
+      return;
+    }
+    try {
+      /*
+       * KeepTrack reserves inactive Satellite instances as propagation slots.
+       * Exclude those placeholders here; operational status is derived separately
+       * in toView_ and must never reuse this engine-allocation flag.
+       */
+      const sats = catalog.getSats().filter((sat) => sat.active);
+
+      this.objects_ = sats.map((sat) => this.toView_(sat));
       this.objectsByCatalogId_ = new Map(this.objects_.map((obj) => [obj.catalogId, obj]));
+      this.engineIdByCatalogId_ = new Map(sats.map((sat, index) => [this.objects_[index].catalogId, sat.id]));
       this.state_.objectCount = this.objects_.length;
       const newestEpochMs = this.objects_.reduce((newest, obj) => {
         const epoch = new Date(obj.epoch).getTime();
@@ -226,10 +242,16 @@ export class SatGlobeEngineAdapter {
 
       this.state_.newestElementEpoch = Number.isFinite(newestEpochMs) ? new Date(newestEpochMs).toISOString() : '';
       this.state_.ready = true;
+      this.state_.error = null;
       this.installColorScheme_();
       this.poll_();
-    } catch {
-      // KeepTrack services become available in phases. The polling loop retries.
+    } catch (error) {
+      // A populated catalog that fails to map is a real defect, not a startup race.
+      const message = error instanceof Error ? error.message : String(error);
+
+      this.state_.error = `Catalog hydration failed: ${message}`;
+      errorManagerInstance.warn(`SatGlobe adapter: ${this.state_.error}`);
+      this.emit_();
     }
   }
 
@@ -237,23 +259,26 @@ export class SatGlobeEngineAdapter {
     if (this.disposed_) {
       return;
     }
-    try {
-      const time = ServiceLocator.getTimeManager().simulationTimeObj;
-      const camera = ServiceLocator.getMainCamera().state;
+    let simulationTimeIso: string;
+    let camera: ReturnType<typeof ServiceLocator.getMainCamera>['state'];
 
-      this.state_.simulationTime = time.toISOString();
-      this.state_.camera = {
-        pitch: Number(camera.camPitchTarget),
-        yaw: Number(camera.camYawTarget),
-        zoom: camera.zoomTarget,
-      };
-      if (!this.state_.ready && this.engineReady_) {
-        this.hydrate_();
-      } else {
-        this.emit_();
-      }
+    try {
+      simulationTimeIso = ServiceLocator.getTimeManager().simulationTimeObj.toISOString();
+      camera = ServiceLocator.getMainCamera().state;
     } catch {
-      // Expected during engine startup.
+      // Time and camera services register in phases during startup; retry next tick.
+      return;
+    }
+    this.state_.simulationTime = simulationTimeIso;
+    this.state_.camera = {
+      pitch: Number(camera.camPitchTarget),
+      yaw: Number(camera.camYawTarget),
+      zoom: camera.zoomTarget,
+    };
+    if (!this.state_.ready && this.engineReady_) {
+      this.hydrate_();
+    } else {
+      this.emit_();
     }
   }
 
@@ -264,22 +289,19 @@ export class SatGlobeEngineAdapter {
     const manager = ServiceLocator.getColorSchemeManager();
 
     this.colorScheme_ = new SatGlobeColorScheme(this.state_.filters, this.state_.encoding);
-    const instances = manager.colorSchemeInstances as unknown as Record<string, SatGlobeColorScheme>;
-
-    instances[this.colorScheme_.id] = this.colorScheme_;
+    manager.registerScheme(this.colorScheme_);
     manager.setColorScheme(this.colorScheme_, true);
   }
 
   private applyVisualState_(): void {
-    try {
-      this.colorScheme_?.setState(this.state_.filters, this.state_.encoding);
-      const manager = ServiceLocator.getColorSchemeManager();
-
-      if (this.colorScheme_) {
-        manager.setColorScheme(this.colorScheme_, true);
+    this.colorScheme_?.setState(this.state_.filters, this.state_.encoding);
+    if (this.colorScheme_) {
+      try {
+        ServiceLocator.getColorSchemeManager().setColorScheme(this.colorScheme_, true);
+      } catch (error) {
+        // Color buffers may still be initializing; the next update applies the state.
+        errorManagerInstance.log(`SatGlobe adapter: recolor deferred (${error instanceof Error ? error.message : String(error)})`);
       }
-    } catch {
-      // Visual buffers may still be initializing; the next update will apply state.
     }
     this.emit_();
   }
@@ -290,7 +312,6 @@ export class SatGlobeEngineAdapter {
     const epoch = isSatellite ? tleEpochToIso(Number(sat.epochYear), Number(sat.epochDay)) : '';
 
     return {
-      engineId: obj.id,
       catalogId: isSatellite ? String(sat.sccNum) : String(obj.id),
       name: obj.name || 'Unnamed object',
       kind: objectKindFromSpaceObjectType(obj.type),
