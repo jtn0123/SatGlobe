@@ -33,6 +33,24 @@ import { mountSatGlobe } from './satglobe/bootstrap';
  */
 document.documentElement.setAttribute('theme', 'dark');
 
+/**
+ * The bundled catalog gates first dots, and nothing before CatalogLoader needs
+ * its bytes - so start the 19 MB fetch now and let it overlap engine init.
+ * CatalogLoader consumes the promise in offlineMode and falls back to its own
+ * fetch if this one failed. Dead-code eliminated outside the offline edition.
+ */
+function startCatalogPrefetch(): void {
+  const prefetch = fetch('./tle/tle.json').then((response) => response.json());
+
+  // Failures surface through CatalogLoader's own fetch path, not as unhandled rejections.
+  prefetch.catch(() => undefined);
+  window.satGlobeCatalogPrefetch = prefetch;
+}
+
+if (__EDITION__ === 'satglobe') {
+  startCatalogPrefetch();
+}
+
 const keepTrackInstance = KeepTrack.getInstance();
 
 // Load the main website class

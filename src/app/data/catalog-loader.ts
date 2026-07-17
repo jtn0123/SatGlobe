@@ -258,13 +258,17 @@ export class CatalogLoader {
             errorManagerInstance.error(error, 'tleManagerInstance.loadCatalog');
           });
       } else if (settingsManager.offlineMode) {
+        // The offline edition starts this fetch at module evaluation (main.ts)
+        // so it overlaps engine init; fall back to a fresh fetch if it failed.
+        // Both use the page-relative URL: offline builds serve from their own root.
+        // The measure now captures residual wait on the prefetch, not raw fetch time.
         performance.mark('catalog:fetch-start');
-        await fetch(`${settingsManager.installDirectory}tle/tle.json`)
-          .then((response) => response.json())
+        await (window.satGlobeCatalogPrefetch ?? Promise.reject(new Error('no prefetch')))
+          .catch(() => fetch('./tle/tle.json').then((response) => response.json()))
           .then((data) => {
             performance.measure('catalog:fetch+decode', 'catalog:fetch-start');
 
-            return data;
+            return data as KeepTrackTLEFile[];
           })
           .then((data) => CatalogLoader.parse({
             keepTrackTle: data,
