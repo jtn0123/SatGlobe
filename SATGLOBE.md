@@ -75,7 +75,7 @@ npm run test:e2e:satglobe
 
 `npm run verify:satglobe` runs typecheck, the full source lint gate, focused SatGlobe/catalog/offline unit tests, and the production build as one local checkpoint command. The Playwright journey remains separate because it starts the WebGL application in Chromium.
 
-The upstream test suite is available with `npm test`. At the v13.4.0 import baseline, one weather-coordinate snapshot has a machine-dependent floating-point difference around 1e-12; the SatGlobe tests do not alter that upstream behavior.
+The upstream test suite is available with `npm test`. The one machine-dependent snapshot from the v13.4.0 import baseline (a weather-coordinate floating-point difference around 1e-12) has been replaced with a stable projection, so the full suite is expected to pass on any machine.
 
 ## Docker
 

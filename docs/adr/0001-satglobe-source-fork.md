@@ -34,3 +34,7 @@ The browser reads only bundled resources. Catalog refresh is a manual Node comma
 3. Preserve upstream changes unless SatGlobe’s documented profile or adapter boundary requires a small modification.
 4. Run typecheck, SatGlobe unit tests, production build, offline E2E, and selected upstream tests.
 5. Record any unavoidable upstream-file modification in this ADR or a successor.
+
+## Upstream modification log
+
+- 2026-07-17 — `test/weatherApi/weather.test.ts` (+ regenerated snapshot): replaced the machine-dependent full-object snapshot of `calculatePasses_()` with a stable projection (sensor `objName`, pass type, ISO pass windows). The raw `DetailedSensor` graph embeds trig-derived ECF positions that differ at ~1e-12 across libm implementations, which made the upstream snapshot fail on some machines (previously noted in `SATGLOBE.md`).

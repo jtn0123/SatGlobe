@@ -75,7 +75,20 @@ describe('SensorTimeline Weather Integration', () => {
 
     const calculatedPasses = await sensorTimelinePlugin['calculatePasses_']();
 
-    // Snapshot the output of calculatePasses_
-    expect(calculatedPasses).toMatchSnapshot();
+    /*
+     * Snapshot a stable projection instead of the raw Passes[][]: pass windows are
+     * step-quantized and deterministic, but the embedded DetailedSensor objects carry
+     * trig-derived ECF positions that differ at ~1e-12 across libm implementations,
+     * which made the full-object snapshot machine-dependent.
+     */
+    const stablePasses = calculatedPasses.map((sensorPasses) =>
+      sensorPasses.map(({ sensor, type, passes }) => ({
+        sensor: sensor.objName,
+        type,
+        passes: passes.map(({ start, end }) => ({ start: start.toISOString(), end: end.toISOString() })),
+      })));
+
+    expect(stablePasses.length).toBeGreaterThan(0);
+    expect(stablePasses).toMatchSnapshot();
   });
 });
