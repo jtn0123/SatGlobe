@@ -109,6 +109,15 @@ export interface SpaceObjectView {
   periodMinutes: number;
   regime: OrbitRegime;
   isStarlink: boolean;
+  /*
+   * Precomputed lowercase text, filled once when the view is built. Search and
+   * filter sweeps run O(catalog) per keystroke/change; these keep the per-object
+   * cost to comparisons instead of allocations.
+   */
+  nameText: string;
+  launchText: string;
+  ownershipText: string;
+  searchText: string;
 }
 
 export interface StorySource {
@@ -157,6 +166,8 @@ export interface EngineState {
   /** Non-null when the engine failed to hydrate; the UI surfaces it instead of loading forever. */
   error: string | null;
   objectCount: number;
+  /** Objects passing the current filters; maintained by the adapter so the UI never sweeps the catalog itself. */
+  visibleCount: number;
   newestElementEpoch: string;
   simulationTime: string;
   selectedObject: SpaceObjectView | null;

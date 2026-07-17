@@ -5,6 +5,7 @@ import { EventBusEvent } from '@app/engine/events/event-bus-events';
 import { errorManagerInstance } from '@app/engine/utils/errorManager';
 import { SelectSatManager } from '@app/plugins/select-sat-manager/select-sat-manager';
 import { BaseObject, PayloadStatus, Satellite } from '@ootk/src/main';
+import { prepareFilterMatcher } from '../domain/filters';
 import { classifyOrbit, tleEpochToIso } from '../domain/orbits';
 import {
   DEFAULT_CAMERA,
@@ -37,6 +38,7 @@ export class SatGlobeEngineAdapter {
     ready: false,
     error: null,
     objectCount: 0,
+    visibleCount: 0,
     simulationTime: new Date().toISOString(),
     selectedObject: null,
     filters: structuredClone(DEFAULT_FILTERS),
@@ -114,8 +116,8 @@ export class SatGlobeEngineAdapter {
     }
 
     return this.objects_
-      .filter((obj) => `${obj.name} ${obj.catalogId} ${obj.internationalDesignator} ${obj.owner} ${obj.country}`.toLocaleLowerCase().includes(normalized))
-      .sort((a, b) => Number(b.name.toLocaleLowerCase().startsWith(normalized)) - Number(a.name.toLocaleLowerCase().startsWith(normalized)))
+      .filter((obj) => obj.searchText.includes(normalized))
+      .sort((a, b) => Number(b.nameText.startsWith(normalized)) - Number(a.nameText.startsWith(normalized)))
       .slice(0, limit);
   }
 
@@ -242,6 +244,7 @@ export class SatGlobeEngineAdapter {
 
       this.patchState_({
         objectCount: this.objects_.length,
+        visibleCount: this.countVisible_(),
         newestElementEpoch: Number.isFinite(newestEpochMs) ? new Date(newestEpochMs).toISOString() : '',
         ready: true,
         error: null,
@@ -332,25 +335,47 @@ export class SatGlobeEngineAdapter {
         errorManagerInstance.log(`SatGlobe adapter: recolor deferred (${error instanceof Error ? error.message : String(error)})`);
       }
     }
+    this.patchState_({ visibleCount: this.countVisible_() }, false);
     this.emit_();
+  }
+
+  /** One prepared-matcher sweep over the precomputed views; the UI reads the result from state. */
+  private countVisible_(): number {
+    const matcher = prepareFilterMatcher(this.state_.filters);
+    let count = 0;
+
+    for (const obj of this.objects_) {
+      if (matcher(obj)) {
+        count += 1;
+      }
+    }
+
+    return count;
   }
 
   private toView_(obj: BaseObject): SpaceObjectView {
     const sat = obj as Satellite;
     const isSatellite = obj.isSatellite();
     const epoch = isSatellite ? tleEpochToIso(Number(sat.epochYear), Number(sat.epochDay)) : '';
+    const catalogId = isSatellite ? String(sat.sccNum) : String(obj.id);
+    const name = obj.name || 'Unnamed object';
+    const intlDes = isSatellite ? sat.intlDes || '' : '';
+    const launchDate = isSatellite ? sat.launchDate || '' : '';
+    const owner = isSatellite ? sat.owner || '' : '';
+    const country = isSatellite ? sat.country || '' : '';
+    const nameText = name.toLocaleLowerCase();
 
     return {
-      catalogId: isSatellite ? String(sat.sccNum) : String(obj.id),
-      name: obj.name || 'Unnamed object',
+      catalogId,
+      name,
       kind: objectKindFromSpaceObjectType(obj.type),
       active: isSatellite ? isKnownActivePayloadStatus(sat.status) : false,
       status: isSatellite ? statusLabels[sat.status] ?? 'Unknown' : 'Unknown',
-      internationalDesignator: isSatellite ? sat.intlDes || '' : '',
-      launchDate: isSatellite ? sat.launchDate || '' : '',
+      internationalDesignator: intlDes,
+      launchDate,
       launchVehicle: isSatellite ? sat.launchVehicle || '' : '',
-      owner: isSatellite ? sat.owner || '' : '',
-      country: isSatellite ? sat.country || '' : '',
+      owner,
+      country,
       source: isSatellite && sat.source && sat.source.toLocaleLowerCase() !== 'unknown' ? sat.source : 'KeepTrack enriched catalog',
       epoch,
       apogeeKm: isSatellite ? Number(sat.apogee) : Number.NaN,
@@ -358,7 +383,11 @@ export class SatGlobeEngineAdapter {
       inclinationDeg: isSatellite ? Number(sat.inclination) : Number.NaN,
       periodMinutes: isSatellite ? Number(sat.period) : Number.NaN,
       regime: isSatellite ? classifyOrbit(Number(sat.perigee), Number(sat.apogee), Number(sat.period)) : 'other',
-      isStarlink: obj.name.toLocaleLowerCase().startsWith('starlink'),
+      isStarlink: nameText.startsWith('starlink'),
+      nameText,
+      launchText: `${intlDes} ${launchDate}`.toLocaleLowerCase(),
+      ownershipText: `${country} ${owner}`.toLocaleLowerCase(),
+      searchText: `${nameText} ${catalogId} ${intlDes} ${owner} ${country}`.toLocaleLowerCase(),
     };
   }
 

@@ -2,7 +2,6 @@ import { GroupType } from '@app/app/data/object-group';
 import { ServiceLocator } from '@app/engine/core/service-locator';
 import { ColorSchemeManager } from '@app/engine/rendering/color-scheme-manager';
 import { WebGLRenderer } from '@app/engine/rendering/webgl-renderer';
-import * as getEl from '@app/engine/utils/get-el';
 import { settingsManager } from '@app/settings/settings';
 import { BaseObject, Degrees, Satellite, SpaceObjectType, TleLine1 } from '@ootk/src/main';
 import { defaultSat } from '@test/environment/apiMocks';

@@ -6,7 +6,7 @@ import { MissionColorScheme } from '@app/engine/rendering/color-schemes/mission-
 import { ObjectTypeColorScheme } from '@app/engine/rendering/color-schemes/object-type-color-scheme';
 import { OrbitalPlaneDensityColorScheme } from '@app/engine/rendering/color-schemes/orbital-plane-density-color-scheme';
 import { StarlinkColorScheme } from '@app/engine/rendering/color-schemes/starlink-color-scheme';
-import { matchesSatGlobeFilters } from '../domain/filters';
+import { prepareFilterMatcher, type FilterableSpaceObject, type FilterMatcher } from '../domain/filters';
 import { classifyOrbit } from '../domain/orbits';
 import type { FilterState, ObjectKind, OrbitRegime, VisualEncoding } from '../domain/types';
 import { isKnownActivePayloadStatus, objectKindFromSpaceObjectType } from './satglobe-object-state';
@@ -31,8 +31,14 @@ export class SatGlobeColorScheme extends ColorScheme {
   readonly label = 'SatGlobe';
   isOptionInColorMenu = false;
   isOptionInRmbMenu = false;
-  private filters_: FilterState;
   private encoding_: VisualEncoding;
+  private matcher_: FilterMatcher;
+  /*
+   * Recoloring evaluates every dot on every pass; caching each satellite's
+   * normalized filterable view avoids re-allocating and re-lowercasing ~30k
+   * objects per recolor. Keyed weakly so catalog reloads release entries.
+   */
+  private readonly filterableViews_ = new WeakMap<Satellite, FilterableSpaceObject>();
   private readonly schemes_: Record<Exclude<VisualEncoding, 'orbit-regime'>, ColorScheme>;
 
   constructor(filters: FilterState, encoding: VisualEncoding) {
@@ -43,8 +49,8 @@ export class SatGlobeColorScheme extends ColorScheme {
       satglobeHeo: regimeColors.heo,
       satglobeOther: regimeColors.other,
     });
-    this.filters_ = filters;
     this.encoding_ = encoding;
+    this.matcher_ = prepareFilterMatcher(filters);
     this.schemes_ = {
       'object-type': new ObjectTypeColorScheme(),
       'launch-cohort': new MissionColorScheme(),
@@ -56,8 +62,8 @@ export class SatGlobeColorScheme extends ColorScheme {
   }
 
   setState(filters: FilterState, encoding: VisualEncoding): void {
-    this.filters_ = filters;
     this.encoding_ = encoding;
+    this.matcher_ = prepareFilterMatcher(filters);
   }
 
   calculateParams() {
@@ -110,18 +116,28 @@ export class SatGlobeColorScheme extends ColorScheme {
   }
 
   private matches_(sat: Satellite, regime: OrbitRegime): boolean {
-    return matchesSatGlobeFilters({
-      kind: objectKindFromSpaceObjectType(sat.type),
-      active: isKnownActivePayloadStatus(sat.status),
-      regime,
-      perigeeKm: Number(sat.perigee),
-      apogeeKm: Number(sat.apogee),
-      inclinationDeg: Number(sat.inclination),
-      name: sat.name,
-      internationalDesignator: sat.intlDes,
-      launchDate: sat.launchDate,
-      country: sat.country,
-      owner: sat.owner,
-    }, this.filters_);
+    let view = this.filterableViews_.get(sat);
+
+    if (!view) {
+      view = {
+        kind: objectKindFromSpaceObjectType(sat.type),
+        active: isKnownActivePayloadStatus(sat.status),
+        regime,
+        perigeeKm: Number(sat.perigee),
+        apogeeKm: Number(sat.apogee),
+        inclinationDeg: Number(sat.inclination),
+        name: sat.name,
+        internationalDesignator: sat.intlDes,
+        launchDate: sat.launchDate,
+        country: sat.country,
+        owner: sat.owner,
+        nameText: (sat.name ?? '').toLocaleLowerCase(),
+        launchText: `${sat.intlDes} ${sat.launchDate}`.toLocaleLowerCase(),
+        ownershipText: `${sat.country} ${sat.owner}`.toLocaleLowerCase(),
+      };
+      this.filterableViews_.set(sat, view);
+    }
+
+    return this.matcher_(view);
   }
 }
