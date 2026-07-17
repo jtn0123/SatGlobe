@@ -364,7 +364,7 @@ function getQuickLensState(lens: QuickLens): { filters: FilterState; encoding: V
   return { filters, encoding };
 }
 
-/*
+/**
  * Owns workshop filter state. UI state updates immediately; the engine
  * application (a full-catalog recolor) coalesces to the trailing value, so
  * dragging a slider costs one recolor instead of one per input event.
