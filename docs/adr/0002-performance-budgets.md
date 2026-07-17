@@ -18,7 +18,7 @@ This ADR defines the budgets SatGlobe holds itself to and how each is enforced. 
 | 2 | SGP4 propagation throughput | No sustained regression trend | Report-only CI job uploads `benchmark-results/` per run; convert to a hard threshold after runner baselines accumulate | tracked in CI artifacts |
 | 3 | Idle steady-state | **Zero** React re-renders and **zero** full GPU buffer uploads when nothing changes | Manual check with React DevTools Profiler + FrameProfiler until Wave 2 (G4/G5) lands the mechanisms; then E2E-verifiable | Not yet met — adapter emits every 600 ms; full color+position `bufferSubData` every frame (audit items G4, G5) |
 | 4 | Interaction cost | Main-thread work per input event ≤ **one frame (16.7 ms)** at full catalog (~30k objects) | Manual Performance-panel trace on filter drag until Wave 2 (G3) lands | Not yet met — filter change costs 2×O(n) sweeps + full GPU upload (audit item G3) |
-| 5 | Startup | First visible dots as early as possible; no regression to time-to-first-dots | Measure before/after on catalog-path changes (Wave 2, G7 sets the mechanism) | Single 20 MB main-thread JSON parse gates first render |
+| 5 | Startup | First visible dots as early as possible; no regression to time-to-first-dots | Measure before/after on catalog-path changes | Measured 2026-07-17: parsing the full 20 MB catalog costs 48 ms one-time (33,337 rows) — startup is dominated by engine/cruncher init, not the parse. A binary catalog format is not warranted at this catalog size |
 
 Budgets 3–5 are aspirational targets with known violations at baseline; Wave 2 of the implementation play (grade-report items G2–G8) exists to meet them. Budgets 1–2 are enforced now to stop regressions while that work proceeds.
 
