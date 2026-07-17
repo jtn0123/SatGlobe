@@ -321,15 +321,6 @@ for (const realm of [globalThis as unknown as Window, dom.window]) {
   })) as unknown as HTMLMediaElement['addTextTrack'];
 }
 
-/*
- * Eruda is a console for mobile web browsers
- * It is not needed for testing and causes issues with the test environment
- */
-vi.mock('eruda', () => ({
-  init: vi.fn(),
-  add: vi.fn(),
-}));
-
 // Mock Draggabilly - jsdom doesn't support getComputedStyle properly for elements
 vi.mock('draggabilly', () => {
   class MockDraggabilly {
