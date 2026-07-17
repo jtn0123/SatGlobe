@@ -958,21 +958,32 @@ export const resetInactiveMarkers = (i: number) => {
 };
 
 export const sendDataToSatSet = () => {
+  /*
+   * The worker reuses satPos/satVel across propagation cycles, so the live
+   * buffers cannot be transferred. Posting worker-side copies with transfer
+   * lists moves the serialization/allocation cost off the main thread: the
+   * worker pays a memcpy, the main thread receives the buffers zero-copy.
+   */
+  const satPosOut = satPos.slice();
+  const transfer: ArrayBuffer[] = [satPosOut.buffer as ArrayBuffer];
   const postMessageArray = <PositionCruncherOutgoingMsg>{
-    satPos,
+    satPos: satPosOut,
     gmst: lastGmst,
     seqNum: catalogSeqNum,
   };
   // Add In View Data if Sensor Selected
 
   if (isSensor) {
-    postMessageArray.satInView = satInView;
+    postMessageArray.satInView = satInView.slice();
+    transfer.push(postMessageArray.satInView.buffer as ArrayBuffer);
   } else {
+    // The shared empty constant is cloned, never transferred, so it stays usable.
     postMessageArray.satInView = EMPTY_INT8_ARRAY;
   }
   // Add Sun View Data if Enabled
   if (isSunlightView) {
-    postMessageArray.satInSun = satInSun;
+    postMessageArray.satInSun = satInSun.slice();
+    transfer.push(postMessageArray.satInSun.buffer as ArrayBuffer);
   } else {
     postMessageArray.satInSun = EMPTY_INT8_ARRAY;
   }
@@ -984,12 +995,13 @@ export const sendDataToSatSet = () => {
   }
 
   try {
-    // TODO: Explore SharedArrayBuffer Options
-    postMessage(postMessageArray);
+    postMessage(postMessageArray, { transfer });
     // Send Velocity Separate to avoid CPU Overload on Main Thread
+    const satVelOut = satVel.slice();
+
     postMessage(<PositionCruncherOutgoingMsg>{
-      satVel,
-    });
+      satVel: satVelOut,
+    }, { transfer: [satVelOut.buffer as ArrayBuffer] });
   } catch (e) {
     if (!process) {
       throw e;
