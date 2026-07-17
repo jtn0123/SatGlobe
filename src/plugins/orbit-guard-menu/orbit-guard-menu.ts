@@ -34,8 +34,13 @@ const l = (key: string): string => t7e(`plugins.OrbitGuardMenuPlugin.${key}` as 
 export class OrbitGuardMenuPlugin extends KeepTrackPlugin {
   readonly id = 'OrbitGuardMenuPlugin';
   dependencies_ = [];
-  private readonly maneuverDataSrc = 'http://192.34.81.138:8501/orbitguard'; // API endpoint
-  private readonly bearerToken = 'Bearer guruspace5172x2';
+  /*
+   * Deployment-specific OrbitGuard endpoint and credential. Intentionally empty in
+   * source: the previous hardcoded bearer token and plaintext-HTTP endpoint were a
+   * committed credential. Operators must supply their own HTTPS endpoint and token.
+   */
+  private readonly maneuverDataSrc = '';
+  private readonly bearerToken = '';
 
   private selectSatIdOnCruncher_: number | null = null;
   private orbitGuardEvents = <OrbitGuardEvent[]>[];
@@ -133,6 +138,11 @@ export class OrbitGuardMenuPlugin extends KeepTrackPlugin {
   }
 
   private parseManeuverData_() {
+    if (!this.maneuverDataSrc) {
+      errorManagerInstance.warn('OrbitGuard endpoint is not configured; no maneuver data will be loaded.');
+
+      return;
+    }
     if (this.orbitGuardEvents.length === 0) {
       fetch(this.maneuverDataSrc, {
         method: 'GET',

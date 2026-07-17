@@ -22,8 +22,13 @@ export class SatInfoBoxOrbitGuard extends KeepTrackPlugin {
 
   private isManeuverSectionCollapsed_ = false;
 
-  private readonly historicalDataAPIEndpoint = 'http://192.34.81.138:8501/orbitguard/historical_data';
-  private readonly bearerToken = 'Bearer guruspace5172x2';
+  /*
+   * Deployment-specific OrbitGuard endpoint and credential. Intentionally empty in
+   * source: the previous hardcoded bearer token and plaintext-HTTP endpoint were a
+   * committed credential. Operators must supply their own HTTPS endpoint and token.
+   */
+  private readonly historicalDataAPIEndpoint = '';
+  private readonly bearerToken = '';
   private readonly maneuverDataCache_: Map<string, EChartsData> = new Map();
 
   private readonly elsetDataColumns = {
@@ -66,6 +71,11 @@ export class SatInfoBoxOrbitGuard extends KeepTrackPlugin {
   }
 
   private async fetchHistoricalPlotData_(sccNum: string): Promise<EChartsData> {
+    if (!this.historicalDataAPIEndpoint) {
+      errorManagerInstance.log('OrbitGuard endpoint is not configured; historical orbit data is unavailable.');
+
+      return [];
+    }
     try {
       const response = await fetch(this.historicalDataAPIEndpoint, {
         method: 'POST',
