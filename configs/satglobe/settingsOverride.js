@@ -47,6 +47,16 @@ const settingsOverride = {
   orbitInViewColor: [0.54, 0.84, 0.81, 0.38],
   searchLimit: 120,
   copyrightOveride: 'SatGlobe · orbital data is propagated, not live telemetry',
+  /*
+   * Offline contract, enforced at plugin level rather than by hiding UI: the
+   * strict allowlist force-disables every optional plugin (remote fetchers like
+   * the launch calendar, EPIC photos, reentry feed, transponder API, and catalog
+   * browser included), so no URL parameter or future menu path can reach an
+   * external service. alwaysEnabled infrastructure (SelectSatManager) is exempt;
+   * SatGlobe's React overlay provides the product surface itself.
+   */
+  isStrictPluginList: true,
+  plugins: {},
 };
 
 window.settingsOverride = settingsOverride;
