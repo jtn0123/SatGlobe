@@ -1,4 +1,5 @@
 import { GroupType, ObjectGroup } from '@app/app/data/object-group';
+import { escapeHtml } from '@app/engine/utils/escape-html';
 import { OemSatellite } from '@app/app/objects/oem-satellite';
 import { ToastMsgType } from '@app/engine/core/interfaces';
 import { PluginRegistry } from '@app/engine/core/plugin-registry';
@@ -458,6 +459,12 @@ export class SearchManager {
       searchType === SearchResultType.PLANET;
   }
 
+
+  /** Escapes a catalog-derived field and wraps the matched span; all three segments are escaped (E4). */
+  private static highlightMatch_(text: string, strIndex: number, patlen: number): string {
+    return `${escapeHtml(text.substring(0, strIndex))}<span class="search-hilight">${escapeHtml(text.substring(strIndex, strIndex + patlen))}</span>${escapeHtml(text.substring(strIndex + patlen))}`;
+  }
+
   fillResultBox(results: SearchResult[], catalogManagerInstance: CatalogManager, totalFound?: number) {
     const colorSchemeManagerInstance = ServiceLocator.getColorSchemeManager();
     const dotsManagerInstance = ServiceLocator.getDotsManager();
@@ -483,26 +490,18 @@ export class SearchManager {
 
       // Left half of search results
       if (obj.isMissile()) {
-        html += obj.name;
+        html += escapeHtml(obj.name);
       } else if (SearchManager.isNameHighlightType_(result.searchType)) {
         // If the name matched - highlight it
-        html += obj.name.substring(0, result.strIndex);
-        html += '<span class="search-hilight">';
-        html += obj.name.substring(result.strIndex, result.strIndex + result.patlen);
-        html += '</span>';
-        html += obj.name.substring(result.strIndex + result.patlen);
+        html += SearchManager.highlightMatch_(obj.name, result.strIndex, result.patlen);
       } else if (obj.isSatellite() && result.searchType === SearchResultType.ALT_NAME) {
         const sat = obj as Satellite;
 
         // If the alternate name matched - highlight it
-        html += sat.altName.substring(0, result.strIndex);
-        html += '<span class="search-hilight">';
-        html += sat.altName.substring(result.strIndex, result.strIndex + result.patlen);
-        html += '</span>';
-        html += sat.altName.substring(result.strIndex + result.patlen);
+        html += SearchManager.highlightMatch_(sat.altName, result.strIndex, result.patlen);
       } else {
         // If not, just write the name
-        html += obj.name;
+        html += escapeHtml(obj.name);
       }
       html += '</div>';
       html += '<div class="search-result-scc">';
@@ -517,11 +516,7 @@ export class SearchManager {
             result.strIndex = result.strIndex || 0;
             result.patlen = result.patlen || 5;
 
-            html += sat.sccNum.substring(0, result.strIndex);
-            html += '<span class="search-hilight">';
-            html += sat.sccNum.substring(result.strIndex, result.strIndex + result.patlen);
-            html += '</span>';
-            html += sat.sccNum.substring(result.strIndex + result.patlen);
+            html += SearchManager.highlightMatch_(sat.sccNum, result.strIndex, result.patlen);
           }
           break;
         case SearchResultType.INTLDES:
@@ -532,11 +527,7 @@ export class SearchManager {
             result.strIndex = result.strIndex || 0;
             result.patlen = result.patlen || 5;
 
-            html += sat.intlDes.substring(0, result.strIndex);
-            html += '<span class="search-hilight">';
-            html += sat.intlDes.substring(result.strIndex, result.strIndex + result.patlen);
-            html += '</span>';
-            html += sat.intlDes.substring(result.strIndex + result.patlen);
+            html += SearchManager.highlightMatch_(sat.intlDes, result.strIndex, result.patlen);
           }
           break;
         case SearchResultType.BUS:
@@ -547,11 +538,7 @@ export class SearchManager {
             result.strIndex = result.strIndex || 0;
             result.patlen = result.patlen || 5;
 
-            html += sat.bus.substring(0, result.strIndex);
-            html += '<span class="search-hilight">';
-            html += sat.bus.substring(result.strIndex, result.strIndex + result.patlen);
-            html += '</span>';
-            html += sat.bus.substring(result.strIndex + result.patlen);
+            html += SearchManager.highlightMatch_(sat.bus, result.strIndex, result.patlen);
           }
           break;
         case SearchResultType.LAUNCH_VEHICLE:
@@ -561,41 +548,37 @@ export class SearchManager {
             result.strIndex = result.strIndex || 0;
             result.patlen = result.patlen || 5;
 
-            html += sat.launchVehicle.substring(0, result.strIndex);
-            html += '<span class="search-hilight">';
-            html += sat.launchVehicle.substring(result.strIndex, result.strIndex + result.patlen);
-            html += '</span>';
-            html += sat.launchVehicle.substring(result.strIndex + result.patlen);
+            html += SearchManager.highlightMatch_(sat.launchVehicle, result.strIndex, result.patlen);
           }
           break;
         case SearchResultType.MISSILE:
           {
             const misl = obj as MissileObject;
 
-            html += misl.desc;
+            html += escapeHtml(misl.desc);
           }
           break;
         case SearchResultType.STAR:
           html += 'Star';
           break;
         case SearchResultType.SENSOR:
-          html += (obj as unknown as DetailedSensor).country ?? 'Sensor';
+          html += escapeHtml((obj as unknown as DetailedSensor).country ?? 'Sensor');
           break;
         case SearchResultType.LAUNCH_SITE:
-          html += (obj as unknown as LaunchSite).country ?? 'Launch Site';
+          html += escapeHtml((obj as unknown as LaunchSite).country ?? 'Launch Site');
           break;
         case SearchResultType.PLANET:
           html += 'Planet';
           break;
         default:
           if (obj instanceof MissileObject) {
-            html += obj.desc;
+            html += escapeHtml(obj.desc);
           } else if (obj instanceof Star) {
             html += 'Star';
           } else if (obj instanceof OemSatellite) {
-            html += (obj as OemSatellite).OemDataBlocks[0]?.metadata.OBJECT_ID;
+            html += escapeHtml((obj as OemSatellite).OemDataBlocks[0]?.metadata.OBJECT_ID ?? '');
           } else {
-            html += (obj as Satellite).sccNum;
+            html += escapeHtml((obj as Satellite).sccNum);
           }
           break;
       }

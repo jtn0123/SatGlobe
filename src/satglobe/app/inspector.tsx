@@ -4,10 +4,10 @@ import { Icon } from './icon';
 import { describeEpoch, formatCalendarDate, formatNumber, formatUtc, objectKindLabels, regimeLabels } from './labels';
 
 /** Shows identity, orbit, mission, and provenance for the selected record. */
-function InspectorBase({ object, onClose }: { object: SpaceObjectView | null; onClose: () => void }) {
+function InspectorBase({ inert, object, onClose }: { inert?: boolean; object: SpaceObjectView | null; onClose: () => void }) {
   if (!object) {
     return (
-      <aside className="sg-panel sg-side-panel sg-inspector sg-inspector-empty">
+      <aside className="sg-panel sg-side-panel sg-inspector sg-inspector-empty" inert={inert || undefined}>
         <div className="sg-panel-kicker">INSPECT</div>
         <div className="sg-empty-orbit" aria-hidden="true"><span /><i /></div>
         <h2>Select an object</h2>
@@ -30,7 +30,7 @@ function InspectorBase({ object, onClose }: { object: SpaceObjectView | null; on
   ];
 
   return (
-    <aside className="sg-panel sg-side-panel sg-inspector" data-testid="object-inspector">
+    <aside className="sg-panel sg-side-panel sg-inspector" data-testid="object-inspector" inert={inert || undefined}>
       <div className="sg-inspector-head">
         <div><div className="sg-panel-kicker">SELECTED OBJECT</div><h2>{object.name}</h2></div>
         <button aria-label="Close inspector" className="sg-icon-button" onClick={onClose} type="button"><Icon name="close" /></button>

@@ -411,6 +411,24 @@ describe('SearchManager interactions', () => {
     expect(mgr.getLastResultGroup()).toBe(group);
   });
 
+  it('fillResultBox escapes markup in catalog-derived fields (stored XSS guard)', () => {
+    const sat = new Satellite({ ...defaultSat, id: 0, sccNum: '25544', intlDes: '1998-067A' });
+
+    Object.assign(sat, { name: '<img src=x onerror=alert(1)>SAT' });
+    ServiceLocator.getCatalogManager().objectCache = [sat] as never;
+    ServiceLocator.getDotsManager().positionData = null as never;
+
+    const results = [{ id: 0, searchType: SearchResultType.OBJECT_NAME, strIndex: 0, patlen: 4 }];
+
+    mgr.fillResultBox(results, ServiceLocator.getCatalogManager(), 1);
+
+    const box = document.getElementById('search-results')!;
+
+    // The hostile name must render as text, never as an element.
+    expect(box.querySelector('img')).toBeNull();
+    expect(box.textContent).toContain('onerror');
+  });
+
   it('fillResultBox renders a highlighted row for each search-result type', () => {
     const sat = new Satellite({ ...defaultSat, id: 0, sccNum: '25544', intlDes: '1998-067A', launchVehicle: 'Proton-K' });
 

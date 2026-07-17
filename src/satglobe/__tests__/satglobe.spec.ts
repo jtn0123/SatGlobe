@@ -90,3 +90,17 @@ test.describe('SatGlobe workshop', () => {
     expect(await page.evaluate(() => [document.documentElement.scrollWidth, document.documentElement.scrollHeight])).toEqual([1280, 720]);
   });
 });
+
+test.describe('SatGlobe failure states', () => {
+  test('surfaces a catalog-load error instead of spinning forever', async ({ page }) => {
+    // Outside the main suite's beforeEach on purpose: this journey breaks the
+    // catalog request and must not inherit the healthy-boot assertions.
+    await page.route('**/tle/tle.json', (route) => route.abort());
+    await page.goto('/');
+    await expect(page.getByTestId('satglobe-app')).toBeVisible();
+    // The adapter's hydrate timeout (20s after engine-ready) raises the error.
+    await expect(page.getByTestId('engine-error')).toBeVisible({ timeout: 45_000 });
+    await expect(page.getByTestId('engine-error')).toContainText('failed to load');
+    await expect(page.getByTestId('engine-error').getByRole('button', { name: 'Reload' })).toBeVisible();
+  });
+});
