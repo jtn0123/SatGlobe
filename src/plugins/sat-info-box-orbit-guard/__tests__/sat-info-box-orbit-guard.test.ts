@@ -62,7 +62,14 @@ describe('SatInfoBoxOrbitGuard behavior', () => {
   });
 
   describe('fetchHistoricalPlotData_', () => {
+    // The endpoint ships empty (no committed credential); configure one so the
+    // fetch paths are actually exercised.
+    const configureEndpoint = () => {
+      p().historicalDataAPIEndpoint = 'https://orbitguard.example.test/historical_data';
+    };
+
     it('parses the API response into elset/eo/event series', async () => {
+      configureEndpoint();
       vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({
         ok: true, status: 200,
         json: () => Promise.resolve(apiPayload('25544')),
@@ -77,15 +84,24 @@ describe('SatInfoBoxOrbitGuard behavior', () => {
     });
 
     it('returns an empty array on a non-ok response', async () => {
+      configureEndpoint();
       vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({ ok: false, status: 500, statusText: 'err' })));
 
       expect(await p().fetchHistoricalPlotData_('25544')).toEqual([]);
     });
 
     it('returns an empty array when fetch rejects', async () => {
+      configureEndpoint();
       vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('network'))));
 
       expect(await p().fetchHistoricalPlotData_('25544')).toEqual([]);
+    });
+
+    it('makes no network call and returns [] when no endpoint is configured', async () => {
+      vi.stubGlobal('fetch', vi.fn());
+
+      expect(await p().fetchHistoricalPlotData_('25544')).toEqual([]);
+      expect(globalThis.fetch).not.toHaveBeenCalled();
     });
   });
 
