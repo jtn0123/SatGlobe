@@ -99,6 +99,66 @@ export abstract class GlUtils {
    * with exponential backoff. 4xx and AbortError fail immediately. Honors Retry-After when
    * present and within TEXTURE_RETRY_AFTER_CAP_MS.
    */
+  /**
+   * Threshold above which a texture uploads in row bands instead of one call.
+   * A single texImage2D of a 16k earth map is a ~512 MB synchronous transfer
+   * that blocks the main thread for over a second on integrated GPUs.
+   */
+  private static readonly BANDED_UPLOAD_MIN_BYTES_ = 1 << 26; // 64 MiB decoded RGBA
+
+  /** Decoded bytes per band; ~16 MiB keeps each texSubImage2D well under a frame. */
+  private static readonly BANDED_UPLOAD_BAND_BYTES_ = 1 << 24;
+
+  /**
+   * Uploads a bitmap to the bound texture. Large bitmaps (8k+) upload in row
+   * bands with a frame yielded between bands so no single call blocks the
+   * main thread; small bitmaps keep the one-call fast path. The caller only
+   * publishes the texture handle after this resolves, so nothing samples a
+   * partially filled texture.
+   */
+  private static async uploadTexture_(gl: WebGL2RenderingContext, texture: WebGLTexture, imgBitmap: ImageBitmap): Promise<void> {
+    const { width, height } = imgBitmap;
+
+    if (width * height * 4 < GlUtils.BANDED_UPLOAD_MIN_BYTES_ || typeof gl.texStorage2D !== 'function') {
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, imgBitmap);
+
+      return;
+    }
+
+    const isPot = GlUtils.isPowerOf2(width) && GlUtils.isPowerOf2(height);
+    const levels = isPot ? Math.floor(Math.log2(Math.max(width, height))) + 1 : 1;
+
+    gl.texStorage2D(gl.TEXTURE_2D, levels, gl.RGBA8, width, height);
+
+    const bandRows = Math.max(256, Math.floor(GlUtils.BANDED_UPLOAD_BAND_BYTES_ / (width * 4)));
+
+    for (let y = 0; y < height; y += bandRows) {
+      const rows = Math.min(bandRows, height - y);
+      // Cropping an ImageBitmap avoids UNPACK_SKIP_* quirks across browsers.
+      // eslint-disable-next-line no-await-in-loop -- bands upload sequentially by design
+      const band = await createImageBitmap(imgBitmap, 0, y, width, rows, { premultiplyAlpha: 'none', imageOrientation: 'none' });
+
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+      gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, y, width, rows, gl.RGBA, gl.UNSIGNED_BYTE, band);
+      band.close();
+      if (y + rows < height) {
+        /*
+         * Yield between bands. rAF aligns with frames when visible, but never
+         * fires in background tabs - the timeout keeps uploads finishing there.
+         */
+        // eslint-disable-next-line no-await-in-loop -- yield between bands by design
+        await new Promise<void>((resolve) => {
+          const timer = setTimeout(resolve, 64);
+
+          requestAnimationFrame(() => {
+            clearTimeout(timer);
+            resolve();
+          });
+        });
+      }
+    }
+  }
+
   static async initTexture(gl: WebGL2RenderingContext, url: string): Promise<WebGLTexture> {
     const texture = gl.createTexture();
 
@@ -168,7 +228,9 @@ export abstract class GlUtils {
       gl.pixelStorei(gl.UNPACK_ALIGNMENT, 4);
 
       gl.bindTexture(gl.TEXTURE_2D, texture);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, imgBitmap);
+      performance.mark(`tex:upload-start:${url.split('/').pop()}`);
+      await GlUtils.uploadTexture_(gl, texture, imgBitmap);
+      performance.measure(`tex:upload:${url.split('/').pop()}`, `tex:upload-start:${url.split('/').pop()}`);
 
       if (GlUtils.isPowerOf2(imgBitmap.width) && GlUtils.isPowerOf2(imgBitmap.height)) {
         // power of 2: generate mipmaps and set trilinear filtering + repeat
@@ -185,7 +247,9 @@ export abstract class GlUtils {
           gl.texParameterf(gl.TEXTURE_2D, ext.TEXTURE_MAX_ANISOTROPY_EXT, maxAnisotropy);
         }
 
+        performance.mark(`tex:mipgen-start:${url.split('/').pop()}`);
         gl.generateMipmap(gl.TEXTURE_2D);
+        performance.measure(`tex:mipgen:${url.split('/').pop()}`, `tex:mipgen-start:${url.split('/').pop()}`);
       } else {
         // not power of 2: clamp and linear filtering
         // eslint-disable-next-line no-console
