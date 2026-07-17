@@ -128,6 +128,19 @@ export class ColorSchemeManager {
   pickableBufferOneTime = false;
   pickableData = new Int8Array(0);
   private hasRegisteredOffsetListener_ = false;
+  /**
+   * True when colorData/pickableData changed since the last GPU upload. Every
+   * CPU-side write marks it; sendColorBufferToGpu is a no-op while clean, so
+   * an idle scene performs zero bufferSubData calls (ADR 0002 idle budget).
+   */
+  private isColorPickableDirty_ = true;
+  /** Dots painted by the last selection/hover overlay pass, restored from the clean snapshot when they change. */
+  private lastOverlaidSel_ = -1;
+  private lastOverlaidHover_ = -1;
+
+  private markColorDirty_(): void {
+    this.isColorPickableDirty_ = true;
+  }
 
   // ─── Worker Mode ───────────────────────────────────────────────────────
   private colorCruncher_: ColorCruncherThreadManager | null = null;
@@ -211,6 +224,20 @@ export class ColorSchemeManager {
         return;
       }
 
+      /*
+       * Static schemes (colors depend only on catalog + explicitly applied
+       * state) skip the periodic progressive sweep entirely. Forced recolors
+       * still run the full loop; selection/hover overlays stay responsive via
+       * the clean-snapshot repaint, and the dirty flag keeps the GPU upload a
+       * no-op when nothing was touched.
+       */
+      if (!isForceRecolor && !this.isUseGroupColorScheme && this.currentColorScheme?.isStaticColorScheme) {
+        this.refreshOverlaysFromClean_();
+        this.sendColorBufferToGpu();
+
+        return;
+      }
+
       // In worker mode, delegate to the color worker instead of running main-thread loop
       if (this.useWorkerMode_ && this.colorCruncher_) {
         if (isForceRecolor) {
@@ -270,8 +297,13 @@ export class ColorSchemeManager {
         this.calculateBufferDataLoop_(firstDotToColor, lastDotToColor, catalogManagerInstance.objectCache, params);
       }
 
-      // Save clean copy after loop (before overlay) so setFovFadeAlpha can reapply without compounding
-      if (this.fovFadeAlpha_) {
+      this.markColorDirty_();
+      /*
+       * Save clean copy after loop (before overlay) so setFovFadeAlpha can
+       * reapply without compounding. Static schemes need it too: their
+       * per-frame path repaints previously overlaid dots from this snapshot.
+       */
+      if (this.fovFadeAlpha_ || this.currentColorScheme?.isStaticColorScheme) {
         if (!this.cleanColorData_ || this.cleanColorData_.length !== this.colorData.length) {
           this.cleanColorData_ = new Float32Array(this.colorData.length);
         }
@@ -389,6 +421,7 @@ export class ColorSchemeManager {
       if (data && data.colorData.length === this.colorData.length) {
         this.colorData.set(data.colorData);
         this.pickableData.set(data.pickableData);
+        this.markColorDirty_();
         // Save clean copy before overlay so setFovFadeAlpha can reapply without compounding
         if (this.fovFadeAlpha_) {
           if (!this.cleanColorData_ || this.cleanColorData_.length !== this.colorData.length) {
@@ -998,6 +1031,7 @@ export class ColorSchemeManager {
     // Restore clean color data before reapplying overlay to avoid compounding
     if (this.cleanColorData_ && this.cleanColorData_.length === this.colorData.length) {
       this.colorData.set(this.cleanColorData_);
+      this.markColorDirty_();
     } else if (alpha && !hadOverlay) {
       // First time enabling the overlay with no clean snapshot yet: the current
       // buffer is un-overlaid, so capture it as the base for future reapplies.
@@ -1027,6 +1061,7 @@ export class ColorSchemeManager {
     for (let i = 0; i < n; i++) {
       this.colorData[i * 4 + 3] *= this.fovFadeAlpha_[i];
     }
+    this.markColorDirty_();
   }
 
   /**
@@ -1034,13 +1069,42 @@ export class ColorSchemeManager {
    * colors directly (e.g. the optical-simulation capture's photometric pass).
    */
   uploadColorDataToGpu(): void {
+    this.markColorDirty_();
     this.sendColorBufferToGpu();
+  }
+
+  /**
+   * Restores the previously overlaid selection/hover dots from the clean
+   * snapshot, then repaints the current overlay. When neither changed since
+   * the last frame this performs zero writes, leaving the buffers clean.
+   */
+  private refreshOverlaysFromClean_(): void {
+    const selSat = PluginRegistry.getPlugin(SelectSatManager)?.selectedSat ?? -1;
+    const hovSat = ServiceLocator.getHoverManager()?.hoveringSat ?? -1;
+
+    if (selSat === this.lastOverlaidSel_ && hovSat === this.lastOverlaidHover_) {
+      return;
+    }
+    if (this.cleanColorData_ && this.cleanColorData_.length === this.colorData.length) {
+      for (const index of [this.lastOverlaidSel_, this.lastOverlaidHover_]) {
+        if (index >= 0) {
+          this.colorData.set(this.cleanColorData_.subarray(index * 4, index * 4 + 4), index * 4);
+          this.markColorDirty_();
+        }
+      }
+    }
+    this.setSelectedAndHoverBuffer_();
   }
 
   /**
    * Sends the color buffer to the GPU
    */
   private sendColorBufferToGpu() {
+    // Steady state performs zero uploads; only CPU-side writes reopen the path.
+    if (!this.isColorPickableDirty_ && this.colorBufferOneTime && this.pickableBufferOneTime) {
+      return;
+    }
+    this.isColorPickableDirty_ = false;
     const gl = this.gl_;
 
     gl.bindBuffer(gl.ARRAY_BUFFER, this.colorBuffer);
@@ -1068,6 +1132,8 @@ export class ColorSchemeManager {
   private setSelectedAndHoverBuffer_() {
     const selSat = PluginRegistry.getPlugin(SelectSatManager)?.selectedSat;
 
+    this.lastOverlaidSel_ = typeof selSat === 'undefined' ? -1 : selSat;
+    this.lastOverlaidHover_ = -1;
     if (typeof selSat !== 'undefined' && selSat !== -1) {
       // Selected satellites are always one color so forget whatever we just did
       const selSatNum = selSat;
@@ -1078,6 +1144,7 @@ export class ColorSchemeManager {
       this.colorData[selSatNum * 4 + 1] = color[1]; // G
       this.colorData[selSatNum * 4 + 2] = color[2]; // B
       this.colorData[selSatNum * 4 + 3] = color[3]; // A
+      this.markColorDirty_();
     }
 
     const hovSat = ServiceLocator.getHoverManager().hoveringSat;
@@ -1085,6 +1152,8 @@ export class ColorSchemeManager {
     if (hovSat === -1 || hovSat === selSat) {
       return;
     }
+    this.lastOverlaidHover_ = hovSat;
+    this.markColorDirty_();
     /*
      * Hover satellites are always one color so forget whatever we just did
      * We check this last so you can hover over the selected satellite
