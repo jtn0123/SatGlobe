@@ -1,5 +1,4 @@
 #!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
 
 # Guard against corrupt commit subjects that poison the generated changelog.
 #
