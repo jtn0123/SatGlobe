@@ -93,36 +93,6 @@ describe('SatelliteViewPlugin_class', () => {
     EventBus.getInstance().emit(EventBusEvent.bottomMenuClick, plugin.bottomIconElementName);
     expect(uiManagerInstance.toast).toHaveBeenCalledWith(t7e('errorMsgs.SelectSatelliteFirst'), ToastMsgType.serious, true);
   });
-
-  // Tests that a toast message is not displayed when a satellite is selected and trying to activate Satellite Camera Mode
-  it.skip('test_bottomMenuClick_callback_satellite_selected', () => {
-    const plugin = new SatelliteViewPlugin();
-    const uiManagerInstance = ServiceLocator.getUiManager();
-
-    selectSatManagerInstance.selectedSat = 1;
-    plugin.init();
-    EventBus.getInstance().emit(EventBusEvent.uiManagerInit);
-    EventBus.getInstance().emit(EventBusEvent.uiManagerFinal);
-    Container.getInstance().registerSingleton<Camera>(Singletons.MainCamera, mockCameraManager);
-    EventBus.getInstance().emit(EventBusEvent.bottomMenuClick, plugin.bottomIconElementName);
-    expect(uiManagerInstance.toast).not.toHaveBeenCalled();
-  });
-
-  // Tests that clicking the Satellite Camera Mode icon switches the camera to Satellite mode
-  it.skip('should_switch_to_satellite_camera_mode_when_icon_clicked', () => {
-    const plugin = new SatelliteViewPlugin();
-    const uiManagerInstance = ServiceLocator.getUiManager();
-
-    selectSatManagerInstance.selectedSat = 1;
-    plugin.init();
-    EventBus.getInstance().emit(EventBusEvent.uiManagerInit);
-    EventBus.getInstance().emit(EventBusEvent.uiManagerFinal);
-    const tempMockCamera = { ...mockCameraManager, cameraType: CameraType.SATELLITE_FIRST_PERSON } as Camera;
-
-    Container.getInstance().registerSingleton<Camera>(Singletons.MainCamera, tempMockCamera);
-    EventBus.getInstance().emit(EventBusEvent.bottomMenuClick, plugin.bottomIconElementName);
-    expect(uiManagerInstance.toast).not.toHaveBeenCalled();
-  });
 });
 
 describe('SatelliteViewPlugin methods', () => {

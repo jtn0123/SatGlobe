@@ -54,14 +54,10 @@ const setupStandardEnvironment = () => {
   Image.prototype.decode = vi.fn();
 
   catalogManagerInstance.init = vi.fn();
-  catalogManagerInstance.satCruncherThread = {
-    postMessage: vi.fn(),
-    worker: {
-      postMessage: vi.fn(),
+  catalogManagerInstance.satCruncherThread = {postMessage: vi.fn(),
+    worker: {postMessage: vi.fn(),
       terminate: vi.fn(),
-      onmessage: null as ((ev: MessageEvent) => void) | null,
-    },
-  } as any;
+      onmessage: null as ((ev: MessageEvent) => void) | null } } as any;
 
   // eslint-disable-next-line require-await
   vi.spyOn(CatalogLoader, 'load').mockImplementation(async () => {
@@ -72,14 +68,10 @@ const setupStandardEnvironment = () => {
       new Satellite({ ...defaultSat, ...{ id: 0, type: 1 } }),
       new Satellite({ ...defaultSat, ...{ id: 1, type: 2 } }),
     ] as Satellite[];
-    catalogManagerInstance.satCruncherThread = {
-      postMessage: vi.fn(),
-      worker: {
-        postMessage: vi.fn(),
+    catalogManagerInstance.satCruncherThread = {postMessage: vi.fn(),
+      worker: {postMessage: vi.fn(),
         terminate: vi.fn(),
-        onmessage: null as ((ev: MessageEvent) => void) | null,
-      },
-    } as any;
+        onmessage: null as ((ev: MessageEvent) => void) | null } } as any;
 
     // Call the onmessage handler only if it is set to avoid "possibly null" invocation.
     catalogManagerInstance.satCruncher.onmessage?.({ data: { type: 'satData', data: [] } as unknown as SatCruncherMessageData } as unknown as MessageEvent);
@@ -98,54 +90,12 @@ const setupStandardEnvironment = () => {
 };
 
 describe('code_snippet', () => {
-  const settingsOverride = {
-    isPreventDefaultHtml: true,
-    isDisableCss: true,
-  } as unknown as SettingsManagerOverride;
+  const settingsOverride = {isPreventDefaultHtml: true,
+    isDisableCss: true } as unknown as SettingsManagerOverride;
 
   beforeEach(() => {
     KeepTrack.reset();
     setupStandardEnvironment();
-  });
-
-  // Tests that the constructor initializes all necessary objects and settings correctly.
-  it.skip('test_constructor_initializes_objects_without_showErrorCode', () => {
-    const drawManagerInstance = ServiceLocator.getRenderer();
-
-    drawManagerInstance.update = vi.fn();
-    ServiceLocator.getMainCamera().draw = vi.fn();
-
-    let keepTrack: KeepTrack;
-    const initializationTest = async () => {
-      keepTrack = KeepTrack.getInstance();
-      KeepTrack.getInstance().containerRoot = document.body as HTMLDivElement;
-      keepTrack.init(settingsOverride);
-      KeepTrack.initCss();
-      await keepTrack.run();
-
-      expect(keepTrack.isInitialized).toBe(true);
-    };
-
-    expect(initializationTest).not.toThrow();
-  });
-
-  // Test that error messages are displayed on the loading screen in case of errors.
-  it.skip('test_error_messages_displayed_on_loading_screen', () => {
-    const scene = ServiceLocator.getScene();
-
-    scene.loadScene = () => {
-      throw new Error('Test error');
-    };
-
-    const keepTrack = KeepTrack.getInstance();
-
-    keepTrack.init(settingsOverride);
-    keepTrack.run().then(() => {
-      /*
-       * const error = new Error('Test error');
-       * expect(getEl('loader-text')?.innerHTML).toEqual(error.message);
-       */
-    });
   });
 
   // Tests that the game loop updates and draws the application correctly.

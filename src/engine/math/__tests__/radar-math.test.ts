@@ -34,7 +34,7 @@ import { DEG2RAD, Kilometers, Meters, Radians } from '@ootk/src/main';
  */
 describe('minSignal_method', () => {
   // Tests that the method returns the correct minimum detectable signal in dB for valid input values.
-  it.skip('test_min_signal_with_valid_input', () => {
+  it('test_min_signal_with_valid_input', () => {
     expect(RadarMath.minSignal(100000 as Watts, 10, 300 as Meters, 3000 as Meters, 450)).toMatchSnapshot();
   });
 

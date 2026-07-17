@@ -1,8 +1,8 @@
 import { DateTimeManager } from '@app/plugins/date-time-manager/date-time-manager';
-import { DetailedSensor } from '@app/app/sensors/DetailedSensor';
 import { SensorListPlugin } from '@app/plugins/sensor-list/sensor-list';
 import { TopMenu } from '@app/plugins/top-menu/top-menu';
 import { keepTrackApi } from '@app/keepTrackApi';
+import { ServiceLocator } from '@app/engine/core/service-locator';
 import { standardChangeTests, standardClickTests, standardPluginMenuButtonTests, standardPluginSuite } from '@test/generic-tests';
 import { vi } from 'vitest';
 
@@ -38,11 +38,9 @@ describe('SensorListPlugin', () => {
   });
 
   it('should set drag options correctly', () => {
-    expect(plugin.dragOptions).toEqual({
-      isDraggable: true,
+    expect(plugin.dragOptions).toEqual({isDraggable: true,
       minWidth: 550,
-      maxWidth: 800,
-    });
+      maxWidth: 800 });
   });
 
   it('should generate correct side menu HTML', () => {
@@ -51,35 +49,31 @@ describe('SensorListPlugin', () => {
     expect(plugin.sideMenuElementHtml).toContain('<div id="list-of-sensors">');
   });
 
-  it.skip('should handle sensorListContentClick with valid sensor group', () => {
+  it('should handle sensorListContentClick with valid sensor group', () => {
     const mockSetSensor = vi.fn();
 
-    vi.spyOn(keepTrackApi, 'getSensorManager').mockReturnValue({
-      clearSecondarySensors: vi.fn(),
-      setSensor: mockSetSensor,
-    } as any);
+    // The handler resolves the sensor manager through ServiceLocator, not the
+    // keepTrackApi facade - spy on the call site it actually uses.
+    vi.spyOn(ServiceLocator, 'getSensorManager').mockReturnValue({clearSecondarySensors: vi.fn(),
+      setSensor: mockSetSensor } as any);
 
-    plugin.sensorListContentClick('validSensorGroup');
+    // The handler ignores clicks while the menu is closed and only forwards
+    // names that exist in the sensor-group catalog ('ssn' is the first).
+    plugin.isMenuButtonActive = true;
+    plugin.sensorListContentClick('ssn');
 
-    expect(mockSetSensor).toHaveBeenCalledWith('validSensorGroup');
+    expect(mockSetSensor).toHaveBeenCalledWith('ssn');
   });
 
   it('should handle sensorListContentClick with invalid sensor group', () => {
     const mockSetSensor = vi.fn();
 
-    vi.spyOn(keepTrackApi, 'getSensorManager').mockReturnValue({
-      clearSecondarySensors: vi.fn(),
-      setSensor: mockSetSensor,
-    } as any);
+    vi.spyOn(keepTrackApi, 'getSensorManager').mockReturnValue({clearSecondarySensors: vi.fn(),
+      setSensor: mockSetSensor } as any);
 
     plugin.sensorListContentClick('invalidSensorGroup');
 
     expect(mockSetSensor).not.toHaveBeenCalled();
   });
 
-  it.skip('should throw error if no sensors are found in createSensorRow_', () => {
-    expect(() => {
-      (SensorListPlugin as unknown as { createSensorRow_: (sensor: DetailedSensor) => void }).createSensorRow_({} as DetailedSensor);
-    }).toThrow('No sensors found');
-  });
 });
