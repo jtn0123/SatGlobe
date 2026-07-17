@@ -147,7 +147,7 @@ describe('OemSatellite.applyUserDefinedMetadata_', () => {
   it('maps every USER_DEFINED_ field onto the satellite', () => {
     const sat = new OemSatellite(makeOem());
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     (sat as any).applyUserDefinedMetadata_({
       COUNTRY: 'US',
       LAUNCH_SITE: 'KSC',
@@ -174,7 +174,7 @@ describe('OemSatellite.applyUserDefinedMetadata_', () => {
   it('maps OBJECT_TYPE onto the SpaceObjectType enum', () => {
     const sat = new OemSatellite(makeOem());
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     (sat as any).applyUserDefinedMetadata_({ OBJECT_TYPE: 'rocket_body' });
     expect(sat.type).toBe(SpaceObjectType.ROCKET_BODY);
   });
@@ -183,7 +183,7 @@ describe('OemSatellite.applyUserDefinedMetadata_', () => {
     const sat = new OemSatellite(makeOem());
     const before = sat.type;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     (sat as any).applyUserDefinedMetadata_({ OBJECT_TYPE: 'NONSENSE' });
     expect(sat.type).toBe(before);
   });
@@ -192,7 +192,7 @@ describe('OemSatellite.applyUserDefinedMetadata_', () => {
     const sat = new OemSatellite(makeOem());
 
     sat.country = 'PRESET';
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     (sat as any).applyUserDefinedMetadata_(undefined);
     expect(sat.country).toBe('PRESET');
   });
@@ -259,24 +259,24 @@ describe('OemSatellite.computeGlobalIndex_', () => {
     const sat = new OemSatellite(makeMultiBlockOem());
 
     // Set the private indices directly to avoid the setters' orbit-path rebuild.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     (sat as any).dataBlockIdx_ = 1;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     (sat as any).stateVectorIdx_ = 2;
 
     // block0 has 2 points, so global index = 2 + 2 = 4.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     expect((sat as any).computeGlobalIndex_()).toBe(4);
   });
 
   it('returns the state-vector index for the first block', () => {
     const sat = new OemSatellite(makeMultiBlockOem());
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     (sat as any).dataBlockIdx_ = 0;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     (sat as any).stateVectorIdx_ = 1;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     expect((sat as any).computeGlobalIndex_()).toBe(1);
   });
 });
@@ -313,7 +313,7 @@ describe('OemSatellite.clone', () => {
 describe('OemSatellite.serializeSpecific', () => {
   it('emits the OEM-specific snapshot fields', () => {
     const sat = new OemSatellite(makeOem(['NORAD_ID = 25544']));
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const data = (sat as any).serializeSpecific() as Record<string, unknown>;
 
     expect(data.sccNum).toBe('25544');
@@ -346,14 +346,14 @@ describe('OemSatellite.findStateVectorTime_ (binary search over ephemeris)', () 
   const buildSat = (): OemSatellite => {
     const sat = new OemSatellite(makeMultiVectorOem());
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     (sat as any).getOrbitPath = () => new Float32Array();
 
     return sat;
   };
 
   const search = (sat: OemSatellite, simSec: number): number => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     (sat as any).findStateVectorTime_(simSec);
 
     return sat.stateVectorIdx;
@@ -388,7 +388,7 @@ describe('OemSatellite.findStateVectorTime_ (binary search over ephemeris)', () 
 });
 
 describe('OemSatellite ephemeris math', () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   let sat: any;
   const inRange = new Date(Date.UTC(2026, 0, 1, 0, 0, 30));
 

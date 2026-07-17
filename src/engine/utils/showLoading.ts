@@ -63,7 +63,7 @@ export const showLoading = (callback?: () => void, delay?: number): void => {
 
   setTimeout(() => {
     if (callback) {
-      // eslint-disable-next-line callback-return
+
       callback();
     }
 

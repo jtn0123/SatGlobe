@@ -385,7 +385,7 @@ export class MultiSensorLookAnglesPlugin extends KeepTrackPlugin {
     multiSiteArray.sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
     sensorManagerInstance.lastMultiSiteArray = multiSiteArray;
 
-    // eslint-disable-next-line no-unused-expressions
+
     if (isResetToDefault) {
       sensorManagerInstance.setCurrentSensor(null);
     } else {

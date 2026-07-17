@@ -8,7 +8,7 @@ import { settingsManager } from '@app/settings/settings';
 import { setupDefaultHtml } from '@test/environment/standard-env';
 import { standardPluginMenuButtonTests, standardPluginSuite } from '@test/generic-tests';
 
-// eslint-disable-next-line max-lines-per-function
+
 describe('PlanetsMenuPlugin', () => {
   beforeEach(() => {
     setupDefaultHtml();
@@ -235,7 +235,7 @@ describe('PlanetsMenuPlugin', () => {
     it('should register uiManagerFinal handler on addHtml', () => {
       const plugin = new PlanetsMenuPlugin();
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       const uiFinalSpy = vi.spyOn(plugin as any, 'uiManagerFinal_').mockImplementation(() => undefined);
       const onSpy = vi.spyOn(EventBus.getInstance(), 'on');
 
@@ -294,7 +294,7 @@ describe('PlanetsMenuPlugin', () => {
         const disableSpy = vi.spyOn(plugin, 'setBottomIconToDisabled').mockImplementation(() => undefined);
         const hideSpy = vi.spyOn(plugin, 'hideBottomIcon');
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         (plugin as any).uiManagerFinal_();
 
         expect(disableSpy).toHaveBeenCalled();
@@ -312,7 +312,7 @@ describe('PlanetsMenuPlugin', () => {
         const disableSpy = vi.spyOn(plugin, 'setBottomIconToDisabled').mockImplementation(() => undefined);
 
         settingsManager.isDisablePlanets = true;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         (plugin as any).checkPlanetsDisabledState_();
 
         expect(disableSpy).toHaveBeenCalled();
@@ -327,7 +327,7 @@ describe('PlanetsMenuPlugin', () => {
         const enableSpy = vi.spyOn(plugin, 'setBottomIconToEnabled').mockImplementation(() => undefined);
 
         settingsManager.isDisablePlanets = false;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         (plugin as any).checkPlanetsDisabledState_();
 
         expect(enableSpy).toHaveBeenCalled();
@@ -346,7 +346,7 @@ describe('PlanetsMenuPlugin', () => {
         vi.spyOn(ServiceLocator, 'getInputManager').mockReturnValue({ rmbMenuItems } as ReturnType<typeof ServiceLocator.getInputManager>);
 
         settingsManager.isDisablePlanets = true;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         (plugin as any).checkPlanetsDisabledState_();
 
         expect(rmbMenuItems[0].isRmbOnEarth).toBe(false);
@@ -362,7 +362,7 @@ describe('PlanetsMenuPlugin', () => {
         const disableSpy = vi.spyOn(plugin, 'setBottomIconToDisabled');
         const enableSpy = vi.spyOn(plugin, 'setBottomIconToEnabled');
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         (plugin as any).checkPlanetsDisabledState_();
 
         expect(disableSpy).not.toHaveBeenCalled();

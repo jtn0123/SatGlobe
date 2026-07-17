@@ -1,4 +1,4 @@
-/* eslint-disable dot-notation */
+
 import { ServiceLocator } from '@app/engine/core/service-locator';
 import { PolarPlotPlugin } from '@app/plugins/polar-plot/polar-plot';
 import { PolarPass } from '@app/plugins/polar-plot/polar-plot-pass';
@@ -8,13 +8,10 @@ import { websiteInit } from '@test/generic-tests';
 import { vi } from 'vitest';
 
 const fakePass = (maxEl = 40): PolarPass => ({
-  samples: [
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    { t: new Date('2026-05-31T00:00:00Z'), az: 100 as any, el: 5 as any, rng: 800 as any },
-  ],
+  samples: [{ t: new Date('2026-05-31T00:00:00Z'), az: 100 as any, el: 5 as any, rng: 800 as any }],
   aos: new Date('2026-05-31T00:00:00Z'),
   los: new Date('2026-05-31T00:05:00Z'),
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   maxEl: maxEl as any,
   culmination: new Date('2026-05-31T00:02:30Z'),
   durationMs: 5 * 60 * 1000,
@@ -22,7 +19,7 @@ const fakePass = (maxEl = 40): PolarPass => ({
 
 describe('PolarPlotPlugin updatePlot_/renderCurrent_', () => {
   let plugin: PolarPlotPlugin;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = () => plugin as any;
 
   beforeEach(() => {
@@ -57,7 +54,7 @@ describe('PolarPlotPlugin updatePlot_/renderCurrent_', () => {
 
 describe('PolarPlotPlugin stepPass_', () => {
   let plugin: PolarPlotPlugin;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = () => plugin as any;
 
   beforeEach(() => {
@@ -95,7 +92,7 @@ describe('PolarPlotPlugin stepPass_', () => {
 
 describe('PolarPlotPlugin togglePolarPlot_ (P shortcut)', () => {
   let plugin: PolarPlotPlugin;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = () => plugin as any;
 
   const toggle = () => plugin.getKeyboardShortcuts().find((s) => s.key === 'P')!.callback();

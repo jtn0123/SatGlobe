@@ -698,7 +698,7 @@ export abstract class KeepTrackPlugin {
    * Adds HTML for the KeepTrackPlugin.
    * @throws {Error} If HTML has already been added.
    */
-  // eslint-disable-next-line complexity
+
   addHtml(): void {
     if (this.isHtmlAdded) {
       throw new Error(`${this.id} HTML already added.`);
@@ -1536,7 +1536,7 @@ export abstract class KeepTrackPlugin {
 
           // If a callback is defined, call it even if the icon is disabled
           if (callback) {
-            // eslint-disable-next-line callback-return
+
             callback();
           }
         }
@@ -1629,7 +1629,7 @@ export abstract class KeepTrackPlugin {
           form.addEventListener('submit', (e) => {
             e.preventDefault();
             if (callback) {
-              // eslint-disable-next-line callback-return
+
               callback();
             }
           });

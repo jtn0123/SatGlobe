@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 /* eslint-disable dot-notation */
 import { GroupsManager } from '@app/app/data/groups-manager';
 import { GroupType, ObjectGroup } from '@app/app/data/object-group';
@@ -207,7 +207,7 @@ describe('CountriesMenu', () => {
     it('should handle undefined group name', () => {
       const plugin = new CountriesMenu();
 
-      // eslint-disable-next-line no-undefined
+
       expect(() => plugin['groupSelected_'](undefined as any)).not.toThrow();
     });
 
@@ -223,7 +223,7 @@ describe('CountriesMenu', () => {
       const plugin = new CountriesMenu();
       const countryMenuClickSpy = vi
         .spyOn(plugin as any, 'countryMenuClick_')
-        // eslint-disable-next-line
+
         .mockImplementation(() => undefined);
 
       vi

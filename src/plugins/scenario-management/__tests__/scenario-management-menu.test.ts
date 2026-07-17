@@ -1,4 +1,4 @@
-/* eslint-disable dot-notation */
+
 import { EventBus } from '@app/engine/events/event-bus';
 import { EventBusEvent } from '@app/engine/events/event-bus-events';
 import { ServiceLocator } from '@app/engine/core/service-locator';
@@ -16,7 +16,7 @@ vi.mock('@app/engine/utils/compression', () => ({
 
 describe('ScenarioManagementMenu', () => {
   let plugin: ScenarioManagementMenu;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = () => plugin as any;
   const PREFIX = 'scenario-management-form';
 

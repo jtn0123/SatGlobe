@@ -11,7 +11,7 @@ import { vi } from 'vitest';
  * (updateURL) and the earth/sun preset handlers, which the existing suites
  * skipped. window.location is driven via history.replaceState (jsdom).
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 const Url = UrlManager as any;
 const setLocation = (q: string) => window.history.replaceState(null, '', q);
 

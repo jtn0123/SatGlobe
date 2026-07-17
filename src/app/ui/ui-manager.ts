@@ -1,4 +1,4 @@
-/* eslint-disable max-classes-per-file */
+
 /**
  * /////////////////////////////////////////////////////////////////////////////
  *
@@ -121,7 +121,7 @@ export class UiManager {
       });
     }, 0);
 
-    // eslint-disable-next-line multiline-comment-style
+
     // // Enable Satbox Overlay
     // if (settingsManager.enableHoverOverlay) {
     //   try {

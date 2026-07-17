@@ -1,4 +1,4 @@
-/* eslint-disable class-methods-use-this */
+
 import { BaseObject, SpaceObjectType } from '@ootk/src/main';
 
 export interface LaunchSiteParams {

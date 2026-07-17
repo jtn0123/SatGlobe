@@ -1,5 +1,5 @@
-/* eslint-disable complexity */
-/* eslint-disable newline-before-return */
+
+
 /* eslint-disable max-lines */
 /**
  * /////////////////////////////////////////////////////////////////////////////

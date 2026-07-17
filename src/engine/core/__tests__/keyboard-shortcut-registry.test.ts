@@ -285,7 +285,7 @@ describe('KeyboardShortcutRegistry', () => {
    * Keep this list in sync with the actual getKeyboardShortcuts() implementations.
    */
   describe('real-world shortcut audit', () => {
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
+
     const noop = () => { /* noop */ };
 
     it('should have no conflicts across all plugin shortcuts', () => {

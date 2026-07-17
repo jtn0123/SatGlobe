@@ -1,6 +1,6 @@
 import { vi } from 'vitest';
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable no-undefined */
+
+
 import { Pickable } from '@app/engine/core/interfaces';
 import { GpAgeColorScheme } from '@app/engine/rendering/color-schemes/gp-age-color-scheme';
 import { ColorSchemeTestUtils } from '@test/engine/rendering/color-schemes/__helpers__/color-scheme-test-utils';

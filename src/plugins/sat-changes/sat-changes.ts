@@ -1,4 +1,4 @@
-/* eslint-disable no-use-before-define */
+
 import { ServiceLocator } from '@app/engine/core/service-locator';
 import { EventBus } from '@app/engine/events/event-bus';
 import { EventBusEvent } from '@app/engine/events/event-bus-events';

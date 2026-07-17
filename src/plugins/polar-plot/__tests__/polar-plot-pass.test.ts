@@ -3,9 +3,9 @@ import * as bestPass from '@app/plugins/best-pass/best-pass-calculator';
 import { buildPolarPass, findPolarPasses, PolarSample, samplePassTrack } from '@app/plugins/polar-plot/polar-plot-pass';
 import { vi } from 'vitest';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 const sensor = { maxRng: 100_000 } as any;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 const satrec = {} as any;
 
 const inViewDeps = (raeImpl: () => { az: number | null; el: number | null; rng: number | null }) => ({
@@ -68,7 +68,7 @@ describe('buildPolarPass', () => {
 
   const sample: PolarSample = {
     t: new Date('2026-05-31T00:00:00Z'),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     az: 100 as any, el: 30 as any, rng: 800 as any,
   };
 
@@ -86,14 +86,14 @@ describe('buildPolarPass', () => {
   });
 
   it('returns null when the row lacks Date fields', () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     expect(buildPolarPass(row({ START_DATE: null as any }), [sample])).toBeNull();
   });
 });
 
 describe('findPolarPasses', () => {
   const NOW = Date.parse('2026-05-31T12:00:00Z');
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const deps = { baseTimeMs: NOW, getRae: vi.fn(() => ({ az: 90, el: 30, rng: 800 })), checkIsInView: vi.fn(() => true), sunEciKm: vi.fn() } as any;
 
   const makeRow = (startMin: number, stopMin: number): lookanglesRow => ({

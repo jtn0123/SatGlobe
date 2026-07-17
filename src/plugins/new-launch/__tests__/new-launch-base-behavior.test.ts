@@ -10,7 +10,7 @@ import { vi } from 'vitest';
 
 describe('NewLaunch (base) behavior', () => {
   let plugin: NewLaunch;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = () => plugin as any;
 
   beforeEach(() => {

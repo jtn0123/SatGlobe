@@ -1,4 +1,4 @@
-/* eslint-disable max-lines */
+
 import { SatMath } from '@app/app/analysis/sat-math';
 import { buildCatalogRcsStats, estimateRcsWithSource } from '@app/app/analysis/rcs-estimator';
 import { estimateStdMagWithSource, StdMagWithSource } from '@app/app/analysis/std-mag-estimator';

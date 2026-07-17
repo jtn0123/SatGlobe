@@ -7,7 +7,7 @@ import { BaseObject, TemeVec3 } from '@ootk/src/main';
 import { GlUtils } from '../gl-utils';
 import { glsl } from '@app/engine/utils/development/formatter';
 
-/* eslint-disable no-useless-escape */
+
 /* eslint-disable camelcase */
 
 export class Ellipsoid {

@@ -1,4 +1,4 @@
-/* eslint-disable complexity */
+
 import { DensityBin } from '@app/app/data/catalog-manager';
 import { ColorInformation, Pickable, rgbaArray } from '@app/engine/core/interfaces';
 import { html } from '@app/engine/utils/development/formatter';

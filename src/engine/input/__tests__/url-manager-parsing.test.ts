@@ -11,7 +11,7 @@ import { settingsManager } from '@app/settings/settings';
  * parsers read window.location, which jsdom lets us drive via history
  * .replaceState. The private handlers are reached through a typed cast.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 const Url = UrlManager as any;
 
 const setLocation = (queryOrHash: string) => {

@@ -35,7 +35,7 @@ describe('LookAnglesPlugin_class', () => {
 
 describe('LookAnglesPlugin look-angle computation', () => {
   let plugin: LookAnglesPlugin;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = () => plugin as any;
 
   beforeEach(() => {
@@ -85,7 +85,7 @@ describe('LookAnglesPlugin look-angle computation', () => {
   });
 
   it('tearrTypeToString_ maps every TearrType to a label', () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const toStr = (LookAnglesPlugin as any).tearrTypeToString_;
 
     expect(toStr(TearrType.RISE)).toBe('Rise');

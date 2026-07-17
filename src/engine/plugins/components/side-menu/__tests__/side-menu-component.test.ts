@@ -35,7 +35,7 @@ let mockSlideInRight: MockInstance;
 let mockSlideOutLeft: MockInstance;
 let mockClickAndDragWidth: MockInstance;
 
-// eslint-disable-next-line max-lines-per-function
+
 describe('SideMenuComponent', () => {
   let eventBus: EventBus;
 

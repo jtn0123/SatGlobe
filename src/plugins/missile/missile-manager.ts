@@ -1,6 +1,6 @@
 /* eslint-disable max-params */
-/* eslint-disable max-statements */
-/* eslint-disable max-lines-per-function */
+
+
 import { MissileObject } from '@app/app/data/catalog-manager/MissileObject';
 import { fetchJson } from '@app/app/data/fetch-json';
 import { DetailedSensor } from '@app/app/sensors/DetailedSensor';

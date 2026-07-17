@@ -1619,7 +1619,7 @@ export const sensors = <SensorList>{
     country: 'Russia',
     operator: Operators.RUSSF,
   }),
-  // eslint-disable-next-line multiline-comment-style
+
   // CHINESE RADARS
   // XUA: new DetailedSensor({ // Not operational anymore
   //   id: 0,

@@ -15,7 +15,7 @@ const sensor = (over: Partial<typeof defaultSensor> = {}) => {
 
 describe('SensorManager position + observation', () => {
   let mgr: SensorManager;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = () => mgr as any;
 
   beforeEach(() => {
@@ -70,7 +70,7 @@ describe('SensorManager position + observation', () => {
 
   it('loadSensorJson applies a persisted sensorId in offline mode', () => {
     // sensorManager reads the GLOBAL settingsManager, not the module import.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const globalSettings = (globalThis as any).settingsManager;
 
     globalSettings.offlineMode = true;

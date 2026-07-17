@@ -127,7 +127,7 @@ describe('SensorManager remove/clear', () => {
 
 describe('SensorManager add / set / reset', () => {
   let mgr: SensorManager;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = () => mgr as any;
 
   beforeEach(() => {

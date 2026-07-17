@@ -9,7 +9,7 @@ import { vi } from 'vitest';
 
 describe('SatInfoBoxOrbitGuard behavior', () => {
   let plugin: SatInfoBoxOrbitGuard;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = () => plugin as any;
 
   beforeEach(() => {

@@ -7,6 +7,19 @@ import { getEl } from '@app/engine/utils/get-el';
 import { KeepTrack } from '@app/keeptrack';
 
 describe('UiValidation_class', () => {
+  let previousContainerRoot: HTMLDivElement;
+
+  beforeEach(() => {
+    // containerRoot is only assigned during KeepTrack.init(); tests must set it
+    // themselves (getEl resolves ids through document, so body works).
+    previousContainerRoot = KeepTrack.getInstance().containerRoot;
+    KeepTrack.getInstance().containerRoot = document.body as unknown as HTMLDivElement;
+  });
+
+  afterEach(() => {
+    KeepTrack.getInstance().containerRoot = previousContainerRoot;
+  });
+
   // Tests that all event listeners are added successfully
   it('test_init_ui_validation', () => {
     // the following event listeners may be added.

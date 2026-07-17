@@ -14,7 +14,7 @@ const sensor = (over: Partial<DetailedSensor>): DetailedSensor => {
 
 describe('SensorManager selection bookkeeping', () => {
   let mgr: SensorManager;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = () => mgr as any;
 
   beforeEach(() => {

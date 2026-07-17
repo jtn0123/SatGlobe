@@ -11,7 +11,7 @@ import { vi } from 'vitest';
  */
 describe('Calendar', () => {
   let cal: Calendar;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const c = () => cal as any;
 
   beforeEach(() => {

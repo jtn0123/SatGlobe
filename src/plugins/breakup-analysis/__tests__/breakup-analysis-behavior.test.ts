@@ -24,7 +24,7 @@ const fakeSat = (over: Record<string, unknown> = {}) => ({
 
 describe('BreakupAnalysis behavior', () => {
   let plugin: BreakupAnalysis;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = () => plugin as any;
 
   beforeEach(() => {

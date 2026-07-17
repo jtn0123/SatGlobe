@@ -1,6 +1,6 @@
 /* eslint-disable camelcase */
 import * as echarts from 'echarts';
-/* eslint-disable max-lines */
+
 import { EChartsData } from '@app/engine/core/interfaces';
 import { EventBus } from '@app/engine/events/event-bus';
 import { EventBusEvent } from '@app/engine/events/event-bus-events';

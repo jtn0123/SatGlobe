@@ -109,7 +109,7 @@ describe('filter-menu-core', () => {
     });
 
     it('treats an undefined value as the default', () => {
-      // eslint-disable-next-line no-undefined
+
       expect(isDefaultState(() => undefined)).toBe(true);
     });
 

@@ -154,7 +154,7 @@ describe('WatchlistPlugin_addInputForm_sccNumForms', () => {
 
 describe('WatchlistPlugin list operations', () => {
   let plugin: WatchlistPlugin;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = () => plugin as any;
 
   beforeEach(() => {

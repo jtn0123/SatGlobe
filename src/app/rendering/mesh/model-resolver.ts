@@ -401,7 +401,7 @@ export class ModelResolver {
     }
 
     // JWST not ready yet.
-    // eslint-disable-next-line no-constant-condition
+    // eslint-disable-next-line no-constant-condition, no-constant-binary-expression
     if (false && sat.sccNum === SatelliteNumber.jwst) {
       return SatelliteModels.jwst;
     }

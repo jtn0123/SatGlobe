@@ -64,9 +64,9 @@ describe('CloseObjectsPlugin_capabilities', () => {
 
 describe('CloseObjectsPlugin search algorithm', () => {
   let plugin: CloseObjectsPlugin;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = () => plugin as any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const statics = CloseObjectsPlugin as any;
 
   // Two satellites within 50km on X plus a far one; getEci is stubbed to echo each sat's position.

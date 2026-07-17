@@ -18,9 +18,9 @@ const group = (over: Record<string, unknown> = {}) => ({
 
 describe('PluginDrawer internals', () => {
   let drawer: PluginDrawer;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = () => drawer as any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const C = PluginDrawer as any;
 
   beforeEach(() => {

@@ -1,4 +1,4 @@
-/* eslint-disable dot-notation */
+
 import { ServiceLocator } from '@app/engine/core/service-locator';
 import { getEl } from '@app/engine/utils/get-el';
 import { StereoMap } from '@app/plugins/stereo-map/stereo-map';
@@ -41,7 +41,7 @@ const fakeSat = (over: Record<string, unknown> = {}) => ({
 
 describe('StereoMap draw chain and interactions', () => {
   let plugin: StereoMap;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = () => plugin as any;
   let ctx: ReturnType<typeof makeCtx>;
 
@@ -64,7 +64,7 @@ describe('StereoMap draw chain and interactions', () => {
 
     // Shared 2D context on the canvas INSTANCE (other suites reassign the prototype).
     ctx = makeCtx();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     (p().canvas_ as any).getContext = vi.fn(() => ctx);
 
     p().isMenuButtonActive = true;
@@ -205,7 +205,7 @@ describe('StereoMap draw chain and interactions', () => {
 
   describe('onDownload', () => {
     it('exports the canvas as a PNG download', () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       (p().canvas_ as any).toDataURL = vi.fn(() => 'data:image/png;base64,abc');
       const clickSpy = vi.spyOn(HTMLElement.prototype, 'click').mockImplementation(() => undefined);
 

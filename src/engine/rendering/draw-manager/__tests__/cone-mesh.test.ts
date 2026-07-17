@@ -6,7 +6,7 @@ import { mat4 } from 'gl-matrix';
 import { vi } from 'vitest';
 
 describe('ConeMesh', () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const gl = () => global.mocks.glMock as any;
   const settings = (over: Record<string, unknown> = {}) => ({ fieldOfView: 3, ...over });
 
@@ -17,7 +17,7 @@ describe('ConeMesh', () => {
 
     return mesh;
   };
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const camera = () => ServiceLocator.getMainCamera() as any;
 
   beforeEach(() => {
@@ -26,7 +26,7 @@ describe('ConeMesh', () => {
 
     pos.set([42000, 0, 0], 0); // source (GEO-ish so satDistance > offsetDistance)
     pos.set([42000, 300, 80], 3); // target
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     (ServiceLocator.getDotsManager() as any).positionData = pos;
     camera().cameraType = CameraType.DEFAULT;
     vi.clearAllMocks();
@@ -36,7 +36,7 @@ describe('ConeMesh', () => {
 
   it('init builds an apex + base-circle vertex array and triangle fan indices', () => {
     const mesh = build();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const m = mesh as any;
 
     expect(m.isLoaded_).toBe(true);
@@ -52,7 +52,7 @@ describe('ConeMesh', () => {
       mesh.update();
 
       expect(subSpy).toHaveBeenCalled();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       expect((mesh as any).vertices_.some((v: number) => v !== 0)).toBe(true);
     });
 

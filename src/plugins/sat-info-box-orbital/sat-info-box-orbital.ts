@@ -1,5 +1,5 @@
-/* eslint-disable max-statements */
-/* eslint-disable max-lines */
+
+
 import { SatMath } from '@app/app/analysis/sat-math';
 import { MissileObject } from '@app/app/data/catalog-manager/MissileObject';
 import { OemSatellite } from '@app/app/objects/oem-satellite';

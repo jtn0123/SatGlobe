@@ -22,12 +22,12 @@ describe('SettingsManager persistence', () => {
     it('sets every plugin flag to false', () => {
       const settings = new SettingsManager();
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       (settings as any).plugins = { foo: true, bar: true, baz: false };
 
       settings.disableAllPlugins();
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       const plugins = (settings as any).plugins;
 
       expect(Object.values(plugins).every((v) => v === false)).toBe(true);

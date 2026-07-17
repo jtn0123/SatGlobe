@@ -8,7 +8,7 @@ import { starTalk } from './presets/startalk';
 import { stemEnvironment } from './presets/stem';
 import type { SettingsManager } from './settings';
 
-// eslint-disable-next-line complexity
+
 export const parseGetVariables = (params: string[], settingsManager: SettingsManager): void => {
   for (const param of params) {
     const key = param.split('=')[0];

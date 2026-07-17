@@ -62,9 +62,9 @@ export class Mesh {
 
     // Remove uniforms and attributes that are still null after program linking
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
     material.uniforms = Object.fromEntries(Object.entries(material.uniforms).filter(([_, v]) => v !== null)) as Record<string, WebGLUniformLocation>;
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
     geometry.attributes = Object.fromEntries(Object.entries(geometry.attributes).filter(([_, v]) => v.location !== -1));
   }
 

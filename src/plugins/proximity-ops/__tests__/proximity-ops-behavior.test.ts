@@ -29,7 +29,7 @@ const rpoEvent = (over: Record<string, unknown> = {}) => ({
 
 describe('ProximityOps behavior', () => {
   let plugin: ProximityOps;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = () => plugin as any;
 
   beforeEach(() => {

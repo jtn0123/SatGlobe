@@ -63,7 +63,7 @@ describe('DetailedSensor.isRaeInFov (azimuth-sector FOV)', () => {
 });
 
 describe('DetailedSensor boresight / span math', () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const priv = (s: DetailedSensor) => s as any;
 
   it('boresight azimuth is the midpoint of a normal sector', () => {

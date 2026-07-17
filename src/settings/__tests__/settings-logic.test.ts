@@ -5,7 +5,7 @@ import { SettingsManager } from '@app/settings/settings';
  * setting overrides: nested plain objects merge, arrays and scalars replace.
  */
 describe('SettingsManager.deepMerge', () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const merge = (t: object, s: object) => (new SettingsManager() as any).deepMerge(t, s);
 
   it('adds new keys from the source', () => {

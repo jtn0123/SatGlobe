@@ -1,4 +1,4 @@
-/* eslint-disable camelcase */
+
 import { SolarBody } from '@app/engine/core/interfaces';
 import { Scene } from '@app/engine/core/scene';
 import { settingsManager } from '@app/settings/settings';

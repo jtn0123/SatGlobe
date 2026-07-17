@@ -109,7 +109,7 @@ describe('SatellitePhotos', () => {
     it('should register uiManagerFinal handler on addJs', () => {
       const plugin = new SatellitePhotos();
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       vi.spyOn(plugin as any, 'uiManagerFinal_').mockImplementation(() => { /* Intentional no-op */ });
       const onSpy = vi.spyOn(EventBus.getInstance(), 'on');
 
@@ -162,7 +162,7 @@ describe('SatellitePhotos_test_links', () => {
 
 describe('SatellitePhotos behavior', () => {
   let plugin: SatellitePhotos;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = () => plugin as any;
 
   beforeEach(() => {
@@ -250,7 +250,7 @@ describe('SatellitePhotos behavior', () => {
       ok: true,
       // eslint-disable-next-line camelcase
       json: () => Promise.resolve([{ image: 'img', identifier: '20220101', centroid_coordinates: { lat: 0, lon: 0 } }]),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     })) as any;
 
     plugin.onSideMenuOpen();

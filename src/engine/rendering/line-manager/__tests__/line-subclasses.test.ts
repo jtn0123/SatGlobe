@@ -1,4 +1,4 @@
-/* eslint-disable max-lines-per-function */
+
 import { ServiceLocator } from '@app/engine/core/service-locator';
 import { Scene } from '@app/engine/core/scene';
 import { SolarBody } from '@app/engine/core/interfaces';
@@ -406,7 +406,7 @@ describe('line-manager subclasses', () => {
 
   describe('Path', () => {
     class TestPath extends Path {
-      // eslint-disable-next-line class-methods-use-this
+
       update(): void {
         // no-op concrete implementation for testing the base class
       }

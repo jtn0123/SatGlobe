@@ -1,6 +1,6 @@
 import { vi } from 'vitest';
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable no-undefined */
+
+
 import { Pickable } from '@app/engine/core/interfaces';
 import { ObjectTypeColorScheme } from '@app/engine/rendering/color-schemes/object-type-color-scheme';
 import { SpaceObjectType } from '@ootk/src/main';

@@ -1,6 +1,6 @@
 import { t7e } from '@app/locales/keys';
 import Draggabilly from 'draggabilly';
-/* eslint-disable max-lines */
+
 import { country2flagIcon } from '@app/app/data/catalogs/countries';
 import { OemSatellite } from '@app/app/objects/oem-satellite';
 import { SoundNames } from '@app/engine/audio/sounds';

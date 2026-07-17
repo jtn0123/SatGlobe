@@ -9,7 +9,7 @@ import { defaultSat } from '@test/environment/apiMocks';
  * all, through the heavyweight load()/parse() orchestrators. They are private
  * statics, accessed here via a typed cast.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 const Loader = CatalogLoader as any;
 
 /**

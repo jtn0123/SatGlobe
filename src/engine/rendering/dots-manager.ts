@@ -2,7 +2,7 @@
 import { EciArr3, SatCruncherMessageData, SolarBody } from '../core/interfaces';
 import { GlUtils } from './gl-utils';
 /* eslint-disable camelcase */
-/* eslint-disable no-useless-escape */
+
 import { MissileObject } from '@app/app/data/catalog-manager/MissileObject';
 import { OemSatellite } from '@app/app/objects/oem-satellite';
 import { SelectSatManager } from '@app/plugins/select-sat-manager/select-sat-manager';

@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import {
   buildRpoCsvRow, computeEventPc, dataToSat, findClosestApproach, findSatsAvAGeo, findSatsAvALeo, ProximityOpsEvent,
   RPO_CSV_HEADERS, satToData, sortByDistance,

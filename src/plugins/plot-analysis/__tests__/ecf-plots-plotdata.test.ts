@@ -1,4 +1,4 @@
-/* eslint-disable dot-notation */
+
 import { ServiceLocator } from '@app/engine/core/service-locator';
 import { SatMathApi } from '@app/engine/math/sat-math-api';
 import { EcfPlot } from '@app/plugins/plot-analysis/ecf-plots';
@@ -11,7 +11,7 @@ const NOW = Date.UTC(2026, 4, 31);
 
 describe('EcfPlot getPlotData / createPlot', () => {
   let plugin: EcfPlot;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = () => plugin as any;
 
   const fakeSat = { name: 'SAT-A', period: 90 };

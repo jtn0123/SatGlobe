@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-/* eslint-disable dot-notation */
+
 import { PluginRegistry } from '@app/engine/core/plugin-registry';
 import { ServiceLocator } from '@app/engine/core/service-locator';
 import { EventBus } from '@app/engine/events/event-bus';
@@ -24,7 +24,7 @@ describe('TimeSlider', () => {
 
 describe('TimeSlider behavior', () => {
   let plugin: TimeSlider;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = () => plugin as any;
 
   const setScenario = (scenario: unknown) => vi.spyOn(PluginRegistry, 'getPlugin').mockReturnValue({ scenario } as never);

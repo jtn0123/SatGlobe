@@ -56,14 +56,14 @@ export const waitForCruncher = (params: WaitForCruncherParams): void => {
         }
 
         // If we have a valid message, call the callback function.
-        // eslint-disable-next-line callback-return
+
         cb();
       } else if (retryCount < maxRetries) {
         // If we don't have a valid message, wait for the next message.
         waitForCruncher({ ...params, retryCount: retryCount + 1 });
       } else if (isRunCbOnFailure) {
         // If we have reached the maximum retry count, but we want to run the callback function on failure, call the callback function.
-        // eslint-disable-next-line callback-return
+
         cb();
       } else {
         // If we have reached the maximum retry count, call the error callback function.

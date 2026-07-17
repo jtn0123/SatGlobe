@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { buildChartOption, computeLonRange, Time2LonChartLabels } from '@app/plugins/plot-analysis/time2lon-chart';
 import { Time2LonSatLine } from '@app/plugins/plot-analysis/time2lon-core';
 

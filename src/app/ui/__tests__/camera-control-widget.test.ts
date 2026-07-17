@@ -23,7 +23,7 @@ const mockCtx = () => {
 
 describe('CameraControlWidget', () => {
   let widget: CameraControlWidget;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = () => widget as any;
 
   beforeEach(() => {

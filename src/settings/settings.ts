@@ -42,7 +42,7 @@ import { SettingsPresets } from './presets/presets';
 import { SatLabelMode, UiSettings, defaultUiSettings } from './ui-settings';
 
 /* eslint-disable @typescript-eslint/no-unsafe-declaration-merging */
-/* eslint-disable max-lines */
+
 
 /**
  * Mapping of property names to their category
@@ -919,7 +919,7 @@ export class SettingsManager {
   /**
    * Placeholder for overrides
    */
-  // eslint-disable-next-line class-methods-use-this, @typescript-eslint/no-unused-vars
+
   timeMachineString(_yearStr: string): string | boolean {
     return false;
   }
