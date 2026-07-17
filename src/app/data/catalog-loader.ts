@@ -258,8 +258,14 @@ export class CatalogLoader {
             errorManagerInstance.error(error, 'tleManagerInstance.loadCatalog');
           });
       } else if (settingsManager.offlineMode) {
+        performance.mark('catalog:fetch-start');
         await fetch(`${settingsManager.installDirectory}tle/tle.json`)
           .then((response) => response.json())
+          .then((data) => {
+            performance.measure('catalog:fetch+decode', 'catalog:fetch-start');
+
+            return data;
+          })
           .then((data) => CatalogLoader.parse({
             keepTrackTle: data,
             keepTrackExtra: extraSats,
@@ -351,7 +357,9 @@ export class CatalogLoader {
        * Filter TLEs
        * Sets catalogManagerInstance.satData internally to reduce memory usage
        */
+      performance.mark('catalog:build-start');
       CatalogLoader.filterTLEDatabase(resp, extraSats, asciiCatalog, jsCatalog);
+      performance.measure('catalog:build', 'catalog:build-start');
 
       const catalogManagerInstance = ServiceLocator.getCatalogManager();
 

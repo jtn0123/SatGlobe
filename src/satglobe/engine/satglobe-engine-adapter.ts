@@ -228,6 +228,7 @@ export class SatGlobeEngineAdapter {
     if (!catalog?.objectCache?.length) {
       return;
     }
+    performance.mark('satglobe:hydrate-start');
     try {
       /*
        * KeepTrack reserves inactive Satellite instances as propagation slots.
@@ -254,6 +255,7 @@ export class SatGlobeEngineAdapter {
       }, false);
       this.installColorScheme_();
       this.poll_();
+      performance.measure('satglobe:hydrate', 'satglobe:hydrate-start');
     } catch (error) {
       // A populated catalog that fails to map is a real defect, not a startup race.
       const message = `Catalog hydration failed: ${error instanceof Error ? error.message : String(error)}`;
