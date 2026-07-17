@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "noEmit": true
+  },
+  "include": ["src/satglobe/**/*", "src/global.d.ts", "src/plugins-external.d.ts", "src/plugins-pro.d.ts"]
+}
