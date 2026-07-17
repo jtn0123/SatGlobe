@@ -7,7 +7,7 @@ import { Satellite } from '@ootk/src/main';
  * reached here via a typed cast on a bare CatalogManager instance.
  */
 describe('CatalogManager orbital-density math', () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   let cm: any;
 
   beforeEach(() => {

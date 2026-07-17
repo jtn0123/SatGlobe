@@ -1,8 +1,8 @@
-/* eslint-disable max-lines */
+
 /* eslint-disable max-params */
 /* eslint-disable max-statements */
-/* eslint-disable max-lines-per-function */
-/* eslint-disable complexity */
+
+
 import { ToastMsgType } from '@app/engine/core/interfaces';
 import { Degrees, Kilometers } from '@ootk/src/main';
 import { MissileSimulationResult, MissileSpec } from './missile-types';

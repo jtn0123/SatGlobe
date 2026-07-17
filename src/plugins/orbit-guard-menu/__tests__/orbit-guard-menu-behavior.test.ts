@@ -25,7 +25,7 @@ const manyEvents = (n: number) => Array.from({ length: n }, (_, i) => event({ sa
 
 describe('OrbitGuardMenuPlugin behavior', () => {
   let plugin: OrbitGuardMenuPlugin;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = () => plugin as any;
 
   beforeEach(() => {

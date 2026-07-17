@@ -1,4 +1,4 @@
-/* eslint-disable dot-notation */
+
 import { sensors } from '@app/app/data/catalogs/sensors';
 import { CameraType } from '@app/engine/camera/camera-type';
 import { ServiceLocator } from '@app/engine/core/service-locator';
@@ -10,13 +10,13 @@ import { vi } from 'vitest';
 
 describe('SensorListPlugin commands, shortcuts and content clicks', () => {
   let plugin: SensorListPlugin;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = () => plugin as any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   let sm: any;
 
   beforeEach(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     (DateTimeManager.prototype as any).uiManagerFinal_ = vi.fn();
     setupStandardEnvironment([TopMenu, DateTimeManager]);
     plugin = new SensorListPlugin();

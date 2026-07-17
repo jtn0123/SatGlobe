@@ -1,4 +1,4 @@
-/* eslint-disable dot-notation */
+
 import { PluginRegistry } from '@app/engine/core/plugin-registry';
 import { ServiceLocator } from '@app/engine/core/service-locator';
 import { EventBus } from '@app/engine/events/event-bus';
@@ -36,10 +36,10 @@ const touchEvt = (touches: { clientX?: number; clientY?: number; pageX?: number;
 
 describe('TouchInput', () => {
   let touch: TouchInput;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const t = () => touch as any;
   let camera: ReturnType<typeof makeCamera>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   let inputManager: any;
   let selectSat: ReturnType<typeof vi.fn>;
 

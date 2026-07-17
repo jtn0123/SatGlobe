@@ -148,13 +148,13 @@ export class DeepSpaceSatellite extends ChebyshevBody {
     return this.config_.model ?? 'sat2';
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
   draw(_sunPosition?: unknown, _tgtBuffer?: unknown): void {
     // No-op: deep-space satellites are too small for sphere rendering.
     // 3D mesh rendering is handled by MeshManager when centered.
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
   drawOcclusion(_pMatrix?: unknown, _camMatrix?: unknown, _occlusionPrgm?: unknown, _tgtBuffer?: unknown): void {
     // No-op: spacecraft is too small to occlude the sun for godrays.
   }

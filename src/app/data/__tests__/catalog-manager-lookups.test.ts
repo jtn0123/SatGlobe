@@ -40,7 +40,7 @@ describe('CatalogManager lookups', () => {
     vi.spyOn(ServiceLocator, 'getDotsManager').mockReturnValue({
       updatePosVel,
       getCurrentPosition,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     } as any);
   });
 
@@ -209,7 +209,7 @@ describe('CatalogManager lookups', () => {
         lonList: [],
         altList: [],
         timeList: [],
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       } as any);
 
       catalog.objectCache = [missile, defaultSat];

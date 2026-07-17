@@ -4,9 +4,9 @@ import { mat4, vec3 } from 'gl-matrix';
 import { vi } from 'vitest';
 
 describe('Ellipsoid', () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const gl = () => global.mocks.glMock as any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = (e: Ellipsoid) => e as any;
   let savedFlag: boolean;
 

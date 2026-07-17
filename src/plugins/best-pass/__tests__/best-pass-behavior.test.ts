@@ -18,9 +18,9 @@ vi.mock('@app/engine/utils/saveVariable', () => ({
 
 describe('BestPassPlugin behavior', () => {
   let plugin: BestPassPlugin;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = () => plugin as any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const C = BestPassPlugin as any;
 
   beforeEach(() => {

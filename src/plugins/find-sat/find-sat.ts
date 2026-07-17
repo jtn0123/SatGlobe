@@ -1,5 +1,5 @@
-/* eslint-disable prefer-const */
-/* eslint-disable complexity */
+
+
 import { initMaterialSelects, refreshMaterialSelect, syncMaterialSelect } from '@app/engine/ui/material-select';
 import { CatalogExporter } from '@app/app/data/catalog-exporter';
 import { countryCodeList, countryNameList } from '@app/app/data/catalogs/countries';

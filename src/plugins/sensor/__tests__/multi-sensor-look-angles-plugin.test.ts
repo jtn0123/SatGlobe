@@ -91,7 +91,7 @@ describe('MultiSensorLookAnglesPlugin_class', () => {
 
 describe('MultiSensorLookAnglesPlugin look-angle computation', () => {
   let plugin: MultiSensorLookAnglesPlugin;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = () => plugin as any;
 
   beforeEach(() => {
@@ -106,7 +106,7 @@ describe('MultiSensorLookAnglesPlugin look-angle computation', () => {
   });
 
   it('propagateMultiSite_ returns a TearrData for an in-view pass', () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const result = (MultiSensorLookAnglesPlugin as any).propagateMultiSite_(new Date('2022-01-01T00:00:00Z'), defaultSat.satrec, defaultSensor);
 
     expect(result).toHaveProperty('time');

@@ -1,7 +1,6 @@
 /* eslint-disable camelcase */
-/* eslint-disable max-lines-per-function */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable dot-notation */
+
+
 import { ServiceLocator } from '@app/engine/core/service-locator';
 import { getEl } from '@app/engine/utils/get-el';
 import { LaunchInfoObject, TheSpaceDevLaunchCalendarPlugin } from '@app/plugins/thespacedev-launch-calendar/thespacedev-launch-calendar';

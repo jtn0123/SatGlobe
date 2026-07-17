@@ -1,4 +1,4 @@
-/* eslint-disable camelcase */
+
 import { CatalogLoader } from '@app/app/data/catalog-loader';
 import { ToastMsgType } from '@app/engine/core/interfaces';
 import { ServiceLocator } from '@app/engine/core/service-locator';
@@ -20,7 +20,7 @@ const fakeSat = (over: Record<string, unknown> = {}) => ({
 
 describe('CatalogBrowserPlugin behavior', () => {
   let plugin: CatalogBrowserPlugin;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = () => plugin as any;
 
   beforeEach(() => {

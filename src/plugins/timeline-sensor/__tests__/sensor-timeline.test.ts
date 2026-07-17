@@ -22,7 +22,7 @@ const mockCtx = () => new Proxy({}, {
 
 describe('SensorTimeline behavior', () => {
   let plugin: SensorTimeline;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = () => plugin as any;
 
   beforeEach(() => {

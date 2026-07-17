@@ -1,4 +1,4 @@
-/* eslint-disable dot-notation */
+
 import { PluginRegistry } from '@app/engine/core/plugin-registry';
 import { ServiceLocator } from '@app/engine/core/service-locator';
 import { getEl } from '@app/engine/utils/get-el';
@@ -29,7 +29,7 @@ const installFactory = () => {
     editSettings: vi.fn(),
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   (ServiceLocator.getScene() as any).coneFactory = factory;
 
   return factory;
@@ -37,7 +37,7 @@ const installFactory = () => {
 
 describe('SatelliteFov cone management', () => {
   let plugin: SatelliteFov;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = () => plugin as any;
   let factory: ReturnType<typeof installFactory>;
   let sm: SelectSatManager;

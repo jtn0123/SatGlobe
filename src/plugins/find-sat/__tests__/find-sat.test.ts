@@ -13,7 +13,7 @@ import { standardPluginMenuButtonTests, standardPluginSuite, websiteInit } from 
 import { KeepTrack } from '@app/keeptrack';
 import { Satellite } from '@ootk/src/main';
 
-// eslint-disable-next-line max-lines-per-function
+
 describe('FindSatPlugin_class', () => {
   beforeEach(() => {
     KeepTrack.getInstance().containerRoot.innerHTML = '';

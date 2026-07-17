@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 /* eslint-disable dot-notation */
 import { CameraType } from '@app/engine/camera/camera-type';
 import { MenuMode } from '@app/engine/core/interfaces';

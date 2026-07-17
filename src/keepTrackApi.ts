@@ -34,7 +34,7 @@ declare global {
     settingsManager: SettingsManager;
     gremlins: unknown;
     randomizer: unknown;
-    // eslint-disable-next-line no-use-before-define
+
     keepTrackApi: KeepTrackApi;
     dataLayer?: unknown[]; // For Google Tag Manager / gtag
     _numeric: unknown;

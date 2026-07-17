@@ -26,7 +26,7 @@ describe('MissileObject', () => {
       country: 'USA',
       launchVehicle: 'TST-1',
       ...overrides,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     } as any);
 
   beforeEach(() => {
@@ -363,7 +363,7 @@ describe('MissileObject', () => {
     it('emits the missile-specific fields', () => {
       const m = makeMissile();
       // serializeSpecific is protected; reach it for serialization coverage.
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       const data = (m as any).serializeSpecific() as Record<string, unknown>;
 
       expect(data).toMatchObject({

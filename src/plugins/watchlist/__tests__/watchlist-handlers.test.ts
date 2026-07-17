@@ -11,7 +11,7 @@ import { vi } from 'vitest';
 
 describe('WatchlistPlugin handlers', () => {
   let plugin: WatchlistPlugin;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = () => plugin as any;
 
   beforeEach(() => {

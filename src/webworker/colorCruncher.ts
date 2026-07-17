@@ -8,7 +8,7 @@
  * struct-of-arrays typed data — no class instances or ServiceLocator access.
  */
 
-/* eslint-disable complexity */
+
 /* eslint-disable max-lines */
 
 import { CameraType } from '../engine/camera/camera-type';

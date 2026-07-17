@@ -16,8 +16,7 @@ const flush = async () => {
   }
 };
 
-/* eslint-disable max-lines-per-function */
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 /* eslint-disable dot-notation */
 
 // Mock fetch for collision data
@@ -309,7 +308,7 @@ describe('CollisionsPlugin_class', () => {
 
 describe('Collisions behavior', () => {
   let plugin: Collisions;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = () => plugin as any;
 
   beforeEach(() => {

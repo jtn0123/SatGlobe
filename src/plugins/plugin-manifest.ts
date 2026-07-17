@@ -1,4 +1,4 @@
-/* eslint-disable no-undefined */
+
 /* eslint-disable max-lines -- flat registry of every plugin; grows with each addition */
 /**
  * Plugin Manifest - Single source of truth for all plugin registrations.

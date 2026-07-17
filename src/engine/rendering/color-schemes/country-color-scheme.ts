@@ -1,4 +1,4 @@
-/* eslint-disable complexity */
+
 import { CameraType } from '@app/engine/camera/camera-type';
 import { ColorInformation, Pickable, rgbaArray } from '@app/engine/core/interfaces';
 import { ServiceLocator } from '@app/engine/core/service-locator';

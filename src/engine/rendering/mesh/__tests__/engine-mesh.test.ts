@@ -15,7 +15,7 @@ const realLayout = () => new OBJ.Layout(
 
 describe('MeshRegistry', () => {
   let registry: MeshRegistry;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const gl = () => global.mocks.glMock as any;
   const meshModel = (name: string) => ({ name }) as never;
 
@@ -94,7 +94,7 @@ describe('MeshRegistry', () => {
 });
 
 describe('MeshRenderer', () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const gl = () => global.mocks.glMock as any;
 
   const fakeMeshManager = (over: Record<string, unknown> = {}) => ({
@@ -127,7 +127,7 @@ describe('MeshRenderer', () => {
     settingsManager.isDrawLess = false;
     settingsManager.noMeshManager = false;
     settingsManager.nearZoomLevel = 1_000_000;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     (ServiceLocator.getMainCamera() as any).state.camDistBuffer = 0;
     // glMock methods are shared vi.fns — reset their call history each test.
     vi.clearAllMocks();

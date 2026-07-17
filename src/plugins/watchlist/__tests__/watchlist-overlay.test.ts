@@ -20,7 +20,7 @@ describe('WatchlistOverlay_class', () => {
 
 describe('WatchlistOverlay behavior', () => {
   let plugin: WatchlistOverlay;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = () => plugin as any;
   const T = WatchlistOverlay as unknown as {
     IMMINENT_MS_: number; UPCOMING_MS_: number; AWARE_MS_: number; DISPLAY_CAP_MS_: number; DEPARTED_MS_: number;

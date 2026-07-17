@@ -1,4 +1,4 @@
-/* eslint-disable max-lines-per-function */
+
 import { MissileObject } from '@app/app/data/catalog-manager/MissileObject';
 import { ToastMsgType } from '@app/engine/core/interfaces';
 import { ServiceLocator } from '@app/engine/core/service-locator';

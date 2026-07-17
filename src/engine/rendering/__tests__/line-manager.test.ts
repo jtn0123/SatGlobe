@@ -12,7 +12,7 @@ import { vi } from 'vitest';
 
 describe('LineManager', () => {
   let lm: LineManager;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = () => lm as any;
 
   beforeEach(() => {
@@ -226,7 +226,7 @@ describe('LineManager', () => {
 
     it('setWorldUniforms covers the flat-map and polar-view branches', () => {
       const camera = ServiceLocator.getMainCamera();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       const cam = camera as any;
 
       cam.flatMapPanX = 0;

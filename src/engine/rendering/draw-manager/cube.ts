@@ -7,7 +7,7 @@ import { mat4, vec3, vec4 } from 'gl-matrix';
 import { DepthManager } from '../depth-manager';
 import { GlUtils } from '../gl-utils';
 
-/* eslint-disable no-useless-escape */
+
 /* eslint-disable camelcase */
 
 export class Box {
@@ -139,7 +139,7 @@ export class Box {
     this.isLoaded_ = true;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
   update(obj: BaseObject | null, _selectedDate?: Date) {
     if (!this.isLoaded_) {
       return;

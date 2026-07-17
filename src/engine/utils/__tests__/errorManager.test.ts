@@ -157,7 +157,7 @@ describe('ErrorManager.reportEvent', () => {
     // Cross-origin still surfaces to EventBus for telemetry, but is not loud.
     expect(captured).toHaveLength(1);
     expect(captured[0].err.message).toBe('Script error.');
-    // eslint-disable-next-line no-console
+
     expect(console.warn).toHaveBeenCalled();
   });
 
@@ -175,9 +175,9 @@ describe('ErrorManager.reportEvent', () => {
 
     expect(captured).toHaveLength(1);
     expect((captured[0].err as { isUnactionable?: boolean }).isUnactionable).toBe(true);
-    // eslint-disable-next-line no-console
+
     expect(console.warn).toHaveBeenCalled();
-    // eslint-disable-next-line no-console
+
     expect(console.error).not.toHaveBeenCalled();
   });
 
@@ -196,9 +196,9 @@ describe('ErrorManager.reportEvent', () => {
 
     // Still surfaces to EventBus for telemetry, but quietly (warn, not error).
     expect(captured).toHaveLength(1);
-    // eslint-disable-next-line no-console
+
     expect(console.warn).toHaveBeenCalled();
-    // eslint-disable-next-line no-console
+
     expect(console.error).not.toHaveBeenCalled();
   });
 
@@ -210,7 +210,7 @@ describe('ErrorManager.reportEvent', () => {
     })).toThrow('real bug');
 
     expect(captured).toHaveLength(1);
-    // eslint-disable-next-line no-console
+
     expect(console.error).toHaveBeenCalled();
   });
 

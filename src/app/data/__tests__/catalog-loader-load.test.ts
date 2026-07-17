@@ -4,7 +4,7 @@ import { orgDataService } from '@app/app/data/catalogs/org-data-service';
 import { setupStandardEnvironment } from '@test/environment/standard-env';
 import { vi } from 'vitest';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 const CL = CatalogLoader as any;
 
 const makeSettings = (over: Record<string, unknown> = {}) => ({
@@ -14,7 +14,7 @@ const makeSettings = (over: Record<string, unknown> = {}) => ({
     externalTLEs: '',
     externalTLEsOnly: false,
     isSupplementExternal: false,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     ...(over.dataSources as any ?? {}),
   },
   limitSats: '',

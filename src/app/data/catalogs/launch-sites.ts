@@ -455,7 +455,7 @@ export const launchSites = {
 
 
 export const launchSiteObjects = Object.entries(launchSites).map(
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
   ([_key, value]) => new LaunchSite({
     name: value.name,
     lat: value.lat,

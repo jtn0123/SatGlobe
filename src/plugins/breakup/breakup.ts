@@ -332,7 +332,7 @@ export class Breakup extends KeepTrackPlugin implements ICommandPaletteCapable {
     (<HTMLInputElement>getEl('hc-scc')).value = (obj as Satellite).sccNum;
   }
 
-  // eslint-disable-next-line max-statements
+
   private onSubmit_(): void {
     const timeManager = ServiceLocator.getTimeManager();
     const catalogManagerInstance = ServiceLocator.getCatalogManager();

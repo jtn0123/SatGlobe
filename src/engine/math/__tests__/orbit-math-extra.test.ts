@@ -6,7 +6,7 @@ import { Kilometers, TemeVec3 } from '@ootk/src/main';
  * left partially covered: the arctan2 quadrant helper, mean-anomaly, the
  * equatorial argument-of-perigee branch, and the full stateVector2Tle compose.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 const Math_ = OrbitMath as any;
 
 describe('OrbitMath.arctan2 (private quadrant helper)', () => {

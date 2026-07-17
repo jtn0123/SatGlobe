@@ -24,7 +24,7 @@ describe('SatelliteTimeline_class', () => {
 
 describe('SatelliteTimeline behavior', () => {
   let plugin: SatelliteTimeline;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = () => plugin as any;
 
   const highRangeSensor = () => Object.assign(Object.create(Object.getPrototypeOf(defaultSensor)), defaultSensor, { maxRng: 100000 });

@@ -1,4 +1,4 @@
-/* eslint-disable complexity */
+
 import { ColorInformation, Pickable, rgbaArray } from '@app/engine/core/interfaces';
 import { BaseObject, Days, Satellite, getDayOfYear, Star } from '@ootk/src/main';
 import { getCatalogReferenceDate } from '../../utils/catalog-reference-time';

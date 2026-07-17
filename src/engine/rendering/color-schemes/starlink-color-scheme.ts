@@ -1,4 +1,4 @@
-/* eslint-disable complexity */
+
 import { MissileObject } from '@app/app/data/catalog-manager/MissileObject';
 import { CameraType } from '@app/engine/camera/camera-type';
 import { ColorInformation, Pickable, rgbaArray } from '@app/engine/core/interfaces';

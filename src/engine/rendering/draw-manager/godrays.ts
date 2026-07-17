@@ -9,7 +9,7 @@ import { glsl } from '@app/engine/utils/development/formatter';
 import { mat4, vec2, vec4 } from 'gl-matrix';
 import { DepthManager } from '../depth-manager';
 import { Sun } from './sun';
-/* eslint-disable no-useless-escape */
+
 /* eslint-disable camelcase */
 
 /**

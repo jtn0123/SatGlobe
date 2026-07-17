@@ -6,7 +6,7 @@ import { vi } from 'vitest';
 
 describe('SoundManager stop / play guards', () => {
   let sm: SoundManager;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const p = () => sm as any;
 
   const fakeWebAudio = () => ({ source: { stop: vi.fn() }, gainNode: { gain: { setTargetAtTime: vi.fn() } } });
@@ -80,7 +80,7 @@ describe('SoundManager stop / play guards', () => {
     vi.useFakeTimers();
     const audio = { volume: 1, pause: vi.fn(), currentTime: 3 } as unknown as HTMLAudioElement;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     (SoundManager as any).fadeOut_(audio, 100);
     vi.advanceTimersByTime(200);
 

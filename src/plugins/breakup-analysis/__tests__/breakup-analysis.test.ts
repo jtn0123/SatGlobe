@@ -118,7 +118,7 @@ describe('BreakupAnalysis_class', () => {
 
       websiteInit(plugin);
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       const p = plugin as any;
 
       p.selectedEventId_ = 'fengyun1c';

@@ -1,5 +1,5 @@
 // Shaders should NOT be modified
-/* eslint-disable no-useless-escape */
+
 
 import { WebGlProgramHelper } from '@app/engine/rendering/webgl-program';
 import { mat4, vec3, vec4 } from 'gl-matrix';

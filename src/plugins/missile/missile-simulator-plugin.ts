@@ -320,7 +320,7 @@ export class MissileSimulatorPlugin extends KeepTrackPlugin {
     this.updateStatus_();
   };
 
-  // eslint-disable-next-line max-statements
+
   private missileSubmit_(): void {
     showLoading(() => {
       const timeManagerInstance = ServiceLocator.getTimeManager();

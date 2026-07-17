@@ -1,5 +1,5 @@
-/* eslint-disable max-depth */
-/* eslint-disable complexity */
+
+
 /* eslint-disable camelcase */
 import { MissileObject } from '@app/app/data/catalog-manager/MissileObject';
 import { OemSatellite } from '@app/app/objects/oem-satellite';

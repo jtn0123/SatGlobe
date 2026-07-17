@@ -1,4 +1,4 @@
-/* eslint-disable dot-notation */
+
 import { CameraType } from '@app/engine/camera/camera-type';
 import { PluginRegistry } from '@app/engine/core/plugin-registry';
 import { ServiceLocator } from '@app/engine/core/service-locator';
@@ -13,13 +13,13 @@ import { vi } from 'vitest';
 
 describe('MouseInput handlers', () => {
   let mouse: MouseInput;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const m = () => mouse as any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   let camera: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   let inputManager: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   let timeManager: any;
   let selectSat: ReturnType<typeof vi.fn>;
   let setSecondarySat: ReturnType<typeof vi.fn>;
