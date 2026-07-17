@@ -38,3 +38,4 @@ The browser reads only bundled resources. Catalog refresh is a manual Node comma
 ## Upstream modification log
 
 - 2026-07-17 — `test/weatherApi/weather.test.ts` (+ regenerated snapshot): replaced the machine-dependent full-object snapshot of `calculatePasses_()` with a stable projection (sensor `objName`, pass type, ISO pass windows). The raw `DetailedSensor` graph embeds trig-derived ECF positions that differ at ~1e-12 across libm implementations, which made the upstream snapshot fail on some machines (previously noted in `SATGLOBE.md`).
+- 2026-07-17 — `build/webpack-manager.ts`: removed the asset-size `ignoreWarnings` suppression and added an ADR 0002 bundle budget (`performance.hints: 'error'`, 8 MiB per JS asset/entrypoint, JS-only filter, `COVERAGE=1` exempt) to production builds.
