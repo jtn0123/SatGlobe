@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { matchesSatGlobeFilters, type FilterableSpaceObject } from '../filters';
+import { matchesSatGlobeFilters, prepareFilterMatcher, type FilterableSpaceObject } from '../filters';
 import { DEFAULT_FILTERS, type FilterState } from '../types';
 
 const object: FilterableSpaceObject = {
@@ -51,5 +51,39 @@ describe('matchesSatGlobeFilters', () => {
 
     expect(matchesSatGlobeFilters(inactive, withFilters({ status: 'inactive' }))).toBe(true);
     expect(matchesSatGlobeFilters(inactive, withFilters({ status: 'all' }))).toBe(true);
+  });
+});
+
+describe('prepareFilterMatcher', () => {
+  it('returns a reusable predicate equivalent to matchesSatGlobeFilters', () => {
+    const filters = withFilters({ constellation: 'starlink' });
+    const matcher = prepareFilterMatcher(filters);
+
+    expect(matcher(object)).toBe(true);
+    expect(matcher({ ...object, name: 'ONEWEB-0001' })).toBe(false);
+    expect(matcher(object)).toBe(matchesSatGlobeFilters(object, filters));
+  });
+
+  it('prefers precomputed lowercase fields over deriving them per call', () => {
+    const matcher = prepareFilterMatcher(withFilters({
+      launchCohort: '2019-029',
+      constellation: 'starlink',
+      countryOrOperator: 'spacex',
+    }));
+    // Raw fields deliberately contradict the precomputed text: matches prove
+    // the precomputed path is used, so callers can rely on the fast path.
+    const precomputed: FilterableSpaceObject = {
+      ...object,
+      name: 'RAW NAME IGNORED',
+      internationalDesignator: 'ignored',
+      launchDate: 'ignored',
+      country: 'ignored',
+      owner: 'ignored',
+      nameText: 'starlink-1008',
+      launchText: '2019-029b 2019-05-24',
+      ownershipText: 'us spacex',
+    };
+
+    expect(matcher(precomputed)).toBe(true);
   });
 });

@@ -1,6 +1,5 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import type { SatGlobeEngineAdapter } from '../engine/satglobe-engine-adapter';
-import { matchesSatGlobeFilters } from '../domain/filters';
 import { downloadSavedView, importSavedView } from '../domain/saved-view';
 import {
   DEFAULT_FILTERS,
@@ -365,13 +364,45 @@ function getQuickLensState(lens: QuickLens): { filters: FilterState; encoding: V
   return { filters, encoding };
 }
 
+/**
+ * Owns workshop filter state. UI state updates immediately; the engine
+ * application (a full-catalog recolor) coalesces to the trailing value, so
+ * dragging a slider costs one recolor instead of one per input event.
+ */
+function useWorkshopFilters(adapter: SatGlobeEngineAdapter): {
+  filters: FilterState;
+  setFilters: (next: FilterState) => void;
+  setFiltersState: React.Dispatch<React.SetStateAction<FilterState>>;
+} {
+  const [filters, setFiltersState] = useState<FilterState>(structuredClone(DEFAULT_FILTERS));
+  const pending = useRef<number | null>(null);
+  const setFilters = useCallback((next: FilterState) => {
+    setFiltersState(next);
+    if (pending.current !== null) {
+      window.clearTimeout(pending.current);
+    }
+    pending.current = window.setTimeout(() => {
+      pending.current = null;
+      adapter.setFilters(next);
+    }, 120);
+  }, [adapter]);
+
+  useEffect(() => () => {
+    if (pending.current !== null) {
+      window.clearTimeout(pending.current);
+    }
+  }, []);
+
+  return { filters, setFilters, setFiltersState };
+}
+
 /** Coordinates SatGlobe's workshop, presentation, and story states. */
 export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
   const [engine, setEngine] = useState<EngineState>(adapter.getState());
   const [mode, setMode] = useState<AppMode>('workshop');
   const [scaleMode, setScaleMode] = useState<ScaleMode>('semantic');
   const [query, setQuery] = useState('');
-  const [filters, setFiltersState] = useState<FilterState>(structuredClone(DEFAULT_FILTERS));
+  const { filters, setFilters, setFiltersState } = useWorkshopFilters(adapter);
   const [results, setResults] = useState<SpaceObjectView[]>([]);
   const [savedViews, setSavedViews] = useState<SavedViewV1[]>([]);
   const [notice, setNotice] = useState('');
@@ -388,11 +419,6 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
   useEffect(() => {
     setResults(adapter.search(query));
   }, [adapter, engine.objectCount, query]);
-
-  const setFilters = useCallback((next: FilterState) => {
-    setFiltersState(next);
-    adapter.setFilters(next);
-  }, [adapter]);
 
   const switchMode = useCallback((nextMode: AppMode) => {
     setMode(nextMode);
@@ -534,10 +560,8 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
     adapter.setEncoding(encoding);
   };
 
-  const visibleEstimate = useMemo(
-    () => adapter.getObjects().filter((object) => matchesSatGlobeFilters(object, filters)).length,
-    [adapter, engine.objectCount, filters],
-  );
+  // Maintained by the adapter as a byproduct of filter application; the UI never sweeps the catalog.
+  const visibleEstimate = engine.visibleCount;
   const newestElementAge = ageInDays(engine.newestElementEpoch);
   const openStory = useCallback(() => {
     switchMode('story');
