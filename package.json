@@ -46,7 +46,7 @@
     "changelog": "auto-changelog",
     "generate-t7e": "npx tsx ./build/generate-translation.ts",
     "lcov": "npx tsx ./build/utils/open-lcov.ts",
-    "lint": "eslint ./src",
+    "lint": "eslint ./src --max-warnings 0",
     "typecheck": "tsc --noEmit -p tsconfig.build.json",
     "createtest": "npx tsx ./scripts/create-test-file.ts",
     "scenario:generate": "npx tsx --tsconfig src/plugins-pro/offline-scenario-creator/tsconfig.json src/plugins-pro/offline-scenario-creator/src/bin/generate-scenario.ts",
