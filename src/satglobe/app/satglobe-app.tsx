@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { SatGlobeEngineAdapter } from '../engine/satglobe-engine-adapter';
 import { matchesSatGlobeFilters } from '../domain/filters';
 import { downloadSavedView, importSavedView } from '../domain/saved-view';
@@ -148,7 +148,7 @@ function FilterSection({ label, children, open = true }: { label: string; childr
 }
 
 /** Shows identity, orbit, mission, and provenance for the selected record. */
-function Inspector({ object, onClose }: { object: SpaceObjectView | null; onClose: () => void }) {
+function InspectorBase({ object, onClose }: { object: SpaceObjectView | null; onClose: () => void }) {
   if (!object) {
     return (
       <aside className="sg-panel sg-side-panel sg-inspector sg-inspector-empty">
@@ -197,8 +197,11 @@ function Inspector({ object, onClose }: { object: SpaceObjectView | null; onClos
   );
 }
 
+const Inspector = memo(InspectorBase);
+
 interface TopBarProps {
-  engine: EngineState;
+  ready: boolean;
+  objectCount: number;
   mode: AppMode;
   newestElementAge: number | null;
   onModeChange: (mode: AppMode) => void;
@@ -206,7 +209,7 @@ interface TopBarProps {
 }
 
 /** Renders global mode controls and local-catalog health. */
-function TopBar({ engine, mode, newestElementAge, onModeChange, onStoryOpen }: TopBarProps) {
+function TopBarBase({ ready, objectCount, mode, newestElementAge, onModeChange, onStoryOpen }: TopBarProps) {
   return (
     <header className="sg-topbar">
       <button className="sg-brand" onClick={() => onModeChange('workshop')} type="button">
@@ -214,8 +217,8 @@ function TopBar({ engine, mode, newestElementAge, onModeChange, onStoryOpen }: T
         <span><strong>SATGLOBE</strong><small>ORBITAL WORKSHOP / ALPHA</small></span>
       </button>
       <div className="sg-topbar-center" data-testid="catalog-status">
-        <span className={`sg-status-dot ${engine.ready ? 'is-ready' : ''}`} />
-        <span>{engine.ready ? `${formatNumber(engine.objectCount)} OBJECTS · LOCAL CATALOG` : 'INITIALIZING PROPAGATION ENGINE'}</span>
+        <span className={`sg-status-dot ${ready ? 'is-ready' : ''}`} />
+        <span>{ready ? `${formatNumber(objectCount)} OBJECTS · LOCAL CATALOG` : 'INITIALIZING PROPAGATION ENGINE'}</span>
         {newestElementAge !== null && newestElementAge >= 14 && <strong className="sg-stale-data">NEWEST ELEMENT {Math.floor(newestElementAge)}D OLD</strong>}
       </div>
       <nav className="sg-mode-switcher" aria-label="Display mode">
@@ -227,8 +230,10 @@ function TopBar({ engine, mode, newestElementAge, onModeChange, onStoryOpen }: T
   );
 }
 
+const TopBar = memo(TopBarBase);
+
 /** Renders shared simulation-time controls for every scene mode. */
-function TimeDock({ adapter, simulationTime }: { adapter: SatGlobeEngineAdapter; simulationTime: string }) {
+function TimeDockBase({ adapter, simulationTime }: { adapter: SatGlobeEngineAdapter; simulationTime: string }) {
   const moveTime = (hours: number) => adapter.setSimulationTime(new Date(new Date(simulationTime).getTime() + hours * 3_600_000).toISOString());
 
   return (
@@ -242,8 +247,10 @@ function TimeDock({ adapter, simulationTime }: { adapter: SatGlobeEngineAdapter;
   );
 }
 
+const TimeDock = memo(TimeDockBase);
+
 /** Renders the minimal editorial title used in presentation mode. */
-function PresentationTitle({ encoding, objectCount, onOpenWorkshop }: { encoding: VisualEncoding; objectCount: number; onOpenWorkshop: () => void }) {
+function PresentationTitleBase({ encoding, objectCount, onOpenWorkshop }: { encoding: VisualEncoding; objectCount: number; onOpenWorkshop: () => void }) {
   return (
     <section className="sg-presentation-title">
       <span>EARTH ORBIT / LOCAL SNAPSHOT</span>
@@ -253,6 +260,8 @@ function PresentationTitle({ encoding, objectCount, onOpenWorkshop }: { encoding
     </section>
   );
 }
+
+const PresentationTitle = memo(PresentationTitleBase);
 
 /** Renders one sourced story fact and its publisher links. */
 function StoryFactCard({ fact, story }: { fact: StoryFact; story: StoryManifestV1 }) {
@@ -285,7 +294,7 @@ interface StoryDeckProps {
 }
 
 /** Renders guided playback without replacing the underlying orbital scene. */
-function StoryDeck(props: StoryDeckProps) {
+function StoryDeckBase(props: StoryDeckProps) {
   const { beatIndex, playing, progress, showSources, story } = props;
   const beat = story.beats[beatIndex];
 
@@ -322,6 +331,8 @@ function StoryDeck(props: StoryDeckProps) {
     </section>
   );
 }
+
+const StoryDeck = memo(StoryDeckBase);
 
 /** Shows and toggles the visual scale disclosure shared by all modes. */
 function ScaleDisclosure({ mode, onToggle }: { mode: ScaleMode; onToggle: () => void }) {
@@ -392,6 +403,12 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
       setStoryProgress(0);
     }
   }, []);
+
+  // Stable handlers so memoized children skip re-rendering on unrelated state changes.
+  const clearSelection = useCallback(() => adapter.clearSelection(), [adapter]);
+  const openWorkshop = useCallback(() => switchMode('workshop'), [switchMode]);
+  const togglePlaying = useCallback(() => setStoryPlaying((playing) => !playing), []);
+  const toggleSources = useCallback(() => setShowSources((show) => !show), []);
 
   const applyBeat = useCallback((index: number) => {
     const nextIndex = Math.min(Math.max(index, 0), story.beats.length - 1);
@@ -522,10 +539,10 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
     [adapter, engine.objectCount, filters],
   );
   const newestElementAge = ageInDays(engine.newestElementEpoch);
-  const openStory = () => {
+  const openStory = useCallback(() => {
     switchMode('story');
     applyBeat(storyBeat);
-  };
+  }, [applyBeat, storyBeat, switchMode]);
   const toggleScale = () => setScaleMode((value) => {
     const next = value === 'semantic' ? 'true' : 'semantic';
 
@@ -536,7 +553,7 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
 
   return (
     <main className={`sg-app sg-mode-${mode}`} data-testid="satglobe-app">
-      <TopBar engine={engine} mode={mode} newestElementAge={newestElementAge} onModeChange={switchMode} onStoryOpen={openStory} />
+      <TopBar mode={mode} newestElementAge={newestElementAge} objectCount={engine.objectCount} onModeChange={switchMode} onStoryOpen={openStory} ready={engine.ready} />
 
       <aside className="sg-panel sg-side-panel sg-discover" data-testid="discover-panel">
         <div className="sg-panel-title"><div><span className="sg-panel-index">01</span><h1>Discover</h1></div><span className="sg-count" data-testid="visible-count">{formatNumber(visibleEstimate)} visible</span></div>
@@ -631,15 +648,15 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
         </details>
       </aside>
 
-      <Inspector object={engine.selectedObject} onClose={() => adapter.clearSelection()} />
+      <Inspector object={engine.selectedObject} onClose={clearSelection} />
 
       <ScaleDisclosure mode={scaleMode} onToggle={toggleScale} />
 
       <TimeDock adapter={adapter} simulationTime={engine.simulationTime} />
 
-      {mode === 'presentation' && <PresentationTitle encoding={engine.encoding} objectCount={visibleEstimate} onOpenWorkshop={() => switchMode('workshop')} />}
+      {mode === 'presentation' && <PresentationTitle encoding={engine.encoding} objectCount={visibleEstimate} onOpenWorkshop={openWorkshop} />}
 
-      {mode === 'story' && <StoryDeck beatIndex={storyBeat} onAuthoredView={() => adapter.setCamera(beat.camera)} onBeatChange={applyBeat} onOpenWorkshop={() => switchMode('workshop')} onPlayingChange={() => setStoryPlaying((playing) => !playing)} onSourcesChange={() => setShowSources((show) => !show)} playing={storyPlaying} progress={storyProgress} showSources={showSources} story={story} />}
+      {mode === 'story' && <StoryDeck beatIndex={storyBeat} onAuthoredView={() => adapter.setCamera(beat.camera)} onBeatChange={applyBeat} onOpenWorkshop={openWorkshop} onPlayingChange={togglePlaying} onSourcesChange={toggleSources} playing={storyPlaying} progress={storyProgress} showSources={showSources} story={story} />}
 
       {notice && <button className="sg-notice" onClick={() => setNotice('')} type="button">{notice}<Icon name="close" size={14} /></button>}
       {!engine.ready && <div className="sg-engine-loading"><span className="sg-loader-ring" /><strong>Preparing the orbital environment</strong><small>Loading the bundled catalog and propagation workers…</small></div>}
