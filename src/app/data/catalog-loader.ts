@@ -260,8 +260,9 @@ export class CatalogLoader {
       } else if (settingsManager.offlineMode) {
         // The offline edition starts this fetch at module evaluation (main.ts)
         // so it overlaps engine init; fall back to a fresh fetch if it failed.
+        // Both use the page-relative URL: offline builds serve from their own root.
         await (window.satGlobeCatalogPrefetch ?? Promise.reject(new Error('no prefetch')))
-          .catch(() => fetch(`${settingsManager.installDirectory}tle/tle.json`).then((response) => response.json()))
+          .catch(() => fetch('./tle/tle.json').then((response) => response.json()))
           .then((data) => data as KeepTrackTLEFile[])
           .then((data) => CatalogLoader.parse({
             keepTrackTle: data,
