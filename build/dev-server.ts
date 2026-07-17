@@ -14,6 +14,24 @@ const distDir = resolve(rootDir, 'dist');
 
 const RELOAD_SCRIPT = `<script>new EventSource("/__reload").onmessage=()=>location.reload()</script>`;
 
+/*
+ * Security headers for the satglobe profile, mirroring configs/satglobe/nginx.conf
+ * (keep the two in sync). Served from the dev server too so the offline contract
+ * holds in `start:satglobe` and `start:satglobe:static`, not just Docker.
+ */
+const SATGLOBE_CSP = [
+  "default-src 'self' blob:",
+  "img-src 'self' data: blob:",
+  "style-src 'self' 'unsafe-inline'",
+  "script-src 'self' 'unsafe-eval' blob:",
+  "worker-src 'self' blob:",
+  "connect-src 'self'",
+  "font-src 'self'",
+  "frame-ancestors 'none'",
+  "object-src 'none'",
+  "base-uri 'self'",
+].join('; ');
+
 // Maps config directory filenames to their dist/ destinations
 const CONFIG_FILE_DESTINATIONS: Record<string, string> = {
   'settingsOverride.js': 'dist/settings/settingsOverride.js',
@@ -42,7 +60,7 @@ const mimeTypes: Record<string, string> = {
 // SSE clients for livereload
 const sseClients = new Set<ServerResponse>();
 
-function startServer() {
+function startServer(securityHeaders: Record<string, string> = {}) {
   const server = createServer(async (req, res) => {
     // Swallow socket-level errors (client aborts, RST). Without this listener a
     // write to a closed/aborted socket emits an unhandled 'error' that crashes the
@@ -91,7 +109,7 @@ function startServer() {
         data = Buffer.from(html);
       }
 
-      res.writeHead(200, { 'Content-Type': mimeTypes[ext] || 'application/octet-stream' });
+      res.writeHead(200, { 'Content-Type': mimeTypes[ext] || 'application/octet-stream', ...securityHeaders });
       res.end(data);
     } catch {
       // Guard against "headers already sent" when the response was partially
@@ -232,9 +250,17 @@ function getProfileName(args: string[]): string | null {
 }
 
 const isStaticOnly = process.argv.includes('--static');
+const requestedProfile = getProfileName(process.argv.slice(2));
+const securityHeaders: Record<string, string> = requestedProfile === 'satglobe'
+  ? {
+    'Content-Security-Policy': SATGLOBE_CSP,
+    'X-Content-Type-Options': 'nosniff',
+    'Referrer-Policy': 'no-referrer',
+  }
+  : {};
 
 if (isStaticOnly) {
-  startServer();
+  startServer(securityHeaders);
 } else {
   const args = process.argv.slice(2).filter((arg) => arg !== '--static');
   const profileName = getProfileName(args);
@@ -243,7 +269,7 @@ if (isStaticOnly) {
   runBuildWatch(args);
 
   // Start server and file watchers
-  startServer();
+  startServer(securityHeaders);
   watchDist();
 
   // Watch config directory for non-rspack file changes

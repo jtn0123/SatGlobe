@@ -67,7 +67,7 @@
     "start:celestrak": "npx tsx ./build/dev-server.ts --profile=celestrak",
     "start:ci": "npx tsx ./build/dev-server.ts --static",
     "start:satglobe": "npx tsx ./build/dev-server.ts --profile=satglobe",
-    "start:satglobe:static": "npx tsx ./build/dev-server.ts --static",
+    "start:satglobe:static": "npx tsx ./build/dev-server.ts --static --profile=satglobe",
     "docker:satglobe": "docker build -f Dockerfile.satglobe -t satglobe:local .",
     "catalog:refresh": "npx tsx ./scripts/satglobe/catalog-refresh.ts",
     "catalog:verify": "npx tsx ./scripts/satglobe/catalog-refresh.ts --verify-only",
