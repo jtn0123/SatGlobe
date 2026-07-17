@@ -56,6 +56,8 @@ function FilterSection({ label, children, open = true }: { label: string; childr
 }
 
 export interface DiscoverPanelProps {
+  /** True while another mode owns the screen: removes the hidden panel from focus order and the accessibility tree. */
+  inert?: boolean;
   visibleCount: number;
   query: string;
   results: SpaceObjectView[];
@@ -75,14 +77,14 @@ export interface DiscoverPanelProps {
 
 /** The workshop's search, lens, filter, encoding, and saved-view instrument panel. */
 function DiscoverPanelBase({
-  visibleCount, query, results, filters, encoding, savedViews,
+  inert, visibleCount, query, results, filters, encoding, savedViews,
   onQueryChange, onSelectResult, onQuickLens, setFilters, onEncodingChange,
   onSaveView, onApplyView, createView, onImportFile,
 }: DiscoverPanelProps) {
   const fileInput = useRef<HTMLInputElement>(null);
 
   return (
-    <aside className="sg-panel sg-side-panel sg-discover" data-testid="discover-panel">
+    <aside className="sg-panel sg-side-panel sg-discover" data-testid="discover-panel" inert={inert || undefined}>
       <div className="sg-panel-title"><div><span className="sg-panel-index">01</span><h1>Discover</h1></div><span className="sg-count" data-testid="visible-count">{formatNumber(visibleCount)} visible</span></div>
       <label className="sg-search">
         <Icon name="search" />

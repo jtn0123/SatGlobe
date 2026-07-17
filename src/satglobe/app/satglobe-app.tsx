@@ -37,9 +37,19 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
   const [results, setResults] = useState<SpaceObjectView[]>([]);
   const [savedViews, setSavedViews] = useState<SavedViewV1[]>([]);
   const [notice, setNotice] = useState('');
+  const [webglMissing, setWebglMissing] = useState(false);
   const story = starlinkBuildoutStory;
 
   useEffect(() => adapter.subscribe(setEngine), [adapter]);
+
+  // WebGL2 failure otherwise presents as an eternal loading state (C1).
+  useEffect(() => {
+    const probe = document.createElement('canvas').getContext('webgl2');
+
+    if (!probe) {
+      setWebglMissing(true);
+    }
+  }, []);
 
   useEffect(() => {
     setResults(adapter.search(query));
@@ -181,6 +191,7 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
         createView={createView}
         encoding={engine.encoding}
         filters={filters}
+        inert={mode !== 'workshop'}
         onApplyView={applyView}
         onEncodingChange={setEncoding}
         onImportFile={importFile}
@@ -195,7 +206,7 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
         visibleCount={engine.visibleCount}
       />
 
-      <Inspector object={engine.selectedObject} onClose={clearSelection} />
+      <Inspector inert={mode !== 'workshop'} object={engine.selectedObject} onClose={clearSelection} />
 
       <ScaleDisclosure mode={scaleMode} onToggle={toggleScale} />
 
@@ -205,8 +216,20 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
 
       {mode === 'story' && <StoryDeck beatIndex={playback.beatIndex} onAuthoredView={() => adapter.setCamera(beat.camera)} onBeatChange={applyBeat} onOpenWorkshop={openWorkshop} onPlayingChange={togglePlaying} onSourcesChange={toggleSources} playing={playback.playing} progress={playback.progress} showSources={playback.showSources} story={story} />}
 
-      {notice && <button className="sg-notice" onClick={() => setNotice('')} type="button">{notice}<Icon name="close" size={14} /></button>}
-      {!engine.ready && <div className="sg-engine-loading"><span className="sg-loader-ring" /><strong>Preparing the orbital environment</strong><small>Loading the bundled catalog and propagation workers…</small></div>}
+      {notice && <button aria-live="polite" className="sg-notice" onClick={() => setNotice('')} role="status" type="button">{notice}<Icon name="close" size={14} /></button>}
+      {(webglMissing || engine.error) && (
+        <div className="sg-engine-loading sg-engine-error" data-testid="engine-error" role="alert">
+          <Icon name="info" />
+          <strong>{webglMissing ? 'This browser cannot render SatGlobe' : 'The orbital environment failed to load'}</strong>
+          <small>{webglMissing ? 'SatGlobe needs WebGL 2. Enable hardware acceleration or use a current browser.' : engine.error}</small>
+          <button onClick={() => window.location.reload()} type="button">Reload</button>
+        </div>
+      )}
+      {!engine.ready && !engine.error && !webglMissing && (
+        <div aria-live="polite" className="sg-engine-loading" role="status">
+          <span className="sg-loader-ring" /><strong>Preparing the orbital environment</strong><small>Loading the bundled catalog and propagation workers…</small>
+        </div>
+      )}
     </main>
   );
 }

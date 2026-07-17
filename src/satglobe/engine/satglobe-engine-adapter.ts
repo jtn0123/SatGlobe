@@ -55,6 +55,9 @@ export class SatGlobeEngineAdapter {
   private interval_: number | null = null;
   private disposed_ = false;
   private engineReady_ = false;
+  /** Wall-clock ms at construction; the engine must produce a catalog within BOOT_TIMEOUT_MS_ or the UI surfaces an error. */
+  private readonly constructedAt_ = Date.now();
+  private static readonly BOOT_TIMEOUT_MS_ = 30_000;
   private scaleMode_: ScaleMode = 'semantic';
   private readonly eventBus_ = EventBus.getInstance();
   private readonly onCatalogReloaded_ = () => {
@@ -262,6 +265,19 @@ export class SatGlobeEngineAdapter {
 
   private poll_(): void {
     if (this.disposed_) {
+      return;
+    }
+    /*
+     * Checked before the service reads: a failed boot (missing catalog, engine
+     * crash) can leave services unregistered forever, and the old spinner had
+     * no exit. Runs from construction, not engine-ready, for the same reason.
+     */
+    if (!this.state_.ready && !this.state_.error && Date.now() - this.constructedAt_ > SatGlobeEngineAdapter.BOOT_TIMEOUT_MS_) {
+      const message = 'The bundled catalog or propagation engine did not start. Check that public/tle/tle.json is present, then reload.';
+
+      errorManagerInstance.warn(`SatGlobe adapter: ${message}`);
+      this.patchState_({ error: message });
+
       return;
     }
     let simulationTimeIso: string;

@@ -655,7 +655,6 @@ button {
   padding: 0 8px;
   border: 1px solid var(--sg-line);
   border-radius: 0;
-  outline: 0;
   background: var(--sg-panel-solid);
   color: var(--sg-ink);
   font-size: var(--sg-small);
@@ -1411,6 +1410,40 @@ body.sg-story .sg-scale-disclosure {
   .sg-time-dock { grid-template-columns: 0 42px 1fr 42px 44px; }
   .sg-time-tools { overflow: hidden; padding: 0; border: 0; }
   .sg-scale-disclosure { display: none; }
+}
+
+
+/* Keyboard focus is visible everywhere; pointer interactions stay ring-free. */
+.sg-app :focus-visible {
+  outline: 2px solid var(--sg-accent, #e8c980);
+  outline-offset: 2px;
+}
+
+.sg-engine-error {
+  gap: 4px;
+}
+
+.sg-engine-error strong {
+  color: var(--sg-danger, #e8a08a);
+}
+
+.sg-engine-error small {
+  max-width: 420px;
+  text-align: center;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.sg-engine-error button {
+  margin-top: 18px;
+  padding: 9px 26px;
+  border: 1px solid var(--sg-line);
+  background: var(--sg-panel-solid);
+  color: var(--sg-ink);
+  cursor: pointer;
+  font-size: var(--sg-small);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
 
 @media (prefers-reduced-motion: reduce) {
