@@ -1,4 +1,4 @@
-import { memo, useRef } from 'react';
+import { memo, useRef, useState } from 'react';
 import { downloadSavedView } from '../domain/saved-view';
 import {
   DEFAULT_FILTERS,
@@ -82,10 +82,14 @@ function DiscoverPanelBase({
   onSaveView, onApplyView, createView, onImportFile,
 }: DiscoverPanelProps) {
   const fileInput = useRef<HTMLInputElement>(null);
+  const [importing, setImporting] = useState(false);
 
   return (
     <aside className="sg-panel sg-side-panel sg-discover" data-testid="discover-panel" inert={inert || undefined}>
       <div className="sg-panel-title"><div><span className="sg-panel-index">01</span><h1>Discover</h1></div><span className="sg-count" data-testid="visible-count">{formatNumber(visibleCount)} visible</span></div>
+      {visibleCount === 0 && (
+        <p className="sg-empty-hint" data-testid="empty-hint">No objects match the current filters — <button onClick={() => setFilters(structuredClone(DEFAULT_FILTERS))} type="button">reset them</button>.</p>
+      )}
       <label className="sg-search">
         <Icon name="search" />
         <input aria-label="Search catalog" data-testid="catalog-search" onChange={(event) => onQueryChange(event.target.value)} placeholder="Name, catalog ID, launch…" value={query} />
@@ -188,11 +192,16 @@ function DiscoverPanelBase({
         {savedViews.length === 0 ? <p>Camera, time, filters, selection, scale, and presentation mode travel together.</p> : savedViews.slice(0, 2).map((view) => <button key={view.name} onClick={() => onApplyView(view)} type="button"><strong>{view.name}</strong><small>{encodingLabels[view.encoding]}</small></button>)}
         <div className="sg-portable-actions">
           <button data-testid="export-view" onClick={() => downloadSavedView(createView())} type="button"><Icon name="export" size={14} /> Export JSON</button>
-          <button onClick={() => fileInput.current?.click()} type="button"><Icon name="import" size={14} /> Import</button>
+          <button aria-busy={importing || undefined} disabled={importing} onClick={() => fileInput.current?.click()} type="button"><Icon name="import" size={14} /> {importing ? 'Importing…' : 'Import'}</button>
           <input accept="application/json,.json" data-testid="import-view" onChange={async (event) => {
-            await onImportFile(event.target.files?.[0]);
-            if (fileInput.current) {
-              fileInput.current.value = '';
+            setImporting(true);
+            try {
+              await onImportFile(event.target.files?.[0]);
+            } finally {
+              setImporting(false);
+              if (fileInput.current) {
+                fileInput.current.value = '';
+              }
             }
           }} ref={fileInput} type="file" />
         </div>
