@@ -72,14 +72,15 @@ export class WebpackManager {
           devtool: 'hidden-source-map',
           /*
            * ADR 0002 bundle budget: fail the production build if any JS asset or
-           * entrypoint grows past the limit (baseline: main.js 7.42 MiB at v13.4.0).
+           * entrypoint grows past the limit (baseline: main.js ~5.2 MiB after
+           * non-English locale resources moved to on-demand chunks).
            * Non-JS assets (textures, fonts, icons) are budgeted separately, not here.
            */
           performance: {
             hints: 'error' as const,
             assetFilter: (assetFilename: string) => assetFilename.endsWith('.js'),
-            maxAssetSize: 8 * 1024 * 1024,
-            maxEntrypointSize: 8 * 1024 * 1024,
+            maxAssetSize: 6.5 * 1024 * 1024,
+            maxEntrypointSize: 6.5 * 1024 * 1024,
           },
           optimization: {
             minimizer: [

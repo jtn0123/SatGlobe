@@ -3,10 +3,14 @@ import { expect, test } from '@playwright/test';
 test.describe('SatGlobe workshop', () => {
   test.beforeEach(async ({ page }) => {
     const externalRequests: string[] = [];
+    const localeChunkRequests: string[] = [];
 
     await page.route('**/*', async (route) => {
       const url = new URL(route.request().url());
 
+      if (url.pathname.includes('/js/locale-')) {
+        localeChunkRequests.push(url.href);
+      }
       if (url.hostname !== 'localhost' && url.hostname !== '127.0.0.1') {
         externalRequests.push(url.href);
         await route.abort();
@@ -19,6 +23,7 @@ test.describe('SatGlobe workshop', () => {
     await expect(page.getByTestId('satglobe-app')).toBeVisible();
     await expect(page.getByTestId('catalog-status')).toContainText('OBJECTS · LOCAL CATALOG', { timeout: 45_000 });
     expect(externalRequests).toEqual([]);
+    expect(localeChunkRequests).toEqual([]);
   });
 
   test('filters, inspects, presents, tells a story, and exports a view', async ({ page }) => {
@@ -102,5 +107,67 @@ test.describe('SatGlobe failure states', () => {
     await expect(page.getByTestId('engine-error')).toBeVisible({ timeout: 45_000 });
     await expect(page.getByTestId('engine-error')).toContainText('failed to load');
     await expect(page.getByTestId('engine-error').getByRole('button', { name: 'Reload' })).toBeVisible();
+  });
+});
+
+test.describe('SatGlobe localization chunks', () => {
+  test('loads the selected non-English locale from the same origin before boot', async ({ page }) => {
+    const externalRequests: string[] = [];
+    const localeChunkRequests: string[] = [];
+    let releaseItalianChunk: () => void = () => undefined;
+    const italianChunkGate = new Promise<void>((resolve) => {
+      releaseItalianChunk = resolve;
+    });
+
+    await page.addInitScript(() => localStorage.setItem('i18nextLng', 'it'));
+    await page.route('**/*', async (route) => {
+      const url = new URL(route.request().url());
+
+      if (url.pathname.includes('/js/locale-')) {
+        localeChunkRequests.push(url.href);
+      }
+      if (url.hostname !== 'localhost' && url.hostname !== '127.0.0.1') {
+        externalRequests.push(url.href);
+        await route.abort();
+
+        return;
+      }
+      if ((/\/js\/locale-it\.[^/]+\.js$/u).test(url.pathname)) {
+        await italianChunkGate;
+      }
+      await route.continue();
+    });
+
+    const catalogRequest = page.waitForRequest((request) => new URL(request.url()).pathname === '/tle/tle.json');
+    const italianChunk = page.waitForResponse((response) => (/\/js\/locale-it\.[^/]+\.js$/u).test(new URL(response.url()).pathname));
+    const navigation = page.goto('/');
+
+    await catalogRequest;
+    await expect(page.getByTestId('satglobe-app')).toHaveCount(0);
+    expect(await page.evaluate(() => typeof window.keepTrack)).toBe('undefined');
+    releaseItalianChunk();
+
+    const [response] = await Promise.all([italianChunk, navigation]);
+
+    await expect(page.getByTestId('satglobe-app')).toBeVisible();
+    await expect(page.getByTestId('catalog-status')).toContainText('OBJECTS · LOCAL CATALOG', { timeout: 45_000 });
+
+    expect(response.ok()).toBe(true);
+    expect(new URL(response.url()).origin).toBe(new URL(page.url()).origin);
+    expect(localeChunkRequests).toHaveLength(1);
+    expect(new URL(localeChunkRequests[0]).pathname).toMatch(/\/js\/locale-it\.[^/]+\.js$/u);
+    expect(await page.evaluate(() => localStorage.getItem('i18nextLng'))).toBe('it');
+    expect(await page.evaluate(() => typeof window.keepTrack)).toBe('object');
+    expect(externalRequests).toEqual([]);
+  });
+
+  test('falls back to bundled English and completes boot when a locale chunk fails', async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem('i18nextLng', 'it'));
+    await page.route(/\/js\/locale-it\.[^/]+\.js$/u, (route) => route.abort());
+
+    await page.goto('/');
+    await expect(page.getByTestId('satglobe-app')).toBeVisible({ timeout: 45_000 });
+    await expect(page.getByTestId('catalog-status')).toContainText('OBJECTS · LOCAL CATALOG', { timeout: 45_000 });
+    expect(await page.evaluate(() => localStorage.getItem('i18nextLng'))).toBe('en');
   });
 });

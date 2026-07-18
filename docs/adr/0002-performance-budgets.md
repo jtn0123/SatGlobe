@@ -14,7 +14,7 @@ This ADR defines the budgets SatGlobe holds itself to and how each is enforced. 
 
 | # | Budget | Target | Enforcement | Baseline (2026-07-17) |
 |---|--------|--------|-------------|------------------------|
-| 1 | Initial JS bundle | No JS asset or entrypoint over **8 MiB** | `performance.hints: 'error'` in the production build (`build/webpack-manager.ts`) — build fails | `main.js` 7.42 MiB |
+| 1 | Initial JS bundle | No JS asset or entrypoint over **6.5 MiB** | `performance.hints: 'error'` in the production build (`build/webpack-manager.ts`) — build fails | `main.js` 5.15 MiB; non-English locales are on-demand chunks |
 | 2 | SGP4 propagation throughput | No sustained regression trend | Report-only CI job uploads `benchmark-results/` per run; convert to a hard threshold after runner baselines accumulate | tracked in CI artifacts |
 | 3 | Idle steady-state | **Zero** React re-renders and **zero** full GPU buffer uploads when nothing changes | Manual check with React DevTools Profiler + FrameProfiler until Wave 2 (G4/G5) lands the mechanisms; then E2E-verifiable | Not yet met — adapter emits every 600 ms; full color+position `bufferSubData` every frame (audit items G4, G5) |
 | 4 | Interaction cost | Main-thread work per input event ≤ **one frame (16.7 ms)** at full catalog (~30k objects) | Manual Performance-panel trace on filter drag until Wave 2 (G3) lands | Not yet met — filter change costs 2×O(n) sweeps + full GPU upload (audit item G3) |
@@ -24,9 +24,9 @@ Budgets 3–5 are aspirational targets with known violations at baseline; Wave 2
 
 ## Decision
 
-1. Production builds fail when any JS asset or entrypoint exceeds 8 MiB. The filter intentionally excludes non-JS assets (textures, fonts, icons), which are governed by the existing 25 MiB per-file deploy check. The unminified `COVERAGE=1` build is exempt (not a shipped artifact).
+1. Production builds fail when any JS asset or entrypoint exceeds 6.5 MiB. The filter intentionally excludes non-JS assets (textures, fonts, icons), which are governed by the existing 25 MiB per-file deploy check. The unminified `COVERAGE=1` build is exempt (not a shipped artifact).
 2. The SGP4 benchmark runs bounded (`--limit 5000 --frames 10`) on every push/PR to `main` and uploads its JSON/HTML report as a 90-day artifact. It becomes a hard gate once enough runner-consistent baselines exist to set a fair threshold.
-3. The 8 MiB ceiling is a **regression stop, not an endorsement** — the 7.42 MiB main bundle is expected to shrink (data-as-code catalogs and worker/library splits are audit candidates), and the ceiling should be ratcheted down as it does.
+3. The 6.5 MiB ceiling is a **regression stop, not an endorsement**. It was ratcheted from 8 MiB after moving 11 non-English translation resources out of the initial graph reduced the SatGlobe production entry from 7.51 MiB to 5.15 MiB. Catalog prefetch still begins immediately; the active locale is ready before engine/UI boot, changing language fetches only that locale's same-origin chunk, and a failed initial locale load switches to bundled English before boot continues.
 
 ## Consequences
 

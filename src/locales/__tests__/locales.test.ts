@@ -1,8 +1,12 @@
-import { LocaleInformation, Localization } from '@app/locales/locales';
+import { LocaleInformation, Localization, localizationReady } from '@app/locales/locales';
 import i18next from 'i18next';
 
 describe('Locales', () => {
   const flatMapOfAllKeys: string[] = [];
+
+  beforeAll(async () => {
+    await localizationReady;
+  });
 
   const setup = (Localization: LocaleInformation) => {
     /*
@@ -20,43 +24,58 @@ describe('Locales', () => {
     flatMapOfAllKeys.push(...flatMap(Localization));
   };
 
-  it('should have a valid English translations', () => {
-    i18next.changeLanguage('en');
+  it('starts with only the bundled English resource registered', () => {
+    expect(Object.keys(i18next.store.data)).toEqual(['en']);
+  });
+
+  it('should have a valid English translations', async () => {
+    await i18next.changeLanguage('en');
     const localization = Localization.getInstance();
 
     setup(localization);
     validateLocalizationKeys(localization, flatMapOfAllKeys);
   });
 
-  it('should have a valid French translations', () => {
-    i18next.changeLanguage('fr');
+  it('should have a valid French translations', async () => {
+    await i18next.changeLanguage('fr');
     const localization = Localization.getInstance();
 
     setup(localization);
     validateLocalizationKeys(localization, flatMapOfAllKeys);
   });
 
-  it('should have a valid Spanish translations', () => {
-    i18next.changeLanguage('es');
+  it('should have a valid Spanish translations', async () => {
+    await i18next.changeLanguage('es');
     const localization = Localization.getInstance();
 
     setup(localization);
     validateLocalizationKeys(localization, flatMapOfAllKeys);
   });
 
-  it('should have a valid German translations', () => {
-    i18next.changeLanguage('de');
+  it('should have a valid German translations', async () => {
+    await i18next.changeLanguage('de');
     const localization = Localization.getInstance();
 
     setup(localization);
     validateLocalizationKeys(localization, flatMapOfAllKeys);
   });
 
-  it('pre-caches all translations without throwing', () => {
-    i18next.changeLanguage('en');
+  it('pre-caches all translations without throwing', async () => {
+    await i18next.changeLanguage('en');
     const localization = Localization.getInstance() as unknown as { preCacheTranslations(): void };
 
     expect(() => localization.preCacheTranslations()).not.toThrow();
+  });
+
+  it('loads a selected non-English locale on demand', async () => {
+    await i18next.changeLanguage('en');
+
+    expect(i18next.hasResourceBundle('it', 'translation')).toBe(false);
+
+    await i18next.changeLanguage('it');
+
+    expect(i18next.hasResourceBundle('it', 'translation')).toBe(true);
+    expect(i18next.t('countries.AQ')).toBe('Antartide');
   });
 });
 
@@ -84,4 +103,3 @@ const validateLocalizationKeys = (localization: LocaleInformation, flatMapOfAllK
     }
   });
 };
-
