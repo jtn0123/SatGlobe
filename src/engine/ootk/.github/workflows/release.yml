@@ -1,0 +1,102 @@
+name: Release
+
+# On every push to main, build the package and hand off to semantic-release.
+# It reads the conventional commits since the last tag, computes the bump
+# (feat -> minor, BREAKING CHANGE -> major, everything else -> patch, per
+# .releaserc.json), updates package.json + CHANGELOG.md, tags, creates the
+# GitHub release, and publishes to npm with provenance.
+#
+# Tests are NOT re-run here: ci.yml gates lint/unit/integration on every PR, so
+# main is already verified before this runs. Re-running the full suite in the
+# publish path only adds flaky-failure surface. semantic-release no-ops when
+# there are no releasable commits, so an empty run is harmless.
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write # tag + push CHANGELOG/package.json, create GitHub release
+  issues: write # semantic-release success/failure comments
+  pull-requests: write
+  id-token: write # npm provenance
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Gate + Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # semantic-release needs full history + tags
+          persist-credentials: false # semantic-release authenticates itself
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.x'
+          registry-url: 'https://registry.npmjs.org'
+
+      - run: npm ci --ignore-scripts
+
+      # Lint / unit / integration tests already gate every PR before it can
+      # merge to main (see ci.yml), so main is verified by the time this runs.
+      # Here we only rebuild to confirm the package is publishable, then release.
+      - name: Build
+        run: npm run build
+
+      # --- Release (no-ops when there are no releasable commits) ---
+      - name: semantic-release
+        run: npx semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: 'true'
+
+  # After a release, semantic-release has pushed the version bump + regenerated
+  # CHANGELOG.md to main. Back-merge main into develop so the source branch never
+  # lags behind the published version. Runs even on no-op releases (then it's a
+  # harmless up-to-date merge). Pushes are made with GITHUB_TOKEN, which does NOT
+  # re-trigger workflows, so this cannot loop.
+  sync-develop:
+    name: Back-merge main into develop
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # push the merge to develop
+      pull-requests: write # open a fallback PR if the merge conflicts
+    steps:
+      - name: Checkout develop
+        uses: actions/checkout@v4
+        with:
+          ref: develop
+          fetch-depth: 0 # need full history to merge main
+
+      - name: Merge main into develop
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git fetch origin main
+          if git merge --no-edit origin/main; then
+            # Nothing to push when develop already contains main.
+            if [ -n "$(git log origin/develop..HEAD)" ]; then
+              git push origin develop
+            else
+              echo 'develop already up to date with main.'
+            fi
+          else
+            # Rare: develop independently edited a released file. Surface it as a
+            # PR for manual resolution instead of guessing a merge.
+            git merge --abort
+            gh pr create --base develop --head main \
+              --title 'chore: back-merge main into develop' \
+              --body 'Automated back-merge after release hit a conflict. Resolve and merge manually.' \
+              || echo 'Back-merge PR already exists.'
+          fi
