@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
+import { SATGLOBE_CSP } from '../../../build/dev-server-response';
 import { conjunctionFeedV1Schema } from '../domain/conjunctions';
 import type { ConjunctionFeedV1, ConjunctionObjectRef } from '../domain/types';
 import {
@@ -121,6 +122,70 @@ function buildConjunctionFixture(subjects: BundledFixtureSubjects, now = new Dat
     ],
   };
 }
+
+test.describe('SatGlobe production-static script policy', () => {
+  test.skip(!process.env.CI, 'Strict CSP acceptance requires the prebuilt production-static server.');
+
+  test('boots workers, lenses, and a story with the exact CSP and no violations', async ({ page }) => {
+    const consoleErrors: string[] = [];
+    const pageErrors: string[] = [];
+    const workerUrls: string[] = [];
+
+    page.on('console', (message) => {
+      if (message.type() === 'error') {
+        consoleErrors.push(message.text());
+      }
+    });
+    page.on('pageerror', (error) => pageErrors.push(error.message));
+    page.on('worker', (worker) => workerUrls.push(worker.url()));
+    await page.addInitScript(() => {
+      const state = window as Window & { __satGlobeCspViolations?: string[] };
+
+      state.__satGlobeCspViolations = [];
+      document.addEventListener('securitypolicyviolation', (event) => {
+        state.__satGlobeCspViolations?.push(`${event.effectiveDirective}: ${event.blockedURI}`);
+      });
+    });
+
+    const response = await page.goto('/');
+    const csp = response?.headers()['content-security-policy'];
+
+    expect(response?.ok()).toBe(true);
+    expect(csp).toBe(SATGLOBE_CSP);
+    expect(csp).not.toContain('\'unsafe-eval\'');
+    expect((await page.request.get('/__reload-client.js')).status()).toBe(404);
+    await expect(page.getByTestId('satglobe-app')).toBeVisible();
+    await expect(page.getByTestId('catalog-status')).toContainText('OBJECTS · LOCAL CATALOG', { timeout: 45_000 });
+    await page.waitForFunction(() => window.keepTrack?.isReady === true, undefined, { timeout: 45_000 });
+    await expect.poll(() => workerUrls.length).toBeGreaterThan(0);
+    const registeredThreads = await page.evaluate(() => window.keepTrack.threads
+      .map(({ WEB_WORKER_CODE, isReady }) => ({ WEB_WORKER_CODE, isReady })));
+
+    expect(registeredThreads.length).toBeGreaterThan(0);
+    expect(registeredThreads.every(({ WEB_WORKER_CODE, isReady }) => WEB_WORKER_CODE.length > 0 && isReady)).toBe(true);
+
+    await page.getByTestId('starlink-lens').click();
+    await expect(page.getByTestId('encoding-select')).toHaveValue('orbital-plane');
+    const conjunctionLens = page.getByTestId('conjunction-lens');
+
+    await expect(conjunctionLens).toBeEnabled({ timeout: 45_000 });
+    await conjunctionLens.click();
+    await expect(conjunctionLens).toHaveAttribute('aria-pressed', 'true');
+    await page.getByTestId('story-mode').click();
+    await expect(page.getByTestId('story-deck')).toBeVisible();
+    await page.getByRole('button', { name: 'Next beat' }).click();
+    await expect(page.getByTestId('story-deck')).toContainText('One launch, one catalog cohort');
+
+    const cspViolations = await page.evaluate(() =>
+      (window as Window & { __satGlobeCspViolations?: string[] }).__satGlobeCspViolations ?? [],
+    );
+
+    expect(workerUrls).not.toEqual([]);
+    expect(cspViolations).toEqual([]);
+    expect(consoleErrors).toEqual([]);
+    expect(pageErrors).toEqual([]);
+  });
+});
 
 test.describe('SatGlobe workshop', () => {
   test.beforeEach(async ({ page }) => {

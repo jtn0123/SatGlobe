@@ -10,6 +10,7 @@ import { FileSystemManager } from './lib/filesystem-manager';
 import { assertPropagatorBundleProfile } from './lib/propagator-bundle-guard';
 import { shouldCopyProWasmArtifacts } from './lib/propagator-build-profile';
 import { reporter } from './lib/reporter';
+import { assertSatGlobeScriptPolicy } from './lib/satglobe-script-policy';
 import { VersionManager } from './lib/version-manager';
 import { WebpackManager } from './webpack-manager';
 
@@ -244,6 +245,9 @@ class BuildManager {
 
         try {
           assertPropagatorBundleProfile(resolve('dist'), config.propagatorBackend);
+          if (config.edition === 'satglobe') {
+            assertSatGlobeScriptPolicy(resolve('dist'));
+          }
         } catch (bundleError) {
           handleBuildError(bundleError, false);
           logWithStyle('Build failed.', ConsoleStyles.ERROR);

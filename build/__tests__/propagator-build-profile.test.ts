@@ -97,6 +97,21 @@ describe('propagator build profile', () => {
     }
   });
 
+  it('selects the eval-free OBJ loader only for the SatGlobe edition', () => {
+    const satglobeAliases = compilerNamed(WebpackManager.createConfig(configFor('sgp4')), 'MainFiles')
+      .resolve?.alias as Record<string, string>;
+    const ossAliases = compilerNamed(WebpackManager.createConfig({ ...configFor('sgp4'), edition: 'oss' }), 'MainFiles')
+      .resolve?.alias as Record<string, string>;
+    const proAliases = compilerNamed(WebpackManager.createConfig(configFor('sgp4-xp-wasm')), 'MainFiles')
+      .resolve?.alias as Record<string, string>;
+
+    expect(satglobeAliases['webgl-obj-loader$']).toBe(
+      resolve('node_modules/webgl-obj-loader/dist/webgl-obj-loader.js'),
+    );
+    expect(ossAliases['webgl-obj-loader$']).toBeUndefined();
+    expect(proAliases['webgl-obj-loader$']).toBeUndefined();
+  });
+
   it('inventories one main surface and every one of the nine worker variants', () => {
     const configs = WebpackManager.createConfig(configFor('sgp4'));
     const main = compilerNamed(configs, 'MainFiles');

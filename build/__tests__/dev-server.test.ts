@@ -106,7 +106,7 @@ describe('dev-server HTML responses', () => {
 
     expect(localPolicy).toBe(SATGLOBE_CSP);
     expect(nginxPolicy).toBe(SATGLOBE_CSP);
-    expect(SATGLOBE_CSP.match(/script-src [^;]+/u)?.[0]).toBe('script-src \'self\' \'unsafe-eval\' blob:');
+    expect(SATGLOBE_CSP.match(/script-src [^;]+/u)?.[0]).toBe('script-src \'self\' blob:');
   });
 
   it('loads the early service-worker bootstrap from same-origin JS instead of executable inline code', () => {
