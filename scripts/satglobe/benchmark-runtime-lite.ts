@@ -194,7 +194,9 @@ async function measureInteraction(browser: Browser, trigger: string, response: s
         } else if (entry.name === recolorName) {
           recolorMs += entry.duration;
           recolorCount++;
-          recolorCauses.push(String((entry.detail as { cause?: unknown } | null)?.cause ?? 'unknown'));
+          const cause = (entry.detail as { cause?: unknown } | null)?.cause;
+
+          recolorCauses.push(typeof cause === 'string' ? cause : 'unknown');
         } else if (entry.name === countName) {
           countUpdateMs += entry.duration;
           countUpdateCount++;
