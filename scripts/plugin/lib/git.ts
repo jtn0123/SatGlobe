@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { trustedGitExecutable } from '../../../build/lib/trusted-executables';
+import { fixedGitExecutable } from '../../../build/lib/fixed-executables';
 import { CliError } from './log';
 
 interface GitResult {
@@ -13,7 +13,7 @@ interface GitResult {
  * Captures output by default; pass `inherit: true` to stream clone/fetch progress.
  */
 export function git(args: string[], opts: { cwd?: string; inherit?: boolean; allowFail?: boolean } = {}): GitResult {
-  const res = spawnSync(trustedGitExecutable(), args, {
+  const res = spawnSync(fixedGitExecutable(), args, {
     cwd: opts.cwd,
     encoding: 'utf8',
     stdio: opts.inherit ? ['ignore', 'inherit', 'inherit'] : 'pipe',

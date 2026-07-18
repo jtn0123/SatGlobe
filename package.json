@@ -70,7 +70,7 @@
     "start:ci": "npx tsx ./build/dev-server.ts --static",
     "start:satglobe": "npx tsx ./build/dev-server.ts --profile=satglobe",
     "start:satglobe:static": "npx tsx ./build/dev-server.ts --static --profile=satglobe",
-    "docker:satglobe": "docker build -f Dockerfile.satglobe -t satglobe:local .",
+    "docker:satglobe": "node ./scripts/satglobe/docker-build.mjs",
     "catalog:refresh": "npx tsx ./scripts/satglobe/catalog-refresh.ts",
     "catalog:verify": "npx tsx ./scripts/satglobe/catalog-refresh.ts --verify-only",
     "check:story-walker": "eslint ./scripts/satglobe/verify-stories.ts --max-warnings 0 && tsc --noEmit -p tsconfig.story-walker.json",

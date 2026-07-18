@@ -30,7 +30,7 @@ import {
   type Response as PlaywrightResponse,
 } from '@playwright/test';
 import { SATGLOBE_CSP } from '../../build/dev-server-response';
-import { trustedGitExecutable } from '../../build/lib/trusted-executables';
+import { fixedGitExecutable } from '../../build/lib/fixed-executables';
 import { storySimulationTime } from '../../src/satglobe/domain/story-time';
 import { DEFAULT_FILTERS, type EngineState, type FilterState, type StoryBeat } from '../../src/satglobe/domain/types';
 import { storyLibrary } from '../../src/satglobe/stories';
@@ -40,7 +40,7 @@ const ROOT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const DIST_DIR = resolve(ROOT_DIR, 'dist');
 const require = createRequire(import.meta.url);
 const TSX_CLI = require.resolve('tsx/cli');
-const GIT_EXECUTABLE = trustedGitExecutable();
+const GIT_EXECUTABLE = fixedGitExecutable();
 const APP_URL = process.env.SATGLOBE_STORY_URL ?? DEFAULT_APP_URL;
 const INITIAL_GIT_PROVENANCE = readGitProvenance();
 const GIT_SHA = INITIAL_GIT_PROVENANCE.gitSha;

@@ -4,9 +4,10 @@ import DotEnv from 'dotenv-webpack';
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { shortCommitSha } from './lib/build-provenance';
 import { BuildConfig } from './lib/config-manager';
+import { fixedGitExecutable } from './lib/fixed-executables';
 import { reporter } from './lib/reporter';
-import { trustedGitExecutable } from './lib/trusted-executables';
 export class WebpackManager {
   static readonly DEFAULT_MODE = 'development';
   static readonly DEFAULT_WATCH = false;
@@ -19,11 +20,12 @@ export class WebpackManager {
     const dirName = dirname(fileName);
     const appVersion = JSON.parse(readFileSync(resolve(dirName, '../package.json'), 'utf-8')).version;
 
-    const commitHash = execFileSync(
-      trustedGitExecutable(),
-      ['rev-parse', '--short', 'HEAD'],
+    const fullCommitHash = process.env.SATGLOBE_COMMIT_SHA ?? execFileSync(
+      fixedGitExecutable(),
+      ['rev-parse', 'HEAD'],
       { cwd: resolve(dirName, '..'), encoding: 'utf8' },
     ).trim();
+    const commitHash = shortCommitSha(fullCommitHash);
 
     this.versionDefine_ = new DefinePlugin({
       __VERSION__: JSON.stringify(appVersion),
