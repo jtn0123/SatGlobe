@@ -256,6 +256,8 @@ const securityHeaders: Record<string, string> = requestedProfile === 'satglobe'
     'Content-Security-Policy': SATGLOBE_CSP,
     'X-Content-Type-Options': 'nosniff',
     'Referrer-Policy': 'no-referrer',
+    // Enables the JS self-profiling API locally so perf work can sample real stacks.
+    'Document-Policy': 'js-profiling',
   }
   : {};
 

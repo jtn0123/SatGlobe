@@ -95,10 +95,24 @@ export class Localization implements LocaleInformation {
     requestIdleCallback(this.preCacheTranslations.bind(this));
   }
 
-  private preCacheTranslations() {
-    // Pre-cache translations for the current language
-    for (const key of Keys) {
-      t7e(key);
+  /** Next key to warm; the pre-cache resumes here across idle slices. */
+  private preCacheIndex_ = 0;
+
+  /**
+   * Pre-caches translations for the current language. Warming all ~2,900 keys
+   * in one callback measured as a 1.3 s main-thread block a few seconds after
+   * boot - exactly when the user first interacts. Process keys only while the
+   * idle budget lasts, then resume in the next idle period.
+   */
+  private preCacheTranslations(deadline?: IdleDeadline) {
+    const hasIdleBudget = () => !deadline || deadline.timeRemaining() > 2;
+
+    while (this.preCacheIndex_ < Keys.length && hasIdleBudget()) {
+      t7e(Keys[this.preCacheIndex_]);
+      this.preCacheIndex_ += 1;
+    }
+    if (this.preCacheIndex_ < Keys.length) {
+      requestIdleCallback(this.preCacheTranslations.bind(this));
     }
   }
 
