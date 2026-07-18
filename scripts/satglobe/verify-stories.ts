@@ -19,6 +19,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { mkdir, readdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { dirname, relative, resolve, sep } from 'node:path';
+import { performance } from 'node:perf_hooks';
 import { fileURLToPath } from 'node:url';
 import {
   chromium,
@@ -28,6 +29,8 @@ import {
   type Request,
   type Response as PlaywrightResponse,
 } from '@playwright/test';
+import { SATGLOBE_CSP } from '../../build/dev-server-response';
+import { trustedGitExecutable } from '../../build/lib/trusted-executables';
 import { storySimulationTime } from '../../src/satglobe/domain/story-time';
 import { DEFAULT_FILTERS, type EngineState, type FilterState, type StoryBeat } from '../../src/satglobe/domain/types';
 import { storyLibrary } from '../../src/satglobe/stories';
@@ -35,6 +38,9 @@ import { storyLibrary } from '../../src/satglobe/stories';
 const DEFAULT_APP_URL = 'http://127.0.0.1:5544';
 const ROOT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const DIST_DIR = resolve(ROOT_DIR, 'dist');
+const require = createRequire(import.meta.url);
+const TSX_CLI = require.resolve('tsx/cli');
+const GIT_EXECUTABLE = trustedGitExecutable();
 const APP_URL = process.env.SATGLOBE_STORY_URL ?? DEFAULT_APP_URL;
 const INITIAL_GIT_PROVENANCE = readGitProvenance();
 const GIT_SHA = INITIAL_GIT_PROVENANCE.gitSha;
@@ -81,7 +87,7 @@ interface AuditAnchorRecord {
 
 interface ProductionBuildRecord {
   byteCount: number;
-  command: 'npm run build:satglobe';
+  command: 'direct build:satglobe pipeline';
   completedAt: string;
   fileCount: number;
   identity: string;
@@ -214,9 +220,9 @@ function envFlag(name: string, fallback: boolean): boolean {
 
 /** Captures both the commit and exact porcelain state used to label one run. */
 function readGitProvenance(): GitProvenance {
-  const gitSha = execFileSync('git', ['rev-parse', '--short=12', 'HEAD'], { cwd: ROOT_DIR, encoding: 'utf8' }).trim();
+  const gitSha = execFileSync(GIT_EXECUTABLE, ['rev-parse', '--short=12', 'HEAD'], { cwd: ROOT_DIR, encoding: 'utf8' }).trim();
   const statusPorcelain = execFileSync(
-    'git',
+    GIT_EXECUTABLE,
     ['status', '--porcelain=v1', '--untracked-files=all'],
     { cwd: ROOT_DIR, encoding: 'utf8' },
   );
@@ -341,17 +347,31 @@ async function digestProductionBuild(): Promise<Pick<ProductionBuildRecord, 'byt
 /** Runs and identifies a fresh production build even for direct CLI invocation. */
 async function buildProductionProfile(): Promise<ProductionBuildRecord> {
   const startedAt = new Date().toISOString();
+  const deadline = performance.now() + BUILD_TIMEOUT_MS;
 
-  execFileSync('npm', ['run', 'build:satglobe'], {
-    cwd: ROOT_DIR,
-    stdio: 'inherit',
-    timeout: BUILD_TIMEOUT_MS,
-  });
+  const steps = [
+    ['./scripts/plugin/index.ts', 'sync', '--skip-locales'],
+    ['./build/generate-translation.ts'],
+    ['./build/build-manager.ts', 'production', '--profile=satglobe', '--skip-locales'],
+  ];
+
+  for (const step of steps) {
+    const remainingTimeMs = Math.floor(deadline - performance.now());
+
+    if (remainingTimeMs <= 0) {
+      throw new Error(`Production build exceeded its ${BUILD_TIMEOUT_MS} ms aggregate deadline.`);
+    }
+    execFileSync(process.execPath, [TSX_CLI, ...step], {
+      cwd: ROOT_DIR,
+      stdio: 'inherit',
+      timeout: remainingTimeMs,
+    });
+  }
   const digest = await digestProductionBuild();
 
   return {
     ...digest,
-    command: 'npm run build:satglobe',
+    command: 'direct build:satglobe pipeline',
     completedAt: new Date().toISOString(),
     identity: `satglobe-production-${digest.sha256.slice(0, 16)}`,
     outputDirectory: 'dist',
@@ -450,10 +470,8 @@ async function assertNoExistingServer(): Promise<void> {
 /** Starts the same static SatGlobe server used by the production E2E lane. */
 function startStaticServer(): StaticServerProcess {
   assertOwnedServerConfiguration();
-  const require = createRequire(import.meta.url);
-  const tsxCli = require.resolve('tsx/cli');
 
-  const child = spawn(process.execPath, [tsxCli, './build/dev-server.ts', '--static', '--profile=satglobe'], {
+  const child = spawn(process.execPath, [TSX_CLI, './build/dev-server.ts', '--static', '--profile=satglobe'], {
     cwd: ROOT_DIR,
     stdio: 'pipe',
   });
@@ -507,7 +525,7 @@ async function waitForStaticServer(server: StaticServerProcess): Promise<void> {
       if (response.ok) {
         const csp = response.headers.get('content-security-policy') ?? '';
 
-        if (!csp.includes('default-src \'self\'')) {
+        if (csp !== SATGLOBE_CSP) {
           throw new Error('Target did not return the SatGlobe production Content-Security-Policy header.');
         }
 

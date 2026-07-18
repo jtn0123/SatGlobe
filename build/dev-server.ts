@@ -1,7 +1,7 @@
 import { spawn } from 'node:child_process';
 import { cpSync, existsSync, watch } from 'node:fs';
 import { createServer, type ServerResponse } from 'node:http';
-import { readFile, stat } from 'node:fs/promises';
+import { readFile, realpath, stat } from 'node:fs/promises';
 import { dirname, extname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
@@ -56,21 +56,46 @@ function sendNotFound(res: ServerResponse): void {
   res.end('Not found');
 }
 
-/** Resolve one decoded URL pathname only when the result remains inside dist/. */
-function resolveStaticPath(pathname: string): string | null {
+/** Return whether one path remains at or below an already-resolved directory. */
+function isWithinDirectory(directory: string, candidate: string): boolean {
+  const directoryRelativePath = relative(directory, candidate);
+
+  return directoryRelativePath === '' || (
+    directoryRelativePath !== '..' &&
+    !directoryRelativePath.startsWith(`..${sep}`) &&
+    !isAbsolute(directoryRelativePath)
+  );
+}
+
+/** Resolve one decoded URL pathname only when its canonical file remains inside dist/. */
+async function resolveStaticPath(pathname: string): Promise<string | null> {
   const decodedPath = decodeURIComponent(pathname === '/' ? '/index.html' : pathname)
     // URL paths use forward slashes, but a decoded backslash is a separator on Windows.
     // Normalizing it here makes traversal handling identical on every host platform.
     .replaceAll('\\', '/');
   const rootedPath = decodedPath.startsWith('/') ? decodedPath : `/${decodedPath}`;
   const candidate = resolve(distDir, `.${rootedPath}`);
-  const distRelativePath = relative(distDir, candidate);
 
-  if (distRelativePath === '..' || distRelativePath.startsWith(`..${sep}`) || isAbsolute(distRelativePath)) {
+  if (!isWithinDirectory(distDir, candidate)) {
     return null;
   }
 
-  return candidate;
+  try {
+    const canonicalDistDir = await realpath(distDir);
+    let canonicalCandidate = await realpath(candidate);
+
+    if (!isWithinDirectory(canonicalDistDir, canonicalCandidate)) {
+      return null;
+    }
+
+    if ((await stat(canonicalCandidate)).isDirectory()) {
+      canonicalCandidate = await realpath(join(canonicalCandidate, 'index.html'));
+    }
+
+    return isWithinDirectory(canonicalDistDir, canonicalCandidate) ? canonicalCandidate : null;
+  } catch {
+    return null;
+  }
 }
 
 /** Serve the current dist directory with the requested headers and reload behavior. */
@@ -137,18 +162,12 @@ export function startServer(securityHeaders: Record<string, string>, liveReloadE
     }
 
     try {
-      let filePath = resolveStaticPath(pathname);
+      const filePath = await resolveStaticPath(pathname);
 
       if (!filePath) {
         sendNotFound(res);
 
         return;
-      }
-
-      const fileStat = await stat(filePath).catch(() => null);
-
-      if (fileStat?.isDirectory()) {
-        filePath = join(filePath, 'index.html');
       }
 
       let data: Buffer = await readFile(filePath);

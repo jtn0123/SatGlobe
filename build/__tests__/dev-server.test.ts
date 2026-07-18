@@ -1,8 +1,11 @@
+import { randomUUID } from 'node:crypto';
 import { once } from 'node:events';
 import { existsSync, readFileSync } from 'node:fs';
+import { mkdir, mkdtemp, rm, symlink, writeFile } from 'node:fs/promises';
 import { request, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
-import { resolve } from 'node:path';
+import { join, resolve } from 'node:path';
+import { tmpdir } from 'node:os';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { runDevServer, startServer } from '../dev-server';
 import {
@@ -198,6 +201,26 @@ describe('dev-server static HTTP boundary', () => {
 
     expect(posixTraversal).toMatchObject({ body: 'Not found', status: 404 });
     expect(windowsTraversal).toMatchObject({ body: 'Not found', status: 404 });
+  });
+
+  it('does not follow a symlink inside dist to a file outside dist', async () => {
+    const outsideDir = await mkdtemp(join(tmpdir(), 'satglobe-dev-server-'));
+    const distPath = resolve(process.cwd(), 'dist');
+    const linkName = `symlink-escape-${randomUUID()}`;
+    const linkPath = join(distPath, linkName);
+
+    await mkdir(distPath, { recursive: true });
+    await writeFile(join(outsideDir, 'index.html'), 'outside-dist-secret');
+    await symlink(outsideDir, linkPath, process.platform === 'win32' ? 'junction' : 'dir');
+    try {
+      const response = await requestServer(address.port, `/${linkName}/index.html`);
+
+      expect(response).toMatchObject({ body: 'Not found', status: 404 });
+      expect(response.body).not.toContain('outside-dist-secret');
+    } finally {
+      await rm(linkPath, { force: true, recursive: true });
+      await rm(outsideDir, { force: true, recursive: true });
+    }
   });
 
   it('does not dispatch the plugin handler in static mode', async () => {
