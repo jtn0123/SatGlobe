@@ -28,32 +28,13 @@ describe('Locales', () => {
     expect(Object.keys(i18next.store.data)).toEqual(['en']);
   });
 
-  it('should have a valid English translations', async () => {
-    await i18next.changeLanguage('en');
-    const localization = Localization.getInstance();
-
-    setup(localization);
-    validateLocalizationKeys(localization, flatMapOfAllKeys);
-  });
-
-  it('should have a valid French translations', async () => {
-    await i18next.changeLanguage('fr');
-    const localization = Localization.getInstance();
-
-    setup(localization);
-    validateLocalizationKeys(localization, flatMapOfAllKeys);
-  });
-
-  it('should have a valid Spanish translations', async () => {
-    await i18next.changeLanguage('es');
-    const localization = Localization.getInstance();
-
-    setup(localization);
-    validateLocalizationKeys(localization, flatMapOfAllKeys);
-  });
-
-  it('should have a valid German translations', async () => {
-    await i18next.changeLanguage('de');
+  it.each([
+    ['English', 'en'],
+    ['French', 'fr'],
+    ['Spanish', 'es'],
+    ['German', 'de'],
+  ])('should have valid %s translations', async (_name, code) => {
+    await i18next.changeLanguage(code);
     const localization = Localization.getInstance();
 
     setup(localization);
