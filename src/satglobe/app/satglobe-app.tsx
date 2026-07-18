@@ -57,8 +57,9 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
   }, []);
 
   useEffect(() => {
-    setResults(adapter.search(query));
-  }, [adapter, engine.objectCount, query]);
+    // Pre-ready searches would query an unbuilt catalog and flash empty results.
+    setResults(engine.ready ? adapter.search(query) : []);
+  }, [adapter, engine.objectCount, engine.ready, query]);
 
   const onBeatApplied = useCallback((beat: StoryBeat) => {
     const beatFilters = { ...structuredClone(DEFAULT_FILTERS), constellation: beat.constellation ?? '' };
@@ -213,6 +214,9 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
 
   return (
     <main className={`sg-app sg-mode-${mode}`} data-testid="satglobe-app">
+      <div className="sg-small-screen-note" role="note">SatGlobe is designed for larger screens — panels are limited at this size.</div>
+      {/* display:contents wrapper; keeps the booting shell out of the tab order behind the loading overlay */}
+      <div className="sg-boot-guard" inert={!engine.ready || undefined}>
       <TopBar mode={mode} newestElementAge={newestElementAge} objectCount={engine.objectCount} onModeChange={switchMode} onStoryOpen={openStory} ready={engine.ready} />
 
       <DiscoverPanel
@@ -245,6 +249,7 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
       {mode === 'story' && <StoryDeck beatIndex={playback.beatIndex} onAuthoredView={() => adapter.setCamera(beat.camera)} onBeatChange={applyBeat} onOpenWorkshop={openWorkshop} onPlayingChange={togglePlaying} onSourcesChange={toggleSources} playing={playback.playing} progress={playback.progress} showSources={playback.showSources} story={story} />}
 
       {showShortcuts && <KeyboardLegend onClose={() => setShowShortcuts(false)} />}
+      </div>
       {notice && <button aria-live="polite" className="sg-notice" onClick={() => setNotice('')} role="status" type="button">{notice}<Icon name="close" size={14} /></button>}
       {(webglMissing || engine.error) && (
         <div className="sg-engine-loading sg-engine-error" data-testid="engine-error" role="alert">

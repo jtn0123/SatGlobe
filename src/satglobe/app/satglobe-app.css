@@ -1478,3 +1478,32 @@ body.sg-story .sg-scale-disclosure {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Boot guard: layout-neutral wrapper that inerts the shell until the engine is ready. */
+.sg-boot-guard {
+  display: contents;
+}
+
+/* Desktop-first by decision (2026-07-17): below the layout floor, say so plainly. */
+.sg-small-screen-note {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .sg-small-screen-note {
+    position: fixed;
+    z-index: 40;
+    top: 64px;
+    left: 50%;
+    display: block;
+    transform: translateX(-50%);
+    max-width: min(92vw, 420px);
+    padding: 8px 14px;
+    border: 1px solid var(--sg-line, rgba(176, 208, 202, 0.18));
+    border-radius: 6px;
+    background: var(--sg-panel, rgba(10, 18, 16, 0.92));
+    color: var(--sg-ink, #d8e2df);
+    font-size: 12px;
+    text-align: center;
+  }
+}
