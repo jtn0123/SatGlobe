@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "snapshotId": "satglobe-2026-07-20-c528d08b8fa7",
+  "generatedAt": "2026-07-20T09:43:32.333Z",
+  "previousObjectCount": 33337,
+  "objectCount": 35049,
+  "added": 1712,
+  "updated": 14353,
+  "unchanged": 3193,
+  "rejected": 7591,
+  "rejectionReasons": {
+    "Epoch regression": 7591
+  },
+  "sources": [
+    {
+      "id": "keeptrack-enriched",
+      "url": "https://github.com/thkruz/keeptrack.space",
+      "recordCount": 33337,
+      "checksum": "1feb86bc2ade78c790df18bcbb59b4b035af99d895fa888b11683ef4d7e6391f"
+    },
+    {
+      "id": "celestrak-active",
+      "url": "https://celestrak.org/NORAD/elements/gp.php?GROUP=ACTIVE&FORMAT=CSV",
+      "recordCount": 16065,
+      "checksum": "db91b7e0508ced3642254e22a3eaee6b3304976aeef0ece4c7a78eed5a68caf2"
+    },
+    {
+      "id": "celestrak-starlink",
+      "url": "https://celestrak.org/NORAD/elements/gp.php?GROUP=STARLINK&FORMAT=CSV",
+      "recordCount": 10784,
+      "checksum": "4b4b739d162ea1243dfabe1904b7f536e51b55e31954865b6bf4290d54eef158"
+    }
+  ],
+  "checksum": "c528d08b8fa73da748ef30e40bbf1251afc68cd37240af349cad2f1fdd019340"
+}
