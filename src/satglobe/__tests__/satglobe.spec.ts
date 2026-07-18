@@ -419,7 +419,9 @@ test.describe('SatGlobe workshop', () => {
         performance.clearMeasures(name);
       }
     }, SATGLOBE_INTERACTION_MEASURES);
-    await page.waitForTimeout(750);
+    // Absence is the behavior under test: observe longer than the 500 ms autoplay tick,
+    // because there is no positive condition for Playwright to await while paused.
+    await page.waitForTimeout(750); // NOSONAR -- intentional no-churn observation window.
     expect(await page.evaluate((names) => names.every((name) => performance.getEntriesByName(name).length === 0), SATGLOBE_INTERACTION_MEASURES)).toBe(true);
 
     await page.getByRole('button', { name: 'Present' }).click();
