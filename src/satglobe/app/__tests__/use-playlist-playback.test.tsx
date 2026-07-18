@@ -90,8 +90,10 @@ describe('usePlaylistPlayback', () => {
     expect(result.current.playback.playing).toBe(true);
     act(() => vi.advanceTimersByTime(1_100));
     expect(onEntryApplied).toHaveBeenCalledWith(playlist.entries[1], 1);
+    expect(onEntryApplied).toHaveBeenCalledTimes(1);
     expect(result.current.playback.entryIndex).toBe(1);
     act(() => vi.advanceTimersByTime(1_100));
+    expect(onEntryApplied).toHaveBeenCalledTimes(1);
     expect(result.current.playback.playing).toBe(false);
     expect(result.current.playback.progress).toBe(1);
   });

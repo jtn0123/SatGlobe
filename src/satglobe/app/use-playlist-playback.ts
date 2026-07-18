@@ -111,7 +111,14 @@ export function usePlaylistPlayback(
     }
     const entry = playlist.entries[entryIndex];
     const startedAt = performance.now() - playback.progress * entry.durationMs;
+    let advanced = false;
     const advance = () => {
+      // A congested event loop can queue more than one interval callback
+      // before React commits the seek and cleans this effect up.
+      if (advanced) {
+        return;
+      }
+      advanced = true;
       if (entryIndex < playlist.entries.length - 1) {
         applyEntry(entryIndex + 1);
       } else {
