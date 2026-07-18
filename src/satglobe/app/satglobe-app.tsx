@@ -374,7 +374,14 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
 
       {showShortcuts && <KeyboardLegend onClose={() => setShowShortcuts(false)} />}
       </div>
-      {notice && <button aria-live="polite" className="sg-notice" data-testid="app-notice" onClick={() => setNotice('')} role="status" type="button">{notice}<Icon name="close" size={14} /></button>}
+      {notice && (
+        <div className="sg-notice" data-testid="app-notice">
+          <span aria-live="polite" role="status">{notice}</span>
+          <button aria-label="Dismiss notice" className="sg-icon-button" onClick={() => setNotice('')} type="button">
+            <Icon name="close" size={14} />
+          </button>
+        </div>
+      )}
       {(webglMissing || engine.error) && (
         <div className="sg-engine-loading sg-engine-error" data-testid="engine-error" role="alert">
           <Icon name="info" />

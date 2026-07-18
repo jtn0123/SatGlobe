@@ -5,10 +5,10 @@ import { Icon } from './icon';
 import { describeEpoch, formatCalendarDate, formatNumber, formatUtc, objectKindLabels, regimeLabels } from './labels';
 
 interface InspectorProps {
-  conjunctions: ConjunctionState;
-  inert?: boolean;
-  object: SpaceObjectView | null;
-  onClose: () => void;
+  readonly conjunctions: ConjunctionState;
+  readonly inert?: boolean;
+  readonly object: SpaceObjectView | null;
+  readonly onClose: () => void;
 }
 
 /** Uses compact scientific notation without turning a valid zero into missing data. */

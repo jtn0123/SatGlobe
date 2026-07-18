@@ -105,7 +105,7 @@ function sha256(value: string | Uint8Array): string {
 
 function isoTimestamp(value: unknown, field: string): string {
   if (typeof value !== 'string') {
-    throw new Error(`${field} must be an ISO timestamp.`);
+    throw new TypeError(`${field} must be an ISO timestamp.`);
   }
   const instant = new Date(value);
 
@@ -147,13 +147,14 @@ function finiteNumber(value: string, field: string, maximum = Number.POSITIVE_IN
 }
 
 function parseTca(value: string): string {
-  const match = value.trim().match(/^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2}) (?<hour>\d{2}):(?<minute>\d{2}):(?<second>\d{2})\.(?<millisecond>\d{3})$/u);
+  const match = (/^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2}) (?<hour>\d{2}):(?<minute>\d{2}):(?<second>\d{2})\.(?<millisecond>\d{3})$/u)
+    .exec(value.trim());
 
   if (!match?.groups) {
     throw new Error('TCA must use the CelesTrak UTC format YYYY-MM-DD HH:mm:ss.sss.');
   }
-  const parts = ['year', 'month', 'day', 'hour', 'minute', 'second', 'millisecond']
-    .map((key) => Number(match.groups?.[key]));
+  const { year: yearPart, month: monthPart, day: dayPart, hour: hourPart, minute: minutePart, second: secondPart, millisecond: millisecondPart } = match.groups;
+  const parts = [yearPart, monthPart, dayPart, hourPart, minutePart, secondPart, millisecondPart].map(Number);
   const [year, month, day, hour, minute, second, millisecond] = parts;
   const instant = new Date(Date.UTC(year, month - 1, day, hour, minute, second, millisecond));
 
@@ -238,7 +239,7 @@ function assertExpectedHeaders(fields: string[] | undefined): void {
 
 export function parseSocratesCsv(raw: string, options: ParseSocratesOptions): SocratesFeedV1 {
   if (!Number.isFinite(options.now.getTime())) {
-    throw new Error('SOCRATES refresh time is invalid.');
+    throw new TypeError('SOCRATES refresh time is invalid.');
   }
   const parsed = Papa.parse<SocratesCsvRow>(raw, {
     header: true,
@@ -285,8 +286,8 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function assertExactKeys(value: Record<string, unknown>, expected: string[], field: string): void {
-  const actual = Object.keys(value).sort();
-  const canonical = [...expected].sort();
+  const actual = Object.keys(value).sort((left, right) => left.localeCompare(right, 'en'));
+  const canonical = [...expected].sort((left, right) => left.localeCompare(right, 'en'));
 
   if (actual.length !== canonical.length || actual.some((key, index) => key !== canonical[index])) {
     throw new Error(`${field} has unexpected fields. Expected: ${canonical.join(',')}. Received: ${actual.join(',')}.`);
@@ -413,9 +414,9 @@ export function validateSocratesFeed(value: unknown): asserts value is SocratesF
 
 function providerTimestamp(value: unknown): string {
   if (typeof value !== 'string') {
-    throw new Error('SOCRATES FILE_MTIME is missing.');
+    throw new TypeError('SOCRATES FILE_MTIME is missing.');
   }
-  const match = value.match(/^(?<date>\d{4}-\d{2}-\d{2}) (?<time>\d{2}:\d{2}:\d{2}) UTC$/u);
+  const match = (/^(?<date>\d{4}-\d{2}-\d{2}) (?<time>\d{2}:\d{2}:\d{2}) UTC$/u).exec(value);
 
   if (!match?.groups) {
     throw new Error(`SOCRATES FILE_MTIME has an unexpected format: ${value}.`);
@@ -439,7 +440,7 @@ function parseProviderMetadata(raw: string): ProviderMetadata {
     throw new Error('SOCRATES metadata is not valid JSON.');
   }
   if (!Array.isArray(decoded)) {
-    throw new Error('SOCRATES metadata must be an array.');
+    throw new TypeError('SOCRATES metadata must be an array.');
   }
   const entry = decoded.find((candidate) => isRecord(candidate) && candidate.FILE_NAME === 'sort-minRange.csv');
 
@@ -524,8 +525,9 @@ async function fetchResponse(url: string, fetchSource: typeof fetch): Promise<Re
 
   if (!response.ok) {
     const providerMessage = (await response.text()).trim();
+    const providerDetails = providerMessage ? `\n${providerMessage}` : '';
 
-    throw new Error(`SOCRATES source returned HTTP ${response.status}: ${url}${providerMessage ? `\n${providerMessage}` : ''}`);
+    throw new Error(`SOCRATES source returned HTTP ${response.status}: ${url}${providerDetails}`);
   }
 
   return response;
@@ -594,7 +596,7 @@ export async function loadSocratesSource(options: LoadSocratesOptions = {}): Pro
   const now = options.now ?? new Date();
 
   if (!Number.isFinite(now.getTime())) {
-    throw new Error('SOCRATES retrieval time is invalid.');
+    throw new TypeError('SOCRATES retrieval time is invalid.');
   }
   if (options.input) {
     return validatedLoadedSource(await loadLocalSource(
@@ -615,7 +617,7 @@ export async function loadSocratesSource(options: LoadSocratesOptions = {}): Pro
   const metadataResponse = await fetchResponse(SOCRATES_METADATA_URL, fetchSource);
   const provider = parseProviderMetadata(await metadataResponse.text());
 
-  if (cached && cached.metadata.updatedAt === provider.updatedAt && cached.metadata.size === provider.size) {
+  if (cached?.metadata.updatedAt === provider.updatedAt && cached.metadata.size === provider.size) {
     const loaded = validatedLoadedSource(loadedFromCache(cached), now);
 
     if (options.writeCache !== false) {

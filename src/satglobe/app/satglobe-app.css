@@ -1421,8 +1421,12 @@ button {
   color: var(--sg-ink, #f5f1e8);
   font-size: 9px;
   text-align: left;
-  cursor: pointer;
+  cursor: default;
   pointer-events: auto;
+}
+
+.sg-notice > span {
+  flex: 1;
 }
 
 .sg-engine-loading {

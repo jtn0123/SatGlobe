@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_CAMERA, DEFAULT_FILTERS, type AvailableConjunctionState, type SavedViewV1, type SpaceObjectView } from '../../domain/types';
 import { storyLibrary } from '../../stories';
@@ -144,6 +144,21 @@ describe('SatGlobeApp', () => {
     expect(screen.getByTestId('satglobe-app')).toBeTruthy();
     expect(screen.queryByTestId('engine-error')).toBeNull();
     expect(screen.queryByText('Preparing the orbital environment')).toBeNull();
+  });
+
+  it('announces notices without replacing the dismiss button semantics', () => {
+    renderApp();
+    fireEvent.click(screen.getByRole('button', { name: '+ Save current' }));
+    const notice = screen.getByTestId('app-notice');
+    const status = within(notice).getByRole('status');
+    const dismiss = within(notice).getByRole('button', { name: 'Dismiss notice' });
+
+    expect(notice.contains(status)).toBe(true);
+    expect(status.textContent).toContain('Saved “Orbital workshop view” on this device.');
+    expect(dismiss.getAttribute('role')).toBeNull();
+
+    fireEvent.click(dismiss);
+    expect(screen.queryByTestId('app-notice')).toBeNull();
   });
 
   it('handles the global search, legend, presentation, and escape shortcuts', () => {

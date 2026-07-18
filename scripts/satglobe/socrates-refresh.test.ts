@@ -164,6 +164,40 @@ describe('SOCRATES refresh', () => {
     });
   });
 
+  it('classifies invalid value types as TypeError failures', async () => {
+    const artifact = JSON.parse(await readFile(path.resolve('public/tle/satglobe/conjunctions.json'), 'utf8')) as Record<string, unknown>;
+
+    artifact.generatedAt = 42;
+    expect(() => validateSocratesFeed(artifact)).toThrow(TypeError);
+    expect(() => parseSocratesCsv(csv([row()]), { now: new Date(Number.NaN), source: SOURCE })).toThrow(TypeError);
+    await expect(loadSocratesSource({ now: new Date(Number.NaN) })).rejects.toThrow(TypeError);
+
+    const metadataObject = vi.fn<typeof fetch>().mockResolvedValue(new Response('{}', { status: 200 }));
+
+    await expect(loadSocratesSource({
+      cacheDirectory: path.join(tmpdir(), `satglobe-socrates-object-${process.pid}-${Date.now()}`),
+      fetchSource: metadataObject,
+      now: NOW,
+      writeCache: false,
+    })).rejects.toThrow(TypeError);
+
+    const invalidMtime = JSON.stringify([
+      {
+        FILE_NAME: 'sort-minRange.csv',
+        FILE_SIZE: 1,
+        FILE_MTIME: 42,
+      },
+    ]);
+    const metadataWithInvalidMtime = vi.fn<typeof fetch>().mockResolvedValue(new Response(invalidMtime, { status: 200 }));
+
+    await expect(loadSocratesSource({
+      cacheDirectory: path.join(tmpdir(), `satglobe-socrates-mtime-${process.pid}-${Date.now()}`),
+      fetchSource: metadataWithInvalidMtime,
+      now: NOW,
+      writeCache: false,
+    })).rejects.toThrow(TypeError);
+  });
+
   it('requires explicit provider provenance for a saved local source', async () => {
     const directory = await mkdtemp(path.join(tmpdir(), 'satglobe-socrates-input-'));
     const input = path.join(directory, 'socrates.csv');

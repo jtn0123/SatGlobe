@@ -85,7 +85,9 @@ export const conjunctionFeedV1Schema = z.object({
     }
     ids.add(pair.id);
 
-    const unorderedIds = [pair.object1.catalogId, pair.object2.catalogId].sort().join(':');
+    const unorderedIds = [pair.object1.catalogId, pair.object2.catalogId]
+      .sort((left, right) => Number(left) - Number(right))
+      .join(':');
     const encounter = `${unorderedIds}:${pair.timeOfClosestApproach}`;
 
     if (encounters.has(encounter)) {
