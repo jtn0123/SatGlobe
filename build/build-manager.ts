@@ -5,8 +5,9 @@ import { readFileSync } from 'node:fs';
 import { relative, resolve } from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { BuildError, ConsoleStyles, ErrorCodes, handleBuildError, logWithStyle } from './lib/build-error';
-import { ConfigManager } from './lib/config-manager';
+import { BuildConfig, ConfigManager } from './lib/config-manager';
 import { FileSystemManager } from './lib/filesystem-manager';
+import { assertPropagatorBundleProfile } from './lib/propagator-bundle-guard';
 import { reporter } from './lib/reporter';
 import { VersionManager } from './lib/version-manager';
 import { WebpackManager } from './webpack-manager';
@@ -118,7 +119,7 @@ class BuildManager {
         logWithStyle('Watching for changes...', ConsoleStyles.INFO);
         BuildManager.watchCompilers(compiler);
       } else {
-        BuildManager.runCompilers(compiler, startedAt);
+        BuildManager.runCompilers(compiler, startedAt, config);
       }
     } catch (error) {
       handleBuildError(error);
@@ -217,7 +218,7 @@ class BuildManager {
   /**
    * Runs the compilers once
    */
-  static runCompilers(compilers: MultiCompiler, startedAt: number) {
+  static runCompilers(compilers: MultiCompiler, startedAt: number, config: BuildConfig) {
     compilers.run((err: Error | null, stats?: MultiStats) => {
       BuildManager.handleCompilerResults(err, stats);
 
@@ -232,6 +233,14 @@ class BuildManager {
         if (failed || closeErr) {
           // A failed compile must exit non-zero so CI catches it here rather than
           // serving an app-less dist to the downstream smoke tests.
+          logWithStyle('Build failed.', ConsoleStyles.ERROR);
+          process.exit(1);
+        }
+
+        try {
+          assertPropagatorBundleProfile(resolve('dist/js'), config.propagatorBackend);
+        } catch (bundleError) {
+          handleBuildError(bundleError, false);
           logWithStyle('Build failed.', ConsoleStyles.ERROR);
           process.exit(1);
         }
