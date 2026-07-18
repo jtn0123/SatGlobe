@@ -70,6 +70,7 @@ describe('code_snippet', () => {
     hoverManager.init();
     const hostile = { name: '<img src=x onerror="window.pwned=1">', desc: '<script>window.pwned=1</script>' };
 
+    // eslint-disable-next-line dot-notation -- private-method access under TS requires bracket notation
     hoverManager['missile_'](hostile as never);
     const node1 = getEl('sat-hoverbox1')!;
 
