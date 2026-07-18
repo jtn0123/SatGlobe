@@ -6,6 +6,7 @@ import type { ConjunctionFeedV1, ConjunctionObjectRef } from '../domain/types';
 import {
   COUNT_UPDATE_MEASURE,
   FILTER_APPLY_MEASURE,
+  LAUNCH_TIMELAPSE_APPLY_MEASURE,
   LENS_APPLY_MEASURE,
   PLAYLIST_APPLY_MEASURE,
   RECOLOR_MEASURE,
@@ -375,6 +376,75 @@ test.describe('SatGlobe workshop', () => {
     expect(stepMeasures[FILTER_APPLY_MEASURE]).toEqual([{ cause: 'combined' }]);
     expect(stepMeasures[RECOLOR_MEASURE]).toEqual([{ cause: 'combined' }]);
     expect(stepMeasures[COUNT_UPDATE_MEASURE]).toEqual([{ cause: 'combined' }]);
+  });
+
+  test('scrubs cumulative launch history monotonically with one visual pass and no paused churn', async ({ page }) => {
+    await page.setViewportSize({ width: 2560, height: 1440 });
+    const visibleCount = async () => Number((await page.getByTestId('visible-count').textContent())?.replace(/,/gu, '').match(/\d+/u)?.[0]);
+    const timeline = page.getByTestId('launch-timelapse');
+
+    await expect(timeline).toBeVisible();
+    await page.getByRole('button', { name: 'Show launches through 1960' }).click();
+    const count1960 = await visibleCount();
+
+    await page.evaluate((names) => {
+      for (const name of names) {
+        performance.clearMeasures(name);
+      }
+    }, SATGLOBE_INTERACTION_MEASURES);
+    await page.getByRole('button', { name: 'Show launches through 1970' }).click();
+    const count1970 = await visibleCount();
+    const stepMeasures = await page.evaluate((names) => {
+      const result: Record<string, unknown[]> = {};
+
+      for (const name of names) {
+        result[name] = (performance.getEntriesByName(name) as PerformanceMeasure[]).map(({ detail }) => detail);
+      }
+
+      return result;
+    }, [LAUNCH_TIMELAPSE_APPLY_MEASURE, FILTER_APPLY_MEASURE, RECOLOR_MEASURE, COUNT_UPDATE_MEASURE] as const);
+
+    expect(count1970).toBeGreaterThan(count1960);
+    expect(stepMeasures[LAUNCH_TIMELAPSE_APPLY_MEASURE]).toEqual([{ year: 1970 }]);
+    expect(stepMeasures[FILTER_APPLY_MEASURE]).toEqual([{ cause: 'combined' }]);
+    expect(stepMeasures[RECOLOR_MEASURE]).toEqual([{ cause: 'combined' }]);
+    expect(stepMeasures[COUNT_UPDATE_MEASURE]).toEqual([{ cause: 'combined' }]);
+
+    await page.getByRole('button', { name: 'Show launches through 2020' }).click();
+    expect(await visibleCount()).toBeGreaterThan(count1970);
+    await expect(page.getByTestId('encoding-select')).toHaveValue('launch-cohort');
+
+    await page.evaluate((names) => {
+      for (const name of names) {
+        performance.clearMeasures(name);
+      }
+    }, SATGLOBE_INTERACTION_MEASURES);
+    await page.waitForTimeout(750);
+    expect(await page.evaluate((names) => names.every((name) => performance.getEntriesByName(name).length === 0), SATGLOBE_INTERACTION_MEASURES)).toBe(true);
+
+    await page.getByRole('button', { name: 'Present' }).click();
+    await expect(timeline).toBeVisible();
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await expect(page.getByRole('button', { name: 'Play launch history' })).toBeDisabled();
+    await page.getByRole('button', { name: 'Show launches through 1970' }).click();
+    await expect(timeline).toHaveAttribute('data-year', '1970');
+
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.getByRole('button', { name: 'Workshop', exact: true }).click();
+    const expectTimelineClearOfDiscover = async (width: number) => {
+      await page.setViewportSize({ width, height: 720 });
+      const timelineBox = await timeline.boundingBox();
+      const discoverBox = await page.getByTestId('discover-panel').boundingBox();
+
+      expect(timelineBox).not.toBeNull();
+      expect(discoverBox).not.toBeNull();
+      expect(timelineBox!.x).toBeGreaterThanOrEqual(discoverBox!.x + discoverBox!.width + 12);
+    };
+
+    await expectTimelineClearOfDiscover(800);
+    await expectTimelineClearOfDiscover(1_000);
+    await page.getByTestId('catalog-search').click();
+    await expect(page.getByTestId('catalog-search')).toBeFocused();
   });
 
   test('keeps presentation typography legible at 4K', async ({ page }) => {

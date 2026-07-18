@@ -160,6 +160,42 @@ describe('SatGlobeApp', () => {
     expect(screen.queryByText('Preparing the orbital environment')).toBeNull();
   });
 
+  it('applies cumulative launch history through one combined visual update in Workshop and Present', () => {
+    const firstLaunch = { ...selectedObject, catalogId: '5', internationalDesignator: '1958-002B', launchDate: '1958-03-17' };
+    const newestLaunch = { ...selectedObject, catalogId: '99999', internationalDesignator: '2026-027A', launchDate: '2026-02-03' };
+    const { methods } = renderApp({ objects: [firstLaunch, newestLaunch] });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show launches through 1970' }));
+    expect(methods.setVisualState).toHaveBeenCalledOnce();
+    expect(methods.setVisualState).toHaveBeenCalledWith({
+      encoding: 'launch-cohort',
+      filters: expect.objectContaining({
+        launchYearMax: 1970,
+        objectKinds: ['payload', 'rocket-body', 'debris', 'other'],
+        status: 'all',
+      }),
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Present' }));
+    expect(screen.getByTestId('launch-timelapse')).toBeTruthy();
+    fireEvent.click(screen.getByTestId('story-mode'));
+    expect(screen.queryByTestId('launch-timelapse')).toBeNull();
+  });
+
+  it('deactivates launch history when a quick lens replaces its cumulative filter', () => {
+    const firstLaunch = { ...selectedObject, catalogId: '5', internationalDesignator: '1958-002B', launchDate: '1958-03-17' };
+    const newestLaunch = { ...selectedObject, catalogId: '99999', internationalDesignator: '2026-027A', launchDate: '2026-02-03' };
+
+    renderApp({ objects: [firstLaunch, newestLaunch] });
+    fireEvent.click(screen.getByRole('button', { name: 'Show launches through 1970' }));
+    expect(screen.getByTestId('launch-timelapse').getAttribute('data-active')).toBe('true');
+
+    fireEvent.click(screen.getByTestId('starlink-lens'));
+
+    expect(screen.getByTestId('launch-timelapse').getAttribute('data-active')).toBe('false');
+    expect(screen.getByTestId('launch-timelapse').getAttribute('data-playing')).toBe('false');
+  });
+
   it('announces notices without replacing the dismiss button semantics', () => {
     renderApp();
     fireEvent.click(screen.getByRole('button', { name: '+ Save current' }));

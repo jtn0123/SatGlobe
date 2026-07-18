@@ -19,6 +19,7 @@ import { DiscoverPanel, getQuickLensState, type QuickLens } from './discover-pan
 import { Icon } from './icon';
 import { Inspector } from './inspector';
 import { KeyboardLegend } from './keyboard-legend';
+import { LaunchTimelapse } from './launch-timelapse';
 import { ageInDays } from './labels';
 import { PresentationTitle } from './presentation-title';
 import { PlaylistDeck } from './playlist-deck';
@@ -27,6 +28,7 @@ import { StoryDeck } from './story-deck';
 import { TimeDock } from './time-dock';
 import { TopBar } from './top-bar';
 import { useStoryPlayback } from './use-story-playback';
+import { useLaunchTimelapse } from './use-launch-timelapse';
 import { usePlaylistLibrary } from './use-playlist-library';
 import { useWorkshopFilters } from './use-workshop-filters';
 
@@ -122,6 +124,7 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
   const story = storyLibrary.find(({ id }) => id === storyId) ?? storyLibrary[0];
   const storyTimeAnchorRef = useRef(engine.simulationTime);
   const { conjunctionLens, quickLens } = useQuickLensHandlers(adapter, setFiltersWithEncodingImmediate, engine.conjunctions.catalogIds, engine.conjunctionHighlightActive);
+  const { applyLaunchYear, launchBounds } = useLaunchTimelapse(adapter, setFiltersWithEncodingImmediate);
 
   useEffect(() => adapter.subscribe(setEngine), [adapter]);
   // Replacing the engine boundary starts a fresh time reference for the next story beat.
@@ -212,11 +215,7 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
       if (event.target instanceof window.HTMLInputElement || event.target instanceof window.HTMLSelectElement) {
         return;
       }
-      /*
-       * The shell owns these keys. stopPropagation keeps KeepTrack's own
-       * global input manager from double-handling them (C6); the handled
-       * flag also gates preventDefault for keys with browser defaults.
-       */
+      /* The shell stops handled keys before KeepTrack can double-handle them; the flag also gates browser defaults. */
       let handled = true;
 
       if (event.key === '/') {
@@ -317,9 +316,7 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
   const newestElementAge = ageInDays(engine.newestElementEpoch);
   const openStory = useCallback(() => {
     if (mode !== 'story') {
-      // The selected beat survives a trip through Workshop. Recover its
-      // session anchor before reapplying it so a +24 h beat remains +24 h
-      // instead of compounding to +48 h on every re-entry.
+      // Recover the retained session anchor so relative beats do not compound on re-entry.
       storyTimeAnchorRef.current = recoverRetainedStoryAnchor(adapter, story.beats, playback.beatIndex);
     }
     switchMode('story');
@@ -332,6 +329,7 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
 
     return next;
   }), [adapter]);
+  const launchTimelapseVisible = engine.ready && launchBounds !== null && mode !== 'story' && !(mode === 'presentation' && playlistLibrary.activePlaylist);
 
   return (
     <main className={`sg-app sg-mode-${mode}${mode === 'presentation' && playlistLibrary.activePlaylist ? ' sg-playlist-active' : ''}`} data-testid="satglobe-app">
@@ -339,6 +337,8 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
       {/* display:contents wrapper; keeps the booting shell out of the tab order behind the loading overlay */}
       <div className="sg-boot-guard" inert={!engine.ready || undefined}>
       <TopBar mode={mode} newestElementAge={newestElementAge} objectCount={engine.objectCount} onModeChange={switchMode} onStoryOpen={openStory} ready={engine.ready} storyCount={storyLibrary.length} />
+
+      {launchTimelapseVisible && launchBounds && <LaunchTimelapse activeYear={filters.launchYearMax} bounds={launchBounds} onYearChange={applyLaunchYear} />}
 
       <DiscoverPanel
         conjunctions={engine.conjunctions}

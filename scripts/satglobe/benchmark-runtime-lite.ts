@@ -17,6 +17,7 @@ import { chromium, type Browser, type Page } from '@playwright/test';
 import {
   COUNT_UPDATE_MEASURE,
   FILTER_APPLY_MEASURE,
+  LAUNCH_TIMELAPSE_APPLY_MEASURE,
   LENS_APPLY_MEASURE,
   PLAYLIST_APPLY_MEASURE,
   RECOLOR_MEASURE,
@@ -30,6 +31,7 @@ const SAMPLES = Math.max(1, Number(process.env.SATGLOBE_BENCHMARK_SAMPLES) || 5)
 const MIN_IDLE_MEDIAN_FPS = 59.8;
 const MAX_CONJUNCTION_LENS_P95_MS = 100;
 const MAX_PLAYLIST_STEP_P95_MS = 100;
+const MAX_LAUNCH_TIMELAPSE_STEP_P95_MS = 100;
 const BENCHMARK_PLAYLIST_ID = 'b41cf9a5-697d-40c8-ac1b-159a17123c5e';
 const BENCHMARK_PLAYLIST: PlaylistV1 = {
   schemaVersion: 1,
@@ -76,6 +78,14 @@ interface InteractionPhaseSample {
   filterApplyMs: number;
   recolorMs: number;
   countUpdateMs: number;
+  filterApplyCount: number;
+  recolorCount: number;
+  countUpdateCount: number;
+  recolorCauses: string[];
+}
+
+interface ApplyPhaseSample {
+  applyMs: number;
   filterApplyCount: number;
   recolorCount: number;
   countUpdateCount: number;
@@ -288,6 +298,45 @@ async function seedBenchmarkPlaylist(page: Page): Promise<void> {
   }, BENCHMARK_PLAYLIST);
 }
 
+/** Reads one outer apply measure and the visual phases nested inside it. */
+function readApplyPhase(page: Page, applyMeasureName: string): Promise<ApplyPhaseSample> {
+  return page.evaluate((names) => {
+    const [applyName, filterName, recolorName, countName] = names;
+    const entries = performance.getEntriesByType('measure') as PerformanceMeasure[];
+    const applies = entries.filter(({ name }) => name === applyName);
+
+    if (applies.length !== 1) {
+      throw new Error(`Expected one ${applyName} entry, got ${applies.length}`);
+    }
+    const apply = applies[0];
+    const applyEnd = apply.startTime + apply.duration;
+    let filterApplyCount = 0;
+    let recolorCount = 0;
+    let countUpdateCount = 0;
+    const recolorCauses: string[] = [];
+
+    for (const entry of entries) {
+      const insideApply = entry.startTime >= apply.startTime && entry.startTime + entry.duration <= applyEnd;
+
+      if (!insideApply) {
+        continue;
+      }
+      if (entry.name === filterName) {
+        filterApplyCount++;
+      } else if (entry.name === recolorName) {
+        recolorCount++;
+        const cause = (entry.detail as { cause?: unknown } | null)?.cause;
+
+        recolorCauses.push(typeof cause === 'string' ? cause : 'unknown');
+      } else if (entry.name === countName) {
+        countUpdateCount++;
+      }
+    }
+
+    return { applyMs: apply.duration, filterApplyCount, recolorCount, countUpdateCount, recolorCauses };
+  }, [applyMeasureName, FILTER_APPLY_MEASURE, RECOLOR_MEASURE, COUNT_UPDATE_MEASURE]);
+}
+
 /** Proves paused playback is inert and a manual step owns exactly one visual pass. */
 async function measurePlaylistPlayback(browser: Browser) {
   const pausedPage = await newPage(browser);
@@ -314,13 +363,7 @@ async function measurePlaylistPlayback(browser: Browser) {
   }, [PLAYLIST_APPLY_MEASURE, FILTER_APPLY_MEASURE, RECOLOR_MEASURE, COUNT_UPDATE_MEASURE] as const);
 
   await pausedPage.context().close();
-  const stepSamples: Array<{
-    applyMs: number;
-    filterApplyCount: number;
-    recolorCount: number;
-    countUpdateCount: number;
-    recolorCauses: string[];
-  }> = [];
+  const stepSamples: ApplyPhaseSample[] = [];
 
   for (let i = 0; i < SAMPLES; i += 1) {
     /* eslint-disable no-await-in-loop -- interaction samples must not overlap */
@@ -338,49 +381,64 @@ async function measurePlaylistPlayback(browser: Browser) {
     }, SATGLOBE_INTERACTION_MEASURES);
     await page.getByTestId('playlist-next').click();
     await page.waitForSelector('[data-testid="playlist-deck"][data-entry-index="1"]');
-    const phase = await page.evaluate((names) => {
-      const [playlistName, filterName, recolorName, countName] = names;
-      const entries = performance.getEntriesByType('measure') as PerformanceMeasure[];
-      let apply: PerformanceMeasure | null = null;
-      let applyCount = 0;
-
-      for (const entry of entries) {
-        if (entry.name === playlistName) {
-          apply = entry;
-          applyCount++;
-        }
-      }
-      if (applyCount !== 1 || apply === null) {
-        throw new Error(`Expected one ${playlistName} entry, got ${applyCount}`);
-      }
-      const applyEnd = apply.startTime + apply.duration;
-      let filterApplyCount = 0;
-      let recolorCount = 0;
-      let countUpdateCount = 0;
-      const recolorCauses: string[] = [];
-
-      for (const entry of entries) {
-        const insideApply = entry.startTime >= apply.startTime && entry.startTime + entry.duration <= applyEnd;
-
-        if (!insideApply) {
-          continue;
-        }
-        if (entry.name === filterName) {
-          filterApplyCount++;
-        } else if (entry.name === recolorName) {
-          recolorCount++;
-          const cause = (entry.detail as { cause?: unknown } | null)?.cause;
-
-          recolorCauses.push(typeof cause === 'string' ? cause : 'unknown');
-        } else if (entry.name === countName) {
-          countUpdateCount++;
-        }
-      }
-
-      return { applyMs: apply.duration, filterApplyCount, recolorCount, countUpdateCount, recolorCauses };
-    }, [PLAYLIST_APPLY_MEASURE, FILTER_APPLY_MEASURE, RECOLOR_MEASURE, COUNT_UPDATE_MEASURE] as const);
+    const phase = await readApplyPhase(page, PLAYLIST_APPLY_MEASURE);
 
     stepSamples.push(phase);
+    await page.context().close();
+    /* eslint-enable no-await-in-loop */
+  }
+
+  return {
+    pausedFrames,
+    pausedMeasureCounts,
+    stepApplyMs: dist(stepSamples.map(({ applyMs }) => applyMs)),
+    filterApplyPasses: dist(stepSamples.map(({ filterApplyCount }) => filterApplyCount)),
+    recolorPasses: dist(stepSamples.map(({ recolorCount }) => recolorCount)),
+    countUpdatePasses: dist(stepSamples.map(({ countUpdateCount }) => countUpdateCount)),
+    recolorCauses: stepSamples.map(({ recolorCauses }) => recolorCauses),
+  };
+}
+
+/** Proves the paused launch scrubber is inert and every decade step is one visual pass. */
+async function measureLaunchTimelapse(browser: Browser) {
+  const pausedPage = await newPage(browser);
+
+  await pausedPage.goto(APP_URL, { waitUntil: 'domcontentloaded' });
+  await waitForReady(pausedPage);
+  await pausedPage.getByRole('button', { name: 'Show launches through 1970' }).click();
+  await pausedPage.evaluate((names) => {
+    for (const name of names) {
+      performance.clearMeasures(name);
+    }
+  }, SATGLOBE_INTERACTION_MEASURES);
+  const pausedFrames = summarizeFrames(await sampleFrames(pausedPage, 120));
+  const pausedMeasureCounts = await pausedPage.evaluate((names) => {
+    const counts: Record<string, number> = {};
+
+    for (const name of names) {
+      counts[name] = performance.getEntriesByName(name).length;
+    }
+
+    return counts;
+  }, [LAUNCH_TIMELAPSE_APPLY_MEASURE, FILTER_APPLY_MEASURE, RECOLOR_MEASURE, COUNT_UPDATE_MEASURE] as const);
+
+  await pausedPage.context().close();
+  const stepSamples: ApplyPhaseSample[] = [];
+
+  for (let i = 0; i < SAMPLES; i += 1) {
+    /* eslint-disable no-await-in-loop -- interaction samples must not overlap */
+    const page = await newPage(browser);
+
+    await page.goto(APP_URL, { waitUntil: 'domcontentloaded' });
+    await waitForReady(page);
+    await page.evaluate((names) => {
+      for (const name of names) {
+        performance.clearMeasures(name);
+      }
+    }, SATGLOBE_INTERACTION_MEASURES);
+    await page.getByRole('button', { name: 'Show launches through 1970' }).click();
+    await page.waitForSelector('[data-testid="launch-timelapse"][data-year="1970"]');
+    stepSamples.push(await readApplyPhase(page, LAUNCH_TIMELAPSE_APPLY_MEASURE));
     await page.context().close();
     /* eslint-enable no-await-in-loop */
   }
@@ -428,12 +486,12 @@ try {
     waitForConjunctions,
   );
   const playlistPlayback = await measurePlaylistPlayback(browser);
-
+  const launchTimelapse = await measureLaunchTimelapse(browser);
 
   const report = {
     startup,
     steadyStateFrames: { idle, filteredExploration, storySteadyState },
-    interactions: { freshStarlinkLens, freshConjunctionLens, playlistPlayback },
+    interactions: { freshStarlinkLens, freshConjunctionLens, playlistPlayback, launchTimelapse },
   };
 
   console.log(JSON.stringify(report, null, 1));
@@ -469,6 +527,29 @@ try {
   }
   if (playlistPlayback.recolorCauses.some((causes) => causes.length !== 1 || causes[0] !== 'combined')) {
     failures.push(`playlist steps recorded unexpected recolor causes: ${JSON.stringify(playlistPlayback.recolorCauses)}`);
+  }
+  if (launchTimelapse.pausedFrames.medianFps < MIN_IDLE_MEDIAN_FPS) {
+    failures.push(`paused launch timelapse median ${launchTimelapse.pausedFrames.medianFps} fps is below ${MIN_IDLE_MEDIAN_FPS} fps`);
+  }
+  const launchPausedChurn = Object.entries(launchTimelapse.pausedMeasureCounts).filter(([, count]) => count !== 0);
+
+  if (launchPausedChurn.length > 0) {
+    failures.push(`paused launch timelapse recorded interaction churn: ${JSON.stringify(Object.fromEntries(launchPausedChurn))}`);
+  }
+  if (launchTimelapse.stepApplyMs.p95 > MAX_LAUNCH_TIMELAPSE_STEP_P95_MS) {
+    failures.push(`launch timelapse step p95 ${launchTimelapse.stepApplyMs.p95.toFixed(1)} ms exceeds ${MAX_LAUNCH_TIMELAPSE_STEP_P95_MS} ms`);
+  }
+  if (launchTimelapse.recolorPasses.samples.some((count) => count !== 1)) {
+    failures.push(`launch timelapse steps expected one recolor per sample, got ${launchTimelapse.recolorPasses.samples.join(', ')}`);
+  }
+  if (launchTimelapse.filterApplyPasses.samples.some((count) => count !== 1)) {
+    failures.push(`launch timelapse steps expected one filter apply per sample, got ${launchTimelapse.filterApplyPasses.samples.join(', ')}`);
+  }
+  if (launchTimelapse.countUpdatePasses.samples.some((count) => count !== 1)) {
+    failures.push(`launch timelapse steps expected one count update per sample, got ${launchTimelapse.countUpdatePasses.samples.join(', ')}`);
+  }
+  if (launchTimelapse.recolorCauses.some((causes) => causes.length !== 1 || causes[0] !== 'combined')) {
+    failures.push(`launch timelapse steps recorded unexpected recolor causes: ${JSON.stringify(launchTimelapse.recolorCauses)}`);
   }
   if (freshStarlinkLens.recolorPasses.samples.some((count) => count !== 1)) {
     failures.push(`Starlink lens expected one recolor per sample, got ${freshStarlinkLens.recolorPasses.samples.join(', ')}`);

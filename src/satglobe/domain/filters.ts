@@ -1,4 +1,5 @@
 import type { FilterState, ObjectKind, OrbitRegime } from './types';
+import { catalogLaunchYear } from './launch-years';
 
 /** The catalog fields required to evaluate a SatGlobe workshop filter. */
 export interface FilterableSpaceObject {
@@ -11,6 +12,7 @@ export interface FilterableSpaceObject {
   name: string;
   internationalDesignator: string;
   launchDate: string;
+  launchYear?: number | null;
   country: string;
   owner: string;
   /*
@@ -36,7 +38,7 @@ export function prepareFilterMatcher(filters: FilterState): FilterMatcher {
   const countryOrOperator = filters.countryOrOperator.trim().toLocaleLowerCase();
   const kinds = new Set(filters.objectKinds);
   const regimes = new Set(filters.regimes);
-  const { status, altitudeKm, inclinationDeg } = filters;
+  const { status, altitudeKm, inclinationDeg, launchYearMax } = filters;
 
   return (object) => {
     const statusMatches = status === 'all' || (status === 'active' ? object.active : !object.active);
@@ -50,6 +52,13 @@ export function prepareFilterMatcher(filters: FilterState): FilterMatcher {
       const launchText = object.launchText ?? `${object.internationalDesignator} ${object.launchDate}`.toLocaleLowerCase();
 
       if (!launchText.includes(launchCohort)) {
+        return false;
+      }
+    }
+    if (launchYearMax !== undefined) {
+      const launchYear = catalogLaunchYear(object);
+
+      if (launchYear === null || launchYear > launchYearMax) {
         return false;
       }
     }

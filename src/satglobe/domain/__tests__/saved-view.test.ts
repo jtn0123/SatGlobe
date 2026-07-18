@@ -18,11 +18,13 @@ const catalog = [{ catalogId: '44714' }] as SpaceObjectView[];
 
 describe('portable saved views', () => {
   it('round trips without embedding the catalog', () => {
-    const encoded = serializeSavedView(view);
+    const launchHistoryView = { ...view, filters: { ...view.filters, launchYearMax: 2020 } };
+    const encoded = serializeSavedView(launchHistoryView);
     const imported = importSavedView(encoded, catalog);
 
     expect(encoded).not.toContain('objects');
     expect(imported.view.selectedObjectIds).toEqual(['44714']);
+    expect(imported.view.filters.launchYearMax).toBe(2020);
     expect(imported.warnings[0]).toContain('missing');
   });
 
