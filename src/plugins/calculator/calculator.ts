@@ -1,3 +1,4 @@
+import { escapeHtml } from '@app/engine/utils/escape-html';
 import { DetailedSensor } from '@app/app/sensors/DetailedSensor';
 import { MenuMode, ToastMsgType } from '@app/engine/core/interfaces';
 import { PluginRegistry } from '@app/engine/core/plugin-registry';
@@ -402,7 +403,7 @@ export class Calculator extends KeepTrackPlugin {
 
       return `<div class="row">
         <div class="input-field col s12">
-          <input value="${f.default}" id="calc-in-${f.id}" type="text" ${f.readonly ? 'readonly' : ''} />
+          <input value="${escapeHtml(f.default)}" id="calc-in-${escapeHtml(f.id)}" type="text" ${f.readonly ? 'readonly' : ''} />
           <label for="calc-in-${f.id}" class="active">${f.label}${unitSuffix}</label>
         </div>
       </div>`;

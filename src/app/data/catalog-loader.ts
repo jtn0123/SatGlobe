@@ -139,6 +139,17 @@ export interface KeepTrackTLEFile {
 }
 
 export class CatalogLoader {
+  /** True when the URL's hostname is celestrak.org or a subdomain (not a substring match). */
+  private static isCelestrakHost_(url: string): boolean {
+    try {
+      const { hostname } = new URL(url);
+
+      return hostname === 'celestrak.org' || hostname.endsWith('.celestrak.org');
+    } catch {
+      return false;
+    }
+  }
+
   static filterTLEDatabase(resp: KeepTrackTLEFile[], extraSats: ExtraSat[] | null, asciiCatalog: AsciiTleSat[] | null, jsCatalog: JsSat[] | null): void {
     let tempObjData: Satellite[] = [];
     const catalogManagerInstance = ServiceLocator.getCatalogManager();
@@ -944,7 +955,7 @@ export class CatalogLoader {
 
     // Remove any \r characters
     for (let i = 0; i < content.length; i++) {
-      content[i] = content[i].replace('\r', '');
+      content[i] = content[i].replaceAll('\r', '');
     }
   }
 
@@ -1310,7 +1321,7 @@ export class CatalogLoader {
     }
 
     // If pulling from celestrak.org directly or TLE source is the celestrak endpoint of our API, assume Celestrak source
-    if (settingsManager.dataSources.externalTLEs.includes('celestrak.org') || settingsManager.dataSources.tle.includes('sats/celestrak')) {
+    if (CatalogLoader.isCelestrakHost_(settingsManager.dataSources.externalTLEs) || settingsManager.dataSources.tle.endsWith('sats/celestrak')) {
       resp[i].source = CatalogSource.CELESTRAK;
     } else if (!resp[i].source) {
       resp[i].source = CatalogSource.UNKNOWN;
