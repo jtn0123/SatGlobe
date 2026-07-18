@@ -64,7 +64,7 @@ async function importPreset(raw: string) {
   Object.defineProperty(file, 'text', { value: vi.fn().mockResolvedValue(raw) });
   fireEvent.change(screen.getByTestId('import-view'), { target: { files: [file] } });
   await vi.waitFor(() => {
-    expect(screen.queryByRole('status')).not.toBeNull();
+    screen.getByRole('status');
   });
 
   return screen.getByRole('status');
