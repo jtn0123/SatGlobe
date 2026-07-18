@@ -55,18 +55,18 @@ function StoryDeckBase(props: StoryDeckProps) {
   const beat = story.beats[beatIndex];
 
   return (
-    <section className="sg-story-deck" data-testid="story-deck">
+    <section className="sg-story-deck" data-beat-id={beat.id} data-story-id={story.id} data-testid="story-deck">
       <div className="sg-story-topline">
         <span>{beat.eyebrow}</span>
         <label className="sg-story-picker">
           <span>STORY</span>
-          <select data-testid="story-picker" onChange={(event) => props.onStoryChange(event.target.value)} value={story.id}>
+          <select className="browser-default" data-testid="story-picker" onChange={(event) => props.onStoryChange(event.target.value)} value={story.id}>
             {props.stories.map(({ id, title }) => <option key={id} value={id}>{title}</option>)}
           </select>
         </label>
         <div><span className={beat.reconstruction === 'reconstructed' ? 'is-reconstructed' : ''}>{beat.reconstruction === 'reconstructed' ? 'RECONSTRUCTED' : 'INSTALLED CATALOG'}</span><button onClick={props.onSourcesChange} type="button">Sources · Facts</button></div>
       </div>
-      <div className="sg-story-copy"><span>{beat.dateLabel}</span><h2>{beat.title}</h2><p>{beat.narration}</p></div>
+      <div className="sg-story-copy"><span>{beat.dateLabel}</span><h2 data-testid="story-beat-title">{beat.title}</h2><p>{beat.narration}</p></div>
       <div className="sg-story-controls">
         <button aria-label="Previous beat" onClick={() => props.onBeatChange(beatIndex - 1)} type="button"><Icon name="previous" /></button>
         <button aria-label={playing ? 'Pause story' : 'Play story'} className="sg-story-play" data-testid="story-play" onClick={props.onPlayingChange} type="button"><Icon name={playing ? 'pause' : 'play'} /></button>
@@ -75,7 +75,7 @@ function StoryDeckBase(props: StoryDeckProps) {
           <div className="sg-story-progress"><span style={{ width: `${progress * 100}%` }} /></div>
           <div className="sg-story-beats">{story.beats.map((item, index) => <button aria-label={`Go to ${item.title}`} className={index <= beatIndex ? 'is-past' : ''} key={item.id} onClick={() => props.onBeatChange(index)} type="button"><span /></button>)}</div>
         </div>
-        <span className="sg-story-counter">{String(beatIndex + 1).padStart(2, '0')} / {String(story.beats.length).padStart(2, '0')}</span>
+        <span className="sg-story-counter" data-testid="story-beat-counter">{String(beatIndex + 1).padStart(2, '0')} / {String(story.beats.length).padStart(2, '0')}</span>
         <button className="sg-story-action" onClick={props.onAuthoredView} type="button"><Icon name="focus" size={15} /> Authored view</button>
         <button className="sg-story-action" onClick={props.onOpenWorkshop} type="button">Open workshop</button>
       </div>

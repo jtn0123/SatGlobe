@@ -13,7 +13,26 @@ import { SatGlobeEngineAdapter } from '../satglobe-engine-adapter';
 interface FakeServices {
   catalog: { objectCache: unknown[]; getSats: () => unknown[] };
   time: { simulationTimeObj: Date; changeStaticOffset: ReturnType<typeof vi.fn>; setSelectedDate: ReturnType<typeof vi.fn>; changePropRate: ReturnType<typeof vi.fn> };
-  camera: { state: { camPitchTarget: number; camYawTarget: number; zoomTarget: number }; satShaderSizes: { minSize: number | null; maxSize: number | null } };
+  camera: {
+    autoRotate: ReturnType<typeof vi.fn>;
+    camSnap: ReturnType<typeof vi.fn>;
+    state: {
+      camPitchTarget: number;
+      camYawTarget: number;
+      camPitch: number;
+      camYaw: number;
+      earthCenteredPitch: number;
+      earthCenteredYaw: number;
+      hasPrevGmst: boolean;
+      hasPrevSatAngles: boolean;
+      isAutoRotate: boolean;
+      isAutoPitchYawToTarget: boolean;
+      isZoomIn: boolean;
+      zoomLevel: number;
+      zoomTarget: number;
+    };
+    satShaderSizes: { minSize: number | null; maxSize: number | null };
+  };
   colorSchemes: { registerScheme: ReturnType<typeof vi.fn>; setColorScheme: ReturnType<typeof vi.fn> };
   orbits: { addInViewOrbit: ReturnType<typeof vi.fn>; clearInViewOrbit: ReturnType<typeof vi.fn> };
 }
@@ -130,8 +149,35 @@ describe('SatGlobeEngineAdapter', () => {
       setSelectedDate: vi.fn(),
       changePropRate: vi.fn(),
     };
+    const cameraState = {
+      camPitchTarget: 0.34,
+      camYawTarget: 0.38,
+      camPitch: 0.34,
+      camYaw: 0.38,
+      earthCenteredPitch: 0.34,
+      earthCenteredYaw: 0.38,
+      hasPrevGmst: false,
+      hasPrevSatAngles: true,
+      isAutoRotate: true,
+      isAutoPitchYawToTarget: true,
+      isZoomIn: false,
+      zoomLevel: 0.58,
+      zoomTarget: 0.58,
+    };
+
     services.camera = {
-      state: { camPitchTarget: 0.34, camYawTarget: 0.38, zoomTarget: 0.58 },
+      autoRotate: vi.fn((enabled: boolean) => {
+        cameraState.isAutoRotate = enabled;
+      }),
+      camSnap: vi.fn((pitch: number, yaw: number) => {
+        cameraState.camPitchTarget = pitch;
+        cameraState.camYawTarget = yaw;
+        cameraState.earthCenteredPitch = pitch;
+        cameraState.earthCenteredYaw = yaw;
+        cameraState.isAutoPitchYawToTarget = true;
+        cameraState.hasPrevSatAngles = false;
+      }),
+      state: cameraState,
       satShaderSizes: { minSize: null, maxSize: null },
     };
     services.colorSchemes = { registerScheme: vi.fn(), setColorScheme: vi.fn() };
@@ -244,6 +290,76 @@ describe('SatGlobeEngineAdapter', () => {
     adapter.setFilters(filters);
 
     expect(adapter.getState().visibleCount).toBe(2);
+  });
+
+  it.each([
+    ['zoom in', 0.7, 0.3, true],
+    ['zoom out', 0.3, 0.7, false],
+    ['unchanged zoom', 0.5, 0.5, false],
+  ] as const)('sets camera direction so an authored %s target survives the engine guard', (_label, zoomLevel, zoomTarget, expectedIsZoomIn) => {
+    services.camera.state.zoomLevel = zoomLevel;
+    services.camera.state.isZoomIn = !expectedIsZoomIn;
+    services.camera.state.isAutoPitchYawToTarget = false;
+    adapter = bootAdapter([fakeSat()]);
+    const pose = { pitch: 0.2, yaw: 1.4, zoom: zoomTarget };
+
+    adapter.setCamera(pose);
+
+    expect(services.camera.camSnap).toHaveBeenCalledWith(pose.pitch, pose.yaw);
+    expect(services.camera.state.isAutoPitchYawToTarget).toBe(true);
+    expect(services.camera.state.hasPrevSatAngles).toBe(false);
+    expect(services.camera.state.isZoomIn).toBe(expectedIsZoomIn);
+    expect(services.camera.state.zoomTarget).toBe(zoomTarget);
+    expect(services.camera.state.camPitchTarget).toBe(pose.pitch);
+    expect(services.camera.state.camYawTarget).toBe(pose.yaw);
+    const engineWouldCancelTarget =
+      (services.camera.state.zoomLevel > services.camera.state.zoomTarget && !services.camera.state.isZoomIn) ||
+      (services.camera.state.zoomLevel < services.camera.state.zoomTarget && services.camera.state.isZoomIn);
+
+    expect(engineWouldCancelTarget).toBe(false);
+  });
+
+  it('stops ambient rotation before chasing an authored camera pose', () => {
+    adapter = bootAdapter([fakeSat()]);
+
+    expect(services.camera.state.isAutoRotate).toBe(true);
+    adapter.setCamera({ pitch: 0.2, yaw: 1.4, zoom: 0.5 });
+
+    expect(services.camera.autoRotate).toHaveBeenCalledWith(false);
+    expect(services.camera.state.isAutoRotate).toBe(false);
+    expect(services.camera.autoRotate.mock.invocationCallOrder[0]).toBeLessThan(
+      services.camera.camSnap.mock.invocationCallOrder[0],
+    );
+  });
+
+  it('publishes the rendered camera pose instead of stale destination targets', () => {
+    adapter = bootAdapter([fakeSat()]);
+    services.camera.state.camPitch = -0.21;
+    services.camera.state.camYaw = 2.41;
+    services.camera.state.zoomLevel = 0.46;
+    services.camera.state.camPitchTarget = 0.7;
+    services.camera.state.camYawTarget = 5.2;
+    services.camera.state.zoomTarget = 0.91;
+
+    vi.advanceTimersByTime(600);
+
+    expect(adapter.getState().camera).toEqual({ pitch: -0.21, yaw: 2.41, zoom: 0.46 });
+  });
+
+  it.each([
+    ['+1.5 hours', '2022-01-01T01:30:00.000Z', 1.1],
+    ['+6 hours', '2022-01-01T06:00:00.000Z', 2.35],
+  ] as const)('resets the Earth-rotation baseline after a %s time jump so authored yaw remains absolute', (_label, simulationTime, yaw) => {
+    adapter = bootAdapter([fakeSat()]);
+    services.camera.state.hasPrevGmst = true;
+    adapter.setSimulationTime(simulationTime);
+    const pose = { pitch: 0.4, yaw, zoom: 0.5 };
+
+    adapter.setCamera(pose);
+
+    expect(services.time.setSelectedDate).toHaveBeenCalledWith(new Date(simulationTime));
+    expect(services.camera.state.hasPrevGmst).toBe(false);
+    expect(services.camera.state.camYawTarget).toBe(pose.yaw);
   });
 
   it('surfaces catalog hydration failures as state and a logged warning', () => {

@@ -1,6 +1,10 @@
 import type { StoryManifestV1 } from '../domain/types';
 import { starlinkBuildoutStory } from './starlink-buildout';
+import { launchToOrbitStory } from './launch-to-orbit';
+import { issAssemblyStory } from './iss-assembly';
+import { oneDayInOrbitStory } from './one-day-in-orbit';
 import { gpsConstellationStory } from './gps-constellation';
+import { fengyunAsatStory } from './fengyun-asat';
 import { cosmosIridiumStory } from './cosmos-iridium';
 import { geoBeltStory } from './geo-belt';
 
@@ -11,7 +15,11 @@ import { geoBeltStory } from './geo-belt';
  */
 export const storyLibrary: readonly StoryManifestV1[] = [
   starlinkBuildoutStory,
+  launchToOrbitStory,
+  issAssemblyStory,
+  oneDayInOrbitStory,
   gpsConstellationStory,
+  fengyunAsatStory,
   cosmosIridiumStory,
   geoBeltStory,
 ];

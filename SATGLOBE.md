@@ -31,7 +31,7 @@ The application loads the checked-in `public/tle/tle.json` snapshot. Browser run
 
 - Workshop provides local catalog search, quick lenses, combined object and orbital filters, data-driven color encodings, an object inspector, time control, and portable saved-view JSON.
 - Present collapses the instrument panels into a calm title composition without changing engine state.
-- Story plays validated, sourced narratives over the same scene — a library of four ships today (Starlink buildout, the GPS clockwork, the 2009 Cosmos–Iridium collision, the geostationary ring), selectable in the story deck. Historical beats display `Reconstructed`; each story ends on the installed propagated catalog. Authoring guide: `docs/story-authoring.md`.
+- Story plays eight validated, sourced narratives over the same scene: Starlink buildout, launch to orbit, ISS assembly, one day in orbit, the GPS clockwork, the 2007 Fengyun-1C ASAT debris cloud, the 2009 Cosmos–Iridium collision, and the geostationary ring. The picker changes stories in place; the time-led story uses offsets from a stable per-story entry anchor. Historical beats display `Reconstructed`, and every story ends on the installed propagated catalog. Authoring and screenshot-verification guide: `docs/story-authoring.md`.
 - `/` focuses the catalog search, `?` shows the shortcuts legend, `F` toggles presentation, `Escape` returns to Workshop, and the arrow/space controls navigate a story when Story mode is open.
 
 Satellite marks use semantic scale by default. They are enlarged for legibility. True-scale comparison is a disclosure state: most real spacecraft are too small to remain visible at planetary scale.
@@ -74,9 +74,14 @@ npm run lint
 npm run test:satglobe
 npm run build:satglobe
 npm run test:e2e:satglobe
+npm run verify:stories
 ```
 
-`npm run verify:satglobe` runs typecheck, the full source lint gate, focused SatGlobe/catalog/offline unit tests, and the production build as one local checkpoint command. The Playwright journey remains separate because it starts the WebGL application in Chromium.
+`npm run verify:satglobe` runs the application and story-walker typechecks, the full source lint gate, focused SatGlobe/catalog/offline unit tests, and the production build as one local checkpoint command. The Playwright journeys remain separate because they start the WebGL application in Chromium.
+
+`npm run verify:stories` invokes a runner that always creates a fresh production profile itself, so calling `npx tsx scripts/satglobe/verify-stories.ts` directly cannot certify a stale ignored `dist/`. It serves that profile and walks all eight stories in headed Chromium at 1440×900. Before Story opens, the runner stops propagation at rate `0` and fixes the audit clock to the installed catalog's `newestElementEpoch`; every story is reset to that same anchor. It rejects picker/library drift, engine errors, empty scenes, and authored camera/filter/encoding/time mismatches.
+
+Fixed 1440×900 viewport evidence is written under the ignored `test-results/satglobe-story-shots/<run-key>/` path. Every clean or dirty key includes the Git SHA, a compact UTC timestamp, and a UUID; dirty keys are explicitly marked, and the runner creates the leaf directory exclusively instead of reusing an earlier run. `manifest.json` records the fixed audit anchor, the fresh production tree's SHA-256 identity, and a SHA-256 for every screenshot. Set `SATGLOBE_STORY_HEADLESS=1` for automation.
 
 The upstream test suite is available with `npm test`. The one machine-dependent snapshot from the v13.4.0 import baseline (a weather-coordinate floating-point difference around 1e-12) has been replaced with a stable projection, so the full suite is expected to pass on any machine.
 

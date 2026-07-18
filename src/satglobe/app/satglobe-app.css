@@ -1531,6 +1531,7 @@ body.sg-story .sg-scale-disclosure {
 /* Story picker: compact select in the deck topline. */
 .sg-story-picker {
   display: inline-flex;
+  flex: 0 0 auto;
   align-items: center;
   gap: 6px;
   margin-left: 12px;
@@ -1543,6 +1544,8 @@ body.sg-story .sg-scale-disclosure {
 }
 
 .sg-story-picker select {
+  width: clamp(260px, 26vw, 380px);
+  min-width: clamp(260px, 26vw, 380px);
   padding: 3px 6px;
   border: 1px solid var(--sg-line, rgba(176, 208, 202, 0.18));
   border-radius: 4px;

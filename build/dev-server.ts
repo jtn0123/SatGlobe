@@ -4,6 +4,13 @@ import { createServer, type ServerResponse } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
 import { dirname, extname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  LIVE_RELOAD_CLIENT_PATH,
+  LIVE_RELOAD_CLIENT_SOURCE,
+  liveReloadEnabledFor,
+  prepareHtmlResponse,
+  securityHeadersFor,
+} from './dev-server-response';
 import { ConsoleStyles, logWithStyle } from './lib/build-error';
 import { handlePluginEndpoint } from './plugin-install-endpoint';
 
@@ -11,26 +18,6 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const rootDir = resolve(__dirname, '..');
 const PORT = 5544;
 const distDir = resolve(rootDir, 'dist');
-
-const RELOAD_SCRIPT = `<script>new EventSource("/__reload").onmessage=()=>location.reload()</script>`;
-
-/*
- * Security headers for the satglobe profile, mirroring configs/satglobe/nginx.conf
- * (keep the two in sync). Served from the dev server too so the offline contract
- * holds in `start:satglobe` and `start:satglobe:static`, not just Docker.
- */
-const SATGLOBE_CSP = [
-  "default-src 'self' blob:",
-  "img-src 'self' data: blob:",
-  "style-src 'self' 'unsafe-inline'",
-  "script-src 'self' 'unsafe-eval' blob:",
-  "worker-src 'self' blob:",
-  "connect-src 'self'",
-  "font-src 'self'",
-  "frame-ancestors 'none'",
-  "object-src 'none'",
-  "base-uri 'self'",
-].join('; ');
 
 // Maps config directory filenames to their dist/ destinations
 const CONFIG_FILE_DESTINATIONS: Record<string, string> = {
@@ -60,7 +47,7 @@ const mimeTypes: Record<string, string> = {
 // SSE clients for livereload
 const sseClients = new Set<ServerResponse>();
 
-function startServer(securityHeaders: Record<string, string> = {}) {
+function startServer(securityHeaders: Record<string, string>, liveReloadEnabled: boolean) {
   const server = createServer(async (req, res) => {
     // Swallow socket-level errors (client aborts, RST). Without this listener a
     // write to a closed/aborted socket emits an unhandled 'error' that crashes the
@@ -70,6 +57,19 @@ function startServer(securityHeaders: Record<string, string> = {}) {
     res.on('error', () => { /* ignore broken pipe / reset */ });
 
     const pathname = new URL(req.url!, `http://localhost:${PORT}`).pathname;
+
+    // The SatGlobe CSP disallows executable inline scripts. Serve the development
+    // reload client from a same-origin endpoint so live reload remains compatible.
+    if (liveReloadEnabled && pathname === LIVE_RELOAD_CLIENT_PATH) {
+      res.writeHead(200, {
+        'Content-Type': 'application/javascript',
+        'Cache-Control': 'no-store',
+        ...securityHeaders,
+      });
+      res.end(LIVE_RELOAD_CLIENT_SOURCE);
+
+      return;
+    }
 
     // SSE endpoint for livereload
     if (pathname === '/__reload') {
@@ -99,14 +99,12 @@ function startServer(securityHeaders: Record<string, string> = {}) {
         filePath = join(filePath, 'index.html');
       }
 
-      let data = await readFile(filePath);
+      let data: Buffer = await readFile(filePath);
       const ext = extname(filePath).toLowerCase();
 
-      // Inject livereload script into HTML responses
+      // Static HTML must remain byte-for-byte build output; only development gets live reload.
       if (ext === '.html') {
-        const html = data.toString().replace('</body>', `${RELOAD_SCRIPT}</body>`);
-
-        data = Buffer.from(html);
+        data = prepareHtmlResponse(data, liveReloadEnabled);
       }
 
       res.writeHead(200, { 'Content-Type': mimeTypes[ext] || 'application/octet-stream', ...securityHeaders });
@@ -249,29 +247,23 @@ function getProfileName(args: string[]): string | null {
   return profileArg ? profileArg.split('=')[1] : null;
 }
 
-const isStaticOnly = process.argv.includes('--static');
-const requestedProfile = getProfileName(process.argv.slice(2));
-const securityHeaders: Record<string, string> = requestedProfile === 'satglobe'
-  ? {
-    'Content-Security-Policy': SATGLOBE_CSP,
-    'X-Content-Type-Options': 'nosniff',
-    'Referrer-Policy': 'no-referrer',
-    // Enables the JS self-profiling API locally so perf work can sample real stacks.
-    'Document-Policy': 'js-profiling',
-  }
-  : {};
+const cliArgs = process.argv.slice(2);
+const liveReloadEnabled = liveReloadEnabledFor(cliArgs);
+const isStaticOnly = !liveReloadEnabled;
+const requestedProfile = getProfileName(cliArgs);
+const securityHeaders = securityHeadersFor(requestedProfile);
 
 if (isStaticOnly) {
-  startServer(securityHeaders);
+  startServer(securityHeaders, liveReloadEnabled);
 } else {
-  const args = process.argv.slice(2).filter((arg) => arg !== '--static');
+  const args = cliArgs.filter((arg) => arg !== '--static');
   const profileName = getProfileName(args);
 
   // Start build in watch mode (non-blocking)
   runBuildWatch(args);
 
   // Start server and file watchers
-  startServer(securityHeaders);
+  startServer(securityHeaders, liveReloadEnabled);
   watchDist();
 
   // Watch config directory for non-rspack file changes

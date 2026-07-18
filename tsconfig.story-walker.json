@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "allowJs": false,
+    "noEmit": true,
+    "noImplicitAny": true,
+    "strict": true,
+    "strictNullChecks": true,
+    "types": ["node"]
+  },
+  "include": ["scripts/satglobe/verify-stories.ts"]
+}
