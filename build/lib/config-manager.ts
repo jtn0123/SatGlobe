@@ -2,6 +2,7 @@
 // src/scripts/utils/configManager.ts
 import dotenv from 'dotenv';
 import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { BuildError, ConsoleStyles, ErrorCodes, logWithStyle } from './build-error';
 import { ProfileLoader } from './profile-loader';
 
@@ -79,18 +80,20 @@ export class ConfigManager {
    * Loads configuration from environment variables and command line arguments.
    * When --profile=<name> is used, loads from configs/<name>/ instead of .env.
    * @param args Command line arguments
-   * @param rootDir Project root directory (for resolving profile paths)
+   * @param rootDir Project root directory for resolving environment and profile paths
    * @returns The build configuration
    */
   public loadConfig(args: string[], rootDir?: string): BuildConfig {
     try {
+      const projectRoot = rootDir ?? process.cwd();
+
       // Process command line arguments first (to detect --profile)
       this.parseCommandLineArgs(args);
 
       if (this.profileName_) {
-        this.loadProfileConfig_(rootDir);
+        this.loadProfileConfig_(projectRoot);
       } else {
-        this.loadLegacyConfig_();
+        this.loadLegacyConfig_(projectRoot);
       }
 
       /*
@@ -120,10 +123,10 @@ export class ConfigManager {
 
   /**
    * Profile mode: load from configs/<name>/.
-   * @param rootDir Project root directory (for resolving profile paths)
+   * @param projectRoot Project root directory for resolving environment and profile paths
    */
-  private loadProfileConfig_(rootDir?: string): void {
-    const profileLoader = new ProfileLoader(rootDir ?? process.cwd());
+  private loadProfileConfig_(projectRoot: string): void {
+    const profileLoader = new ProfileLoader(projectRoot);
     const errors = profileLoader.validateProfile(this.profileName_!);
 
     if (errors.length > 0) {
@@ -154,11 +157,15 @@ export class ConfigManager {
     // in the root .env (e.g., KEEPTRACK_API_KEY) but aren't duplicated in profile.env.
     // Load profile.env first so its values take precedence over root .env on conflicts;
     // OS env wins over both because dotenv.config does not overwrite existing keys.
-    if (this.config.envFilePath !== '.env' && existsSync(this.config.envFilePath)) {
-      dotenv.config({ path: this.config.envFilePath });
+    const profileEnvPath = resolve(projectRoot, this.config.envFilePath);
+
+    if (this.config.envFilePath !== '.env' && existsSync(profileEnvPath)) {
+      dotenv.config({ path: profileEnvPath, quiet: true });
     }
-    if (existsSync('./.env')) {
-      dotenv.config({ path: './.env' });
+    const rootEnvPath = resolve(projectRoot, '.env');
+
+    if (existsSync(rootEnvPath)) {
+      dotenv.config({ path: rootEnvPath, quiet: true });
     }
 
     // Apply only OS-level env overrides (CI/CD), using the pre-dotenv snapshot
@@ -169,10 +176,10 @@ export class ConfigManager {
   /**
    * Legacy mode: load from .env file.
    */
-  private loadLegacyConfig_(): void {
-    const envFilePath = './.env';
+  private loadLegacyConfig_(projectRoot: string): void {
+    const envFilePath = resolve(projectRoot, '.env');
     const envConfig = existsSync(envFilePath)
-      ? dotenv.config({ path: envFilePath })
+      ? dotenv.config({ path: envFilePath, quiet: true })
       : { parsed: null } as unknown as dotenv.DotenvConfigOutput;
 
     if (envConfig.error) {
