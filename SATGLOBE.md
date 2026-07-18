@@ -47,7 +47,7 @@ npm run catalog:verify
 npm run catalog:refresh
 ```
 
-The command starts with KeepTrack’s enriched catalog, merges CelesTrak OMM-compatible CSV for active objects and Starlink, and curates up to 25 future SOCRATES close-approach records from CelesTrak's official `sort-minRange.csv`. It treats catalog identifiers as strings, rejects duplicate IDs and malformed elements, blocks epoch regressions, checks suspicious object-count drops, strictly validates screening provenance, and derives deterministic snapshot IDs from source content.
+The command starts with KeepTrack’s enriched catalog, merges CelesTrak OMM-compatible CSV for active objects and Starlink, and curates up to 25 future SOCRATES close-approach records from CelesTrak's official `sort-minRange.csv`. It treats catalog identifiers as strings, interprets CelesTrak's timezone-less OMM epochs strictly as UTC, rejects duplicate IDs and malformed elements, blocks every epoch regression, checks suspicious object-count drops, strictly validates screening provenance, and derives deterministic snapshot IDs from accepted catalog bytes.
 
 CelesTrak OMM group downloads use a two-hour local cache. SOCRATES checks provider metadata on an eight-hour gate and preserves its original retrieval timestamp when provider bytes are unchanged. `catalog:verify` is deliberately write-free; `catalog:refresh` validates all candidate outputs before a manifest-last staged install. Delete `.cache/satglobe` only when a genuinely fresh provider request is required. A successful install writes:
 
@@ -71,6 +71,10 @@ npx tsx scripts/satglobe/catalog-refresh.ts \
 ```
 
 `--socrates-updated-at` must be the canonical ISO form of the provider's `FILE_MTIME` for that exact saved CSV, and `--socrates-retrieved-at` must preserve when those bytes were originally downloaded. SatGlobe never substitutes local processing or filesystem modification time for source provenance.
+
+Refresh manifest schema v2 keeps two clocks separate: `refreshedAt` is when the local refresh ran, while `newestElementEpoch` is the maximum epoch in the rows that passed validation and will actually be installed. The checksum covers the exact serialized catalog bytes, and the snapshot ID binds that checksum to the newest installed epoch. Candidate installation fails if those values disagree. Schema v1 is read only at the checked-in artifact-migration boundary; new refreshes always emit v2. See [ADR 0003](docs/adr/0003-catalog-time-provenance.md).
+
+The nginx deployment revalidates `tle.json` plus the stable JSON reports under `tle/satglobe/` on every request. Their filenames do not contain content hashes and must not inherit the seven-day immutable asset policy.
 
 General-perturbations/SGP4 output and SOCRATES screening are predictions from public element sets. SatGlobe never calls either live telemetry. Accuracy degrades as elements age and after maneuvers that the installed elements do not represent.
 

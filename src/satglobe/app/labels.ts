@@ -56,11 +56,11 @@ export function formatCalendarDate(iso: string): string {
   }).format(date).toLocaleUpperCase();
 }
 
-/** Returns the non-negative age of an ISO timestamp in days. */
+/** Returns signed age in days: positive is old, negative is future-dated. */
 export function ageInDays(iso: string): number | null {
   const epoch = new Date(iso).getTime();
 
-  return Number.isFinite(epoch) ? Math.max(0, (Date.now() - epoch) / 86_400_000) : null;
+  return Number.isFinite(epoch) ? (Date.now() - epoch) / 86_400_000 : null;
 }
 
 /** Describes element age without implying the propagated position is live. */
@@ -70,5 +70,11 @@ export function describeEpoch(epoch: string): string {
   }
   const ageDays = ageInDays(epoch);
 
-  return ageDays === null ? 'Epoch unavailable' : `${ageDays.toFixed(ageDays < 10 ? 1 : 0)} days old`;
+  if (ageDays === null) {
+    return 'Epoch unavailable';
+  }
+  const magnitude = Math.abs(ageDays);
+  const formatted = magnitude.toFixed(magnitude < 10 ? 1 : 0);
+
+  return ageDays < 0 ? `${formatted} days in future` : `${formatted} days old`;
 }

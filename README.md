@@ -104,7 +104,7 @@ npm run catalog:verify
 npm run catalog:refresh
 ```
 
-OMM downloads use a two-hour cache; SOCRATES uses an eight-hour provider-metadata gate. Verification is write-free, while refresh performs a manifest-last staged install. The curated `conjunctions.json` plus provenance, checksum, rejection, and summary reports live under `public/tle/satglobe/`.
+OMM downloads use a two-hour cache; SOCRATES uses an eight-hour provider-metadata gate. Timezone-less OMM epochs are parsed strictly as UTC. Verification is write-free, while refresh performs a manifest-last staged install whose v2 manifest separates the actual refresh time from the newest accepted element epoch. The curated `conjunctions.json` plus provenance, checksum, rejection, and summary reports live under `public/tle/satglobe/`; see [ADR 0003](docs/adr/0003-catalog-time-provenance.md) for the checksum, snapshot, and migration invariants.
 
 ## Upstream and license
 
