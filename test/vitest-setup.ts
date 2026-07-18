@@ -337,11 +337,6 @@ vi.mock('draggabilly', () => {
   return { default: MockDraggabilly, __esModule: true };
 });
 
-/** Setup catalog, webgl, and other standard environment */
-import('./environment/standard-env').then((module) => {
-  module.setupStandardEnvironment();
-});
-
 global.mocks = {};
 
 /*
@@ -560,3 +555,12 @@ window.requestAnimationFrame = requestAnimationFrameMock.requestAnimationFrame.b
 window.cancelAnimationFrame = requestAnimationFrameMock.cancelAnimationFrame.bind(requestAnimationFrameMock);
 
 window.scrollTo = vi.fn();
+
+/*
+ * Vitest waits for top-level await in setup files. Finish the standard
+ * environment before it loads the test module, whose hoisted vi.mock calls
+ * could otherwise intercept this setup import while its promise was pending.
+ */
+const { setupStandardEnvironment } = await import('./environment/standard-env');
+
+setupStandardEnvironment();
