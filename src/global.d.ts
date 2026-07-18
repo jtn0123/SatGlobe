@@ -11,6 +11,8 @@ declare global {
   interface Window {
     keepTrack: KeepTrack;
     satGlobe?: import('./satglobe/engine/satglobe-engine-adapter').SatGlobeEngineAdapter;
+    /** Offline-edition catalog fetch started at module evaluation, ahead of engine init (see main.ts). */
+    satGlobeCatalogPrefetch?: Promise<unknown>;
     zaraz?: {
       consent?: {
         get: (key: string) => boolean;
