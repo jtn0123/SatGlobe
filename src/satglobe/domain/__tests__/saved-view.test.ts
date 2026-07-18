@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { importSavedView, serializeSavedView } from '../saved-view';
+import { importSavedView, loadPersistedViews, persistViews, serializeSavedView } from '../saved-view';
 import { DEFAULT_CAMERA, DEFAULT_FILTERS, type SavedViewV1, type SpaceObjectView } from '../types';
 
 const view: SavedViewV1 = {
@@ -37,5 +37,57 @@ describe('portable saved views', () => {
 
   it('reports the invalid field without partially importing the preset', () => {
     expect(() => importSavedView(JSON.stringify({ ...view, camera: { ...view.camera, zoom: 2 } }), catalog)).toThrow('camera.zoom');
+  });
+});
+
+describe('persisted saved views', () => {
+  const fakeStorage = (initial: Record<string, string> = {}) => {
+    const store = new Map(Object.entries(initial));
+
+    return {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        store.set(key, value);
+      },
+      dump: () => Object.fromEntries(store),
+    };
+  };
+
+  it('round trips through storage', () => {
+    const storage = fakeStorage();
+
+    persistViews([view], storage);
+    expect(loadPersistedViews(storage)).toEqual([{ ...view }]);
+  });
+
+  it('drops corrupt entries individually instead of discarding the rest', () => {
+    const storage = fakeStorage({
+      'satglobe.savedViews.v1': JSON.stringify([view, { schemaVersion: 1, name: 'broken' }, 42]),
+    });
+
+    const loaded = loadPersistedViews(storage);
+
+    expect(loaded).toHaveLength(1);
+    expect(loaded[0].name).toBe('Starlink study');
+  });
+
+  it('treats garbage, non-arrays, and absent keys as empty', () => {
+    expect(loadPersistedViews(fakeStorage({ 'satglobe.savedViews.v1': 'not json' }))).toEqual([]);
+    expect(loadPersistedViews(fakeStorage({ 'satglobe.savedViews.v1': '{"a":1}' }))).toEqual([]);
+    expect(loadPersistedViews(fakeStorage())).toEqual([]);
+  });
+
+  it('survives storage that throws (privacy modes)', () => {
+    const throwing = {
+      getItem: () => {
+        throw new Error('denied');
+      },
+      setItem: () => {
+        throw new Error('denied');
+      },
+    };
+
+    expect(loadPersistedViews(throwing)).toEqual([]);
+    expect(() => persistViews([view], throwing)).not.toThrow();
   });
 });

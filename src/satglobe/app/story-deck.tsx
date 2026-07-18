@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import { useDialogFocus } from './use-dialog-focus';
 import type { StoryFact, StoryManifestV1 } from '../domain/types';
 import { Icon } from './icon';
 
@@ -34,6 +35,18 @@ interface StoryDeckProps {
 }
 
 /** Renders guided playback without replacing the underlying orbital scene. */
+/** Wraps the sources drawer with modal-dialog focus behavior. */
+function SourcesDrawerShell({ children }: { children: React.ReactNode }) {
+  const dialogRef = useDialogFocus<HTMLElement>();
+
+  return (
+    <aside aria-label="Sources and technical facts" aria-modal="true" className="sg-source-drawer" ref={dialogRef} role="dialog">
+      {children}
+    </aside>
+  );
+}
+
+/** Compact story transport: beats, scrubber, playback, and the sources drawer. */
 function StoryDeckBase(props: StoryDeckProps) {
   const { beatIndex, playing, progress, showSources, story } = props;
   const beat = story.beats[beatIndex];
@@ -58,7 +71,7 @@ function StoryDeckBase(props: StoryDeckProps) {
         <button className="sg-story-action" onClick={props.onOpenWorkshop} type="button">Open workshop</button>
       </div>
       {showSources && (
-        <aside className="sg-source-drawer">
+        <SourcesDrawerShell>
           <div className="sg-inspector-head"><div><div className="sg-panel-kicker">SOURCES & TECHNICAL FACTS</div><h2>{beat.title}</h2></div><button aria-label="Close sources" className="sg-icon-button" onClick={props.onSourcesChange} type="button"><Icon name="close" /></button></div>
           {beat.factIds.map((factId) => {
             const fact = story.facts.find(({ id }) => id === factId);
@@ -66,7 +79,7 @@ function StoryDeckBase(props: StoryDeckProps) {
             return fact ? <StoryFactCard fact={fact} key={fact.id} story={story} /> : null;
           })}
           <div className="sg-truth-note"><Icon name="info" /><span>Historical chapters use sourced reconstruction. Current positions are propagated from the installed public catalog.</span></div>
-        </aside>
+        </SourcesDrawerShell>
       )}
     </section>
   );

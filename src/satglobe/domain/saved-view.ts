@@ -51,6 +51,54 @@ export function importSavedView(raw: string, catalog: readonly SpaceObjectView[]
   };
 }
 
+const SAVED_VIEWS_STORAGE_KEY = 'satglobe.savedViews.v1';
+
+/**
+ * Loads views persisted on this device. Entries the schema rejects are
+ * dropped individually, so one corrupt record never discards the rest.
+ */
+export function loadPersistedViews(storage: Pick<Storage, 'getItem'> = localStorage): SavedViewV1[] {
+  let raw: string | null;
+
+  try {
+    raw = storage.getItem(SAVED_VIEWS_STORAGE_KEY);
+  } catch {
+    // Storage can be unavailable (privacy modes); treat as empty.
+    return [];
+  }
+  if (!raw) {
+    return [];
+  }
+
+  let decoded: unknown;
+
+  try {
+    decoded = JSON.parse(raw);
+  } catch {
+    return [];
+  }
+  if (!Array.isArray(decoded)) {
+    return [];
+  }
+
+  return decoded
+    .flatMap((entry) => {
+      const parsed = savedViewV1Schema.safeParse(entry);
+
+      return parsed.success ? [parsed.data] : [];
+    })
+    .slice(0, 12);
+}
+
+/** Persists views on this device; quota or privacy-mode failures are non-fatal. */
+export function persistViews(views: readonly SavedViewV1[], storage: Pick<Storage, 'setItem'> = localStorage): void {
+  try {
+    storage.setItem(SAVED_VIEWS_STORAGE_KEY, JSON.stringify(views));
+  } catch {
+    // Losing persistence degrades gracefully to session-only views.
+  }
+}
+
 /** Downloads a validated view through a short-lived local object URL. */
 export function downloadSavedView(view: SavedViewV1): void {
   const blob = new Blob([serializeSavedView(view)], { type: 'application/json' });
