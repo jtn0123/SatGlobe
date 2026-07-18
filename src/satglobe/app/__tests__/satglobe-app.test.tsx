@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { DEFAULT_CAMERA, DEFAULT_FILTERS, type AvailableConjunctionState, type SavedViewV1, type SpaceObjectView } from '../../domain/types';
+import { DEFAULT_CAMERA, DEFAULT_FILTERS, type AvailableConjunctionState, type PlaylistV1, type SavedViewV1, type SpaceObjectView } from '../../domain/types';
 import { storyLibrary } from '../../stories';
 import { SatGlobeApp } from '../satglobe-app';
 import { makeAdapter } from './test-adapter';
@@ -107,6 +107,19 @@ async function importPreset(raw: string) {
 
   Object.defineProperty(file, 'text', { value: vi.fn().mockResolvedValue(raw) });
   fireEvent.change(screen.getByTestId('import-view'), { target: { files: [file] } });
+  await vi.waitFor(() => {
+    screen.getByTestId('app-notice');
+  });
+
+  return screen.getByTestId('app-notice');
+}
+
+/** Selects a portable-playlist file and waits for its user-visible result. */
+async function importPlaylistFile(raw: string) {
+  const file = new File([raw], 'playlist.json', { type: 'application/json' });
+
+  Object.defineProperty(file, 'text', { value: vi.fn().mockResolvedValue(raw) });
+  fireEvent.change(screen.getByTestId('import-playlist'), { target: { files: [file] } });
   await vi.waitFor(() => {
     screen.getByTestId('app-notice');
   });
@@ -371,12 +384,12 @@ describe('SatGlobeApp', () => {
     expect(screen.queryByTestId('story-deck')).toBeNull();
     expect(methods.setSimulationTime).toHaveBeenCalledTimes(1);
     expect(methods.setSimulationTime).toHaveBeenCalledWith(savedView.simulationTime);
-    expect(methods.setFilters).toHaveBeenCalledTimes(1);
-    expect(methods.setFilters).toHaveBeenCalledWith(savedView.filters);
+    expect(methods.setVisualState).toHaveBeenCalledTimes(1);
+    expect(methods.setVisualState).toHaveBeenCalledWith({ filters: savedView.filters, encoding: savedView.encoding });
     expect(methods.setCamera).toHaveBeenCalledTimes(1);
     expect(methods.setCamera).toHaveBeenCalledWith(savedView.camera);
-    expect(methods.setEncoding).toHaveBeenCalledTimes(1);
-    expect(methods.setEncoding).toHaveBeenCalledWith(savedView.encoding);
+    expect(methods.setFilters).not.toHaveBeenCalled();
+    expect(methods.setEncoding).not.toHaveBeenCalled();
     expect(methods.setScaleMode).toHaveBeenCalledTimes(1);
     expect(methods.setScaleMode).toHaveBeenCalledWith(savedView.scaleMode);
     expect(methods.clearSelection).toHaveBeenCalledTimes(1);
@@ -409,6 +422,112 @@ describe('SatGlobeApp', () => {
     });
     expect(methods.setFilters).not.toHaveBeenCalled();
     expect(methods.setEncoding).not.toHaveBeenCalled();
+  });
+
+  it('plays persisted views as a paused Presentation sequence with one visual update per step', () => {
+    const firstView: SavedViewV1 = {
+      schemaVersion: 1,
+      name: 'Opening field',
+      camera: DEFAULT_CAMERA,
+      simulationTime: '2026-07-18T12:00:00.000Z',
+      filters: { ...structuredClone(DEFAULT_FILTERS), status: 'all' },
+      encoding: 'object-type',
+      selectedObjectIds: [],
+      scaleMode: 'semantic',
+      presentation: { mode: 'story', panelsVisible: false, storyId: storyLibrary[0].id, storyBeat: 1 },
+    };
+    const secondView: SavedViewV1 = {
+      ...firstView,
+      name: 'Closing ring',
+      filters: { ...structuredClone(DEFAULT_FILTERS), regimes: ['geo'] },
+      encoding: 'orbit-regime',
+      scaleMode: 'true',
+    };
+    const playlist: PlaylistV1 = {
+      schemaVersion: 1,
+      id: '870bb249-6c6d-4771-8505-da74b2f393f2',
+      name: 'Two-view briefing',
+      entries: [
+        { view: firstView, caption: 'Begin in the whole field.', durationMs: 6_000 },
+        { view: secondView, caption: 'Finish at geosynchronous altitude.', durationMs: 7_000 },
+      ],
+    };
+
+    localStorage.setItem('satglobe.playlists.v1', JSON.stringify([playlist]));
+    const { methods } = renderApp();
+
+    fireEvent.click(screen.getByTestId(`play-playlist-${playlist.id}`));
+
+    expect(screen.getByTestId('satglobe-app').classList.contains('sg-mode-presentation')).toBe(true);
+    expect(screen.getByTestId('playlist-deck').getAttribute('data-playing')).toBe('false');
+    expect(screen.getByTestId('playlist-caption').textContent).toBe('Begin in the whole field.');
+    expect(screen.queryByTestId('story-deck')).toBeNull();
+    expect(screen.queryByText('Sources · Facts')).toBeNull();
+    expect(methods.setVisualState).toHaveBeenCalledTimes(1);
+    expect(methods.setVisualState).toHaveBeenLastCalledWith({ filters: firstView.filters, encoding: firstView.encoding });
+
+    fireEvent.click(screen.getByTestId('playlist-next'));
+
+    expect(screen.getByTestId('playlist-caption').textContent).toBe('Finish at geosynchronous altitude.');
+    expect(methods.setVisualState).toHaveBeenCalledTimes(2);
+    expect(methods.setVisualState).toHaveBeenLastCalledWith({ filters: secondView.filters, encoding: secondView.encoding });
+    expect(methods.setFilters).not.toHaveBeenCalled();
+    expect(methods.setEncoding).not.toHaveBeenCalled();
+
+    fireEvent.click(within(screen.getByTestId('playlist-deck')).getByRole('button', { name: 'Open workshop' }));
+    fireEvent.click(screen.getByTestId(`play-playlist-${playlist.id}`));
+
+    expect(screen.getByTestId('playlist-deck').getAttribute('data-entry-index')).toBe('0');
+    expect(screen.getByTestId('playlist-caption').textContent).toBe('Begin in the whole field.');
+    expect(methods.setVisualState).toHaveBeenCalledTimes(3);
+    expect(methods.setVisualState).toHaveBeenLastCalledWith({ filters: firstView.filters, encoding: firstView.encoding });
+  });
+
+  it('loads a persisted playlist after remount without resuming playback', () => {
+    const savedView: SavedViewV1 = {
+      schemaVersion: 1,
+      name: 'Portable view',
+      camera: DEFAULT_CAMERA,
+      simulationTime: '2026-07-18T12:00:00.000Z',
+      filters: structuredClone(DEFAULT_FILTERS),
+      encoding: 'object-type',
+      selectedObjectIds: [],
+      scaleMode: 'semantic',
+      presentation: { mode: 'presentation', panelsVisible: false },
+    };
+    const playlist: PlaylistV1 = {
+      schemaVersion: 1,
+      id: 'b340ac9e-8fa5-412f-94aa-58645dc9b341',
+      name: 'Reload-safe briefing',
+      entries: [
+        { view: savedView, caption: 'One', durationMs: 6_000 },
+        { view: savedView, caption: 'Two', durationMs: 6_000 },
+      ],
+    };
+
+    localStorage.setItem('satglobe.playlists.v1', JSON.stringify([playlist]));
+    renderApp();
+    expect(screen.getByText(playlist.name)).toBeTruthy();
+    expect(screen.queryByTestId('playlist-deck')).toBeNull();
+
+    cleanup();
+    renderApp();
+    expect(screen.getByText(playlist.name)).toBeTruthy();
+    expect(screen.queryByTestId('playlist-deck')).toBeNull();
+  });
+
+  it('rejects a hostile playlist atomically with a notice', async () => {
+    const { methods } = renderApp();
+    const notice = await importPlaylistFile(JSON.stringify({
+      schemaVersion: 1,
+      id: 'fd4a58d9-6605-4cd8-b4c3-844dc2942257',
+      name: 'Hostile',
+      entries: [{ script: 'alert(1)' }, { script: 'alert(2)' }],
+    }));
+
+    expect(notice.textContent).toContain('This playlist is invalid');
+    expect(notice.textContent).toContain('No application state was changed.');
+    expectNoAdapterMutations(methods);
   });
 
   it('toggles the conjunction lens on and off while preserving filters and encoding', () => {

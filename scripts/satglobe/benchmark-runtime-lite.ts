@@ -18,15 +18,56 @@ import {
   COUNT_UPDATE_MEASURE,
   FILTER_APPLY_MEASURE,
   LENS_APPLY_MEASURE,
+  PLAYLIST_APPLY_MEASURE,
   RECOLOR_MEASURE,
   SATGLOBE_INTERACTION_MEASURES,
 } from '../../src/satglobe/runtime/performance-measure';
+import { DEFAULT_CAMERA, DEFAULT_FILTERS, type PlaylistV1 } from '../../src/satglobe/domain/types';
 
 const APP_URL = process.env.SATGLOBE_BENCHMARK_URL ?? 'http://localhost:5544';
 const VIEWPORT = { width: 2560, height: 1440 };
 const SAMPLES = Math.max(1, Number(process.env.SATGLOBE_BENCHMARK_SAMPLES) || 5);
 const MIN_IDLE_MEDIAN_FPS = 59.8;
 const MAX_CONJUNCTION_LENS_P95_MS = 100;
+const MAX_PLAYLIST_STEP_P95_MS = 100;
+const BENCHMARK_PLAYLIST_ID = 'b41cf9a5-697d-40c8-ac1b-159a17123c5e';
+const BENCHMARK_PLAYLIST: PlaylistV1 = {
+  schemaVersion: 1,
+  id: BENCHMARK_PLAYLIST_ID,
+  name: 'Runtime benchmark sequence',
+  entries: [
+    {
+      caption: 'Whole active catalog',
+      durationMs: 6_000,
+      view: {
+        schemaVersion: 1,
+        name: 'Whole active catalog',
+        camera: DEFAULT_CAMERA,
+        simulationTime: '2026-07-18T12:00:00.000Z',
+        filters: structuredClone(DEFAULT_FILTERS),
+        encoding: 'object-type',
+        selectedObjectIds: [],
+        scaleMode: 'semantic',
+        presentation: { mode: 'presentation', panelsVisible: false },
+      },
+    },
+    {
+      caption: 'Starlink plane field',
+      durationMs: 6_000,
+      view: {
+        schemaVersion: 1,
+        name: 'Starlink plane field',
+        camera: DEFAULT_CAMERA,
+        simulationTime: '2026-07-18T12:00:00.000Z',
+        filters: { ...structuredClone(DEFAULT_FILTERS), constellation: 'starlink' },
+        encoding: 'orbital-plane',
+        selectedObjectIds: [],
+        scaleMode: 'semantic',
+        presentation: { mode: 'presentation', panelsVisible: false },
+      },
+    },
+  ],
+};
 
 interface Dist { samples: number[]; min: number; median: number; p95: number; max: number }
 
@@ -240,6 +281,119 @@ async function measureInteraction(browser: Browser, trigger: string, response: s
   };
 }
 
+/** Seeds a portable sequence before boot so storage hydration is included in the real shell path. */
+async function seedBenchmarkPlaylist(page: Page): Promise<void> {
+  await page.addInitScript((playlist) => {
+    localStorage.setItem('satglobe.playlists.v1', JSON.stringify([playlist]));
+  }, BENCHMARK_PLAYLIST);
+}
+
+/** Proves paused playback is inert and a manual step owns exactly one visual pass. */
+async function measurePlaylistPlayback(browser: Browser) {
+  const pausedPage = await newPage(browser);
+
+  await seedBenchmarkPlaylist(pausedPage);
+  await pausedPage.goto(APP_URL, { waitUntil: 'domcontentloaded' });
+  await waitForReady(pausedPage);
+  await pausedPage.getByTestId(`play-playlist-${BENCHMARK_PLAYLIST_ID}`).click();
+  await pausedPage.waitForSelector('[data-testid="playlist-deck"][data-playing="false"]');
+  await pausedPage.evaluate((names) => {
+    for (const name of names) {
+      performance.clearMeasures(name);
+    }
+  }, SATGLOBE_INTERACTION_MEASURES);
+  const pausedFrames = summarizeFrames(await sampleFrames(pausedPage, 120));
+  const pausedMeasureCounts = await pausedPage.evaluate((names) => {
+    const counts: Record<string, number> = {};
+
+    for (const name of names) {
+      counts[name] = performance.getEntriesByName(name).length;
+    }
+
+    return counts;
+  }, [PLAYLIST_APPLY_MEASURE, FILTER_APPLY_MEASURE, RECOLOR_MEASURE, COUNT_UPDATE_MEASURE] as const);
+
+  await pausedPage.context().close();
+  const stepSamples: Array<{
+    applyMs: number;
+    filterApplyCount: number;
+    recolorCount: number;
+    countUpdateCount: number;
+    recolorCauses: string[];
+  }> = [];
+
+  for (let i = 0; i < SAMPLES; i += 1) {
+    /* eslint-disable no-await-in-loop -- interaction samples must not overlap */
+    const page = await newPage(browser);
+
+    await seedBenchmarkPlaylist(page);
+    await page.goto(APP_URL, { waitUntil: 'domcontentloaded' });
+    await waitForReady(page);
+    await page.getByTestId(`play-playlist-${BENCHMARK_PLAYLIST_ID}`).click();
+    await page.waitForSelector('[data-testid="playlist-deck"][data-entry-index="0"]');
+    await page.evaluate((names) => {
+      for (const name of names) {
+        performance.clearMeasures(name);
+      }
+    }, SATGLOBE_INTERACTION_MEASURES);
+    await page.getByTestId('playlist-next').click();
+    await page.waitForSelector('[data-testid="playlist-deck"][data-entry-index="1"]');
+    const phase = await page.evaluate((names) => {
+      const [playlistName, filterName, recolorName, countName] = names;
+      const entries = performance.getEntriesByType('measure') as PerformanceMeasure[];
+      let apply: PerformanceMeasure | null = null;
+      let applyCount = 0;
+
+      for (const entry of entries) {
+        if (entry.name === playlistName) {
+          apply = entry;
+          applyCount++;
+        }
+      }
+      if (applyCount !== 1 || apply === null) {
+        throw new Error(`Expected one ${playlistName} entry, got ${applyCount}`);
+      }
+      const applyEnd = apply.startTime + apply.duration;
+      let filterApplyCount = 0;
+      let recolorCount = 0;
+      let countUpdateCount = 0;
+      const recolorCauses: string[] = [];
+
+      for (const entry of entries) {
+        const insideApply = entry.startTime >= apply.startTime && entry.startTime + entry.duration <= applyEnd;
+
+        if (!insideApply) {
+          continue;
+        }
+        if (entry.name === filterName) {
+          filterApplyCount++;
+        } else if (entry.name === recolorName) {
+          recolorCount++;
+          recolorCauses.push(String((entry.detail as { cause?: unknown } | null)?.cause ?? 'unknown'));
+        } else if (entry.name === countName) {
+          countUpdateCount++;
+        }
+      }
+
+      return { applyMs: apply.duration, filterApplyCount, recolorCount, countUpdateCount, recolorCauses };
+    }, [PLAYLIST_APPLY_MEASURE, FILTER_APPLY_MEASURE, RECOLOR_MEASURE, COUNT_UPDATE_MEASURE] as const);
+
+    stepSamples.push(phase);
+    await page.context().close();
+    /* eslint-enable no-await-in-loop */
+  }
+
+  return {
+    pausedFrames,
+    pausedMeasureCounts,
+    stepApplyMs: dist(stepSamples.map(({ applyMs }) => applyMs)),
+    filterApplyPasses: dist(stepSamples.map(({ filterApplyCount }) => filterApplyCount)),
+    recolorPasses: dist(stepSamples.map(({ recolorCount }) => recolorCount)),
+    countUpdatePasses: dist(stepSamples.map(({ countUpdateCount }) => countUpdateCount)),
+    recolorCauses: stepSamples.map(({ recolorCauses }) => recolorCauses),
+  };
+}
+
 const browser = await chromium.launch({ headless: false });
 
 try {
@@ -271,12 +425,13 @@ try {
     '[data-testid="conjunction-lens-status"]',
     waitForConjunctions,
   );
+  const playlistPlayback = await measurePlaylistPlayback(browser);
 
 
   const report = {
     startup,
     steadyStateFrames: { idle, filteredExploration, storySteadyState },
-    interactions: { freshStarlinkLens, freshConjunctionLens },
+    interactions: { freshStarlinkLens, freshConjunctionLens, playlistPlayback },
   };
 
   console.log(JSON.stringify(report, null, 1));
@@ -289,6 +444,29 @@ try {
     failures.push(
       `conjunction lens p95 ${freshConjunctionLens.domResponseMs.p95.toFixed(1)} ms exceeds ${MAX_CONJUNCTION_LENS_P95_MS} ms`,
     );
+  }
+  if (playlistPlayback.pausedFrames.medianFps < MIN_IDLE_MEDIAN_FPS) {
+    failures.push(`paused playlist median ${playlistPlayback.pausedFrames.medianFps} fps is below ${MIN_IDLE_MEDIAN_FPS} fps`);
+  }
+  const pausedChurn = Object.entries(playlistPlayback.pausedMeasureCounts).filter(([, count]) => count !== 0);
+
+  if (pausedChurn.length > 0) {
+    failures.push(`paused playlist recorded interaction churn: ${JSON.stringify(Object.fromEntries(pausedChurn))}`);
+  }
+  if (playlistPlayback.stepApplyMs.p95 > MAX_PLAYLIST_STEP_P95_MS) {
+    failures.push(`playlist step p95 ${playlistPlayback.stepApplyMs.p95.toFixed(1)} ms exceeds ${MAX_PLAYLIST_STEP_P95_MS} ms`);
+  }
+  if (playlistPlayback.recolorPasses.samples.some((count) => count !== 1)) {
+    failures.push(`playlist steps expected one recolor per sample, got ${playlistPlayback.recolorPasses.samples.join(', ')}`);
+  }
+  if (playlistPlayback.filterApplyPasses.samples.some((count) => count !== 1)) {
+    failures.push(`playlist steps expected one filter apply per sample, got ${playlistPlayback.filterApplyPasses.samples.join(', ')}`);
+  }
+  if (playlistPlayback.countUpdatePasses.samples.some((count) => count !== 1)) {
+    failures.push(`playlist steps expected one count update per sample, got ${playlistPlayback.countUpdatePasses.samples.join(', ')}`);
+  }
+  if (playlistPlayback.recolorCauses.some((causes) => causes.length !== 1 || causes[0] !== 'combined')) {
+    failures.push(`playlist steps recorded unexpected recolor causes: ${JSON.stringify(playlistPlayback.recolorCauses)}`);
   }
   if (freshStarlinkLens.recolorPasses.samples.some((count) => count !== 1)) {
     failures.push(`Starlink lens expected one recolor per sample, got ${freshStarlinkLens.recolorPasses.samples.join(', ')}`);

@@ -424,7 +424,8 @@ button {
 
 .sg-lenses,
 .sg-filters,
-.sg-saved-views {
+.sg-saved-views,
+.sg-playlist-library {
   margin-top: 22px;
 }
 
@@ -752,6 +753,227 @@ button {
 
 .sg-portable-actions input {
   display: none;
+}
+
+.sg-playlist-library > p,
+.sg-playlist-entry-list > p {
+  margin: 9px 0;
+  color: var(--sg-ink-muted, #b9c0bd);
+  font-size: var(--sg-micro);
+  line-height: 1.55;
+}
+
+.sg-playlist-record {
+  border-bottom: 1px solid var(--sg-line, rgba(176, 208, 202, 0.18));
+}
+
+.sg-playlist-record > button {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 24px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 0 5px;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sg-playlist-record > button:hover strong,
+.sg-playlist-record > button:hover svg {
+  color: var(--sg-accent, #e9c97f);
+}
+
+.sg-playlist-record strong,
+.sg-playlist-record small {
+  display: block;
+}
+
+.sg-playlist-record strong {
+  font-size: var(--sg-small);
+  font-weight: 600;
+}
+
+.sg-playlist-record small {
+  margin-top: 2px;
+  color: var(--sg-ink-muted, #b9c0bd);
+  font-size: var(--sg-micro);
+}
+
+.sg-sequence-number {
+  color: var(--sg-accent, #e9c97f);
+  font-family: ui-monospace, monospace;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+}
+
+.sg-playlist-record > div {
+  display: flex;
+  gap: 10px;
+  padding: 0 0 7px 32px;
+}
+
+.sg-playlist-record > div button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: rgba(185, 192, 189, 0.72);
+  font-size: 9px;
+  cursor: pointer;
+}
+
+.sg-playlist-record > div button:hover {
+  color: var(--sg-ink, #f5f1e8);
+}
+
+.sg-playlist-editor {
+  margin-top: 12px;
+  padding: 11px;
+  border: 1px solid rgba(233, 201, 127, 0.34);
+  background:
+    linear-gradient(135deg, rgba(233, 201, 127, 0.055), transparent 42%),
+    rgba(2, 9, 12, 0.7);
+  box-shadow: inset 3px 0 0 rgba(233, 201, 127, 0.35);
+}
+
+.sg-playlist-editor-head,
+.sg-playlist-editor-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sg-playlist-editor-head > span,
+.sg-playlist-source-views > span {
+  color: var(--sg-accent, #e9c97f);
+  font-family: ui-monospace, monospace;
+  font-size: 8px;
+  letter-spacing: 0.16em;
+}
+
+.sg-playlist-editor-head > button {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.sg-playlist-editor > label,
+.sg-playlist-entry label {
+  display: grid;
+  gap: 4px;
+  margin-top: 10px;
+  color: var(--sg-ink-muted, #b9c0bd);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sg-playlist-editor input {
+  width: 100%;
+  height: 31px;
+  padding: 0 7px;
+  border: 1px solid var(--sg-line, rgba(176, 208, 202, 0.18));
+  border-radius: 0;
+  background: rgba(0, 0, 0, 0.23);
+  color: var(--sg-ink, #f5f1e8);
+  font-size: var(--sg-micro);
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.sg-playlist-entry-list {
+  max-height: 360px;
+  margin-top: 10px;
+  overflow: auto;
+}
+
+.sg-playlist-entry {
+  margin: 0 0 7px;
+  padding: 6px 8px 8px;
+  border: 1px solid rgba(176, 208, 202, 0.14);
+}
+
+.sg-playlist-entry legend {
+  padding: 0 5px 0 0;
+  color: var(--sg-ink, #f5f1e8);
+  font-size: var(--sg-micro);
+}
+
+.sg-playlist-entry legend span {
+  margin-right: 6px;
+  color: var(--sg-accent, #e9c97f);
+  font-family: ui-monospace, monospace;
+}
+
+.sg-playlist-entry > div {
+  display: flex;
+  gap: 5px;
+  margin-top: 8px;
+}
+
+.sg-playlist-entry > div button,
+.sg-playlist-source-views button,
+.sg-playlist-editor-actions button {
+  padding: 5px 7px;
+  border: 1px solid var(--sg-line, rgba(176, 208, 202, 0.18));
+  background: transparent;
+  color: var(--sg-ink-muted, #b9c0bd);
+  font-size: 9px;
+  cursor: pointer;
+}
+
+.sg-playlist-entry > div button:disabled,
+.sg-playlist-source-views button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.sg-playlist-source-views {
+  display: grid;
+  gap: 5px;
+  margin-top: 11px;
+}
+
+.sg-playlist-source-views button {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  text-align: left;
+}
+
+.sg-playlist-source-views button span {
+  color: var(--sg-accent, #e9c97f);
+}
+
+.sg-playlist-editor-error {
+  margin: 8px 0 0;
+  color: var(--sg-danger, #ef8d78);
+  font-size: 9px;
+  line-height: 1.45;
+}
+
+.sg-playlist-editor-actions {
+  margin-top: 11px;
+  padding-top: 9px;
+  border-top: 1px solid var(--sg-line, rgba(176, 208, 202, 0.18));
+}
+
+.sg-playlist-editor-actions small {
+  margin-right: auto;
+  color: var(--sg-ink-muted, #b9c0bd);
+  font-size: 8px;
+}
+
+.sg-playlist-editor-actions button:last-child {
+  border-color: rgba(233, 201, 127, 0.48);
+  color: var(--sg-accent, #e9c97f);
 }
 
 .sg-legal {
@@ -1352,6 +1574,184 @@ button {
   color: var(--sg-ink-muted, #b9c0bd);
   font-size: 8px;
   white-space: nowrap;
+}
+
+.sg-playlist-deck {
+  position: absolute;
+  z-index: 7;
+  inset: 76px 0 0;
+  pointer-events: none;
+}
+
+.sg-playlist-rail {
+  position: absolute;
+  top: 5vh;
+  right: 4vw;
+  bottom: 130px;
+  width: 1px;
+  background: linear-gradient(180deg, transparent, rgba(233, 201, 127, 0.5), transparent);
+}
+
+.sg-playlist-rail span {
+  position: absolute;
+  left: -3px;
+  width: 7px;
+  height: 7px;
+  border: 1px solid rgba(233, 201, 127, 0.62);
+  border-radius: 50%;
+  background: #081217;
+}
+
+.sg-playlist-rail span:nth-child(1) { top: 12%; }
+.sg-playlist-rail span:nth-child(2) { top: 49%; background: var(--sg-accent, #e9c97f); }
+.sg-playlist-rail span:nth-child(3) { top: 86%; }
+
+.sg-playlist-copy {
+  position: absolute;
+  left: 7vw;
+  bottom: 142px;
+  width: min(630px, 48vw);
+  padding: 20px 24px 20px 0;
+  border-top: 1px solid rgba(233, 201, 127, 0.48);
+  background: linear-gradient(90deg, rgba(3, 10, 13, 0.75), transparent);
+}
+
+.sg-playlist-copy > span {
+  color: var(--sg-accent, #e9c97f);
+  font-family: ui-monospace, monospace;
+  font-size: 9px;
+  letter-spacing: 0.15em;
+}
+
+.sg-playlist-copy h2 {
+  max-width: 620px;
+  margin-top: 8px;
+  font-family: 'SG Display', sans-serif;
+  font-size: clamp(30px, 2.7vw, 52px);
+  font-weight: 400;
+  line-height: 1.04;
+}
+
+.sg-playlist-copy p {
+  margin: 9px 0 0;
+  color: var(--sg-ink-muted, #b9c0bd);
+  font-size: var(--sg-small);
+}
+
+.sg-playlist-controls {
+  position: absolute;
+  right: 36px;
+  bottom: 24px;
+  left: 36px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  border: 1px solid var(--sg-line, rgba(176, 208, 202, 0.18));
+  background: rgba(4, 12, 15, 0.92);
+  backdrop-filter: blur(18px);
+  pointer-events: auto;
+}
+
+.sg-playlist-controls > button {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--sg-line, rgba(176, 208, 202, 0.18));
+  background: transparent;
+  cursor: pointer;
+}
+
+.sg-playlist-controls > button:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+.sg-playlist-controls .sg-playlist-play {
+  border-color: rgba(233, 201, 127, 0.52);
+  color: var(--sg-accent, #e9c97f);
+}
+
+.sg-playlist-scrub {
+  position: relative;
+  flex: 1;
+  height: 36px;
+  margin: 0 14px;
+  display: flex;
+  align-items: center;
+}
+
+.sg-playlist-progress {
+  position: absolute;
+  top: 17px;
+  right: 0;
+  left: 0;
+  height: 1px;
+  background: rgba(185, 192, 189, 0.22);
+}
+
+.sg-playlist-progress span {
+  display: block;
+  height: 100%;
+  background: var(--sg-accent, #e9c97f);
+}
+
+.sg-playlist-stops {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+}
+
+.sg-playlist-stops button {
+  width: 12px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: rgba(4, 12, 15, 1);
+  cursor: pointer;
+}
+
+.sg-playlist-stops button span {
+  width: 5px;
+  height: 5px;
+  border: 1px solid var(--sg-ink-muted, #b9c0bd);
+  border-radius: 50%;
+  background: var(--sg-panel-solid, #081217);
+}
+
+.sg-playlist-stops button.is-past span {
+  border-color: var(--sg-accent, #e9c97f);
+  background: var(--sg-accent, #e9c97f);
+}
+
+.sg-playlist-counter {
+  min-width: 42px;
+  color: var(--sg-ink-muted, #b9c0bd);
+  font-family: ui-monospace, monospace;
+  font-size: 8px;
+}
+
+.sg-playlist-controls .sg-playlist-action {
+  width: auto;
+  padding: 0 10px;
+  color: var(--sg-ink-muted, #b9c0bd);
+  font-size: 8px;
+  white-space: nowrap;
+}
+
+.sg-playlist-motion-note {
+  position: absolute;
+  right: 44px;
+  bottom: 104px;
+  color: var(--sg-ink-muted, #b9c0bd);
+  font-size: 9px;
+  pointer-events: auto;
 }
 
 .sg-source-drawer {
