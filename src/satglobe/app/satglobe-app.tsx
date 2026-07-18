@@ -34,7 +34,7 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
   const [mode, setMode] = useState<AppMode>('workshop');
   const [scaleMode, setScaleMode] = useState<ScaleMode>('semantic');
   const [query, setQuery] = useState('');
-  const { filters, setFilters, setFiltersState } = useWorkshopFilters(adapter);
+  const { filters, setFiltersImmediate, setFiltersDebounced } = useWorkshopFilters(adapter);
   const [results, setResults] = useState<SpaceObjectView[]>([]);
   const [savedViews, setSavedViews] = useState<SavedViewV1[]>(() => loadPersistedViews());
   const [notice, setNotice] = useState('');
@@ -65,13 +65,12 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
   const onBeatApplied = useCallback((beat: StoryBeat) => {
     const beatFilters = { ...structuredClone(DEFAULT_FILTERS), constellation: beat.constellation ?? '', ...beat.filterOverrides };
 
-    setFiltersState(beatFilters);
+    setFiltersImmediate(beatFilters);
     setScaleMode(beat.scaleMode);
     adapter.setScaleMode(beat.scaleMode);
     adapter.setCamera(beat.camera);
-    adapter.setFilters(beatFilters);
     adapter.setEncoding(beat.encoding);
-  }, [adapter, setFiltersState]);
+  }, [adapter, setFiltersImmediate]);
 
   const { playback, dispatch, applyBeat } = useStoryPlayback(story, mode === 'story', onBeatApplied);
   const changeStory = useCallback((id: string) => setStoryId(id), []);
@@ -114,7 +113,7 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement) {
+      if (event.target instanceof window.HTMLInputElement || event.target instanceof window.HTMLSelectElement) {
         return;
       }
       /*
@@ -173,12 +172,11 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
   }, [createView]);
 
   const applyView = useCallback((view: SavedViewV1) => {
-    setFiltersState(view.filters);
+    setFiltersImmediate(view.filters);
     setScaleMode(view.scaleMode);
     adapter.setScaleMode(view.scaleMode);
     adapter.setCamera(view.camera);
     adapter.setSimulationTime(view.simulationTime);
-    adapter.setFilters(view.filters);
     adapter.setEncoding(view.encoding);
     if (view.selectedObjectIds[0]) {
       adapter.selectObject(view.selectedObjectIds[0]);
@@ -187,7 +185,7 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
     if (view.presentation.storyBeat !== undefined) {
       applyBeat(view.presentation.storyBeat);
     }
-  }, [adapter, applyBeat, setFiltersState, switchMode]);
+  }, [adapter, applyBeat, setFiltersImmediate, switchMode]);
 
   const importFile = useCallback(async (file?: File) => {
     if (!file) {
@@ -211,10 +209,9 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
      * The 120 ms trailing debounce in useWorkshopFilters exists to coalesce
      * slider drags; routing lens buttons through it just delays the response.
      */
-    setFiltersState(next);
-    adapter.setFilters(next);
+    setFiltersImmediate(next);
     adapter.setEncoding(encoding);
-  }, [adapter, setFiltersState]);
+  }, [adapter, setFiltersImmediate]);
 
   const newestElementAge = ageInDays(engine.newestElementEpoch);
   const openStory = useCallback(() => {
@@ -251,7 +248,8 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
         query={query}
         results={results}
         savedViews={savedViews}
-        setFilters={setFilters}
+        setFiltersDebounced={setFiltersDebounced}
+        setFiltersImmediate={setFiltersImmediate}
         visibleCount={engine.visibleCount}
       />
 

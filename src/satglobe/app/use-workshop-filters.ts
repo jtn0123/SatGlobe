@@ -3,33 +3,41 @@ import type { SatGlobeEngineAdapter } from '../engine/satglobe-engine-adapter';
 import { DEFAULT_FILTERS, type FilterState } from '../domain/types';
 
 /**
- * Owns workshop filter state. UI state updates immediately; the engine
- * application (a full-catalog recolor) coalesces to the trailing value, so
- * dragging a slider costs one recolor instead of one per input event.
+ * Owns workshop filter state. Every UI change updates React immediately, while
+ * callers choose whether the corresponding engine recolor happens now or is
+ * coalesced to the trailing value of a slider drag.
  */
 export function useWorkshopFilters(adapter: SatGlobeEngineAdapter): {
   filters: FilterState;
-  setFilters: (next: FilterState) => void;
-  setFiltersState: React.Dispatch<React.SetStateAction<FilterState>>;
+  setFiltersImmediate: (next: FilterState) => void;
+  setFiltersDebounced: (next: FilterState) => void;
 } {
   const [filters, setFiltersState] = useState<FilterState>(structuredClone(DEFAULT_FILTERS));
   const pending = useRef<number | null>(null);
-  const setFilters = useCallback((next: FilterState) => {
-    setFiltersState(next);
+
+  const cancelPending = useCallback(() => {
     if (pending.current !== null) {
       window.clearTimeout(pending.current);
+      pending.current = null;
     }
+  }, []);
+
+  const setFiltersImmediate = useCallback((next: FilterState) => {
+    cancelPending();
+    setFiltersState(next);
+    adapter.setFilters(next);
+  }, [adapter, cancelPending]);
+
+  const setFiltersDebounced = useCallback((next: FilterState) => {
+    setFiltersState(next);
+    cancelPending();
     pending.current = window.setTimeout(() => {
       pending.current = null;
       adapter.setFilters(next);
     }, 120);
-  }, [adapter]);
+  }, [adapter, cancelPending]);
 
-  useEffect(() => () => {
-    if (pending.current !== null) {
-      window.clearTimeout(pending.current);
-    }
-  }, []);
+  useEffect(() => cancelPending, [adapter, cancelPending]);
 
-  return { filters, setFilters, setFiltersState };
+  return { filters, setFiltersImmediate, setFiltersDebounced };
 }
