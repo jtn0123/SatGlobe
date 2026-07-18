@@ -1578,8 +1578,17 @@ button {
 
 .sg-playlist-deck {
   position: absolute;
-  z-index: 7;
+  z-index: 11;
   inset: 76px 0 0;
+  pointer-events: none;
+}
+
+/* A playlist owns the presentation canvas; workshop chrome returns on exit. */
+.sg-playlist-active .sg-panel,
+.sg-playlist-active .sg-scale-disclosure,
+.sg-playlist-active .sg-time-dock {
+  visibility: hidden;
+  opacity: 0;
   pointer-events: none;
 }
 

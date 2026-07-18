@@ -334,7 +334,7 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
   }), [adapter]);
 
   return (
-    <main className={`sg-app sg-mode-${mode}`} data-testid="satglobe-app">
+    <main className={`sg-app sg-mode-${mode}${mode === 'presentation' && playlistLibrary.activePlaylist ? ' sg-playlist-active' : ''}`} data-testid="satglobe-app">
       <div className="sg-small-screen-note" role="note">SatGlobe is designed for larger screens — panels are limited at this size.</div>
       {/* display:contents wrapper; keeps the booting shell out of the tab order behind the loading overlay */}
       <div className="sg-boot-guard" inert={!engine.ready || undefined}>
@@ -366,7 +366,7 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
 
       <TimeDock adapter={adapter} simulationTime={engine.simulationTime} />
 
-      {mode === 'presentation' && <PresentationTitle encoding={engine.encoding} objectCount={engine.visibleCount} onOpenWorkshop={openWorkshop} />}
+      {mode === 'presentation' && !playlistLibrary.activePlaylist && <PresentationTitle encoding={engine.encoding} objectCount={engine.visibleCount} onOpenWorkshop={openWorkshop} />}
 
       {mode === 'presentation' && playlistLibrary.activePlaylist && <PlaylistDeck
         entryIndex={playlistLibrary.player.playback.entryIndex}

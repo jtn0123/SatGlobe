@@ -306,7 +306,7 @@ test.describe('SatGlobe workshop', () => {
 
   test('authors, reloads, and plays a two-view mission sequence with one recolor per step', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'no-preference' });
-    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.setViewportSize({ width: 2560, height: 1440 });
     await page.getByRole('button', { name: '+ Save current' }).click();
     await expect(page.getByTestId('app-notice')).toContainText('Saved');
     await page.getByText('GEO belt', { exact: true }).click();
@@ -335,6 +335,16 @@ test.describe('SatGlobe workshop', () => {
     await expect(page.getByTestId('encoding-select')).toHaveValue('orbit-regime');
     await expect(page.getByTestId('story-deck')).toHaveCount(0);
     await expect(page.getByText('Sources · Facts')).toHaveCount(0);
+    await expect(page.getByTestId('discover-panel')).toBeHidden();
+    await expect(page.getByTestId('object-inspector')).toBeHidden();
+    await expect(page.locator('.sg-time-dock')).toBeHidden();
+    await expect(page.locator('.sg-presentation-title')).toHaveCount(0);
+
+    // The presentation time dock must not intercept the transport at desktop scale.
+    await page.getByTestId('playlist-next').click();
+    await expect(deck).toHaveAttribute('data-entry-index', '1');
+    await page.getByRole('button', { name: 'Previous playlist view' }).click();
+    await expect(deck).toHaveAttribute('data-entry-index', '0');
 
     await page.evaluate((names) => {
       for (const name of names) {

@@ -85,6 +85,29 @@ describe('ViewLibrary', () => {
     expect(props.onSavePlaylist).toHaveBeenCalledWith(expect.objectContaining({ id: playlist.id, name: 'Edited ascent' }));
   });
 
+  it('reorders inline views and exports the validated playlist record', () => {
+    const createObjectUrl = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:playlist-export');
+    const revokeObjectUrl = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+    const props = makeProps({ playlists: [playlist] });
+
+    render(<ViewLibrary {...props} />);
+    fireEvent.click(screen.getByRole('button', { name: `Edit ${playlist.name}` }));
+    fireEvent.click(screen.getByRole('button', { name: 'Move Low orbit field later' }));
+    fireEvent.click(screen.getByTestId('save-playlist'));
+
+    expect(props.onSavePlaylist).toHaveBeenCalledWith(expect.objectContaining({
+      entries: [
+        expect.objectContaining({ view: expect.objectContaining({ name: 'High ring' }) }),
+        expect.objectContaining({ view: expect.objectContaining({ name: 'Low orbit field' }) }),
+      ],
+    }));
+
+    fireEvent.click(screen.getByRole('button', { name: `Export ${playlist.name}` }));
+
+    expect(createObjectUrl).toHaveBeenCalledWith(expect.any(Blob));
+    expect(revokeObjectUrl).toHaveBeenCalledWith('blob:playlist-export');
+  });
+
   it('keeps an incomplete sequence local to the editor and explains the bound', () => {
     vi.spyOn(crypto, 'randomUUID').mockReturnValue('d4c5e3b6-d65d-4a40-bb85-f21ee1027401');
     const props = makeProps();

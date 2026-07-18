@@ -459,9 +459,11 @@ describe('SatGlobeApp', () => {
     fireEvent.click(screen.getByTestId(`play-playlist-${playlist.id}`));
 
     expect(screen.getByTestId('satglobe-app').classList.contains('sg-mode-presentation')).toBe(true);
+    expect(screen.getByTestId('satglobe-app').classList.contains('sg-playlist-active')).toBe(true);
     expect(screen.getByTestId('playlist-deck').getAttribute('data-playing')).toBe('false');
     expect(screen.getByTestId('playlist-caption').textContent).toBe('Begin in the whole field.');
     expect(screen.queryByTestId('story-deck')).toBeNull();
+    expect(document.querySelector('.sg-presentation-title')).toBeNull();
     expect(screen.queryByText('Sources · Facts')).toBeNull();
     expect(methods.setVisualState).toHaveBeenCalledTimes(1);
     expect(methods.setVisualState).toHaveBeenLastCalledWith({ filters: firstView.filters, encoding: firstView.encoding });
@@ -475,6 +477,7 @@ describe('SatGlobeApp', () => {
     expect(methods.setEncoding).not.toHaveBeenCalled();
 
     fireEvent.click(within(screen.getByTestId('playlist-deck')).getByRole('button', { name: 'Open workshop' }));
+    expect(screen.getByTestId('satglobe-app').classList.contains('sg-playlist-active')).toBe(false);
     fireEvent.click(screen.getByTestId(`play-playlist-${playlist.id}`));
 
     expect(screen.getByTestId('playlist-deck').getAttribute('data-entry-index')).toBe('0');
@@ -517,7 +520,30 @@ describe('SatGlobeApp', () => {
   });
 
   it('rejects a hostile playlist atomically with a notice', async () => {
+    const existingView: SavedViewV1 = {
+      schemaVersion: 1,
+      name: 'Trusted view',
+      camera: DEFAULT_CAMERA,
+      simulationTime: '2026-07-18T12:00:00.000Z',
+      filters: structuredClone(DEFAULT_FILTERS),
+      encoding: 'object-type',
+      selectedObjectIds: [],
+      scaleMode: 'semantic',
+      presentation: { mode: 'presentation', panelsVisible: false },
+    };
+    const existingPlaylist: PlaylistV1 = {
+      schemaVersion: 1,
+      id: '0a46f600-7cce-4a84-8305-7fd7737a1afd',
+      name: 'Trusted sequence',
+      entries: [
+        { view: existingView, caption: 'Trusted opening', durationMs: 6_000 },
+        { view: existingView, caption: 'Trusted close', durationMs: 6_000 },
+      ],
+    };
+
+    localStorage.setItem('satglobe.playlists.v1', JSON.stringify([existingPlaylist]));
     const { methods } = renderApp();
+    const persistedBeforeImport = localStorage.getItem('satglobe.playlists.v1');
     const notice = await importPlaylistFile(JSON.stringify({
       schemaVersion: 1,
       id: 'fd4a58d9-6605-4cd8-b4c3-844dc2942257',
@@ -527,6 +553,9 @@ describe('SatGlobeApp', () => {
 
     expect(notice.textContent).toContain('This playlist is invalid');
     expect(notice.textContent).toContain('No application state was changed.');
+    expect(screen.getByText(existingPlaylist.name)).toBeTruthy();
+    expect(screen.queryByText('Hostile')).toBeNull();
+    expect(localStorage.getItem('satglobe.playlists.v1')).toBe(persistedBeforeImport);
     expectNoAdapterMutations(methods);
   });
 

@@ -96,6 +96,25 @@ describe('usePlaylistPlayback', () => {
     expect(result.current.playback.progress).toBe(1);
   });
 
+  it('restarts from entry zero when Play is pressed after natural completion', () => {
+    stubMotion(false);
+    vi.useFakeTimers();
+    const onEntryApplied = vi.fn();
+    const { result } = renderHook(() => usePlaylistPlayback(playlist, true, onEntryApplied));
+
+    act(() => result.current.togglePlaying());
+    act(() => vi.advanceTimersByTime(1_100));
+    act(() => vi.advanceTimersByTime(1_100));
+    expect(result.current.playback).toMatchObject({ entryIndex: 1, playing: false, progress: 1 });
+    onEntryApplied.mockClear();
+
+    act(() => result.current.togglePlaying());
+
+    expect(onEntryApplied).toHaveBeenCalledOnce();
+    expect(onEntryApplied).toHaveBeenCalledWith(playlist.entries[0], 0);
+    expect(result.current.playback).toEqual({ entryIndex: 0, playing: true, progress: 0 });
+  });
+
   it('uses one discrete timeout instead of progress intervals for reduced motion', () => {
     stubMotion(true);
     vi.useFakeTimers();

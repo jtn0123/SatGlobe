@@ -113,10 +113,16 @@ export function usePlaylistPlayback(
     onEntryApplied(playlist.entries[nextIndex], nextIndex);
   }, [onEntryApplied, playlist]);
   const togglePlaying = useCallback(() => {
-    if (playlist && enabled) {
-      dispatch({ type: 'togglePlaying' });
+    if (!playlist || !enabled) {
+      return;
     }
-  }, [enabled, playlist]);
+    const finished = !playback.playing && entryIndex === playlist.entries.length - 1 && playback.progress >= 1;
+
+    if (finished) {
+      applyEntry(0);
+    }
+    dispatch({ type: 'togglePlaying' });
+  }, [applyEntry, enabled, entryIndex, playback.playing, playback.progress, playlist]);
   const restart = useCallback(() => dispatch({ type: 'load' }), []);
   const stop = useCallback(() => dispatch({ type: 'stop' }), []);
 
