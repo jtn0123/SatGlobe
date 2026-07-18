@@ -1,12 +1,15 @@
 #!/usr/bin/env npx tsx
 
 import { createHash } from 'node:crypto';
-import { mkdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, mkdtemp, open, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import Papa from 'papaparse';
 import { convertA5to6Digit } from '../../src/engine/ootk/src/coordinate/alpha5';
 import { FormatTle } from '../../src/engine/ootk/src/coordinate/FormatTle';
+import { buildSocratesFeed, validateSocratesFeed } from './socrates-refresh';
+
+/* eslint-disable jsdoc/require-jsdoc -- Refresh helpers are private or expose self-describing typed contracts. */
 
 type CatalogRow = Record<string, unknown> & {
   tle1: string;
@@ -36,6 +39,9 @@ interface RefreshOptions {
   output: string;
   activeInput?: string;
   starlinkInput?: string;
+  socratesInput?: string;
+  socratesUpdatedAt?: string;
+  socratesRetrievedAt?: string;
 }
 
 interface RefreshSummary {
@@ -50,6 +56,13 @@ interface RefreshSummary {
   rejected: number;
   rejectionReasons: Record<string, number>;
   sources: Array<{ id: string; url: string; recordCount: number; checksum: string }>;
+  conjunctions: {
+    snapshotId: string;
+    eventCount: number;
+    updatedAt: string;
+    retrievedAt: string;
+    checksum: string;
+  };
   checksum: string;
 }
 
@@ -58,17 +71,27 @@ const STARLINK_URL = 'https://celestrak.org/NORAD/elements/gp.php?GROUP=STARLINK
 const SOURCE_CACHE_MAX_AGE_MS = 2 * 60 * 60 * 1_000;
 const SOURCE_CACHE_DIRECTORY = path.resolve('.cache/satglobe');
 
-const USAGE = `Usage: catalog-refresh [--verify-only] [--output <file>] [--active-input <file>] [--starlink-input <file>]
+const USAGE = `Usage: catalog-refresh [--verify-only] [--output <file>] [--active-input <file>] [--starlink-input <file>] [--socrates-input <file> --socrates-updated-at <ISO> --socrates-retrieved-at <ISO>]
 
   --verify-only            Validate and report without installing anything
   --output <file>          Catalog to update (default: public/tle/tle.json)
   --active-input <file>    Use a local CSV instead of downloading the active group
   --starlink-input <file>  Use a local CSV instead of downloading the Starlink group
+  --socrates-input <file>  Use an exact saved SOCRATES CSV instead of downloading it
+  --socrates-updated-at    Provider FILE_MTIME for --socrates-input as a canonical ISO timestamp
+  --socrates-retrieved-at  Original retrieval time for --socrates-input as a canonical ISO timestamp
 `;
 
 export function parseArgs(argv: string[]): RefreshOptions {
   const booleanFlags = new Set(['--verify-only']);
-  const valueFlags = new Set(['--output', '--active-input', '--starlink-input']);
+  const valueFlags = new Set([
+    '--output',
+    '--active-input',
+    '--starlink-input',
+    '--socrates-input',
+    '--socrates-updated-at',
+    '--socrates-retrieved-at',
+  ]);
 
   // A typo'd flag silently ignored could turn an intended dry run into a real
   // install, so anything unrecognized is a hard error.
@@ -96,12 +119,23 @@ export function parseArgs(argv: string[]): RefreshOptions {
     return index >= 0 ? argv[index + 1] : undefined;
   };
 
-  return {
+  const options: RefreshOptions = {
     verifyOnly: argv.includes('--verify-only'),
     output: path.resolve(valueAfter('--output') ?? 'public/tle/tle.json'),
     activeInput: valueAfter('--active-input'),
     starlinkInput: valueAfter('--starlink-input'),
+    socratesInput: valueAfter('--socrates-input'),
+    socratesUpdatedAt: valueAfter('--socrates-updated-at'),
+    socratesRetrievedAt: valueAfter('--socrates-retrieved-at'),
   };
+
+  const localSocratesOptions = [options.socratesInput, options.socratesUpdatedAt, options.socratesRetrievedAt];
+
+  if (localSocratesOptions.some(Boolean) && !localSocratesOptions.every(Boolean)) {
+    throw new Error(`--socrates-input, --socrates-updated-at, and --socrates-retrieved-at must be provided together.\n\n${USAGE}`);
+  }
+
+  return options;
 }
 
 function checksum(value: string | Uint8Array): string {
@@ -138,8 +172,16 @@ function parseOmmCsv(raw: string, source: string): { rows: OmmRow[]; rejected: R
   return { rows, rejected };
 }
 
+function validateOmmSource(raw: string, source: string): void {
+  const parsed = parseOmmCsv(raw, source);
+
+  if (parsed.rows.length === 0) {
+    throw new Error(`${source} contains no usable OMM records; source cache and installed snapshot retained.`);
+  }
+}
+
 function normalizeId(value: string): string {
-  return /^\d+$/u.test(value) ? value.replace(/^0+(?=\d)/u, '') : value;
+  return (/^\d+$/u).test(value) ? value.replace(/^0+(?=\d)/u, '') : value;
 }
 
 export function catalogIdFromTle(row: CatalogRow): string {
@@ -225,7 +267,7 @@ export function validateBaseCatalog(rows: CatalogRow[]): Map<string, CatalogRow>
 export function ommToCatalogRow(omm: OmmRow, existing?: CatalogRow): CatalogRow {
   const id = normalizeId(String(omm.NORAD_CAT_ID));
   const numericId = Number(id);
-  const scc = /^\d+$/u.test(id) && numericId > 339_999 ? id.slice(-5) : id;
+  const scc = (/^\d+$/u).test(id) && numericId > 339_999 ? id.slice(-5) : id;
   const { year, dayOfYear } = epochParts(omm.EPOCH);
   const { tle1, tle2 } = FormatTle.createTle({
     inc: requiredFiniteNumber(omm, 'INCLINATION'),
@@ -260,11 +302,13 @@ export function ommToCatalogRow(omm: OmmRow, existing?: CatalogRow): CatalogRow 
 }
 
 export function summarizeRejections(rejections: Rejection[]): Record<string, number> {
-  return Object.fromEntries([...rejections.reduce((counts, rejection) => {
-    counts.set(rejection.reason, (counts.get(rejection.reason) ?? 0) + 1);
+  const counts = rejections.reduce((summary, rejection) => {
+    summary.set(rejection.reason, (summary.get(rejection.reason) ?? 0) + 1);
 
-    return counts;
-  }, new Map<string, number>())].sort(([a], [b]) => a.localeCompare(b)));
+    return summary;
+  }, new Map<string, number>());
+
+  return Object.fromEntries([...counts].sort(([a], [b]) => a.localeCompare(b)));
 }
 
 function mergeSource(
@@ -347,7 +391,9 @@ async function fetchWithRetry(url: string, fetchSource: typeof fetch): Promise<R
     // Retry once on server-side errors; client errors (403 rate limit text, etc.)
     // carry a provider message the caller should surface immediately.
     if (response.status >= 500) {
-      await new Promise((resolveDelay) => { setTimeout(resolveDelay, SOURCE_FETCH_RETRY_DELAY_MS); });
+      await new Promise((resolveDelay) => {
+        setTimeout(resolveDelay, SOURCE_FETCH_RETRY_DELAY_MS);
+      });
 
       return await request();
     }
@@ -355,7 +401,9 @@ async function fetchWithRetry(url: string, fetchSource: typeof fetch): Promise<R
     return response;
   } catch (error) {
     process.stderr.write(`Catalog source request failed (${error instanceof Error ? error.message : String(error)}); retrying once...\n`);
-    await new Promise((resolveDelay) => { setTimeout(resolveDelay, SOURCE_FETCH_RETRY_DELAY_MS); });
+    await new Promise((resolveDelay) => {
+      setTimeout(resolveDelay, SOURCE_FETCH_RETRY_DELAY_MS);
+    });
 
     return request();
   }
@@ -366,13 +414,20 @@ export async function loadSource(
   url: string,
   cacheFile: string,
   fetchSource: typeof fetch = fetch,
+  writeCache = true,
+  validateSource?: (source: string) => void,
 ): Promise<string> {
   if (file) {
-    return readFile(path.resolve(file), 'utf8');
+    const source = await readFile(path.resolve(file), 'utf8');
+
+    validateSource?.(source);
+
+    return source;
   }
   const cached = await readFreshSourceCache(cacheFile);
 
   if (cached !== null) {
+    validateSource?.(cached.contents);
     process.stdout.write(`Using cached download from ${cached.ageMinutes} minute${cached.ageMinutes === 1 ? '' : 's'} ago for ${url}\n  (delete .cache/satglobe to force a fresh provider request)\n`);
 
     return cached.contents;
@@ -387,8 +442,11 @@ export async function loadSource(
 
   const source = await response.text();
 
-  await mkdir(path.dirname(cacheFile), { recursive: true });
-  await writeAtomic(cacheFile, source);
+  validateSource?.(source);
+  if (writeCache) {
+    await mkdir(path.dirname(cacheFile), { recursive: true });
+    await writeAtomic(cacheFile, source);
+  }
 
   return source;
 }
@@ -406,14 +464,228 @@ async function writeAtomic(file: string, contents: string): Promise<void> {
   await rename(temporary, file);
 }
 
+export interface RefreshArtifact {
+  target: string;
+  contents: string;
+  manifest?: boolean;
+}
+
+interface StagedArtifact extends RefreshArtifact {
+  staged: string;
+  backup: string;
+  hadInstalledVersion: boolean;
+}
+
+interface InstallLockOwner {
+  pid: number;
+  startedAt: string;
+}
+
+const INCOMPLETE_LOCK_STALE_AFTER_MS = 60_000;
+
+function processIsAlive(pid: number): boolean {
+  try {
+    process.kill(pid, 0);
+
+    return true;
+  } catch (error) {
+    return (error as NodeJS.ErrnoException).code !== 'ESRCH';
+  }
+}
+
+async function createInstallLock(lockFile: string): Promise<boolean> {
+  let handle: Awaited<ReturnType<typeof open>>;
+
+  try {
+    handle = await open(lockFile, 'wx');
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'EEXIST') {
+      return false;
+    }
+    throw error;
+  }
+
+  try {
+    const owner: InstallLockOwner = { pid: process.pid, startedAt: new Date().toISOString() };
+
+    await handle.writeFile(`${JSON.stringify(owner)}\n`, 'utf8');
+  } catch (error) {
+    await rm(lockFile, { force: true });
+    throw error;
+  } finally {
+    await handle.close();
+  }
+
+  return true;
+}
+
+async function inspectInstallLock(lockFile: string): Promise<'live' | 'stale' | 'missing'> {
+  try {
+    const owner = JSON.parse(await readFile(lockFile, 'utf8')) as Partial<InstallLockOwner>;
+
+    if (Number.isSafeInteger(owner.pid) && Number(owner.pid) > 0) {
+      return processIsAlive(Number(owner.pid)) ? 'live' : 'stale';
+    }
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      return 'missing';
+    }
+  }
+
+  try {
+    const lockStat = await stat(lockFile);
+
+    return Date.now() - lockStat.mtimeMs > INCOMPLETE_LOCK_STALE_AFTER_MS ? 'stale' : 'live';
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      return 'missing';
+    }
+    throw error;
+  }
+}
+
+async function acquireInstallLock(lockFile: string, retriesRemaining = 2): Promise<void> {
+  if (await createInstallLock(lockFile)) {
+    return;
+  }
+  const state = await inspectInstallLock(lockFile);
+
+  if (state === 'live') {
+    throw new Error(`Another catalog refresh holds the install lock: ${lockFile}`);
+  }
+  if (retriesRemaining <= 0) {
+    throw new Error(`Could not acquire the catalog refresh install lock: ${lockFile}`);
+  }
+  if (state === 'stale') {
+    await rm(lockFile, { force: true });
+  }
+  await acquireInstallLock(lockFile, retriesRemaining - 1);
+}
+
+async function installedFileExists(file: string): Promise<boolean> {
+  try {
+    return (await stat(file)).isFile();
+  } catch {
+    return false;
+  }
+}
+
+async function restoreInstalledArtifacts(installed: StagedArtifact[]): Promise<void> {
+  await Promise.all(installed.map(async (artifact) => {
+    if (artifact.hadInstalledVersion) {
+      await copyFile(artifact.backup, artifact.target);
+    } else {
+      await rm(artifact.target, { force: true });
+    }
+  }));
+}
+
+async function installInOrder(artifacts: StagedArtifact[], installed: StagedArtifact[], index = 0): Promise<void> {
+  const artifact = artifacts[index];
+
+  if (!artifact) {
+    return;
+  }
+  await rename(artifact.staged, artifact.target);
+  installed.push(artifact);
+  await installInOrder(artifacts, installed, index + 1);
+}
+
+export async function stageAndInstallArtifacts(outputDirectory: string, artifacts: RefreshArtifact[]): Promise<void> {
+  const targets = new Set(artifacts.map((artifact) => artifact.target));
+
+  if (targets.size !== artifacts.length || artifacts.filter((artifact) => artifact.manifest).length !== 1) {
+    throw new Error('Refresh artifact transaction must contain unique targets and exactly one manifest.');
+  }
+  const lockFile = path.join(outputDirectory, '.satglobe-refresh.lock');
+
+  await acquireInstallLock(lockFile);
+  let stageDirectory: string | null = null;
+  let preserveStageForRecovery = false;
+  const ordered = [...artifacts].sort((left, right) => Number(Boolean(left.manifest)) - Number(Boolean(right.manifest)));
+
+  try {
+    stageDirectory = await mkdtemp(path.join(outputDirectory, '.satglobe-stage-'));
+    await Promise.all(ordered.map((artifact) => mkdir(path.dirname(artifact.target), { recursive: true })));
+    const staged = await Promise.all(ordered.map(async (artifact, index): Promise<StagedArtifact> => {
+      const stagedFile = path.join(stageDirectory, `${index}.next`);
+      const backup = path.join(stageDirectory, `${index}.backup`);
+
+      await writeFile(stagedFile, artifact.contents, 'utf8');
+      const hadInstalledVersion = await installedFileExists(artifact.target);
+
+      if (hadInstalledVersion) {
+        await copyFile(artifact.target, backup);
+      }
+
+      return { ...artifact, staged: stagedFile, backup, hadInstalledVersion };
+    }));
+    const installed: StagedArtifact[] = [];
+
+    try {
+      await installInOrder(staged, installed);
+    } catch (error) {
+      try {
+        await restoreInstalledArtifacts(installed);
+      } catch (rollbackError) {
+        preserveStageForRecovery = true;
+        throw new AggregateError(
+          [error, rollbackError],
+          `Catalog install and rollback both failed; backups were preserved at ${stageDirectory}`,
+        );
+      }
+      throw error;
+    }
+  } finally {
+    if (stageDirectory && !preserveStageForRecovery) {
+      await rm(stageDirectory, { force: true, recursive: true });
+    }
+    await rm(lockFile, { force: true });
+  }
+}
+
+function validateSerializedOutputs(catalogJson: string, conjunctionJson: string, summaryJson: string): void {
+  const catalog = JSON.parse(catalogJson) as CatalogRow[];
+  const conjunctions = JSON.parse(conjunctionJson) as unknown;
+  const summary = JSON.parse(summaryJson) as unknown;
+
+  validateBaseCatalog(catalog);
+  validateSocratesFeed(conjunctions);
+  if (typeof summary !== 'object' || summary === null || !('snapshotId' in summary) || !('checksum' in summary)) {
+    throw new Error('Refresh manifest failed its serialized-output validation.');
+  }
+}
+
 export async function refreshCatalog(options: RefreshOptions): Promise<RefreshSummary> {
   const baseRaw = await readFile(options.output, 'utf8');
   const baseRows = JSON.parse(baseRaw) as CatalogRow[];
   const catalog = validateBaseCatalog(baseRows);
   const previousObjectCount = catalog.size;
-  const [activeRaw, starlinkRaw] = await Promise.all([
-    loadSource(options.activeInput, ACTIVE_URL, path.join(SOURCE_CACHE_DIRECTORY, 'active.csv')),
-    loadSource(options.starlinkInput, STARLINK_URL, path.join(SOURCE_CACHE_DIRECTORY, 'starlink.csv')),
+  const refreshTime = new Date();
+  const [activeRaw, starlinkRaw, conjunctionFeed] = await Promise.all([
+    loadSource(
+      options.activeInput,
+      ACTIVE_URL,
+      path.join(SOURCE_CACHE_DIRECTORY, 'active.csv'),
+      fetch,
+      !options.verifyOnly,
+      (raw) => validateOmmSource(raw, 'celestrak-active'),
+    ),
+    loadSource(
+      options.starlinkInput,
+      STARLINK_URL,
+      path.join(SOURCE_CACHE_DIRECTORY, 'starlink.csv'),
+      fetch,
+      !options.verifyOnly,
+      (raw) => validateOmmSource(raw, 'celestrak-starlink'),
+    ),
+    buildSocratesFeed({
+      input: options.socratesInput,
+      inputUpdatedAt: options.socratesUpdatedAt,
+      inputRetrievedAt: options.socratesRetrievedAt,
+      now: refreshTime,
+      writeCache: !options.verifyOnly,
+    }),
   ]);
   const active = parseOmmCsv(activeRaw, 'celestrak-active');
   const starlink = parseOmmCsv(starlinkRaw, 'celestrak-starlink');
@@ -431,6 +703,7 @@ export async function refreshCatalog(options: RefreshOptions): Promise<RefreshSu
   const sourceEpochs = [...active.rows, ...starlink.rows].map((row) => new Date(row.EPOCH).getTime()).filter(Number.isFinite);
   const generatedAt = new Date(Math.max(...sourceEpochs)).toISOString();
   const catalogJson = `${JSON.stringify(rows)}\n`;
+  const conjunctionJson = `${JSON.stringify(conjunctionFeed, null, 2)}\n`;
   const digest = checksum(catalogJson);
   const snapshotId = `satglobe-${generatedAt.slice(0, 10)}-${digest.slice(0, 12)}`;
   const summary: RefreshSummary = {
@@ -449,32 +722,46 @@ export async function refreshCatalog(options: RefreshOptions): Promise<RefreshSu
       { id: 'celestrak-active', url: ACTIVE_URL, recordCount: active.rows.length, checksum: checksum(activeRaw) },
       { id: 'celestrak-starlink', url: STARLINK_URL, recordCount: starlink.rows.length, checksum: checksum(starlinkRaw) },
     ],
+    conjunctions: {
+      snapshotId: conjunctionFeed.snapshotId,
+      eventCount: conjunctionFeed.conjunctions.length,
+      updatedAt: conjunctionFeed.source.updatedAt,
+      retrievedAt: conjunctionFeed.source.retrievedAt,
+      checksum: conjunctionFeed.source.checksum,
+    },
     checksum: digest,
   };
+  const reportDirectory = path.join(path.dirname(options.output), 'satglobe');
+  const manifestJson = `${JSON.stringify(summary, null, 2)}\n`;
+  const rejectedJson = `${JSON.stringify(rejected, null, 2)}\n`;
+  const summaryJson = `${JSON.stringify({
+    previousObjectCount,
+    objectCount: rows.length,
+    added: summary.added,
+    updated: summary.updated,
+    rejected: summary.rejected,
+    rejectionReasons,
+    conjunctionCount: conjunctionFeed.conjunctions.length,
+    conjunctionSnapshotId: conjunctionFeed.snapshotId,
+  }, null, 2)}\n`;
+  const checksumFile = `${digest}  ${path.basename(options.output)}\n`;
+
+  validateSerializedOutputs(catalogJson, conjunctionJson, manifestJson);
+  JSON.parse(rejectedJson);
+  JSON.parse(summaryJson);
+  if (checksumFile !== `${checksum(catalogJson)}  ${path.basename(options.output)}\n`) {
+    throw new Error('Catalog checksum output failed validation.');
+  }
 
   if (!options.verifyOnly) {
-    const reportDirectory = path.join(path.dirname(options.output), 'satglobe');
-
-    await mkdir(reportDirectory, { recursive: true });
-    try {
-      await writeAtomic(options.output, catalogJson);
-      await Promise.all([
-        writeAtomic(path.join(reportDirectory, 'manifest.json'), `${JSON.stringify(summary, null, 2)}\n`),
-        writeAtomic(path.join(reportDirectory, 'rejected-rows.json'), `${JSON.stringify(rejected, null, 2)}\n`),
-        writeAtomic(path.join(reportDirectory, 'summary.json'), `${JSON.stringify({
-          previousObjectCount,
-          objectCount: rows.length,
-          added: summary.added,
-          updated: summary.updated,
-          rejected: summary.rejected,
-          rejectionReasons,
-        }, null, 2)}\n`),
-        writeAtomic(path.join(reportDirectory, 'catalog.sha256'), `${digest}  ${path.basename(options.output)}\n`),
-      ]);
-    } catch (error) {
-      await rm(`${options.output}.satglobe-${process.pid}.tmp`, { force: true });
-      throw error;
-    }
+    await stageAndInstallArtifacts(path.dirname(options.output), [
+      { target: options.output, contents: catalogJson },
+      { target: path.join(reportDirectory, 'conjunctions.json'), contents: conjunctionJson },
+      { target: path.join(reportDirectory, 'rejected-rows.json'), contents: rejectedJson },
+      { target: path.join(reportDirectory, 'summary.json'), contents: summaryJson },
+      { target: path.join(reportDirectory, 'catalog.sha256'), contents: checksumFile },
+      { target: path.join(reportDirectory, 'manifest.json'), contents: manifestJson, manifest: true },
+    ]);
   }
 
   return summary;

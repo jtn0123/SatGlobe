@@ -1,4 +1,4 @@
-import { mkdtemp, rm } from 'node:fs/promises';
+import { access, copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -9,9 +9,13 @@ import {
   loadSource,
   ommToCatalogRow,
   parseArgs,
+  refreshCatalog,
+  stageAndInstallArtifacts,
   summarizeRejections,
   type OmmRow,
 } from './catalog-refresh';
+
+/* eslint-disable jsdoc/require-jsdoc -- Test fixture builders are intentionally local. */
 
 const temporaryDirectories: string[] = [];
 
@@ -38,6 +42,18 @@ const omm: OmmRow = {
   MEAN_MOTION_DOT: '0.000001',
   MEAN_MOTION_DDOT: '0',
 };
+
+const SOCRATES_HEADER = 'NORAD_CAT_ID_1,OBJECT_NAME_1,DSE_1,NORAD_CAT_ID_2,OBJECT_NAME_2,DSE_2,TCA,TCA_RANGE,TCA_RELATIVE_SPEED,MAX_PROB,DILUTION';
+
+function ommCsv(): string {
+  const fields = Object.keys(omm);
+
+  return `${fields.join(',')}\n${fields.map((field) => omm[field]).join(',')}\n`;
+}
+
+function socratesCsv(secondCatalogId = '64737'): string {
+  return `${SOCRATES_HEADER}\r\n62392,TOMORROW-S3 [+],0,${secondCatalogId},STARLINK-34619 [+],0,2099-07-21 07:10:32.348,0.003,11.520,1.000E+00,0.000\r\n`;
+}
 
 describe('SatGlobe catalog refresh', () => {
   it('converts OMM records into valid, checksummed TLE rows', () => {
@@ -70,7 +86,7 @@ describe('SatGlobe catalog refresh', () => {
   it('reuses a verified source download instead of requesting the same group twice', async () => {
     const directory = await mkdtemp(path.join(tmpdir(), 'satglobe-catalog-'));
     const cacheFile = path.join(directory, 'active.csv');
-    const fetchSource = vi.fn(async () => new Response('fresh source', { status: 200 }));
+    const fetchSource = vi.fn(() => Promise.resolve(new Response('fresh source', { status: 200 })));
 
     temporaryDirectories.push(directory);
     await expect(loadSource(undefined, 'https://example.test/active.csv', cacheFile, fetchSource)).resolves.toBe('fresh source');
@@ -81,10 +97,30 @@ describe('SatGlobe catalog refresh', () => {
   it('surfaces the provider response when a download is rejected and no cache exists', async () => {
     const directory = await mkdtemp(path.join(tmpdir(), 'satglobe-catalog-'));
     const cacheFile = path.join(directory, 'active.csv');
-    const fetchSource = vi.fn(async () => new Response('Data is updated once every 2 hours.', { status: 403 }));
+    const fetchSource = vi.fn(() => Promise.resolve(new Response('Data is updated once every 2 hours.', { status: 403 })));
 
     temporaryDirectories.push(directory);
     await expect(loadSource(undefined, 'https://example.test/active.csv', cacheFile, fetchSource)).rejects.toThrow('Data is updated once every 2 hours.');
+  });
+
+  it('validates a downloaded OMM source before it can enter the cache', async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'satglobe-catalog-invalid-cache-'));
+    const cacheFile = path.join(directory, 'active.csv');
+    const fetchSource = vi.fn(() => Promise.resolve(new Response('bad source', { status: 200 })));
+    const rejectInvalidSource = () => {
+      throw new Error('invalid OMM contract');
+    };
+
+    temporaryDirectories.push(directory);
+    await expect(loadSource(
+      undefined,
+      'https://example.test/active.csv',
+      cacheFile,
+      fetchSource,
+      true,
+      rejectInvalidSource,
+    )).rejects.toThrow('invalid OMM contract');
+    await expect(access(cacheFile)).rejects.toMatchObject({ code: 'ENOENT' });
   });
 
   it('retries once when the provider request fails outright', async () => {
@@ -109,6 +145,114 @@ describe('SatGlobe catalog refresh', () => {
     expect(() => parseArgs(['--verify-onIy'])).toThrow(/Unknown argument: --verify-onIy/u);
     expect(() => parseArgs(['--output'])).toThrow(/Missing value for --output/u);
     expect(parseArgs(['--verify-only']).verifyOnly).toBe(true);
-    expect(parseArgs(['--output', 'out.json', '--active-input', 'a.csv']).activeInput).toBe('a.csv');
+    expect(() => parseArgs(['--socrates-input', 's.csv'])).toThrow(/must be provided together/u);
+    expect(parseArgs([
+      '--output', 'out.json',
+      '--active-input', 'a.csv',
+      '--socrates-input', 's.csv',
+      '--socrates-updated-at', '2026-07-18T01:13:28.000Z',
+      '--socrates-retrieved-at', '2026-07-18T11:25:30.000Z',
+    ])).toMatchObject({
+      activeInput: 'a.csv',
+      socratesInput: 's.csv',
+      socratesUpdatedAt: '2026-07-18T01:13:28.000Z',
+      socratesRetrievedAt: '2026-07-18T11:25:30.000Z',
+    });
+  });
+
+  it('validates a complete dry run without writing catalog, feed, report, or cache artifacts', async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'satglobe-catalog-verify-'));
+    const output = path.join(directory, 'tle.json');
+    const activeInput = path.join(directory, 'active.csv');
+    const starlinkInput = path.join(directory, 'starlink.csv');
+    const socratesInput = path.join(directory, 'socrates.csv');
+
+    temporaryDirectories.push(directory);
+    await Promise.all([
+      copyFile(path.resolve('public/tle/tle.json'), output),
+      writeFile(activeInput, ommCsv(), 'utf8'),
+      writeFile(starlinkInput, ommCsv(), 'utf8'),
+      writeFile(socratesInput, socratesCsv(), 'utf8'),
+    ]);
+    const before = await readFile(output, 'utf8');
+    const summary = await refreshCatalog(parseArgs([
+      '--verify-only',
+      '--output', output,
+      '--active-input', activeInput,
+      '--starlink-input', starlinkInput,
+      '--socrates-input', socratesInput,
+      '--socrates-updated-at', '2026-07-18T01:13:28.000Z',
+      '--socrates-retrieved-at', '2026-07-18T11:25:30.000Z',
+    ]));
+
+    expect(summary.conjunctions.eventCount).toBe(1);
+    await expect(readFile(output, 'utf8')).resolves.toBe(before);
+    await expect(access(path.join(directory, 'satglobe'))).rejects.toMatchObject({ code: 'ENOENT' });
+  });
+
+  it('leaves every installed output unchanged when SOCRATES validation fails', async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'satglobe-catalog-failure-'));
+    const output = path.join(directory, 'tle.json');
+    const reportDirectory = path.join(directory, 'satglobe');
+    const activeInput = path.join(directory, 'active.csv');
+    const starlinkInput = path.join(directory, 'starlink.csv');
+    const socratesInput = path.join(directory, 'socrates.csv');
+    const installedFeed = '{"sentinel":"feed"}\n';
+    const installedManifest = '{"sentinel":"manifest"}\n';
+
+    temporaryDirectories.push(directory);
+    await mkdir(reportDirectory, { recursive: true });
+    await Promise.all([
+      copyFile(path.resolve('public/tle/tle.json'), output),
+      writeFile(activeInput, ommCsv(), 'utf8'),
+      writeFile(starlinkInput, ommCsv(), 'utf8'),
+      writeFile(socratesInput, socratesCsv('62392'), 'utf8'),
+      writeFile(path.join(reportDirectory, 'conjunctions.json'), installedFeed, 'utf8'),
+      writeFile(path.join(reportDirectory, 'manifest.json'), installedManifest, 'utf8'),
+    ]);
+    const before = await readFile(output, 'utf8');
+
+    await expect(refreshCatalog(parseArgs([
+      '--output', output,
+      '--active-input', activeInput,
+      '--starlink-input', starlinkInput,
+      '--socrates-input', socratesInput,
+      '--socrates-updated-at', '2026-07-18T01:13:28.000Z',
+      '--socrates-retrieved-at', '2026-07-18T11:25:30.000Z',
+    ]))).rejects.toThrow(/self-conjunction/u);
+    await expect(readFile(output, 'utf8')).resolves.toBe(before);
+    await expect(readFile(path.join(reportDirectory, 'conjunctions.json'), 'utf8')).resolves.toBe(installedFeed);
+    await expect(readFile(path.join(reportDirectory, 'manifest.json'), 'utf8')).resolves.toBe(installedManifest);
+  });
+
+  it('refuses a concurrent artifact install while the output lock is held', async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'satglobe-catalog-lock-'));
+    const lockFile = path.join(directory, '.satglobe-refresh.lock');
+
+    temporaryDirectories.push(directory);
+    await writeFile(lockFile, `${JSON.stringify({ pid: process.pid, startedAt: new Date().toISOString() })}\n`, 'utf8');
+    await expect(stageAndInstallArtifacts(directory, [
+      { target: path.join(directory, 'candidate.json'), contents: '{}\n' },
+      { target: path.join(directory, 'manifest.json'), contents: '{}\n', manifest: true },
+    ])).rejects.toThrow(/holds the install lock/u);
+    await expect(access(path.join(directory, 'candidate.json'))).rejects.toMatchObject({ code: 'ENOENT' });
+  });
+
+  it('reclaims a lock whose recorded owner process is no longer alive', async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'satglobe-catalog-stale-lock-'));
+    const lockFile = path.join(directory, '.satglobe-refresh.lock');
+    const candidate = path.join(directory, 'candidate.json');
+    const manifest = path.join(directory, 'manifest.json');
+
+    temporaryDirectories.push(directory);
+    await writeFile(lockFile, '{"pid":99999999,"startedAt":"2026-07-18T00:00:00.000Z"}\n', 'utf8');
+    await stageAndInstallArtifacts(directory, [
+      { target: candidate, contents: '{"candidate":true}\n' },
+      { target: manifest, contents: '{"manifest":true}\n', manifest: true },
+    ]);
+
+    await expect(readFile(candidate, 'utf8')).resolves.toBe('{"candidate":true}\n');
+    await expect(readFile(manifest, 'utf8')).resolves.toBe('{"manifest":true}\n');
+    await expect(access(lockFile)).rejects.toMatchObject({ code: 'ENOENT' });
   });
 });

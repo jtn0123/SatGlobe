@@ -5,22 +5,53 @@ import { EventBusEvent } from '@app/engine/events/event-bus-events';
 import { errorManagerInstance } from '@app/engine/utils/errorManager';
 import { SelectSatManager } from '@app/plugins/select-sat-manager/select-sat-manager';
 import { BaseObject, PayloadStatus, Radians, Satellite } from '@ootk/src/main';
+import {
+  createUnavailableConjunctionState,
+  INITIAL_CONJUNCTION_STATE,
+  refreshAvailableConjunctionState,
+  resolveConjunctionFeed,
+} from '../domain/conjunctions';
 import { prepareFilterMatcher } from '../domain/filters';
 import { classifyOrbit, tleEpochToIso } from '../domain/orbits';
 import {
   DEFAULT_CAMERA,
   DEFAULT_FILTERS,
   type CameraPose,
+  type ConjunctionFeedV1,
   type EngineState,
   type FilterState,
   type SpaceObjectView,
   type ScaleMode,
   type VisualEncoding,
 } from '../domain/types';
+import { loadConjunctionFeed } from '../runtime/conjunction-loader';
 import { SatGlobeColorScheme } from './satglobe-color-scheme';
 import { isKnownActivePayloadStatus, objectKindFromSpaceObjectType } from './satglobe-object-state';
 
 export type EngineStateListener = (state: EngineState) => void;
+
+type ConjunctionFeedLoader = (signal: AbortSignal) => Promise<ConjunctionFeedV1>;
+type IdleScheduler = (callback: () => void, timeoutMs: number) => number;
+
+export interface SatGlobeEngineAdapterOptions {
+  loadConjunctionFeed?: ConjunctionFeedLoader;
+  scheduleIdle?: IdleScheduler;
+  cancelIdle?: (handle: number) => void;
+}
+
+const scheduleBrowserIdle: IdleScheduler = (callback, timeoutMs) => (
+  typeof window.requestIdleCallback === 'function'
+    ? window.requestIdleCallback(callback, { timeout: timeoutMs })
+    : window.setTimeout(callback, 0)
+);
+
+const cancelBrowserIdle = (handle: number): void => {
+  if (typeof window.cancelIdleCallback === 'function') {
+    window.cancelIdleCallback(handle);
+  } else {
+    window.clearTimeout(handle);
+  }
+};
 
 const statusLabels: Record<PayloadStatus, string> = {
   [PayloadStatus.OPERATIONAL]: 'Operational',
@@ -45,20 +76,36 @@ export class SatGlobeEngineAdapter {
     encoding: 'object-type',
     camera: DEFAULT_CAMERA,
     newestElementEpoch: '',
+    conjunctions: INITIAL_CONJUNCTION_STATE,
+    highlightedObjectCount: 0,
   };
   private objects_: SpaceObjectView[] = [];
   private objectsByCatalogId_ = new Map<string, SpaceObjectView>();
+  private filterVisibleCatalogIds_ = new Set<string>();
   // Engine-allocated dot indices stay adapter-private; the domain model speaks catalog ids only.
   private engineIdByCatalogId_ = new Map<string, number>();
   private readonly listeners_ = new Set<EngineStateListener>();
   private colorScheme_: SatGlobeColorScheme | null = null;
+  private highlightedCatalogIds_: ReadonlySet<string> = new Set();
+  private conjunctionHighlightActive_ = false;
+  private conjunctionFeed_: ConjunctionFeedV1 | null = null;
   private interval_: number | null = null;
+  private conjunctionIdleHandle_: number | null = null;
+  private conjunctionLoadTimeoutHandle_: number | null = null;
+  private conjunctionAbortController_: AbortController | null = null;
+  private conjunctionLoadScheduled_ = false;
   private disposed_ = false;
   private engineReady_ = false;
   /** Wall-clock ms at construction; the engine must produce a catalog within BOOT_TIMEOUT_MS_ or the UI surfaces an error. */
   private readonly constructedAt_ = Date.now();
   private static readonly BOOT_TIMEOUT_MS_ = 30_000;
+  private static readonly CONJUNCTION_IDLE_TIMEOUT_MS_ = 2_000;
+  private static readonly CONJUNCTION_LOAD_TIMEOUT_MS_ = 2_000;
+  private static readonly MAX_HIGHLIGHTED_OBJECTS_ = 50;
   private scaleMode_: ScaleMode = 'semantic';
+  private readonly loadConjunctionFeed_: ConjunctionFeedLoader;
+  private readonly scheduleIdle_: IdleScheduler;
+  private readonly cancelIdle_: (handle: number) => void;
   private readonly eventBus_ = EventBus.getInstance();
   private readonly onCatalogReloaded_ = () => {
     if (this.engineReady_) {
@@ -83,7 +130,14 @@ export class SatGlobeEngineAdapter {
     this.patchState_({ selectedObject: obj ? this.toView_(obj) : null });
   };
 
-  constructor() {
+  constructor({
+    loadConjunctionFeed: conjunctionLoader = loadConjunctionFeed,
+    scheduleIdle = scheduleBrowserIdle,
+    cancelIdle = cancelBrowserIdle,
+  }: SatGlobeEngineAdapterOptions = {}) {
+    this.loadConjunctionFeed_ = conjunctionLoader;
+    this.scheduleIdle_ = scheduleIdle;
+    this.cancelIdle_ = cancelIdle;
     this.eventBus_.on(EventBusEvent.catalogReloaded, this.onCatalogReloaded_);
     this.eventBus_.on(EventBusEvent.onKeepTrackReady, this.onKeepTrackReady_);
     this.eventBus_.on(EventBusEvent.selectSatData, this.onSelection_);
@@ -180,13 +234,33 @@ export class SatGlobeEngineAdapter {
   }
 
   setFilters(filters: FilterState): void {
-    this.patchState_({ filters: structuredClone(filters) }, false);
-    this.applyVisualState_();
+    this.conjunctionHighlightActive_ = false;
+    this.highlightedCatalogIds_ = new Set();
+    this.patchState_({ filters: structuredClone(filters), highlightedObjectCount: 0 }, false);
+    this.applyVisualState_(this.rebuildFilterVisibility_());
   }
 
   setEncoding(encoding: VisualEncoding): void {
-    this.patchState_({ encoding }, false);
-    this.applyVisualState_();
+    this.conjunctionHighlightActive_ = false;
+    this.highlightedCatalogIds_ = new Set();
+    this.patchState_({ encoding, highlightedObjectCount: 0 }, false);
+    this.applyVisualState_(this.filterVisibleCatalogIds_.size);
+  }
+
+  /**
+   * Emphasizes installed catalog objects for a conjunction lens. Unknown ids,
+   * duplicate ids, whitespace, and caller order cannot create distinct visual
+   * states, so repeated selection of the same pair is a true no-op.
+   */
+  setHighlight(catalogIds: readonly string[]): void {
+    const canonicalIds = this.canonicalHighlightIds_(catalogIds);
+
+    this.conjunctionHighlightActive_ = canonicalIds.size > 0;
+    if (!this.replaceHighlightIds_(canonicalIds)) {
+      return;
+    }
+
+    this.applyVisualState_(this.visibleCountWithHighlight_());
   }
 
   setScaleMode(mode: ScaleMode): void {
@@ -219,6 +293,16 @@ export class SatGlobeEngineAdapter {
     if (this.interval_ !== null) {
       window.clearInterval(this.interval_);
     }
+    if (this.conjunctionIdleHandle_ !== null) {
+      this.cancelIdle_(this.conjunctionIdleHandle_);
+      this.conjunctionIdleHandle_ = null;
+    }
+    if (this.conjunctionLoadTimeoutHandle_ !== null) {
+      window.clearTimeout(this.conjunctionLoadTimeoutHandle_);
+      this.conjunctionLoadTimeoutHandle_ = null;
+    }
+    this.conjunctionAbortController_?.abort();
+    this.conjunctionAbortController_ = null;
     this.eventBus_.unregister(EventBusEvent.catalogReloaded, this.onCatalogReloaded_);
     this.eventBus_.unregister(EventBusEvent.onKeepTrackReady, this.onKeepTrackReady_);
     this.eventBus_.unregister(EventBusEvent.selectSatData, this.onSelection_);
@@ -253,6 +337,20 @@ export class SatGlobeEngineAdapter {
       this.objects_ = sats.map((sat) => this.toView_(sat));
       this.objectsByCatalogId_ = new Map(this.objects_.map((obj) => [obj.catalogId, obj]));
       this.engineIdByCatalogId_ = new Map(sats.map((sat, index) => [this.objects_[index].catalogId, sat.id]));
+      const conjunctions = this.conjunctionFeed_
+        ? resolveConjunctionFeed(
+          this.conjunctionFeed_,
+          (catalogId) => this.objectsByCatalogId_.get(catalogId),
+          new Date(),
+        )
+        : this.state_.conjunctions;
+      const nextHighlights = this.conjunctionHighlightActive_ && conjunctions.status !== 'loading' && conjunctions.status !== 'unavailable'
+        ? this.canonicalHighlightIds_(conjunctions.catalogIds)
+        : this.canonicalHighlightIds_(this.highlightedCatalogIds_);
+
+      const highlightChanged = this.replaceHighlightIds_(nextHighlights);
+
+      this.rebuildFilterVisibility_();
       const newestEpochMs = this.objects_.reduce((newest, obj) => {
         const epoch = new Date(obj.epoch).getTime();
 
@@ -261,13 +359,22 @@ export class SatGlobeEngineAdapter {
 
       this.patchState_({
         objectCount: this.objects_.length,
-        visibleCount: this.countVisible_(),
+        visibleCount: this.visibleCountWithHighlight_(),
+        highlightedObjectCount: this.highlightedCatalogIds_.size,
+        conjunctions,
         newestElementEpoch: Number.isFinite(newestEpochMs) ? new Date(newestEpochMs).toISOString() : '',
         ready: true,
         error: null,
       }, false);
       this.installColorScheme_();
+      if (highlightChanged) {
+        // CatalogLoader rebuilds color buffers before it emits catalogReloaded.
+        // A retained conjunction lens may resolve to a different population in
+        // this hydrate, so force exactly one post-resolution GPU recolor.
+        this.applyVisualState_(this.visibleCountWithHighlight_());
+      }
       this.poll_();
+      this.scheduleConjunctionLoad_();
       performance.measure('satglobe:hydrate', 'satglobe:hydrate-start');
     } catch (error) {
       // A populated catalog that fails to map is a real defect, not a startup race.
@@ -313,6 +420,13 @@ export class SatGlobeEngineAdapter {
     const yaw = Number(camera.camYaw);
     const zoom = camera.zoomLevel;
     const current = this.state_;
+    const conjunctions = current.conjunctions.status === 'loading' || current.conjunctions.status === 'unavailable'
+      ? current.conjunctions
+      : refreshAvailableConjunctionState(current.conjunctions, new Date());
+    const conjunctionsChanged = conjunctions !== current.conjunctions;
+    const highlightChanged = conjunctionsChanged && this.conjunctionHighlightActive_
+      ? this.replaceHighlightIds_(this.canonicalHighlightIds_(conjunctions.catalogIds))
+      : false;
     const timeChanged = current.simulationTime !== simulationTimeIso;
     const cameraChanged = current.camera.pitch !== pitch || current.camera.yaw !== yaw || current.camera.zoom !== zoom;
 
@@ -329,11 +443,15 @@ export class SatGlobeEngineAdapter {
     }
     // Emit only when something observable moved — an idle scene produces zero
     // notifications and therefore zero React re-renders (ADR 0002 idle budget).
-    if (timeChanged || cameraChanged) {
+    if (timeChanged || cameraChanged || conjunctionsChanged) {
       this.patchState_({
         simulationTime: timeChanged ? simulationTimeIso : current.simulationTime,
         camera: cameraChanged ? { pitch, yaw, zoom } : current.camera,
-      });
+        conjunctions,
+      }, !highlightChanged);
+      if (highlightChanged) {
+        this.applyVisualState_(this.visibleCountWithHighlight_());
+      }
     }
   }
 
@@ -351,17 +469,31 @@ export class SatGlobeEngineAdapter {
 
   private installColorScheme_(): void {
     if (this.colorScheme_) {
+      this.colorScheme_.setState(
+        this.state_.filters,
+        this.state_.encoding,
+        this.highlightedCatalogIds_,
+      );
+
       return;
     }
     const manager = ServiceLocator.getColorSchemeManager();
 
-    this.colorScheme_ = new SatGlobeColorScheme(this.state_.filters, this.state_.encoding);
+    this.colorScheme_ = new SatGlobeColorScheme(
+      this.state_.filters,
+      this.state_.encoding,
+      this.highlightedCatalogIds_,
+    );
     manager.registerScheme(this.colorScheme_);
     manager.setColorScheme(this.colorScheme_, true);
   }
 
-  private applyVisualState_(): void {
-    this.colorScheme_?.setState(this.state_.filters, this.state_.encoding);
+  private applyVisualState_(visibleCount: number): void {
+    this.colorScheme_?.setState(
+      this.state_.filters,
+      this.state_.encoding,
+      this.highlightedCatalogIds_,
+    );
     if (this.colorScheme_) {
       try {
         ServiceLocator.getColorSchemeManager().setColorScheme(this.colorScheme_, true);
@@ -370,22 +502,155 @@ export class SatGlobeEngineAdapter {
         errorManagerInstance.log(`SatGlobe adapter: recolor deferred (${error instanceof Error ? error.message : String(error)})`);
       }
     }
-    this.patchState_({ visibleCount: this.countVisible_() }, false);
+    this.patchState_({ visibleCount }, false);
     this.emit_();
   }
 
-  /** One prepared-matcher sweep over the precomputed views; the UI reads the result from state. */
-  private countVisible_(): number {
+  /** Rebuilds the filter-only baseline; highlight clicks never enter this O(catalog) path. */
+  private rebuildFilterVisibility_(): number {
     const matcher = prepareFilterMatcher(this.state_.filters);
-    let count = 0;
+    const visibleCatalogIds = new Set<string>();
 
     for (const obj of this.objects_) {
       if (matcher(obj)) {
-        count += 1;
+        visibleCatalogIds.add(obj.catalogId);
       }
     }
 
-    return count;
+    this.filterVisibleCatalogIds_ = visibleCatalogIds;
+
+    return visibleCatalogIds.size;
+  }
+
+  /** Adds only the bounded highlight delta to the cached filter-visible baseline. */
+  private visibleCountWithHighlight_(): number {
+    let visibleCount = this.filterVisibleCatalogIds_.size;
+
+    for (const catalogId of this.highlightedCatalogIds_) {
+      if (!this.filterVisibleCatalogIds_.has(catalogId)) {
+        visibleCount++;
+      }
+    }
+
+    return visibleCount;
+  }
+
+  /** Normalizes the bounded public highlight API against the installed catalog. */
+  private canonicalHighlightIds_(catalogIds: Iterable<string>): ReadonlySet<string> {
+    const knownIds = new Set<string>();
+
+    for (const candidate of catalogIds) {
+      const catalogId = candidate.trim();
+
+      if (this.objectsByCatalogId_.has(catalogId)) {
+        knownIds.add(catalogId);
+      }
+    }
+
+    return new Set(
+      [...knownIds]
+        .sort((left, right) => left.localeCompare(right))
+        .slice(0, SatGlobeEngineAdapter.MAX_HIGHLIGHTED_OBJECTS_),
+    );
+  }
+
+  /** Replaces a canonical highlight set without recoloring or emitting. */
+  private replaceHighlightIds_(catalogIds: ReadonlySet<string>): boolean {
+    const unchanged = catalogIds.size === this.highlightedCatalogIds_.size &&
+      [...catalogIds].every((catalogId) => this.highlightedCatalogIds_.has(catalogId));
+
+    if (unchanged) {
+      return false;
+    }
+    this.highlightedCatalogIds_ = catalogIds;
+    this.patchState_({ highlightedObjectCount: catalogIds.size }, false);
+
+    return true;
+  }
+
+  /** Schedules the optional screening feed only after the catalog is usable. */
+  private scheduleConjunctionLoad_(): void {
+    if (this.conjunctionLoadScheduled_ || this.disposed_) {
+      return;
+    }
+
+    this.conjunctionLoadScheduled_ = true;
+    this.conjunctionAbortController_ = new AbortController();
+    try {
+      this.conjunctionIdleHandle_ = this.scheduleIdle_(() => {
+        this.conjunctionIdleHandle_ = null;
+        this.loadConjunctions_().catch((error: unknown) => {
+          // loadConjunctions_ owns expected request/parse failures. This final
+          // guard prevents an unexpected programming error from becoming an
+          // unhandled rejection in browsers.
+          errorManagerInstance.log(`SatGlobe adapter: deferred conjunction load failed (${String(error)})`);
+        });
+      }, SatGlobeEngineAdapter.CONJUNCTION_IDLE_TIMEOUT_MS_);
+    } catch (error) {
+      this.conjunctionAbortController_?.abort();
+      this.conjunctionAbortController_ = null;
+      const message = `Conjunction screening data is unavailable: ${error instanceof Error ? error.message : String(error)}`;
+
+      errorManagerInstance.log(`SatGlobe adapter: ${message}`);
+      this.patchState_({ conjunctions: createUnavailableConjunctionState(message) });
+    }
+  }
+
+  /** Resolves public feed ids against the installed catalog without making the feed boot-critical. */
+  private async loadConjunctions_(): Promise<void> {
+    const controller = this.conjunctionAbortController_;
+
+    if (!controller || this.disposed_) {
+      return;
+    }
+
+    this.conjunctionLoadTimeoutHandle_ = window.setTimeout(() => {
+      this.conjunctionLoadTimeoutHandle_ = null;
+      if (this.disposed_ || controller.signal.aborted) {
+        return;
+      }
+      const message = 'Conjunction screening data is unavailable: the local feed load timed out after 2 seconds.';
+
+      errorManagerInstance.log(`SatGlobe adapter: ${message}`);
+      controller.abort();
+      this.patchState_({ conjunctions: createUnavailableConjunctionState(message) });
+    }, SatGlobeEngineAdapter.CONJUNCTION_LOAD_TIMEOUT_MS_);
+
+    try {
+      const feed = await this.loadConjunctionFeed_(controller.signal);
+
+      if (controller.signal.aborted || this.disposed_) {
+        return;
+      }
+
+      this.conjunctionFeed_ = feed;
+      const conjunctions = resolveConjunctionFeed(
+        feed,
+        (catalogId) => this.objectsByCatalogId_.get(catalogId),
+        new Date(),
+      );
+
+      this.patchState_({ conjunctions });
+    } catch (error) {
+      if (controller.signal.aborted || this.disposed_) {
+        return;
+      }
+
+      const message = `Conjunction screening data is unavailable: ${error instanceof Error ? error.message : String(error)}`;
+
+      errorManagerInstance.log(`SatGlobe adapter: ${message}`);
+      this.patchState_({
+        conjunctions: createUnavailableConjunctionState(message),
+      });
+    } finally {
+      if (this.conjunctionLoadTimeoutHandle_ !== null) {
+        window.clearTimeout(this.conjunctionLoadTimeoutHandle_);
+        this.conjunctionLoadTimeoutHandle_ = null;
+      }
+      if (this.conjunctionAbortController_ === controller) {
+        this.conjunctionAbortController_ = null;
+      }
+    }
   }
 
   private toView_(obj: BaseObject): SpaceObjectView {

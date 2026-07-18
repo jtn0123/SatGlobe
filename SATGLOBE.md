@@ -25,14 +25,16 @@ npm run build:satglobe
 npm run start:satglobe:static
 ```
 
-The application loads the checked-in `public/tle/tle.json` snapshot. Browser runtime code is configured for offline mode and does not retrieve catalogs, fonts, imagery, analytics, or story assets from remote services. Browser developer tools may still show requests to the local server because the application itself is delivered as local static files.
+The application loads the checked-in `public/tle/tle.json` catalog and `public/tle/satglobe/conjunctions.json` screening snapshot. Browser runtime code is configured for offline mode and does not retrieve catalogs, screening data, fonts, imagery, analytics, or story assets from remote services. Browser developer tools may still show requests to the local server because the application itself is delivered as local static files.
 
 ## Workshop and story
 
-- Workshop provides local catalog search, quick lenses, combined object and orbital filters, data-driven color encodings, an object inspector, time control, and portable saved-view JSON.
+- Workshop provides local catalog search, quick lenses, combined object and orbital filters, data-driven color encodings, an object inspector, time control, and portable saved-view JSON. The Close approaches lens highlights resolved pairs from the bundled CelesTrak SOCRATES public screening snapshot and shows metrics, source timestamps, and explicit stale/past caveats. It is not live telemetry, an operator alert, or an operational decision source.
 - Present collapses the instrument panels into a calm title composition without changing engine state.
 - Story plays eight validated, sourced narratives over the same scene: Starlink buildout, launch to orbit, ISS assembly, one day in orbit, the GPS clockwork, the 2007 Fengyun-1C ASAT debris cloud, the 2009 Cosmos–Iridium collision, and the geostationary ring. The picker changes stories in place; the time-led story uses offsets from a stable per-story entry anchor. Historical beats display `Reconstructed`, and every story ends on the installed propagated catalog. Authoring and screenshot-verification guide: `docs/story-authoring.md`.
 - `/` focuses the catalog search, `?` shows the shortcuts legend, `F` toggles presentation, `Escape` returns to Workshop, and the arrow/space controls navigate a story when Story mode is open.
+
+Screening status uses the provider update time, never the local retrieval time. A snapshot with future resolved encounters is `current` for 24 hours, then `stale`; once every resolved encounter is past it becomes `archival`. The adapter re-evaluates those boundaries while the page remains open, and the Inspector labels a selected past event as past even when another pair is still upcoming.
 
 Satellite marks use semantic scale by default. They are enlarged for legibility. True-scale comparison is a disclosure state: most real spacecraft are too small to remain visible at planetary scale.
 
@@ -45,12 +47,13 @@ npm run catalog:verify
 npm run catalog:refresh
 ```
 
-The command starts with KeepTrack’s enriched catalog and merges CelesTrak OMM-compatible CSV for active objects and Starlink. It treats catalog identifiers as strings, rejects duplicate IDs and malformed elements, blocks epoch regressions, checks suspicious object-count drops, and derives a deterministic snapshot ID from source content.
+The command starts with KeepTrack’s enriched catalog, merges CelesTrak OMM-compatible CSV for active objects and Starlink, and curates up to 25 future SOCRATES close-approach records from CelesTrak's official `sort-minRange.csv`. It treats catalog identifiers as strings, rejects duplicate IDs and malformed elements, blocks epoch regressions, checks suspicious object-count drops, strictly validates screening provenance, and derives deterministic snapshot IDs from source content.
 
-CelesTrak updates group downloads every two hours and rejects repeat requests inside that window. SatGlobe caches successful manual downloads in the ignored `.cache/satglobe` directory for two hours, so `catalog:verify` followed by `catalog:refresh` validates and installs the exact same inputs without a second provider request. Delete that directory only when a genuinely fresh download is required. A successful install writes:
+CelesTrak OMM group downloads use a two-hour local cache. SOCRATES checks provider metadata on an eight-hour gate and preserves its original retrieval timestamp when provider bytes are unchanged. `catalog:verify` is deliberately write-free; `catalog:refresh` validates all candidate outputs before a manifest-last staged install. Delete `.cache/satglobe` only when a genuinely fresh provider request is required. A successful install writes:
 
 - `public/tle/tle.json` (stored via Git LFS — each refresh rewrites ~20 MB, and LFS keeps those revisions out of the base git history)
 - `public/tle/satglobe/manifest.json`
+- `public/tle/satglobe/conjunctions.json`
 - `public/tle/satglobe/catalog.sha256`
 - `public/tle/satglobe/rejected-rows.json`
 - `public/tle/satglobe/summary.json`
@@ -61,10 +64,15 @@ Use checked-in source files for a reproducibility check:
 npx tsx scripts/satglobe/catalog-refresh.ts \
   --verify-only \
   --active-input ./inputs/active.csv \
-  --starlink-input ./inputs/starlink.csv
+  --starlink-input ./inputs/starlink.csv \
+  --socrates-input ./inputs/sort-minRange.csv \
+  --socrates-updated-at 2026-07-18T01:13:28.000Z \
+  --socrates-retrieved-at 2026-07-18T11:25:30.000Z
 ```
 
-General-perturbations/SGP4 output is a prediction from public element sets. SatGlobe never calls it live telemetry. Accuracy degrades as elements age and after maneuvers that the installed elements do not represent.
+`--socrates-updated-at` must be the canonical ISO form of the provider's `FILE_MTIME` for that exact saved CSV, and `--socrates-retrieved-at` must preserve when those bytes were originally downloaded. SatGlobe never substitutes local processing or filesystem modification time for source provenance.
+
+General-perturbations/SGP4 output and SOCRATES screening are predictions from public element sets. SatGlobe never calls either live telemetry. Accuracy degrades as elements age and after maneuvers that the installed elements do not represent.
 
 ## Quality gates
 

@@ -6,5 +6,7 @@
   "rejected": 7591,
   "rejectionReasons": {
     "Epoch regression": 7591
-  }
+  },
+  "conjunctionCount": 25,
+  "conjunctionSnapshotId": "socrates-2026-07-18-7a4c6bc517f0"
 }

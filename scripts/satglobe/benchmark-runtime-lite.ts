@@ -18,6 +18,8 @@ import { chromium, type Browser, type Page } from '@playwright/test';
 const APP_URL = process.env.SATGLOBE_BENCHMARK_URL ?? 'http://localhost:5544';
 const VIEWPORT = { width: 2560, height: 1440 };
 const SAMPLES = Math.max(1, Number(process.env.SATGLOBE_BENCHMARK_SAMPLES) || 5);
+const MIN_IDLE_MEDIAN_FPS = 59.8;
+const MAX_CONJUNCTION_LENS_P95_MS = 100;
 
 interface Dist { samples: number[]; min: number; median: number; p95: number; max: number }
 
@@ -41,8 +43,17 @@ async function waitForReady(page: Page): Promise<void> {
   await page.waitForFunction(() => window.satGlobe?.getState()?.ready === true, undefined, { timeout: 30_000 });
 }
 
+/** Waits for the deferred screening artifact without folding it into catalog-ready timing. */
+async function waitForConjunctions(page: Page): Promise<void> {
+  await page.waitForFunction(() => {
+    const state = window.satGlobe?.getState()?.conjunctions;
+
+    return state?.status !== undefined && state.status !== 'loading';
+  }, undefined, { timeout: 10_000 });
+}
+
 /** Samples `count` rAF intervals on the page. */
-async function sampleFrames(page: Page, count: number): Promise<number[]> {
+function sampleFrames(page: Page, count: number): Promise<number[]> {
   return page.evaluate<number[]>(`new Promise((resolve) => {
     const intervals = []; let prev = performance.now();
     const tick = (now) => { intervals.push(now - prev); prev = now;
@@ -64,7 +75,9 @@ function summarizeFrames(intervals: number[]) {
 
 /** Cold startup: DCL, catalog-ready (adapter ready flag), visual-ready (ready + 15 settled frames). */
 async function measureStartup(browser: Browser) {
-  const dcl: number[] = [], catalogReady: number[] = [], visualReady: number[] = [];
+  const catalogReady: number[] = [];
+  const dcl: number[] = [];
+  const visualReady: number[] = [];
 
   for (let i = 0; i < SAMPLES; i += 1) {
     // eslint-disable-next-line no-await-in-loop -- cold-start samples are sequential by design
@@ -93,8 +106,10 @@ async function measureStartup(browser: Browser) {
 }
 
 /** Trusted click; long tasks + DOM-response latency observed until the readout changes + 500 ms settle. */
-async function measureInteraction(browser: Browser, trigger: string, response: string) {
-  const longTotals: number[] = [], longMaxes: number[] = [], domResponses: number[] = [];
+async function measureInteraction(browser: Browser, trigger: string, response: string, prepare?: (page: Page) => Promise<void>) {
+  const domResponses: number[] = [];
+  const longMaxes: number[] = [];
+  const longTotals: number[] = [];
 
   for (let i = 0; i < SAMPLES; i += 1) {
     /* eslint-disable no-await-in-loop -- sequential per-sample flow */
@@ -102,6 +117,7 @@ async function measureInteraction(browser: Browser, trigger: string, response: s
 
     await page.goto(APP_URL, { waitUntil: 'domcontentloaded' });
     await waitForReady(page);
+    await prepare?.(page);
     await sampleFrames(page, 15);
     await page.evaluate(`(() => {
       const response = document.querySelector(${JSON.stringify(response)});
@@ -139,6 +155,7 @@ try {
 
   await page.goto(APP_URL, { waitUntil: 'domcontentloaded' });
   await waitForReady(page);
+  await waitForConjunctions(page);
   await sampleFrames(page, 15);
   const idle = summarizeFrames(await sampleFrames(page, 120));
 
@@ -153,9 +170,34 @@ try {
   await page.context().close();
 
   const freshStarlinkLens = await measureInteraction(browser, '[data-testid="starlink-lens"]', '[data-testid="visible-count"]');
+  const freshConjunctionLens = await measureInteraction(
+    browser,
+    '[data-testid="conjunction-lens"]',
+    '[data-testid="conjunction-lens-status"]',
+    waitForConjunctions,
+  );
 
-  // eslint-disable-next-line no-console -- CLI report output
-  console.log(JSON.stringify({ startup, steadyStateFrames: { idle, filteredExploration, storySteadyState }, interactions: { freshStarlinkLens } }, null, 1));
+
+  const report = {
+    startup,
+    steadyStateFrames: { idle, filteredExploration, storySteadyState },
+    interactions: { freshStarlinkLens, freshConjunctionLens },
+  };
+
+  console.log(JSON.stringify(report, null, 1));
+  const failures: string[] = [];
+
+  if (idle.medianFps < MIN_IDLE_MEDIAN_FPS) {
+    failures.push(`idle median ${idle.medianFps} fps is below ${MIN_IDLE_MEDIAN_FPS} fps`);
+  }
+  if (freshConjunctionLens.domResponseMs.p95 > MAX_CONJUNCTION_LENS_P95_MS) {
+    failures.push(
+      `conjunction lens p95 ${freshConjunctionLens.domResponseMs.p95.toFixed(1)} ms exceeds ${MAX_CONJUNCTION_LENS_P95_MS} ms`,
+    );
+  }
+  if (failures.length > 0) {
+    throw new Error(`SatGlobe runtime budget failed: ${failures.join('; ')}`);
+  }
 } finally {
   await browser.close();
 }

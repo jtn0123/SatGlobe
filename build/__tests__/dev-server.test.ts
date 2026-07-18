@@ -129,6 +129,19 @@ describe('dev-server HTML responses', () => {
     expect(bootstrapLocation).not.toMatch(/^\s*add_header\b/mu);
   });
 
+  it('revalidates the conjunction feed without dropping inherited security headers', () => {
+    const nginxConfig = readFileSync(NGINX_CONFIG_PATH, 'utf8');
+    const conjunctionLocation = nginxConfig.match(/location = \/tle\/satglobe\/conjunctions\.json \{(?<body>[\s\S]*?)\n {2}\}/u)?.groups?.body;
+    const exactLocationIndex = nginxConfig.indexOf('location = /tle/satglobe/conjunctions.json');
+    const immutableJsonIndex = nginxConfig.indexOf('location ~* \\.(?:js|css|woff2?|ttf|png|jpg|webp|wasm|json)');
+
+    expect(conjunctionLocation).toContain('expires epoch;');
+    expect(conjunctionLocation).toContain('try_files $uri =404;');
+    expect(conjunctionLocation).not.toMatch(/^\s*add_header\b/mu);
+    expect(exactLocationIndex).toBeGreaterThan(-1);
+    expect(exactLocationIndex).toBeLessThan(immutableJsonIndex);
+  });
+
   it('checks script tags and attributes without case-sensitive gaps', () => {
     const scripts = findInlineExecutableScripts([
       '<SCRIPT>window.inline = true;</SCRIPT >',

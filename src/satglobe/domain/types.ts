@@ -120,6 +120,105 @@ export interface SpaceObjectView {
   searchText: string;
 }
 
+/** One side of a public SOCRATES close-approach prediction. Neither side is privileged. */
+export interface ConjunctionObjectRef {
+  catalogId: string;
+  name: string;
+  /** Age of the object's GP element set at time of closest approach, in days. */
+  dseDays: number;
+}
+
+export interface ConjunctionPair {
+  id: string;
+  object1: ConjunctionObjectRef;
+  object2: ConjunctionObjectRef;
+  timeOfClosestApproach: string;
+  missDistanceKm: number;
+  relativeSpeedKmS: number;
+  maximumProbability: number;
+  dilutionThreshold: number;
+}
+
+export interface ConjunctionSource {
+  provider: 'CelesTrak';
+  rawUrl: string;
+  /** Provider-reported source update time; this, not retrieval time, drives freshness. */
+  updatedAt: string;
+  retrievedAt: string;
+  checksum: string;
+}
+
+export interface ConjunctionFeedV1 {
+  schemaVersion: 1;
+  snapshotId: string;
+  generatedAt: string;
+  source: ConjunctionSource;
+  conjunctions: ConjunctionPair[];
+}
+
+/** A feed-side object reference proven to exist in the installed catalog. */
+export interface ResolvedConjunctionObject extends ConjunctionObjectRef {
+  object: SpaceObjectView;
+}
+
+export interface ResolvedConjunctionPair extends Omit<ConjunctionPair, 'object1' | 'object2'> {
+  object1: ResolvedConjunctionObject;
+  object2: ResolvedConjunctionObject;
+}
+
+interface ResolvedConjunctionStateBase {
+  conjunctions: readonly ResolvedConjunctionPair[];
+  /** Resolved pairs represented by the lens at the classification time. */
+  lensPairCount: number;
+  /** Unique installed catalog ids represented by the resolved conjunctions. */
+  catalogIds: readonly string[];
+  droppedPairCount: number;
+  source: ConjunctionSource;
+  error: null;
+}
+
+export interface ConjunctionCurrentState extends ResolvedConjunctionStateBase {
+  status: 'current';
+}
+
+export interface ConjunctionStaleState extends ResolvedConjunctionStateBase {
+  status: 'stale';
+}
+
+export interface ConjunctionArchivalState extends ResolvedConjunctionStateBase {
+  status: 'archival';
+}
+
+export type AvailableConjunctionState =
+  | ConjunctionCurrentState
+  | ConjunctionStaleState
+  | ConjunctionArchivalState;
+
+export interface ConjunctionLoadingState {
+  status: 'loading';
+  conjunctions: readonly ResolvedConjunctionPair[];
+  lensPairCount: 0;
+  catalogIds: readonly string[];
+  droppedPairCount: 0;
+  source: null;
+  error: null;
+}
+
+export interface ConjunctionUnavailableState {
+  status: 'unavailable';
+  conjunctions: readonly ResolvedConjunctionPair[];
+  lensPairCount: 0;
+  catalogIds: readonly string[];
+  droppedPairCount: number;
+  source: ConjunctionSource | null;
+  error: string;
+}
+
+export type ConjunctionState =
+  | ConjunctionLoadingState
+  | AvailableConjunctionState
+  | ConjunctionUnavailableState;
+
 export interface StorySource {
   id: string;
   title: string;
@@ -184,6 +283,8 @@ export interface EngineState {
   filters: FilterState;
   encoding: VisualEncoding;
   camera: CameraPose;
+  conjunctions: ConjunctionState;
+  highlightedObjectCount: number;
 }
 
 export const DEFAULT_FILTERS: FilterState = {

@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { DEFAULT_CAMERA, DEFAULT_FILTERS, type SavedViewV1, type SpaceObjectView } from '../../domain/types';
+import { DEFAULT_CAMERA, DEFAULT_FILTERS, type AvailableConjunctionState, type SavedViewV1, type SpaceObjectView } from '../../domain/types';
 import { storyLibrary } from '../../stories';
 import { SatGlobeApp } from '../satglobe-app';
 import { makeAdapter } from './test-adapter';
@@ -13,11 +13,28 @@ const mutatingMethodNames = [
   'setCamera',
   'setFilters',
   'setEncoding',
+  'setHighlight',
   'setScaleMode',
   'drawOrbit',
   'clearOrbits',
   'dispose',
 ] as const;
+
+const AVAILABLE_CONJUNCTIONS: AvailableConjunctionState = {
+  status: 'current',
+  conjunctions: [],
+  lensPairCount: 0,
+  catalogIds: ['25544', '43013'],
+  droppedPairCount: 0,
+  source: {
+    provider: 'CelesTrak',
+    rawUrl: 'https://celestrak.org/SOCRATES/sort-minRange.csv',
+    updatedAt: '2026-07-18T08:00:00.000Z',
+    retrievedAt: '2026-07-18T08:05:00.000Z',
+    checksum: 'a'.repeat(64),
+  },
+  error: null,
+};
 
 const selectedObject: SpaceObjectView = {
   catalogId: '25544',
@@ -90,10 +107,10 @@ async function importPreset(raw: string) {
   Object.defineProperty(file, 'text', { value: vi.fn().mockResolvedValue(raw) });
   fireEvent.change(screen.getByTestId('import-view'), { target: { files: [file] } });
   await vi.waitFor(() => {
-    screen.getByRole('status');
+    screen.getByTestId('app-notice');
   });
 
-  return screen.getByRole('status');
+  return screen.getByTestId('app-notice');
 }
 
 describe('SatGlobeApp', () => {
@@ -348,7 +365,7 @@ describe('SatGlobeApp', () => {
     expect(methods.setScaleMode).toHaveBeenCalledWith(savedView.scaleMode);
     expect(methods.clearSelection).toHaveBeenCalledTimes(1);
     expect(methods.selectObject).not.toHaveBeenCalled();
-    expect(screen.getByRole('status').textContent).toContain('Restored its absolute view in Workshop');
+    expect(screen.getByTestId('app-notice').textContent).toContain('Restored its absolute view in Workshop');
   });
 
   it.each([
@@ -372,6 +389,17 @@ describe('SatGlobeApp', () => {
     expect(methods.setFilters).toHaveBeenCalledTimes(1);
     expect(methods.setFilters).toHaveBeenCalledWith(expect.objectContaining({ constellation: 'starlink' }));
     expect(methods.setEncoding).toHaveBeenCalledWith('orbital-plane');
+  });
+
+  it('applies the conjunction lens with one highlight call and preserves filters and encoding', () => {
+    const { methods } = renderApp({ state: { conjunctions: AVAILABLE_CONJUNCTIONS } });
+
+    fireEvent.click(screen.getByTestId('conjunction-lens'));
+
+    expect(methods.setHighlight).toHaveBeenCalledOnce();
+    expect(methods.setHighlight).toHaveBeenCalledWith(AVAILABLE_CONJUNCTIONS.catalogIds);
+    expect(methods.setFilters).not.toHaveBeenCalled();
+    expect(methods.setEncoding).not.toHaveBeenCalled();
   });
 
   it('rejects malformed JSON without mutating application state', async () => {

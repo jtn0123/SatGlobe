@@ -6,15 +6,15 @@ The project is an early alpha. The first vertical slice is designed for a 1280×
 
 ## What works now
 
-- Explore a checked-in catalog of more than 30,000 orbital objects without runtime network access.
+- Explore a checked-in catalog of more than 30,000 orbital objects and a curated public close-approach snapshot without runtime network access.
 - Search the local catalog by identity, launch designator, country, or operator, then filter the scene by object class, operational state, regime, and inclination.
 - Color the same scene by object type, regime, launch cohort, plane density, data age, or Starlink state.
-- Inspect object identity, orbit, launch metadata, element epoch, and catalog provenance.
+- Inspect object identity, orbit, launch metadata, element epoch, catalog provenance, and resolved CelesTrak SOCRATES screening details.
 - Move between a dense Workshop, a quiet presentation view, and a sourced five-beat Starlink buildout story.
 - Export and import validated JSON views containing camera, time, filters, selection, scale, and presentation state.
 - Compare readable semantic satellite marks with a disclosed true-scale view.
 
-SatGlobe does not call predicted positions live telemetry. Browser positions are propagated from public general-perturbations element sets and become less reliable as those elements age or after unrepresented maneuvers.
+SatGlobe does not call predicted positions or public conjunction screening live telemetry. SOCRATES results are not operator alerts and must not be used alone for operational decisions. Predictions become less reliable as public element sets age or after unrepresented maneuvers.
 
 ## Run locally
 
@@ -88,14 +88,14 @@ Read [SATGLOBE.md](SATGLOBE.md) for operating details and [ADR 0001](docs/adr/00
 
 ## Catalog refresh
 
-Catalog updates are deliberate local operations, never browser background requests. The refresh command merges KeepTrack's enriched offline data with CelesTrak OMM-compatible sources, validates identifiers and epochs, rejects regressions, and leaves the installed snapshot untouched on failure.
+Catalog updates are deliberate local operations, never browser background requests. The refresh command merges KeepTrack's enriched offline data with CelesTrak OMM-compatible sources and curates the official CelesTrak SOCRATES close-approach feed. It validates identifiers, epochs, screening provenance, and output shape; rejects regressions; and leaves installed artifacts untouched on failure.
 
 ```bash
 npm run catalog:verify
 npm run catalog:refresh
 ```
 
-Successful downloads are cached for CelesTrak's two-hour update window so verification and installation use identical inputs. Generated provenance, checksum, rejection, and summary reports live under `public/tle/satglobe/`.
+OMM downloads use a two-hour cache; SOCRATES uses an eight-hour provider-metadata gate. Verification is write-free, while refresh performs a manifest-last staged install. The curated `conjunctions.json` plus provenance, checksum, rejection, and summary reports live under `public/tle/satglobe/`.
 
 ## Upstream and license
 

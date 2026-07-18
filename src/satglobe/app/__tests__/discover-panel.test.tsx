@@ -1,7 +1,8 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DiscoverPanel, getQuickLensState, type DiscoverPanelProps } from '../discover-panel';
-import { DEFAULT_FILTERS, type FilterState, type SpaceObjectView } from '../../domain/types';
+import { INITIAL_CONJUNCTION_STATE, createUnavailableConjunctionState } from '../../domain/conjunctions';
+import { DEFAULT_FILTERS, type AvailableConjunctionState, type FilterState, type SpaceObjectView } from '../../domain/types';
 
 const NON_DEFAULT_FILTERS: FilterState = {
   objectKinds: ['payload', 'debris'],
@@ -46,10 +47,13 @@ const makeProps = (overrides: Partial<DiscoverPanelProps> = {}): DiscoverPanelPr
   results: [],
   filters: structuredClone(DEFAULT_FILTERS),
   encoding: 'object-type',
+  conjunctions: INITIAL_CONJUNCTION_STATE,
+  highlightedObjectCount: 0,
   savedViews: [],
   onQueryChange: vi.fn(),
   onSelectResult: vi.fn(),
   onQuickLens: vi.fn(),
+  onConjunctionLens: vi.fn(),
   setFiltersImmediate: vi.fn(),
   setFiltersDebounced: vi.fn(),
   onEncodingChange: vi.fn(),
@@ -59,6 +63,22 @@ const makeProps = (overrides: Partial<DiscoverPanelProps> = {}): DiscoverPanelPr
   onImportFile: vi.fn(),
   ...overrides,
 });
+
+const AVAILABLE_CONJUNCTIONS: AvailableConjunctionState = {
+  status: 'current',
+  conjunctions: [],
+  lensPairCount: 0,
+  catalogIds: ['25544', '43013'],
+  droppedPairCount: 1,
+  source: {
+    provider: 'CelesTrak',
+    rawUrl: 'https://celestrak.org/SOCRATES/sort-minRange.csv',
+    updatedAt: '2026-07-18T08:00:00.000Z',
+    retrievedAt: '2026-07-18T08:05:00.000Z',
+    checksum: 'a'.repeat(64),
+  },
+  error: null,
+};
 
 describe('getQuickLensState', () => {
   it('starlink lens narrows to the constellation and plane encoding', () => {
@@ -131,6 +151,45 @@ describe('DiscoverPanel', () => {
     fireEvent.click(screen.getByTestId('starlink-lens'));
 
     expect(props.onQuickLens).toHaveBeenCalledWith('starlink');
+  });
+
+  it.each([
+    ['loading', INITIAL_CONJUNCTION_STATE, true, 'Loading screening'],
+    ['unavailable', createUnavailableConjunctionState('missing'), true, 'Screening unavailable'],
+    ['current', AVAILABLE_CONJUNCTIONS, false, '0 upcoming pairs'],
+    ['stale', { ...AVAILABLE_CONJUNCTIONS, status: 'stale' as const }, false, '0 stale upcoming pairs'],
+    ['archival', { ...AVAILABLE_CONJUNCTIONS, status: 'archival' as const }, false, '0 latest past pairs'],
+  ])('renders a truthful %s conjunction-lens state', (_status, conjunctions, disabled, label) => {
+    render(<DiscoverPanel {...makeProps({ conjunctions })} />);
+    const button = screen.getByTestId('conjunction-lens') as HTMLButtonElement;
+
+    expect(button.disabled).toBe(disabled);
+    expect(button.getAttribute('data-conjunction-status')).toBe(_status);
+    expect(screen.getByTestId('conjunction-lens-status').textContent).toContain(label);
+  });
+
+  it('applies the conjunction lens through its dedicated callback and reports highlight/drop counts', () => {
+    const props = makeProps({ conjunctions: AVAILABLE_CONJUNCTIONS, highlightedObjectCount: 2 });
+
+    render(<DiscoverPanel {...props} />);
+    fireEvent.click(screen.getByTestId('conjunction-lens'));
+
+    expect(props.onConjunctionLens).toHaveBeenCalledOnce();
+    expect(props.onQuickLens).not.toHaveBeenCalled();
+    expect(screen.getByTestId('conjunction-lens-status').textContent).toBe('2 highlighted');
+    expect(screen.getByTestId('conjunction-lens').getAttribute('data-highlighted-count')).toBe('2');
+    expect(screen.getByTestId('conjunction-lens').getAttribute('data-dropped-pair-count')).toBe('1');
+  });
+
+  it('announces asynchronous lens status and uses singular pair grammar', () => {
+    render(<DiscoverPanel {...makeProps({
+      conjunctions: { ...AVAILABLE_CONJUNCTIONS, lensPairCount: 1 },
+    })} />);
+    const status = screen.getByTestId('conjunction-lens-status');
+
+    expect(status.getAttribute('role')).toBe('status');
+    expect(status.getAttribute('aria-live')).toBe('polite');
+    expect(status.textContent).toBe('1 upcoming pair');
   });
 
   it('routes both inclination sliders through the debounced setter and keeps the bounds ordered', () => {

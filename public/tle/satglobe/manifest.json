@@ -31,5 +31,12 @@
       "checksum": "4b4b739d162ea1243dfabe1904b7f536e51b55e31954865b6bf4290d54eef158"
     }
   ],
+  "conjunctions": {
+    "snapshotId": "socrates-2026-07-18-7a4c6bc517f0",
+    "eventCount": 25,
+    "updatedAt": "2026-07-18T01:13:28.000Z",
+    "retrievedAt": "2026-07-18T11:25:30.000Z",
+    "checksum": "7a4c6bc517f09e20a19a831faaa26bc532f013324f60a0c9d05bb5325e68f88d"
+  },
   "checksum": "c528d08b8fa73da748ef30e40bbf1251afc68cd37240af349cad2f1fdd019340"
 }
