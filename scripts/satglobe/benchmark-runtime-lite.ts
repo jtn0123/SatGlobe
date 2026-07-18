@@ -14,6 +14,13 @@
  *      SATGLOBE_BENCHMARK_SAMPLES (default 5).
  */
 import { chromium, type Browser, type Page } from '@playwright/test';
+import {
+  COUNT_UPDATE_MEASURE,
+  FILTER_APPLY_MEASURE,
+  LENS_APPLY_MEASURE,
+  RECOLOR_MEASURE,
+  SATGLOBE_INTERACTION_MEASURES,
+} from '../../src/satglobe/runtime/performance-measure';
 
 const APP_URL = process.env.SATGLOBE_BENCHMARK_URL ?? 'http://localhost:5544';
 const VIEWPORT = { width: 2560, height: 1440 };
@@ -22,6 +29,17 @@ const MIN_IDLE_MEDIAN_FPS = 59.8;
 const MAX_CONJUNCTION_LENS_P95_MS = 100;
 
 interface Dist { samples: number[]; min: number; median: number; p95: number; max: number }
+
+interface InteractionPhaseSample {
+  lensApplyMs: number;
+  filterApplyMs: number;
+  recolorMs: number;
+  countUpdateMs: number;
+  filterApplyCount: number;
+  recolorCount: number;
+  countUpdateCount: number;
+  recolorCauses: string[];
+}
 
 /** Summarizes samples into the distribution shape the baseline reports use. */
 function dist(samples: number[]): Dist {
@@ -110,6 +128,7 @@ async function measureInteraction(browser: Browser, trigger: string, response: s
   const domResponses: number[] = [];
   const longMaxes: number[] = [];
   const longTotals: number[] = [];
+  const phaseSamples: InteractionPhaseSample[] = [];
 
   for (let i = 0; i < SAMPLES; i += 1) {
     /* eslint-disable no-await-in-loop -- sequential per-sample flow */
@@ -119,6 +138,11 @@ async function measureInteraction(browser: Browser, trigger: string, response: s
     await waitForReady(page);
     await prepare?.(page);
     await sampleFrames(page, 15);
+    await page.evaluate((names) => {
+      for (const name of names) {
+        performance.clearMeasures(name);
+      }
+    }, SATGLOBE_INTERACTION_MEASURES);
     await page.evaluate(`(() => {
       const response = document.querySelector(${JSON.stringify(response)});
       const trace = { clickAt: null, responseAt: null, beforeText: response.textContent, longTasks: [] };
@@ -134,15 +158,86 @@ async function measureInteraction(browser: Browser, trigger: string, response: s
     await page.waitForFunction(() => (window as unknown as { __benchTrace?: { responseAt: number | null } }).__benchTrace?.responseAt !== null, undefined, { timeout: 10_000 });
     await page.waitForTimeout(500);
     const t = await page.evaluate(() => (window as unknown as { __benchTrace: { clickAt: number; responseAt: number; longTasks: number[] } }).__benchTrace);
+    const phaseSample = await page.evaluate((names) => {
+      const [lensName, filterName, recolorName, countName] = names;
+      const entries = performance.getEntriesByType('measure') as PerformanceMeasure[];
+      let lens: PerformanceMeasure | null = null;
+
+      for (const entry of entries) {
+        if (entry.name === lensName) {
+          lens = entry;
+        }
+      }
+      if (!lens) {
+        return null;
+      }
+      const lensEnd = lens.startTime + lens.duration;
+      let filterApplyMs = 0;
+      let recolorMs = 0;
+      let countUpdateMs = 0;
+      let filterApplyCount = 0;
+      let recolorCount = 0;
+      let countUpdateCount = 0;
+      const recolorCauses: string[] = [];
+
+      for (const entry of entries) {
+        const insideLens = entry.startTime >= lens.startTime && entry.startTime + entry.duration <= lensEnd;
+
+        if (!insideLens) {
+          continue;
+        }
+        if (entry.name === filterName) {
+          filterApplyMs += entry.duration;
+          filterApplyCount++;
+        } else if (entry.name === recolorName) {
+          recolorMs += entry.duration;
+          recolorCount++;
+          recolorCauses.push(String((entry.detail as { cause?: unknown } | null)?.cause ?? 'unknown'));
+        } else if (entry.name === countName) {
+          countUpdateMs += entry.duration;
+          countUpdateCount++;
+        }
+      }
+
+      return {
+        lensApplyMs: lens.duration,
+        filterApplyMs,
+        recolorMs,
+        countUpdateMs,
+        filterApplyCount,
+        recolorCount,
+        countUpdateCount,
+        recolorCauses,
+      };
+    }, [LENS_APPLY_MEASURE, FILTER_APPLY_MEASURE, RECOLOR_MEASURE, COUNT_UPDATE_MEASURE] as const);
+
+    if (!phaseSample) {
+      throw new Error(`No ${LENS_APPLY_MEASURE} entry was recorded for ${trigger}`);
+    }
 
     longTotals.push(t.longTasks.reduce((a, b) => a + b, 0));
     longMaxes.push(t.longTasks.length ? Math.max(...t.longTasks) : 0);
     domResponses.push(t.responseAt - t.clickAt);
+    phaseSamples.push(phaseSample);
     await page.context().close();
     /* eslint-enable no-await-in-loop */
   }
 
-  return { longTaskTotalMs: dist(longTotals), longTaskMaxMs: dist(longMaxes), domResponseMs: dist(domResponses) };
+  return {
+    longTaskTotalMs: dist(longTotals),
+    longTaskMaxMs: dist(longMaxes),
+    domResponseMs: dist(domResponses),
+    phaseMs: {
+      lensApply: dist(phaseSamples.map(({ lensApplyMs }) => lensApplyMs)),
+      filterApply: dist(phaseSamples.map(({ filterApplyMs }) => filterApplyMs)),
+      recolor: dist(phaseSamples.map(({ recolorMs }) => recolorMs)),
+      countUpdate: dist(phaseSamples.map(({ countUpdateMs }) => countUpdateMs)),
+    },
+    recolorPasses: dist(phaseSamples.map(({ recolorCount }) => recolorCount)),
+    filterApplyPasses: dist(phaseSamples.map(({ filterApplyCount }) => filterApplyCount)),
+    countUpdatePasses: dist(phaseSamples.map(({ countUpdateCount }) => countUpdateCount)),
+    recolorCauses: phaseSamples.map(({ recolorCauses }) => recolorCauses),
+  };
 }
 
 const browser = await chromium.launch({ headless: false });
@@ -194,6 +289,18 @@ try {
     failures.push(
       `conjunction lens p95 ${freshConjunctionLens.domResponseMs.p95.toFixed(1)} ms exceeds ${MAX_CONJUNCTION_LENS_P95_MS} ms`,
     );
+  }
+  if (freshStarlinkLens.recolorPasses.samples.some((count) => count !== 1)) {
+    failures.push(`Starlink lens expected one recolor per sample, got ${freshStarlinkLens.recolorPasses.samples.join(', ')}`);
+  }
+  if (freshStarlinkLens.filterApplyPasses.samples.some((count) => count !== 1)) {
+    failures.push(`Starlink lens expected one filter apply per sample, got ${freshStarlinkLens.filterApplyPasses.samples.join(', ')}`);
+  }
+  if (freshStarlinkLens.countUpdatePasses.samples.some((count) => count !== 1)) {
+    failures.push(`Starlink lens expected one count update per sample, got ${freshStarlinkLens.countUpdatePasses.samples.join(', ')}`);
+  }
+  if (freshStarlinkLens.recolorCauses.some((causes) => causes.length !== 1 || causes[0] !== 'combined')) {
+    failures.push(`Starlink lens recorded unexpected recolor causes: ${JSON.stringify(freshStarlinkLens.recolorCauses)}`);
   }
   if (failures.length > 0) {
     throw new Error(`SatGlobe runtime budget failed: ${failures.join('; ')}`);

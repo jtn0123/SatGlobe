@@ -3,6 +3,13 @@ import path from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 import { conjunctionFeedV1Schema } from '../domain/conjunctions';
 import type { ConjunctionFeedV1, ConjunctionObjectRef } from '../domain/types';
+import {
+  COUNT_UPDATE_MEASURE,
+  FILTER_APPLY_MEASURE,
+  LENS_APPLY_MEASURE,
+  RECOLOR_MEASURE,
+  SATGLOBE_INTERACTION_MEASURES,
+} from '../runtime/performance-measure';
 
 interface InstalledCatalogRow {
   name?: string;
@@ -215,25 +222,66 @@ test.describe('SatGlobe workshop', () => {
 
   test('filters, inspects, presents, tells a story, and exports a view', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 720 });
+    await page.evaluate((names) => {
+      for (const name of names) {
+        performance.clearMeasures(name);
+      }
+    }, SATGLOBE_INTERACTION_MEASURES);
     await page.getByTestId('starlink-lens').click();
     await expect(page.getByTestId('encoding-select')).toHaveValue('orbital-plane');
+    const visualMeasures = await page.evaluate((names) => {
+      const result: Record<string, unknown[]> = {};
+
+      for (const name of names) {
+        const details: unknown[] = [];
+
+        for (const entry of performance.getEntriesByName(name) as PerformanceMeasure[]) {
+          details.push(entry.detail);
+        }
+        result[name] = details;
+      }
+
+      return result;
+    }, [LENS_APPLY_MEASURE, FILTER_APPLY_MEASURE, RECOLOR_MEASURE, COUNT_UPDATE_MEASURE] as const);
+
+    expect(visualMeasures[LENS_APPLY_MEASURE]).toEqual([{ lens: 'starlink' }]);
+    expect(visualMeasures[FILTER_APPLY_MEASURE]).toEqual([{ cause: 'combined' }]);
+    expect(visualMeasures[RECOLOR_MEASURE]).toEqual([{ cause: 'combined' }]);
+    expect(visualMeasures[COUNT_UPDATE_MEASURE]).toEqual([{ cause: 'combined' }]);
 
     const search = page.getByTestId('catalog-search');
-    const readZoom = () => page.evaluate(() => window.satGlobe?.getState().camera.zoom ?? Number.NaN);
+    const readCamera = () => page.evaluate(() => {
+      const camera = window.keepTrack.api.getMainCamera();
+
+      return {
+        cameraType: camera.cameraType,
+        camZoomSnappedOnSat: camera.state.camZoomSnappedOnSat,
+        zoomLevel: camera.state.zoomLevel,
+        zoomTarget: camera.state.zoomTarget,
+      };
+    });
 
     await expect.poll(async () => {
-      const first = await readZoom();
+      const camera = await readCamera();
 
-      await page.waitForTimeout(100);
-
-      return Math.abs((await readZoom()) - first);
+      return Math.abs(camera.zoomLevel - camera.zoomTarget);
     }).toBeLessThan(0.00005);
-    const cameraBeforeSelection = await page.evaluate(() => window.satGlobe?.getState().camera);
+    // Rendered zoom continues converging by sub-pixel fractions even after the
+    // view looks settled. The actual no-auto-focus contract is that selection
+    // leaves the camera mode and authored zoom target unchanged.
+    const { cameraType, camZoomSnappedOnSat, zoomTarget } = await readCamera();
+    const cameraBeforeSelection = { cameraType, camZoomSnappedOnSat, zoomTarget };
 
     await search.fill('STARLINK-1008');
     await page.getByTestId('search-results').getByRole('button').first().click();
     await expect(page.getByTestId('object-inspector')).toContainText('STARLINK');
-    await expect.poll(readZoom).toBeCloseTo(cameraBeforeSelection?.zoom ?? 0, 4);
+    const cameraAfterSelection = await readCamera();
+
+    expect({
+      cameraType: cameraAfterSelection.cameraType,
+      camZoomSnappedOnSat: cameraAfterSelection.camZoomSnappedOnSat,
+      zoomTarget: cameraAfterSelection.zoomTarget,
+    }).toEqual(cameraBeforeSelection);
     expect(await page.evaluate(() => window.settingsManager.isFocusOnSatelliteWhenSelected)).toBe(false);
     expect(await page.evaluate(() => window.settingsManager.noMeshManager)).toBe(true);
     await expect(page.getByTestId('scale-disclosure')).toContainText('SEMANTIC SCALE');

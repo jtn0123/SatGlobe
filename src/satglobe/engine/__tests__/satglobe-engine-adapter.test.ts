@@ -3,6 +3,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EventBusEvent } from '@app/engine/events/event-bus-events';
 import type { ConjunctionFeedV1 } from '../../domain/types';
 import {
+  COUNT_UPDATE_MEASURE,
+  FILTER_APPLY_MEASURE,
+  RECOLOR_MEASURE,
+} from '../../runtime/performance-measure';
+import {
   SatGlobeEngineAdapter,
   type SatGlobeEngineAdapterOptions,
 } from '../satglobe-engine-adapter';
@@ -589,6 +594,43 @@ describe('SatGlobeEngineAdapter', () => {
     adapter.setFilters(filters);
 
     expect(adapter.getState().visibleCount).toBe(2);
+  });
+
+  it('applies filters and encoding through one measured recolor and notification', () => {
+    adapter = bootAdapter([
+      fakeSat(),
+      fakeSat({ id: 2, sccNum: '30001', name: 'COSMOS 2251 DEB', type: SpaceObjectType.DEBRIS, status: PayloadStatus.NONOPERATIONAL }),
+    ]);
+    const filters = structuredClone(adapter.getState().filters);
+
+    filters.objectKinds = ['payload', 'debris'];
+    filters.status = 'all';
+    const filterSweep = vi.spyOn(
+      adapter as unknown as { rebuildFilterVisibility_: () => number },
+      'rebuildFilterVisibility_',
+    );
+    const listener = vi.fn();
+
+    adapter.subscribe(listener);
+    listener.mockClear();
+    services.colorSchemes.setColorScheme.mockClear();
+    const measure = vi.spyOn(performance, 'measure');
+
+    adapter.setVisualState({ filters, encoding: 'orbit-regime' });
+    const measurements = measure.mock.calls;
+
+    measure.mockRestore();
+
+    expect(adapter.getState()).toMatchObject({ filters, encoding: 'orbit-regime', visibleCount: 2 });
+    expect(filterSweep).toHaveBeenCalledOnce();
+    expect(services.colorSchemes.setColorScheme).toHaveBeenCalledOnce();
+    expect(listener).toHaveBeenCalledOnce();
+    for (const name of [FILTER_APPLY_MEASURE, RECOLOR_MEASURE, COUNT_UPDATE_MEASURE]) {
+      const entries = measurements.filter(([entryName]) => entryName === name);
+
+      expect(entries).toHaveLength(1);
+      expect(entries[0][1]).toEqual(expect.objectContaining({ detail: { cause: 'combined' } }));
+    }
   });
 
   it('canonicalizes known highlight ids and forces exactly one recolor per distinct pair', () => {

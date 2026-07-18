@@ -53,6 +53,7 @@ export function makeAdapter({ state: stateOverrides = {}, objects = [] }: TestAd
     setCamera: vi.fn((_pose: Parameters<SatGlobeEngineAdapter['setCamera']>[0]): void => undefined),
     setFilters: vi.fn((_filters: Parameters<SatGlobeEngineAdapter['setFilters']>[0]): void => undefined),
     setEncoding: vi.fn((_encoding: Parameters<SatGlobeEngineAdapter['setEncoding']>[0]): void => undefined),
+    setVisualState: vi.fn((_update: Parameters<SatGlobeEngineAdapter['setVisualState']>[0]): void => undefined),
     setHighlight: vi.fn((catalogIds: Parameters<SatGlobeEngineAdapter['setHighlight']>[0]): void => {
       const highlightedIds = new Set(catalogIds);
 
