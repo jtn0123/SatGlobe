@@ -3,7 +3,9 @@
  * library graphs continue to resolve the real vendored implementation.
  */
 export class Sgp4WasmPropagator {
+  static readonly unavailableReason = 'Sgp4WasmPropagator is not included in this build profile.';
+
   constructor() {
-    throw new Error('Sgp4WasmPropagator is not included in this build profile.');
+    throw new Error(Sgp4WasmPropagator.unavailableReason);
   }
 }

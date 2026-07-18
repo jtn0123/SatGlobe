@@ -29,7 +29,7 @@ const listJavaScriptAssets = (distDir: string, currentDir = distDir): string[] =
 
 /** Inspect every emitted JS entry, async chunk, and copied runtime artifact. */
 export const inspectPropagatorBundle = (distDir: string): PropagatorBundleInspection => {
-  const assets = listJavaScriptAssets(distDir).sort();
+  const assets = listJavaScriptAssets(distDir).sort((left, right) => left.localeCompare(right, 'en'));
   const offenders = assets.filter((name) => {
     const source = readFileSync(join(distDir, name), 'utf8');
 
