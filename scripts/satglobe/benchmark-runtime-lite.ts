@@ -1,0 +1,161 @@
+/**
+ * Lightweight runtime benchmark for the built SatGlobe bundle.
+ *
+ * Measures cold startup, steady-state frame pacing, and quick-lens interaction
+ * response against a running static server (`npm run start:satglobe:static`
+ * after `npm run build:satglobe`). Techniques mirror the July 2026 Apple M4
+ * baselines: trusted Playwright clicks, a longtask PerformanceObserver, a
+ * MutationObserver on the visible-count readout, and rAF frame sampling in a
+ * headed browser (rAF never fires in background tabs, so headless/background
+ * numbers are not comparable).
+ *
+ * Usage: npx tsx scripts/satglobe/benchmark-runtime-lite.ts
+ * Env: SATGLOBE_BENCHMARK_URL (default http://localhost:5544),
+ *      SATGLOBE_BENCHMARK_SAMPLES (default 5).
+ */
+import { chromium, type Browser, type Page } from '@playwright/test';
+
+const APP_URL = process.env.SATGLOBE_BENCHMARK_URL ?? 'http://localhost:5544';
+const VIEWPORT = { width: 2560, height: 1440 };
+const SAMPLES = Math.max(1, Number(process.env.SATGLOBE_BENCHMARK_SAMPLES) || 5);
+
+interface Dist { samples: number[]; min: number; median: number; p95: number; max: number }
+
+/** Summarizes samples into the distribution shape the baseline reports use. */
+function dist(samples: number[]): Dist {
+  const s = [...samples].sort((a, b) => a - b);
+  const at = (q: number) => s[Math.min(s.length - 1, Math.floor(q * s.length))];
+
+  return { samples, min: s[0], median: at(0.5), p95: at(0.95), max: s[s.length - 1] };
+}
+
+/** Opens an isolated page so cold-start samples don't share caches or JIT state. */
+async function newPage(browser: Browser): Promise<Page> {
+  const context = await browser.newContext({ viewport: VIEWPORT });
+
+  return context.newPage();
+}
+
+/** Waits until the engine adapter reports a hydrated catalog. */
+async function waitForReady(page: Page): Promise<void> {
+  await page.waitForFunction(() => window.satGlobe?.getState()?.ready === true, undefined, { timeout: 30_000 });
+}
+
+/** Samples `count` rAF intervals on the page. */
+async function sampleFrames(page: Page, count: number): Promise<number[]> {
+  return page.evaluate<number[]>(`new Promise((resolve) => {
+    const intervals = []; let prev = performance.now();
+    const tick = (now) => { intervals.push(now - prev); prev = now;
+      intervals.length >= ${count} ? resolve(intervals) : requestAnimationFrame(tick); };
+    requestAnimationFrame(tick);
+  })`);
+}
+
+/** Converts frame intervals into fps/frame-time summary numbers. */
+function summarizeFrames(intervals: number[]) {
+  const d = dist(intervals);
+
+  return {
+    medianFps: Math.round((1000 / d.median) * 100) / 100,
+    p95FrameMs: Math.round(d.p95 * 100) / 100,
+    slowestFrameMs: Math.round(d.max * 100) / 100,
+  };
+}
+
+/** Cold startup: DCL, catalog-ready (adapter ready flag), visual-ready (ready + 15 settled frames). */
+async function measureStartup(browser: Browser) {
+  const dcl: number[] = [], catalogReady: number[] = [], visualReady: number[] = [];
+
+  for (let i = 0; i < SAMPLES; i += 1) {
+    // eslint-disable-next-line no-await-in-loop -- cold-start samples are sequential by design
+    const page = await newPage(browser);
+
+    /* eslint-disable no-await-in-loop -- sequential per-sample flow */
+    await page.goto(APP_URL, { waitUntil: 'domcontentloaded' });
+    await waitForReady(page);
+    const t = await page.evaluate(() => {
+      const nav = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
+
+      return { dcl: nav.domContentLoadedEventEnd, ready: performance.now() };
+    });
+
+    await sampleFrames(page, 15);
+    const visual = await page.evaluate(() => performance.now());
+
+    dcl.push(t.dcl);
+    catalogReady.push(t.ready);
+    visualReady.push(visual);
+    await page.context().close();
+    /* eslint-enable no-await-in-loop */
+  }
+
+  return { domContentLoadedMs: dist(dcl), catalogReadyMs: dist(catalogReady), visualReadyMs: dist(visualReady) };
+}
+
+/** Trusted click; long tasks + DOM-response latency observed until the readout changes + 500 ms settle. */
+async function measureInteraction(browser: Browser, trigger: string, response: string) {
+  const longTotals: number[] = [], longMaxes: number[] = [], domResponses: number[] = [];
+
+  for (let i = 0; i < SAMPLES; i += 1) {
+    /* eslint-disable no-await-in-loop -- sequential per-sample flow */
+    const page = await newPage(browser);
+
+    await page.goto(APP_URL, { waitUntil: 'domcontentloaded' });
+    await waitForReady(page);
+    await sampleFrames(page, 15);
+    await page.evaluate(`(() => {
+      const response = document.querySelector(${JSON.stringify(response)});
+      const trace = { clickAt: null, responseAt: null, beforeText: response.textContent, longTasks: [] };
+      new MutationObserver(() => {
+        if (trace.responseAt === null && response.textContent !== trace.beforeText) trace.responseAt = performance.now();
+      }).observe(response, { childList: true, characterData: true, subtree: true });
+      document.addEventListener('click', () => { if (trace.clickAt === null) trace.clickAt = performance.now(); }, true);
+      new PerformanceObserver((list) => list.getEntries().forEach((e) => trace.longTasks.push(e.duration)))
+        .observe({ type: 'longtask', buffered: false });
+      window.__benchTrace = trace;
+    })()`);
+    await page.locator(trigger).click();
+    await page.waitForFunction(() => (window as unknown as { __benchTrace?: { responseAt: number | null } }).__benchTrace?.responseAt !== null, undefined, { timeout: 10_000 });
+    await page.waitForTimeout(500);
+    const t = await page.evaluate(() => (window as unknown as { __benchTrace: { clickAt: number; responseAt: number; longTasks: number[] } }).__benchTrace);
+
+    longTotals.push(t.longTasks.reduce((a, b) => a + b, 0));
+    longMaxes.push(t.longTasks.length ? Math.max(...t.longTasks) : 0);
+    domResponses.push(t.responseAt - t.clickAt);
+    await page.context().close();
+    /* eslint-enable no-await-in-loop */
+  }
+
+  return { longTaskTotalMs: dist(longTotals), longTaskMaxMs: dist(longMaxes), domResponseMs: dist(domResponses) };
+}
+
+const browser = await chromium.launch({ headless: false });
+
+try {
+  const startup = await measureStartup(browser);
+
+  // Frame scenarios share one warm page; each waits out the transition first.
+  const page = await newPage(browser);
+
+  await page.goto(APP_URL, { waitUntil: 'domcontentloaded' });
+  await waitForReady(page);
+  await sampleFrames(page, 15);
+  const idle = summarizeFrames(await sampleFrames(page, 120));
+
+  await page.getByTestId('starlink-lens').click();
+  await page.waitForTimeout(300);
+  const filteredExploration = summarizeFrames(await sampleFrames(page, 120));
+
+  await page.getByTestId('story-mode').click();
+  await page.waitForTimeout(1000);
+  const storySteadyState = summarizeFrames(await sampleFrames(page, 120));
+
+  await page.context().close();
+
+  const freshStarlinkLens = await measureInteraction(browser, '[data-testid="starlink-lens"]', '[data-testid="visible-count"]');
+
+  // eslint-disable-next-line no-console -- CLI report output
+  console.log(JSON.stringify({ startup, steadyStateFrames: { idle, filteredExploration, storySteadyState }, interactions: { freshStarlinkLens } }, null, 1));
+} finally {
+  await browser.close();
+}
