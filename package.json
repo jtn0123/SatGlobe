@@ -162,7 +162,7 @@
     "imports-loader": "^4.0.1",
     "jsdom": "^28.1.0",
     "jsdom-worker": "^0.3.0",
-    "lint-staged": "^15.5.2",
+    "lint-staged": "^17.1.0",
     "mini-css-extract-plugin": "^2.7.6",
     "monocart-coverage-reports": "^2.12.12",
     "papaparse": "^5.4.1",
