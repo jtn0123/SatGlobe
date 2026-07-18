@@ -27,11 +27,14 @@ interface StoryDeckProps {
   progress: number;
   showSources: boolean;
   story: StoryManifestV1;
+  /** The full library, for the picker; ids/titles only are read. */
+  stories: readonly StoryManifestV1[];
   onAuthoredView: () => void;
   onBeatChange: (index: number) => void;
   onOpenWorkshop: () => void;
   onPlayingChange: () => void;
   onSourcesChange: () => void;
+  onStoryChange: (storyId: string) => void;
 }
 
 /** Renders guided playback without replacing the underlying orbital scene. */
@@ -55,6 +58,12 @@ function StoryDeckBase(props: StoryDeckProps) {
     <section className="sg-story-deck" data-testid="story-deck">
       <div className="sg-story-topline">
         <span>{beat.eyebrow}</span>
+        <label className="sg-story-picker">
+          <span>STORY</span>
+          <select data-testid="story-picker" onChange={(event) => props.onStoryChange(event.target.value)} value={story.id}>
+            {props.stories.map(({ id, title }) => <option key={id} value={id}>{title}</option>)}
+          </select>
+        </label>
         <div><span className={beat.reconstruction === 'reconstructed' ? 'is-reconstructed' : ''}>{beat.reconstruction === 'reconstructed' ? 'RECONSTRUCTED' : 'INSTALLED CATALOG'}</span><button onClick={props.onSourcesChange} type="button">Sources · Facts</button></div>
       </div>
       <div className="sg-story-copy"><span>{beat.dateLabel}</span><h2>{beat.title}</h2><p>{beat.narration}</p></div>

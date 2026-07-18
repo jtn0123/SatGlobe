@@ -7,12 +7,13 @@ interface TopBarProps {
   objectCount: number;
   mode: AppMode;
   newestElementAge: number | null;
+  storyCount: number;
   onModeChange: (mode: AppMode) => void;
   onStoryOpen: () => void;
 }
 
 /** Renders global mode controls and local-catalog health. */
-function TopBarBase({ ready, objectCount, mode, newestElementAge, onModeChange, onStoryOpen }: TopBarProps) {
+function TopBarBase({ ready, objectCount, mode, newestElementAge, storyCount, onModeChange, onStoryOpen }: Readonly<TopBarProps>) {
   return (
     <header className="sg-topbar">
       <button className="sg-brand" onClick={() => onModeChange('workshop')} type="button">
@@ -27,7 +28,7 @@ function TopBarBase({ ready, objectCount, mode, newestElementAge, onModeChange, 
       <nav className="sg-mode-switcher" aria-label="Display mode">
         <button className={mode === 'workshop' ? 'is-active' : ''} onClick={() => onModeChange('workshop')} type="button">Workshop</button>
         <button className={mode === 'presentation' ? 'is-active' : ''} onClick={() => onModeChange('presentation')} type="button">Present</button>
-        <button className={mode === 'story' ? 'is-active' : ''} data-testid="story-mode" onClick={onStoryOpen} type="button">Story <span>01</span></button>
+        <button className={mode === 'story' ? 'is-active' : ''} data-testid="story-mode" onClick={onStoryOpen} type="button">Story <span>{String(storyCount).padStart(2, '0')}</span></button>
       </nav>
     </header>
   );
