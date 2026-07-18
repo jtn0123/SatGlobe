@@ -6,10 +6,29 @@ import { EventBus } from '@app/engine/events/event-bus';
 import { EventBusEvent } from '@app/engine/events/event-bus-events';
 import { LineManager } from '@app/engine/rendering/line-manager';
 import { errorManagerInstance } from '@app/engine/utils/errorManager';
+import { dotProduct3, type Vector3Tuple } from '@app/engine/math/linear-algebra';
 import { Satellite, RAD2DEG } from '@ootk/src/main';
 import { DetailedSensor } from '@app/app/sensors/DetailedSensor';
-import numeric from 'numeric';
 import type { ControlSite } from './ControlSite';
+
+const calculateEarthClearanceAngle = (firstPosition: Vector3Tuple, secondPosition: Vector3Tuple): number | null => {
+  const radialToEarth: Vector3Tuple = [-firstPosition[0], -firstPosition[1], -firstPosition[2]];
+  const firstToSecond: Vector3Tuple = [
+    secondPosition[0] - firstPosition[0],
+    secondPosition[1] - firstPosition[1],
+    secondPosition[2] - firstPosition[2],
+  ];
+  const denominator =
+    Math.sqrt(radialToEarth[0] ** 2 + radialToEarth[1] ** 2 + radialToEarth[2] ** 2) *
+    Math.sqrt(firstToSecond[0] ** 2 + firstToSecond[1] ** 2 + firstToSecond[2] ** 2);
+  const cosine = dotProduct3(radialToEarth, firstToSecond) / denominator;
+
+  if (!Number.isFinite(cosine)) {
+    return null;
+  }
+
+  return Math.acos(Math.max(-1, Math.min(1, cosine))) * RAD2DEG;
+};
 
 export enum SatConstellationString {
   Aehf = 'aehf',
@@ -233,21 +252,12 @@ export class SatLinkManager {
                 continue;
               }
               // NOTE: Reference old version for debug code
-              const theta =
-                Math.acos(
-                  <number>(
-                    numeric.dot(
-                      [-sat1.position.x, -sat1.position.y, -sat1.position.z],
-                      [-sat1.position.x + sat2.position.x, -sat1.position.y + sat2.position.y, -sat1.position.z + sat2.position.z],
-                    )
-                  ) /
-                  (Math.sqrt((-sat1.position.x) ** 2 + (-sat1.position.y) ** 2 + (-sat1.position.z) ** 2) *
-                    Math.sqrt(
-                      (-sat1.position.x + sat2.position.x) ** 2 + (-sat1.position.y + sat2.position.y) ** 2 + (-sat1.position.z + sat2.position.z) ** 2,
-                    )),
-                ) * RAD2DEG;
+              const theta = calculateEarthClearanceAngle(
+                [sat1.position.x, sat1.position.y, sat1.position.z],
+                [sat2.position.x, sat2.position.y, sat2.position.z],
+              );
 
-              if (theta < minTheta) {
+              if (theta === null || theta < minTheta) {
                 // Intentional
               } else {
                 lineManager.createObjToObj(sat1, sat2, [0, 0.6, 1, 1]);

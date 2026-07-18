@@ -37,7 +37,6 @@ declare global {
 
     keepTrackApi: KeepTrackApi;
     dataLayer?: unknown[]; // For Google Tag Manager / gtag
-    _numeric: unknown;
     satellite: SatMath;
   }
 }
