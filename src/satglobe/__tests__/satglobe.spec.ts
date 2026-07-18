@@ -124,7 +124,7 @@ function buildConjunctionFixture(subjects: BundledFixtureSubjects, now = new Dat
 }
 
 test.describe('SatGlobe production-static script policy', () => {
-  test.skip(!process.env.CI, 'Strict CSP acceptance requires the prebuilt production-static server.');
+  test.skip(!process.env.CI, 'Strict CSP acceptance requires the prebuilt production-static server.'); // NOSONAR: S1607 - local E2E serves a watch build, not audited static output.
 
   test('boots workers, lenses, and a story with the exact CSP and no violations', async ({ page }) => {
     const consoleErrors: string[] = [];
