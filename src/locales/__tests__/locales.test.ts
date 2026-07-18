@@ -1,11 +1,33 @@
-import { LocaleInformation, Localization, localizationReady } from '@app/locales/locales';
+import { Localization, SUPPORTED_LOCALES, localizationReady, type LocaleInformation, type SupportedLocale } from '@app/locales/locales';
 import i18next from 'i18next';
 
-describe('Locales', () => {
+const ANTARCTICA_SENTINELS = {
+  en: 'Antarctica',
+  de: 'Antarktis',
+  es: 'Antártida',
+  fr: 'Antarctique',
+  ja: '南極大陸',
+  ko: '남극',
+  ru: 'Антарктида',
+  uk: 'Антарктида',
+  zh: '南极洲',
+  pl: 'Antarktyka',
+  cs: 'Antarktida',
+  it: 'Antartide',
+} satisfies Record<SupportedLocale['code'], string>;
+
+describe.sequential('Locales', () => {
   const flatMapOfAllKeys: string[] = [];
 
   beforeAll(async () => {
     await localizationReady;
+  });
+
+  afterAll(async () => {
+    await i18next.changeLanguage('en');
+    SUPPORTED_LOCALES.filter(({ code }) => code !== 'en').forEach(({ code }) => {
+      i18next.removeResourceBundle(code, 'translation');
+    });
   });
 
   const setup = (Localization: LocaleInformation) => {
@@ -28,26 +50,6 @@ describe('Locales', () => {
     expect(Object.keys(i18next.store.data)).toEqual(['en']);
   });
 
-  it.each([
-    ['English', 'en'],
-    ['French', 'fr'],
-    ['Spanish', 'es'],
-    ['German', 'de'],
-  ])('should have valid %s translations', async (_name, code) => {
-    await i18next.changeLanguage(code);
-    const localization = Localization.getInstance();
-
-    setup(localization);
-    validateLocalizationKeys(localization, flatMapOfAllKeys);
-  });
-
-  it('pre-caches all translations without throwing', async () => {
-    await i18next.changeLanguage('en');
-    const localization = Localization.getInstance() as unknown as { preCacheTranslations(): void };
-
-    expect(() => localization.preCacheTranslations()).not.toThrow();
-  });
-
   it('loads a selected non-English locale on demand', async () => {
     await i18next.changeLanguage('en');
 
@@ -57,6 +59,27 @@ describe('Locales', () => {
 
     expect(i18next.hasResourceBundle('it', 'translation')).toBe(true);
     expect(i18next.t('countries.AQ')).toBe('Antartide');
+  });
+
+  it.each(SUPPORTED_LOCALES)('loads the exact Antarctica sentinel for $nativeName ($code)', async ({ code }) => {
+    await i18next.changeLanguage(code);
+    const localization = Localization.getInstance();
+
+    flatMapOfAllKeys.length = 0;
+    setup(localization);
+    validateLocalizationKeys(localization, flatMapOfAllKeys);
+
+    expect(i18next.language).toBe(code);
+    expect(i18next.resolvedLanguage).toBe(code);
+    expect(i18next.hasResourceBundle(code, 'translation')).toBe(true);
+    expect(i18next.t('countries.AQ')).toBe(ANTARCTICA_SENTINELS[code]);
+  });
+
+  it('pre-caches all translations without throwing', async () => {
+    await i18next.changeLanguage('en');
+    const localization = Localization.getInstance() as unknown as { preCacheTranslations(): void };
+
+    expect(() => localization.preCacheTranslations()).not.toThrow();
   });
 });
 

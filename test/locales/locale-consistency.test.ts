@@ -2,7 +2,7 @@ import { readFileSync } from 'fs';
 import * as path from 'path';
 
 const LOCALES_DIR = path.resolve(__dirname, '../../src/locales');
-const ALL_LANGUAGES = ['en', 'de', 'es', 'fr', 'ja', 'ko', 'ru', 'uk', 'zh'] as const;
+const ALL_LANGUAGES = ['en', 'de', 'es', 'fr', 'ja', 'ko', 'ru', 'uk', 'zh', 'pl', 'cs', 'it'] as const;
 const NON_ENGLISH = ALL_LANGUAGES.filter((l) => l !== 'en');
 const CJK_LANGUAGES = new Set(['ja', 'ko', 'zh']);
 
