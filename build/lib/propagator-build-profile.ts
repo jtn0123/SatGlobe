@@ -1,5 +1,5 @@
 import { resolve } from 'node:path';
-import type { PropagatorBackend } from './config-manager';
+import type { BuildConfig, PropagatorBackend } from './config-manager';
 
 /** Main-thread build boundary that owns the optional loader chunk. */
 export const PROPAGATOR_RUNTIME_REQUEST = './engine/utils/propagator-backend-runtime$';
@@ -25,6 +25,11 @@ export const SGP4_WASM_WORKER_ENTRY_NAMES = [
   'time2lonWorker',
   'azRangeHeatmapWorker',
 ] as const;
+
+/** Proprietary loader artifacts belong only in a WASM-enabled Pro distribution. */
+export const shouldCopyProWasmArtifacts = (
+  config: Pick<BuildConfig, 'isPro' | 'propagatorBackend'>,
+): boolean => config.isPro && config.propagatorBackend !== 'sgp4';
 
 /**
  * Exact request aliases for a pure-TypeScript SGP4 build.

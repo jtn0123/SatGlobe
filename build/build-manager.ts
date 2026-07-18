@@ -8,6 +8,7 @@ import { BuildError, ConsoleStyles, ErrorCodes, handleBuildError, logWithStyle }
 import { BuildConfig, ConfigManager } from './lib/config-manager';
 import { FileSystemManager } from './lib/filesystem-manager';
 import { assertPropagatorBundleProfile } from './lib/propagator-bundle-guard';
+import { shouldCopyProWasmArtifacts } from './lib/propagator-build-profile';
 import { reporter } from './lib/reporter';
 import { VersionManager } from './lib/version-manager';
 import { WebpackManager } from './webpack-manager';
@@ -65,14 +66,14 @@ class BuildManager {
         fileManager.copyDirectory('src/plugins-pro/examples', 'dist/examples', { isOptional: true, recursive: true });
 
         /*
-         * Bundle the USSF Astro Standards Sgp4Prop WebAssembly artifacts for Pro
-         * builds only. They live in the proprietary plugins-pro submodule
+         * Bundle the USSF Astro Standards Sgp4Prop WebAssembly artifacts only for
+         * WASM-enabled Pro builds. They live in the proprietary plugins-pro submodule
          * (src/plugins-pro/wasm/sgp4prop/) together with LICENSE.txt (the USSF
          * Open Source Agreement), which is copied alongside so a copy of the
          * Agreement travels with each distribution (Agreement 3.A.1). OSS builds
          * ship without them and fall back to ootk's pure-TypeScript SGP4.
          */
-        if (config.isPro) {
+        if (shouldCopyProWasmArtifacts(config)) {
           fileManager.copyDirectory('src/plugins-pro/wasm/sgp4prop', 'dist/wasm/sgp4prop', { isOptional: true, recursive: true });
         }
 
@@ -175,11 +176,15 @@ class BuildManager {
   private static hintExternalPluginFailure(stats: MultiStats) {
     const errorsText = JSON.stringify(stats.toJson({ errors: true, all: false }).children ?? []);
     const names = new Set<string>();
-    const re = /src[\\/]plugins-external[\\/]([^\\/"]+)/gu;
+    const re = /src[\\/]plugins-external[\\/](?<pluginName>[^\\/"]+)/gu;
     let m: RegExpExecArray | null = re.exec(errorsText);
 
     while (m !== null) {
-      names.add(m[1]);
+      const pluginName = m.groups?.pluginName;
+
+      if (pluginName) {
+        names.add(pluginName);
+      }
       m = re.exec(errorsText);
     }
 
@@ -238,7 +243,7 @@ class BuildManager {
         }
 
         try {
-          assertPropagatorBundleProfile(resolve('dist/js'), config.propagatorBackend);
+          assertPropagatorBundleProfile(resolve('dist'), config.propagatorBackend);
         } catch (bundleError) {
           handleBuildError(bundleError, false);
           logWithStyle('Build failed.', ConsoleStyles.ERROR);

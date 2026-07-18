@@ -1,5 +1,5 @@
 import { readFileSync, readdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, relative } from 'node:path';
 import { BuildError, ErrorCodes } from './build-error';
 import type { PropagatorBackend } from './config-manager';
 
@@ -15,13 +15,23 @@ export interface PropagatorBundleInspection {
   offenders: string[];
 }
 
-/** Inspect every emitted JS entry and async chunk, not only the main asset. */
-export const inspectPropagatorBundle = (jsDir: string): PropagatorBundleInspection => {
-  const assets = readdirSync(jsDir)
-    .filter((name) => name.endsWith('.js'))
-    .sort();
+/** Lists emitted JavaScript recursively across main, worker, auth, and static asset roots. */
+const listJavaScriptAssets = (distDir: string, currentDir = distDir): string[] => readdirSync(currentDir, { withFileTypes: true })
+  .flatMap((entry) => {
+    const assetPath = join(currentDir, entry.name);
+
+    if (entry.isDirectory()) {
+      return listJavaScriptAssets(distDir, assetPath);
+    }
+
+    return entry.isFile() && entry.name.endsWith('.js') ? [relative(distDir, assetPath)] : [];
+  });
+
+/** Inspect every emitted JS entry, async chunk, and copied runtime artifact. */
+export const inspectPropagatorBundle = (distDir: string): PropagatorBundleInspection => {
+  const assets = listJavaScriptAssets(distDir).sort();
   const offenders = assets.filter((name) => {
-    const source = readFileSync(join(jsDir, name), 'utf8');
+    const source = readFileSync(join(distDir, name), 'utf8');
 
     return SGP4_WASM_GLUE_SIGNATURES.some((signature) => source.includes(signature));
   });
@@ -30,12 +40,18 @@ export const inspectPropagatorBundle = (jsDir: string): PropagatorBundleInspecti
 };
 
 /** Fail pure-SGP4 production builds if any main, worker, or lazy chunk retains the glue. */
-export const assertPropagatorBundleProfile = (jsDir: string, backend: PropagatorBackend): PropagatorBundleInspection => {
-  const inspection = inspectPropagatorBundle(jsDir);
+export const assertPropagatorBundleProfile = (distDir: string, backend: PropagatorBackend): PropagatorBundleInspection => {
+  const inspection = inspectPropagatorBundle(distDir);
 
   if (backend === 'sgp4' && inspection.offenders.length > 0) {
     throw new BuildError(
       `Pure-SGP4 build retained the optional Emscripten loader in: ${inspection.offenders.join(', ')}`,
+      ErrorCodes.BUNDLE_POLICY,
+    );
+  }
+  if (backend !== 'sgp4' && inspection.offenders.length === 0) {
+    throw new BuildError(
+      `WASM-enabled ${backend} build did not retain the optional Emscripten loader`,
       ErrorCodes.BUNDLE_POLICY,
     );
   }
