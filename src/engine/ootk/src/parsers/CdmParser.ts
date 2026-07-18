@@ -220,8 +220,16 @@ export class CdmParser {
       let key = line.substring(0, eqIndex).trim();
       let value = line.substring(eqIndex + 1).trim();
 
-      // Remove units in brackets [km], [km/s], etc.
-      value = value.replace(/\s*\[.*?\]\s*$/u, '').trim();
+      // Remove units in brackets [km], [km/s], etc. Linear-time scan instead
+      // of a regex: the anchored lazy pattern backtracks polynomially on
+      // adversarial input (CodeQL js/polynomial-redos).
+      if (value.endsWith(']')) {
+        const bracketStart = value.indexOf('[');
+
+        if (bracketStart !== -1) {
+          value = value.substring(0, bracketStart).trim();
+        }
+      }
 
       // Track which object we're parsing
       if (key === 'OBJECT') {
