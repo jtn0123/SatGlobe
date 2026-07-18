@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { SatGlobeEngineAdapter } from '../engine/satglobe-engine-adapter';
-import { importSavedView } from '../domain/saved-view';
+import { importSavedView, loadPersistedViews, persistViews } from '../domain/saved-view';
 import {
   DEFAULT_FILTERS,
   type AppMode,
@@ -36,13 +36,16 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
   const [query, setQuery] = useState('');
   const { filters, setFilters, setFiltersState } = useWorkshopFilters(adapter);
   const [results, setResults] = useState<SpaceObjectView[]>([]);
-  const [savedViews, setSavedViews] = useState<SavedViewV1[]>([]);
+  const [savedViews, setSavedViews] = useState<SavedViewV1[]>(() => loadPersistedViews());
   const [notice, setNotice] = useState('');
   const [webglMissing, setWebglMissing] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const story = starlinkBuildoutStory;
 
   useEffect(() => adapter.subscribe(setEngine), [adapter]);
+
+  // Saved views survive reloads; persistence failures degrade to session-only.
+  useEffect(() => persistViews(savedViews), [savedViews]);
 
   // WebGL2 failure otherwise presents as an eternal loading state (C1).
   useEffect(() => {
@@ -148,7 +151,7 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
     const view = createView();
 
     setSavedViews((views) => [view, ...views].slice(0, 12));
-    setNotice(`Saved “${view.name}” locally for this session.`);
+    setNotice(`Saved “${view.name}” on this device.`);
   }, [createView]);
 
   const applyView = useCallback((view: SavedViewV1) => {
