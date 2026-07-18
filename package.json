@@ -74,7 +74,7 @@
     "catalog:refresh": "npx tsx ./scripts/satglobe/catalog-refresh.ts",
     "catalog:verify": "npx tsx ./scripts/satglobe/catalog-refresh.ts --verify-only",
     "check:story-walker": "eslint ./scripts/satglobe/verify-stories.ts --max-warnings 0 && tsc --noEmit -p tsconfig.story-walker.json",
-    "test:satglobe": "vitest run src/satglobe scripts/satglobe/catalog-refresh.test.ts src/app/data/catalogs/__tests__/org-data-service.test.ts",
+    "test:satglobe": "vitest run src/satglobe scripts/satglobe/catalog-refresh.test.ts scripts/satglobe/socrates-refresh.test.ts src/app/data/catalogs/__tests__/org-data-service.test.ts",
     "typecheck:satglobe-strict": "npx tsx ./scripts/satglobe/typecheck-strict.ts",
     "verify:satglobe": "npm run typecheck && npm run typecheck:satglobe-strict && npm run check:story-walker && npm run lint && npm run test:satglobe && npm run build:satglobe",
     "test:e2e:satglobe": "SATGLOBE_E2E=1 npx playwright test src/satglobe/__tests__/satglobe.spec.ts",

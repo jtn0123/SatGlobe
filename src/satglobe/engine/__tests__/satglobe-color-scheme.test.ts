@@ -5,8 +5,9 @@ import { DEFAULT_FILTERS, type VisualEncoding } from '../../domain/types';
 import { launchCohortColor } from '../launch-cohort-color';
 import { SatGlobeColorScheme } from '../satglobe-color-scheme';
 
-const satellite = (internationalDesignator: string) => ({
+const satellite = (internationalDesignator: string, overrides: Record<string, unknown> = {}) => ({
   id: 1,
+  sccNum: '44714',
   type: SpaceObjectType.PAYLOAD,
   status: PayloadStatus.OPERATIONAL,
   name: 'COHORT TEST',
@@ -19,6 +20,7 @@ const satellite = (internationalDesignator: string) => ({
   inclination: 53.2,
   period: 95,
   isSatellite: () => true,
+  ...overrides,
 }) as unknown as BaseObject;
 
 describe('SatGlobe launch cohort encoding', () => {
@@ -42,5 +44,44 @@ describe('SatGlobe launch cohort encoding', () => {
 
     expect(missingEncoding.calculateParams()).toBeNull();
     expect(missingEncoding.update(object)).toEqual(objectType.update(object));
+  });
+
+  it('emphasizes known conjunction subjects, dims matching context, and hides nonmatching objects', () => {
+    const highlighted = satellite('2020-001A', {
+      sccNum: '30001',
+      type: SpaceObjectType.DEBRIS,
+      status: PayloadStatus.NONOPERATIONAL,
+    });
+    const context = satellite('2019-074B');
+    const filteredOut = satellite('2020-001B', {
+      sccNum: '30002',
+      type: SpaceObjectType.DEBRIS,
+      status: PayloadStatus.NONOPERATIONAL,
+    });
+    const scheme = new SatGlobeColorScheme(
+      structuredClone(DEFAULT_FILTERS),
+      'object-type',
+      new Set(['30001']),
+    );
+
+    // Highlighted subjects bypass the default active-payload filter.
+    expect(scheme.update(highlighted)).toEqual({ color: [1, 0.78, 0.3, 1], pickable: Pickable.Yes });
+    // Matching objects remain as quiet, pickable orbital context.
+    expect(scheme.update(context)).toMatchObject({ color: [0.43, 0.78, 0.74, 0.16], pickable: Pickable.Yes });
+    // The lens never reveals unrelated objects that fail the active filters.
+    expect(scheme.update(filteredOut)).toEqual({ color: [0, 0, 0, 0], pickable: Pickable.No });
+  });
+
+  it('returns to the ordinary palette when highlight state is cleared', () => {
+    const scheme = new SatGlobeColorScheme(
+      structuredClone(DEFAULT_FILTERS),
+      'object-type',
+      new Set(['44714']),
+    );
+    const object = satellite('2019-074B');
+
+    expect(scheme.update(object).color).toEqual([1, 0.78, 0.3, 1]);
+    scheme.setState(structuredClone(DEFAULT_FILTERS), 'object-type');
+    expect(scheme.update(object).color).toEqual([0.43, 0.78, 0.74, 0.68]);
   });
 });

@@ -78,6 +78,27 @@ function recoverRetainedStoryAnchor(adapter: SatGlobeEngineAdapter, beats: reado
   return storySimulationAnchor(adapter.getState().simulationTime, retainedBeat?.simulationTimeOffsetHours ?? 0);
 }
 
+/** Keeps ordinary filter lenses and the static conjunction highlight on separate mutation paths. */
+function useQuickLensHandlers(
+  adapter: SatGlobeEngineAdapter,
+  setFiltersImmediate: (filters: FilterState) => void,
+  conjunctionCatalogIds: readonly string[],
+  conjunctionHighlightActive: boolean,
+) {
+  const quickLens = useCallback((lens: QuickLens) => {
+    const { filters: next, encoding } = getQuickLensState(lens);
+
+    setFiltersImmediate(next);
+    adapter.setEncoding(encoding);
+  }, [adapter, setFiltersImmediate]);
+  const conjunctionLens = useCallback(
+    () => adapter.setHighlight(conjunctionHighlightActive ? [] : conjunctionCatalogIds),
+    [adapter, conjunctionCatalogIds, conjunctionHighlightActive],
+  );
+
+  return { conjunctionLens, quickLens };
+}
+
 /** Coordinates SatGlobe's workshop, presentation, and story states. */
 export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
   const [engine, setEngine] = useState<EngineState>(adapter.getState());
@@ -93,6 +114,7 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
   const [storyId, setStoryId] = useState(storyLibrary[0].id);
   const story = storyLibrary.find(({ id }) => id === storyId) ?? storyLibrary[0];
   const storyTimeAnchorRef = useRef(engine.simulationTime);
+  const { conjunctionLens, quickLens } = useQuickLensHandlers(adapter, setFiltersImmediate, engine.conjunctions.catalogIds, engine.conjunctionHighlightActive);
 
   useEffect(() => adapter.subscribe(setEngine), [adapter]);
 
@@ -292,18 +314,6 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
     }
   }, [adapter, applyView]);
 
-  const quickLens = useCallback((lens: QuickLens) => {
-    const { filters: next, encoding } = getQuickLensState(lens);
-
-    /*
-     * Discrete clicks apply immediately, like story beats and saved views do.
-     * The 120 ms trailing debounce in useWorkshopFilters exists to coalesce
-     * slider drags; routing lens buttons through it just delays the response.
-     */
-    setFiltersImmediate(next);
-    adapter.setEncoding(encoding);
-  }, [adapter, setFiltersImmediate]);
-
   const newestElementAge = ageInDays(engine.newestElementEpoch);
   const openStory = useCallback(() => {
     if (mode !== 'story') {
@@ -331,11 +341,15 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
       <TopBar mode={mode} newestElementAge={newestElementAge} objectCount={engine.objectCount} onModeChange={switchMode} onStoryOpen={openStory} ready={engine.ready} storyCount={storyLibrary.length} />
 
       <DiscoverPanel
+        conjunctions={engine.conjunctions}
+        conjunctionHighlightActive={engine.conjunctionHighlightActive}
         createView={createView}
         encoding={engine.encoding}
         filters={filters}
+        highlightedObjectCount={engine.highlightedObjectCount}
         inert={mode !== 'workshop'}
         onApplyView={applyView}
+        onConjunctionLens={conjunctionLens}
         onEncodingChange={setEncoding}
         onImportFile={importFile}
         onQueryChange={setQuery}
@@ -350,7 +364,7 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
         visibleCount={engine.visibleCount}
       />
 
-      <Inspector inert={mode !== 'workshop'} object={engine.selectedObject} onClose={clearSelection} />
+      <Inspector conjunctions={engine.conjunctions} inert={mode !== 'workshop'} object={engine.selectedObject} onClose={clearSelection} />
 
       <ScaleDisclosure mode={scaleMode} onToggle={toggleScale} />
 
@@ -362,7 +376,14 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
 
       {showShortcuts && <KeyboardLegend onClose={() => setShowShortcuts(false)} />}
       </div>
-      {notice && <button aria-live="polite" className="sg-notice" onClick={() => setNotice('')} role="status" type="button">{notice}<Icon name="close" size={14} /></button>}
+      {notice && (
+        <div className="sg-notice" data-testid="app-notice">
+          <span aria-live="polite" role="status">{notice}</span>
+          <button aria-label="Dismiss notice" className="sg-icon-button" onClick={() => setNotice('')} type="button">
+            <Icon name="close" size={14} />
+          </button>
+        </div>
+      )}
       {(webglMissing || engine.error) && (
         <div className="sg-engine-loading sg-engine-error" data-testid="engine-error" role="alert">
           <Icon name="info" />

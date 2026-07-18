@@ -24,6 +24,9 @@ const objectColors: Record<ObjectKind, rgbaArray> = {
   other: [0.72, 0.72, 0.69, 0.5],
 };
 
+const conjunctionHighlightColor: rgbaArray = [1, 0.78, 0.3, 1];
+const conjunctionContextAlpha = 0.16;
+
 export class SatGlobeColorScheme extends ColorScheme {
   readonly id = 'SatGlobeColorScheme';
   readonly label = 'SatGlobe';
@@ -37,6 +40,7 @@ export class SatGlobeColorScheme extends ColorScheme {
   override readonly isStaticColorScheme = true;
   private encoding_: VisualEncoding;
   private matcher_: FilterMatcher;
+  private highlightedCatalogIds_: ReadonlySet<string>;
   /*
    * Recoloring evaluates every dot on every pass; caching each satellite's
    * normalized filterable view avoids re-allocating and re-lowercasing ~30k
@@ -45,7 +49,7 @@ export class SatGlobeColorScheme extends ColorScheme {
   private readonly filterableViews_ = new WeakMap<Satellite, FilterableSpaceObject>();
   private readonly schemes_: Record<'orbital-plane' | 'data-age', ColorScheme>;
 
-  constructor(filters: FilterState, encoding: VisualEncoding) {
+  constructor(filters: FilterState, encoding: VisualEncoding, highlightedCatalogIds: ReadonlySet<string> = new Set()) {
     super({
       satglobeLeo: regimeColors.leo,
       satglobeMeo: regimeColors.meo,
@@ -55,15 +59,17 @@ export class SatGlobeColorScheme extends ColorScheme {
     });
     this.encoding_ = encoding;
     this.matcher_ = prepareFilterMatcher(filters);
+    this.highlightedCatalogIds_ = highlightedCatalogIds;
     this.schemes_ = {
       'orbital-plane': new OrbitalPlaneDensityColorScheme(),
       'data-age': new GpAgeColorScheme(),
     };
   }
 
-  setState(filters: FilterState, encoding: VisualEncoding): void {
+  setState(filters: FilterState, encoding: VisualEncoding, highlightedCatalogIds: ReadonlySet<string> = new Set()): void {
     this.encoding_ = encoding;
     this.matcher_ = prepareFilterMatcher(filters);
+    this.highlightedCatalogIds_ = highlightedCatalogIds;
   }
 
   calculateParams() {
@@ -81,11 +87,42 @@ export class SatGlobeColorScheme extends ColorScheme {
 
     const sat = obj as Satellite;
     const regime = classifyOrbit(Number(sat.perigee), Number(sat.apogee), Number(sat.period));
+    const hasHighlight = this.highlightedCatalogIds_.size > 0;
+    const isHighlighted = hasHighlight && this.highlightedCatalogIds_.has(String(sat.sccNum));
 
-    if (!this.matches_(sat, regime)) {
+    // A conjunction subject stays legible even when the workshop's current
+    // filter would normally exclude it. Everything outside that selected pair
+    // still obeys the filter so the lens cannot accidentally reveal the full
+    // catalog.
+    if (!isHighlighted && !this.matches_(sat, regime)) {
       return this.hidden_();
     }
 
+    if (isHighlighted) {
+      return { color: conjunctionHighlightColor, pickable: Pickable.Yes };
+    }
+
+    const encoded = this.encodedColor_(obj, sat, regime, params);
+
+    if (!hasHighlight || encoded.pickable === Pickable.No) {
+      return encoded;
+    }
+
+    // Matching objects provide restrained orbital context while the pair is
+    // highlighted. Clone the delegated color: several upstream schemes reuse
+    // their palette arrays, which must never be mutated here.
+    return {
+      color: [
+        encoded.color[0],
+        encoded.color[1],
+        encoded.color[2],
+        Math.min(encoded.color[3], conjunctionContextAlpha),
+      ],
+      pickable: encoded.pickable,
+    };
+  }
+
+  private encodedColor_(obj: BaseObject, sat: Satellite, regime: OrbitRegime, params?: ColorSchemeParams): ColorInformation {
     if (this.encoding_ === 'orbit-regime') {
       return { color: regimeColors[regime], pickable: Pickable.Yes };
     }

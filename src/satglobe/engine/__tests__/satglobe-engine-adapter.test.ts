@@ -1,7 +1,11 @@
 import { PayloadStatus, SpaceObjectType } from '@ootk/src/main';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EventBusEvent } from '@app/engine/events/event-bus-events';
-import { SatGlobeEngineAdapter } from '../satglobe-engine-adapter';
+import type { ConjunctionFeedV1 } from '../../domain/types';
+import {
+  SatGlobeEngineAdapter,
+  type SatGlobeEngineAdapterOptions,
+} from '../satglobe-engine-adapter';
 
 /*
  * The adapter is the fork's most upstream-exposed seam, so these tests mock the
@@ -126,19 +130,65 @@ const fakeSat = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 });
 
-const bootAdapter = (sats: unknown[]) => {
+const pendingConjunctionLoad = () => new Promise<ConjunctionFeedV1>(() => {
+  // Deliberately unresolved: ordinary adapter tests should not exercise the
+  // optional feed unless they install an explicit loader.
+});
+
+const bootAdapter = (sats: unknown[], options: SatGlobeEngineAdapterOptions = {}) => {
   services.catalog = { objectCache: sats, getSats: () => sats };
-  const adapter = new SatGlobeEngineAdapter();
+  const adapter = new SatGlobeEngineAdapter({
+    loadConjunctionFeed: pendingConjunctionLoad,
+    scheduleIdle: () => 99,
+    cancelIdle: () => undefined,
+    ...options,
+  });
 
   fakeBus.emit(EventBusEvent.onKeepTrackReady);
 
   return adapter;
 };
 
+const conjunctionFeed = (): ConjunctionFeedV1 => ({
+  schemaVersion: 1,
+  snapshotId: 'socrates-2022-01-01-aaaaaaaaaaaa',
+  generatedAt: '2021-12-31T18:00:00.000Z',
+  source: {
+    provider: 'CelesTrak',
+    rawUrl: 'https://celestrak.org/SOCRATES/sort-minRange.csv',
+    updatedAt: '2021-12-31T18:00:00.000Z',
+    retrievedAt: '2022-01-01T00:00:00.000Z',
+    checksum: 'a'.repeat(64),
+  },
+  conjunctions: [
+    {
+      id: 'a'.repeat(24),
+      object1: { catalogId: '44714', name: 'STARLINK-1008', dseDays: 1.2 },
+      object2: { catalogId: '99999', name: 'ONEWEB-0001', dseDays: 0.8 },
+      timeOfClosestApproach: '2022-01-02T00:00:00.000Z',
+      missDistanceKm: 0.4,
+      relativeSpeedKmS: 12.3,
+      maximumProbability: 0.002,
+      dilutionThreshold: 0.01,
+    },
+    {
+      id: 'b'.repeat(24),
+      object1: { catalogId: '44714', name: 'STARLINK-1008', dseDays: 1.2 },
+      object2: { catalogId: '12345', name: 'NOT INSTALLED', dseDays: 0.9 },
+      timeOfClosestApproach: '2022-01-03T00:00:00.000Z',
+      missDistanceKm: 0.6,
+      relativeSpeedKmS: 8.1,
+      maximumProbability: 0.001,
+      dilutionThreshold: 0.02,
+    },
+  ],
+});
+
 describe('SatGlobeEngineAdapter', () => {
   let adapter: SatGlobeEngineAdapter | null = null;
 
   beforeEach(() => {
+    vi.setSystemTime(new Date('2022-01-01T00:00:00.000Z'));
     busHandlers.clear();
     selectSat.mockClear();
     warn.mockClear();
@@ -210,6 +260,255 @@ describe('SatGlobeEngineAdapter', () => {
 
     expect(services.colorSchemes.registerScheme).toHaveBeenCalledTimes(1);
     expect(services.colorSchemes.setColorScheme).toHaveBeenCalled();
+  });
+
+  it('loads conjunctions after hydration on a two-second idle deadline and drops unresolved pairs', async () => {
+    let runIdle: (() => void) | null = null;
+    const scheduleIdle = vi.fn((callback: () => void, _timeoutMs: number) => {
+      runIdle = callback;
+
+      return 41;
+    });
+    const loadConjunctions = vi.fn(() => Promise.resolve(conjunctionFeed()));
+
+    services.catalog = {
+      objectCache: [fakeSat(), fakeSat({ id: 2, sccNum: '99999', name: 'ONEWEB-0001' })],
+      getSats: () => services.catalog.objectCache,
+    };
+    adapter = new SatGlobeEngineAdapter({
+      loadConjunctionFeed: loadConjunctions,
+      scheduleIdle,
+      cancelIdle: vi.fn(),
+    });
+
+    expect(scheduleIdle).not.toHaveBeenCalled();
+    expect(adapter.getState().conjunctions.status).toBe('loading');
+
+    fakeBus.emit(EventBusEvent.onKeepTrackReady);
+
+    expect(scheduleIdle).toHaveBeenCalledOnce();
+    expect(scheduleIdle).toHaveBeenCalledWith(expect.any(Function), 2_000);
+    expect(loadConjunctions).not.toHaveBeenCalled();
+
+    runIdle!();
+    await vi.waitFor(() => expect(adapter?.getState().conjunctions.status).toBe('current'));
+
+    expect(loadConjunctions).toHaveBeenCalledOnce();
+    expect(loadConjunctions).toHaveBeenCalledWith(expect.any(AbortSignal));
+    expect(adapter.getState().conjunctions).toMatchObject({
+      status: 'current',
+      lensPairCount: 1,
+      droppedPairCount: 1,
+      catalogIds: ['44714', '99999'],
+    });
+    expect(adapter.getState().conjunctions.conjunctions).toHaveLength(1);
+    vi.advanceTimersByTime(2_000);
+    expect(adapter.getState().conjunctions.status).toBe('current');
+
+    // Catalog reloads can rehydrate the engine, but never add another idle
+    // loader or a per-frame feed cost.
+    fakeBus.emit(EventBusEvent.catalogReloaded);
+    expect(scheduleIdle).toHaveBeenCalledOnce();
+  });
+
+  it('reclassifies and resynchronizes an active lens as conjunction boundaries pass', async () => {
+    let runIdle: (() => void) | null = null;
+    const feed = conjunctionFeed();
+
+    feed.conjunctions[1].object2 = { catalogId: '30001', name: 'CATALOG THREE', dseDays: 0.9 };
+    services.catalog = {
+      objectCache: [
+        fakeSat(),
+        fakeSat({ id: 2, sccNum: '99999', name: 'ONEWEB-0001' }),
+        fakeSat({ id: 3, sccNum: '30001', name: 'CATALOG THREE' }),
+      ],
+      getSats: () => services.catalog.objectCache,
+    };
+    adapter = new SatGlobeEngineAdapter({
+      loadConjunctionFeed: () => Promise.resolve(feed),
+      scheduleIdle: (callback) => {
+        runIdle = callback;
+
+        return 46;
+      },
+    });
+    fakeBus.emit(EventBusEvent.onKeepTrackReady);
+    runIdle!();
+    await vi.waitFor(() => expect(adapter?.getState().conjunctions.status).toBe('current'));
+    const filters = structuredClone(adapter.getState().filters);
+
+    filters.constellation = 'starlink';
+    adapter.setFilters(filters);
+    adapter.setHighlight(adapter.getState().conjunctions.catalogIds);
+    services.colorSchemes.setColorScheme.mockClear();
+
+    expect(adapter.getState().conjunctions).toMatchObject({ lensPairCount: 2 });
+    expect(adapter.getState().conjunctionHighlightActive).toBe(true);
+    expect(adapter.getState().highlightedObjectCount).toBe(3);
+    expect(adapter.getState().visibleCount).toBe(3);
+
+    vi.setSystemTime(new Date('2022-01-02T00:00:00.001Z'));
+    vi.advanceTimersByTime(600);
+
+    expect(adapter.getState().conjunctions).toMatchObject({
+      status: 'stale',
+      lensPairCount: 1,
+      catalogIds: ['44714', '30001'],
+    });
+    expect(adapter.getState().highlightedObjectCount).toBe(2);
+    expect(adapter.getState().visibleCount).toBe(2);
+    expect(services.colorSchemes.setColorScheme).toHaveBeenCalledOnce();
+
+    vi.setSystemTime(new Date('2022-01-03T00:00:00.001Z'));
+    vi.advanceTimersByTime(600);
+
+    expect(adapter.getState().conjunctions).toMatchObject({
+      status: 'archival',
+      lensPairCount: 2,
+      catalogIds: ['44714', '99999', '30001'],
+    });
+    expect(adapter.getState().highlightedObjectCount).toBe(3);
+    expect(adapter.getState().visibleCount).toBe(3);
+    expect(services.colorSchemes.setColorScheme).toHaveBeenCalledTimes(2);
+  });
+
+  it('re-resolves retained feed references and an active lens after a catalog reload', async () => {
+    let runIdle: (() => void) | null = null;
+    const scheduleIdle = vi.fn((callback: () => void) => {
+      runIdle = callback;
+
+      return 47;
+    });
+
+    services.catalog = {
+      objectCache: [fakeSat(), fakeSat({ id: 2, sccNum: '99999', name: 'ONEWEB-0001' })],
+      getSats: () => services.catalog.objectCache,
+    };
+    adapter = new SatGlobeEngineAdapter({
+      loadConjunctionFeed: () => Promise.resolve(conjunctionFeed()),
+      scheduleIdle,
+    });
+    fakeBus.emit(EventBusEvent.onKeepTrackReady);
+    runIdle!();
+    await vi.waitFor(() => expect(adapter?.getState().conjunctions.status).toBe('current'));
+    adapter.setHighlight(adapter.getState().conjunctions.catalogIds);
+    services.colorSchemes.setColorScheme.mockClear();
+
+    services.catalog.objectCache = [
+      fakeSat({ name: 'STARLINK-1008 RELOADED' }),
+      fakeSat({ id: 3, sccNum: '12345', name: 'NEWLY INSTALLED' }),
+    ];
+    fakeBus.emit(EventBusEvent.catalogReloaded);
+
+    expect(adapter.getState().conjunctions).toMatchObject({
+      droppedPairCount: 1,
+      lensPairCount: 1,
+      catalogIds: ['44714', '12345'],
+    });
+    expect(adapter.getState().conjunctions.conjunctions[0]).toMatchObject({
+      id: 'b'.repeat(24),
+      object2: { object: { name: 'NEWLY INSTALLED' } },
+    });
+    expect(adapter.getState().highlightedObjectCount).toBe(2);
+    expect(services.colorSchemes.setColorScheme).toHaveBeenCalledOnce();
+    expect(scheduleIdle).toHaveBeenCalledOnce();
+  });
+
+  it('keeps a conjunction load failure nonfatal', async () => {
+    let runIdle: (() => void) | null = null;
+    const loadConjunctions = vi.fn(() => Promise.reject(new Error('offline fixture')));
+
+    adapter = bootAdapter([fakeSat()], {
+      loadConjunctionFeed: loadConjunctions,
+      scheduleIdle: (callback) => {
+        runIdle = callback;
+
+        return 42;
+      },
+      cancelIdle: vi.fn(),
+    });
+    runIdle!();
+
+    await vi.waitFor(() => expect(adapter?.getState().conjunctions.status).toBe('unavailable'));
+
+    expect(adapter.getState().ready).toBe(true);
+    expect(adapter.getState().error).toBeNull();
+    expect(adapter.getState().conjunctions.error).toContain('offline fixture');
+    expect(log).toHaveBeenCalledWith(expect.stringContaining('offline fixture'));
+  });
+
+  it('aborts an in-flight conjunction load after two seconds and marks only that slice unavailable', () => {
+    let runIdle: (() => void) | null = null;
+    const observedLoad: { signal?: AbortSignal } = {};
+
+    adapter = bootAdapter([fakeSat()], {
+      loadConjunctionFeed: (signal) => {
+        observedLoad.signal = signal;
+
+        return pendingConjunctionLoad();
+      },
+      scheduleIdle: (callback) => {
+        runIdle = callback;
+
+        return 45;
+      },
+      cancelIdle: vi.fn(),
+    });
+    runIdle!();
+
+    vi.advanceTimersByTime(1_999);
+    expect(observedLoad.signal?.aborted).toBe(false);
+    expect(adapter.getState().conjunctions.status).toBe('loading');
+
+    vi.advanceTimersByTime(1);
+    expect(observedLoad.signal?.aborted).toBe(true);
+    expect(adapter.getState().conjunctions).toMatchObject({
+      status: 'unavailable',
+      error: expect.stringContaining('timed out after 2 seconds'),
+    });
+    expect(adapter.getState().ready).toBe(true);
+    expect(adapter.getState().error).toBeNull();
+  });
+
+  it('cancels a pending idle load and aborts an in-flight load on dispose', () => {
+    const cancelIdle = vi.fn();
+    const scheduleIdle = vi.fn(() => 43);
+    const loadConjunctions = vi.fn(pendingConjunctionLoad);
+
+    adapter = bootAdapter([fakeSat()], {
+      loadConjunctionFeed: loadConjunctions,
+      scheduleIdle,
+      cancelIdle,
+    });
+    adapter.dispose();
+    adapter = null;
+
+    expect(cancelIdle).toHaveBeenCalledWith(43);
+    expect(loadConjunctions).not.toHaveBeenCalled();
+
+    let runIdle: (() => void) | null = null;
+    const observedLoad: { signal?: AbortSignal } = {};
+
+    adapter = bootAdapter([fakeSat()], {
+      loadConjunctionFeed: (signal) => {
+        observedLoad.signal = signal;
+
+        return pendingConjunctionLoad();
+      },
+      scheduleIdle: (callback) => {
+        runIdle = callback;
+
+        return 44;
+      },
+      cancelIdle,
+    });
+    runIdle!();
+    expect(observedLoad.signal?.aborted).toBe(false);
+
+    adapter.dispose();
+    adapter = null;
+
+    expect(observedLoad.signal?.aborted).toBe(true);
   });
 
   it('searches via precomputed text and ranks name prefixes first', () => {
@@ -292,6 +591,83 @@ describe('SatGlobeEngineAdapter', () => {
     expect(adapter.getState().visibleCount).toBe(2);
   });
 
+  it('canonicalizes known highlight ids and forces exactly one recolor per distinct pair', () => {
+    adapter = bootAdapter([
+      fakeSat(),
+      fakeSat({
+        id: 2,
+        sccNum: '30001',
+        name: 'COSMOS 2251 DEB',
+        type: SpaceObjectType.DEBRIS,
+        status: PayloadStatus.NONOPERATIONAL,
+      }),
+    ]);
+    services.colorSchemes.setColorScheme.mockClear();
+    const filterSweep = vi.spyOn(
+      adapter as unknown as { rebuildFilterVisibility_: () => number },
+      'rebuildFilterVisibility_',
+    );
+    const listener = vi.fn();
+
+    adapter.subscribe(listener);
+    listener.mockClear();
+    adapter.setHighlight([' 30001 ', '44714', '30001', 'not-installed']);
+
+    expect(adapter.getState().conjunctionHighlightActive).toBe(true);
+    expect(adapter.getState().highlightedObjectCount).toBe(2);
+    expect(adapter.getState().visibleCount).toBe(2);
+    expect(services.colorSchemes.setColorScheme).toHaveBeenCalledOnce();
+    expect(filterSweep).not.toHaveBeenCalled();
+    expect(listener).toHaveBeenCalledOnce();
+
+    const snapshot = adapter.getState();
+
+    adapter.setHighlight(['44714', '30001', '44714']);
+
+    expect(adapter.getState()).toBe(snapshot);
+    expect(services.colorSchemes.setColorScheme).toHaveBeenCalledOnce();
+    expect(filterSweep).not.toHaveBeenCalled();
+    expect(listener).toHaveBeenCalledOnce();
+
+    adapter.setHighlight([]);
+
+    expect(adapter.getState().conjunctionHighlightActive).toBe(false);
+    expect(adapter.getState().highlightedObjectCount).toBe(0);
+    expect(services.colorSchemes.setColorScheme).toHaveBeenCalledTimes(2);
+    expect(filterSweep).not.toHaveBeenCalled();
+    expect(listener).toHaveBeenCalledTimes(2);
+  });
+
+  it('clears conjunction highlighting inside one filter or encoding visual-state apply', () => {
+    adapter = bootAdapter([
+      fakeSat(),
+      fakeSat({
+        id: 2,
+        sccNum: '30001',
+        name: 'COSMOS 2251 DEB',
+        type: SpaceObjectType.DEBRIS,
+        status: PayloadStatus.NONOPERATIONAL,
+      }),
+    ]);
+    adapter.setHighlight(['44714', '30001']);
+    services.colorSchemes.setColorScheme.mockClear();
+
+    adapter.setFilters(structuredClone(adapter.getState().filters));
+
+    expect(adapter.getState().conjunctionHighlightActive).toBe(false);
+    expect(adapter.getState().highlightedObjectCount).toBe(0);
+    expect(adapter.getState().visibleCount).toBe(1);
+    expect(services.colorSchemes.setColorScheme).toHaveBeenCalledOnce();
+
+    adapter.setHighlight(['44714', '30001']);
+    services.colorSchemes.setColorScheme.mockClear();
+    adapter.setEncoding('orbit-regime');
+
+    expect(adapter.getState().conjunctionHighlightActive).toBe(false);
+    expect(adapter.getState().highlightedObjectCount).toBe(0);
+    expect(services.colorSchemes.setColorScheme).toHaveBeenCalledOnce();
+  });
+
   it.each([
     ['zoom in', 0.7, 0.3, true],
     ['zoom out', 0.3, 0.7, false],
@@ -369,7 +745,7 @@ describe('SatGlobeEngineAdapter', () => {
         throw new Error('catalog exploded');
       },
     };
-    adapter = new SatGlobeEngineAdapter();
+    adapter = new SatGlobeEngineAdapter({ loadConjunctionFeed: pendingConjunctionLoad });
     fakeBus.emit(EventBusEvent.onKeepTrackReady);
 
     expect(adapter.getState().ready).toBe(false);

@@ -2,6 +2,7 @@ import { memo, useRef, useState } from 'react';
 import { downloadSavedView } from '../domain/saved-view';
 import {
   DEFAULT_FILTERS,
+  type ConjunctionState,
   type FilterState,
   type ObjectKind,
   type OrbitRegime,
@@ -13,6 +14,33 @@ import { Icon } from './icon';
 import { encodingLabels, formatNumber, objectKindLabels, regimeLabels } from './labels';
 
 export type QuickLens = 'starlink' | 'geo' | 'debris';
+
+/** Keeps the fourth lens truthful across loading, freshness, and failure states. */
+export function getConjunctionLensPresentation(
+  conjunctions: ConjunctionState,
+  conjunctionHighlightActive: boolean,
+  highlightedObjectCount: number,
+): { disabled: boolean; label: string } {
+  if (conjunctions.status === 'loading') {
+    return { disabled: true, label: 'Loading screening…' };
+  }
+  if (conjunctions.status === 'unavailable') {
+    return { disabled: true, label: 'Screening unavailable' };
+  }
+  if (conjunctionHighlightActive) {
+    return { disabled: false, label: `${formatNumber(highlightedObjectCount)} highlighted` };
+  }
+  const pairNoun = conjunctions.lensPairCount === 1 ? 'pair' : 'pairs';
+
+  if (conjunctions.status === 'archival') {
+    return { disabled: conjunctions.catalogIds.length === 0, label: `${formatNumber(conjunctions.lensPairCount)} latest past ${pairNoun}` };
+  }
+  if (conjunctions.status === 'stale') {
+    return { disabled: conjunctions.catalogIds.length === 0, label: `${formatNumber(conjunctions.lensPairCount)} stale upcoming ${pairNoun}` };
+  }
+
+  return { disabled: conjunctions.catalogIds.length === 0, label: `${formatNumber(conjunctions.lensPairCount)} upcoming ${pairNoun}` };
+}
 
 /** Builds the filter and encoding state for a suggested workshop lens. */
 export function getQuickLensState(lens: QuickLens): { filters: FilterState; encoding: VisualEncoding } {
@@ -63,10 +91,14 @@ export interface DiscoverPanelProps {
   results: SpaceObjectView[];
   filters: FilterState;
   encoding: VisualEncoding;
+  conjunctions: ConjunctionState;
+  conjunctionHighlightActive: boolean;
+  highlightedObjectCount: number;
   savedViews: SavedViewV1[];
   onQueryChange: (query: string) => void;
   onSelectResult: (catalogId: string) => void;
   onQuickLens: (lens: QuickLens) => void;
+  onConjunctionLens: () => void;
   setFiltersImmediate: (filters: FilterState) => void;
   setFiltersDebounced: (filters: FilterState) => void;
   onEncodingChange: (encoding: VisualEncoding) => void;
@@ -78,12 +110,17 @@ export interface DiscoverPanelProps {
 
 /** The workshop's search, lens, filter, encoding, and saved-view instrument panel. */
 function DiscoverPanelBase({
-  inert, visibleCount, query, results, filters, encoding, savedViews,
-  onQueryChange, onSelectResult, onQuickLens, setFiltersImmediate, setFiltersDebounced, onEncodingChange,
+  inert, visibleCount, query, results, filters, encoding, conjunctions, conjunctionHighlightActive, highlightedObjectCount, savedViews,
+  onQueryChange, onSelectResult, onQuickLens, onConjunctionLens, setFiltersImmediate, setFiltersDebounced, onEncodingChange,
   onSaveView, onApplyView, createView, onImportFile,
 }: DiscoverPanelProps) {
   const fileInput = useRef<HTMLInputElement>(null);
   const [importing, setImporting] = useState(false);
+  const conjunctionLens = getConjunctionLensPresentation(
+    conjunctions,
+    conjunctionHighlightActive,
+    highlightedObjectCount,
+  );
 
   return (
     <aside className="sg-panel sg-side-panel sg-discover" data-testid="discover-panel" inert={inert || undefined}>
@@ -112,6 +149,20 @@ function DiscoverPanelBase({
           <button data-testid="starlink-lens" onClick={() => onQuickLens('starlink')} type="button"><span className="sg-lens-glyph sg-lens-starlink"><i /><i /><i /></span><strong>Starlink</strong><small>Planes & shells</small></button>
           <button onClick={() => onQuickLens('geo')} type="button"><span className="sg-lens-glyph sg-lens-geo"><i /></span><strong>GEO belt</strong><small>The high ring</small></button>
           <button onClick={() => onQuickLens('debris')} type="button"><span className="sg-lens-glyph sg-lens-debris"><i /><i /><i /><i /></span><strong>Debris field</strong><small>Context layer</small></button>
+          <button
+            aria-pressed={conjunctionHighlightActive}
+            data-conjunction-status={conjunctions.status}
+            data-dropped-pair-count={conjunctions.droppedPairCount}
+            data-highlighted-count={highlightedObjectCount}
+            data-testid="conjunction-lens"
+            disabled={conjunctionLens.disabled}
+            onClick={onConjunctionLens}
+            type="button"
+          >
+            <span className="sg-lens-glyph sg-lens-conjunction"><i /><i /></span>
+            <strong>Close approaches</strong>
+            <small aria-live="polite" data-testid="conjunction-lens-status" role="status">{conjunctionLens.label}</small>
+          </button>
         </div>
       </section>
 
