@@ -143,8 +143,11 @@ const server = http.createServer((req, res) => {
       res.end('Not found');
     }
   } catch (err) {
+    // Error details go to the terminal, not the response (CodeQL js/stack-trace-exposure).
+    // eslint-disable-next-line no-console
+    console.error(err);
     res.writeHead(500, { 'Content-Type': 'text/plain' });
-    res.end(String(err));
+    res.end('Internal error - see the mesh-viewer terminal.');
   }
 });
 

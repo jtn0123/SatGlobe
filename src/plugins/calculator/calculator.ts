@@ -404,7 +404,7 @@ export class Calculator extends KeepTrackPlugin {
       return `<div class="row">
         <div class="input-field col s12">
           <input value="${escapeHtml(f.default)}" id="calc-in-${escapeHtml(f.id)}" type="text" ${f.readonly ? 'readonly' : ''} />
-          <label for="calc-in-${f.id}" class="active">${f.label}${unitSuffix}</label>
+          <label for="calc-in-${escapeHtml(f.id)}" class="active">${escapeHtml(f.label)}${escapeHtml(unitSuffix)}</label>
         </div>
       </div>`;
     }).join('');
