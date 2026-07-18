@@ -59,7 +59,13 @@ export function useStoryPlayback(
   applyBeat: (index: number) => void;
 } {
   const [playback, dispatch] = useReducer(storyPlaybackReducer, initialStoryPlayback);
-  const { beatIndex, playing, progress } = playback;
+  /*
+   * The beat index can momentarily exceed a newly selected story's length
+   * (switching from a 5-beat story at beat 5 to a 4-beat one) - every consumer
+   * sees the clamped value so that render never reads past the array.
+   */
+  const beatIndex = Math.min(playback.beatIndex, story.beats.length - 1);
+  const { playing, progress } = playback;
   const beat = story.beats[beatIndex];
 
   const applyBeat = useCallback((index: number) => {
@@ -108,5 +114,5 @@ export function useStoryPlayback(
     return () => window.clearInterval(timer);
   }, [applyBeat, beat.durationMs, beatIndex, isStoryMode, playing, progress, story.beats.length]);
 
-  return { playback, dispatch, applyBeat };
+  return { playback: { ...playback, beatIndex }, dispatch, applyBeat };
 }

@@ -65,6 +65,11 @@ const beatSchema = z.object({
   camera: cameraPoseSchema,
   encoding: z.enum(['object-type', 'orbit-regime', 'launch-cohort', 'orbital-plane', 'data-age', 'starlink']),
   constellation: z.string().optional(),
+  filterOverrides: z.object({
+    objectKinds: z.array(z.enum(['payload', 'rocket-body', 'debris', 'other'])).min(1).optional(),
+    status: z.enum(['all', 'active', 'inactive']).optional(),
+    regimes: z.array(z.enum(['leo', 'meo', 'geo', 'heo', 'other'])).min(1).optional(),
+  }).strict().optional(),
   reconstruction: z.enum(['observed', 'reconstructed']),
   scaleMode: z.enum(['semantic', 'true']),
 }).strict();

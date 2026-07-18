@@ -31,7 +31,7 @@ The application loads the checked-in `public/tle/tle.json` snapshot. Browser run
 
 - Workshop provides local catalog search, quick lenses, combined object and orbital filters, data-driven color encodings, an object inspector, time control, and portable saved-view JSON.
 - Present collapses the instrument panels into a calm title composition without changing engine state.
-- Story plays the validated five-beat “Building a shell” Starlink narrative over the same scene. Historical beats display `Reconstructed`; the current beat uses the installed propagated catalog.
+- Story plays validated, sourced narratives over the same scene — a library of four ships today (Starlink buildout, the GPS clockwork, the 2009 Cosmos–Iridium collision, the geostationary ring), selectable in the story deck. Historical beats display `Reconstructed`; each story ends on the installed propagated catalog. Authoring guide: `docs/story-authoring.md`.
 - `/` focuses the catalog search, `?` shows the shortcuts legend, `F` toggles presentation, `Escape` returns to Workshop, and the arrow/space controls navigate a story when Story mode is open.
 
 Satellite marks use semantic scale by default. They are enlarged for legibility. True-scale comparison is a disclosure state: most real spacecraft are too small to remain visible at planetary scale.

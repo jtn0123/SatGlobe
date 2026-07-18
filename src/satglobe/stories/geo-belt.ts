@@ -1,0 +1,108 @@
+import type { StoryManifestV1 } from '../domain/types';
+import { storyManifestV1Schema } from '../domain/schemas';
+
+const retrievedAt = '2026-07-17';
+
+export const geoBeltStory: StoryManifestV1 = storyManifestV1Schema.parse({
+  schemaVersion: 1,
+  id: 'geo-belt',
+  title: 'The ring that stands still',
+  dek: 'One special altitude where a satellite keeps pace with the turning Earth — and the crowded ring that grew there.',
+  reconstructionPolicy: 'sourced-reconstruction',
+  sources: [
+    {
+      id: 'esa-orbit-types',
+      title: 'Types of orbits',
+      url: 'https://www.esa.int/Enabling_Support/Space_Transportation/Types_of_orbits',
+      retrievedAt,
+      publisher: 'European Space Agency',
+    },
+    {
+      id: 'celestrak-geo',
+      title: 'GP Element Sets: Active Geosynchronous',
+      url: 'https://celestrak.org/NORAD/elements/',
+      retrievedAt,
+      publisher: 'CelesTrak',
+    },
+  ],
+  facts: [
+    {
+      id: 'geo-altitude',
+      text: 'Geostationary orbit sits at 35,786 km altitude, where one orbit takes 23 hours 56 minutes 4 seconds — the length of a sidereal day.',
+      sourceIds: ['esa-orbit-types'],
+    },
+    {
+      id: 'geo-purpose',
+      text: 'Matching the planet’s rotation keeps a satellite fixed above one location, which suits telecommunications and continuous weather monitoring.',
+      sourceIds: ['esa-orbit-types'],
+    },
+    {
+      id: 'geo-coverage',
+      text: 'From that altitude, as few as three evenly spaced satellites can provide near-global coverage.',
+      sourceIds: ['esa-orbit-types'],
+    },
+    {
+      id: 'geo-elements',
+      text: 'Geosynchronous objects shown here are propagated from public element sets for the active geosynchronous population.',
+      sourceIds: ['celestrak-geo'],
+      caveat: 'Small station-keeping maneuvers are not modeled between element-set updates.',
+    },
+  ],
+  beats: [
+    {
+      id: 'the-far-ring',
+      eyebrow: '01 / THE OUTER RING',
+      title: 'A ring at the edge of the picture',
+      dateLabel: 'Context view',
+      narration: 'Pull back from the low-orbit swarm and a thin, distant circle resolves: thousands of kilometers above everything else, satellites arranged in a single ring above the equator.',
+      factIds: ['geo-altitude'],
+      durationMs: 11_000,
+      camera: { pitch: 0.3, yaw: 0.5, zoom: 0.8 },
+      encoding: 'orbit-regime',
+      reconstruction: 'reconstructed',
+      scaleMode: 'semantic',
+    },
+    {
+      id: 'standing-still',
+      eyebrow: '02 / THE TRICK',
+      title: 'Orbiting at the speed of the ground',
+      dateLabel: 'One sidereal day per orbit',
+      narration: 'At exactly 35,786 kilometers, an orbit takes as long as the Earth takes to turn. From the ground the satellite appears to stand still — which is why your dish antenna never has to move.',
+      factIds: ['geo-altitude', 'geo-purpose'],
+      durationMs: 13_000,
+      camera: { pitch: 0.08, yaw: 1.3, zoom: 0.78 },
+      encoding: 'orbit-regime',
+      filterOverrides: { regimes: ['geo'], status: 'all' },
+      reconstruction: 'reconstructed',
+      scaleMode: 'semantic',
+    },
+    {
+      id: 'why-it-matters',
+      eyebrow: '03 / WHY IT FILLED UP',
+      title: 'Three satellites to see the world',
+      dateLabel: 'Coverage geometry',
+      narration: 'Because each spot on the ring sees so much of the planet, near-global coverage takes only a handful of satellites. That efficiency made the ring valuable — and valuable orbits fill up.',
+      factIds: ['geo-coverage', 'geo-purpose'],
+      durationMs: 12_000,
+      camera: { pitch: 0.55, yaw: 2.1, zoom: 0.76 },
+      encoding: 'data-age',
+      filterOverrides: { regimes: ['geo'], status: 'all' },
+      reconstruction: 'reconstructed',
+      scaleMode: 'semantic',
+    },
+    {
+      id: 'geo-present',
+      eyebrow: '04 / THE INSTALLED CATALOG',
+      title: 'The ring as tracked today',
+      dateLabel: 'Current snapshot',
+      narration: 'The installed catalog propagates the active geosynchronous population. Slots, drift, and retirement politics are invisible here — but the ring itself, and how full it has become, is plain to see.',
+      factIds: ['geo-elements'],
+      durationMs: 14_000,
+      camera: { pitch: 0.34, yaw: 2.9, zoom: 0.78 },
+      encoding: 'orbit-regime',
+      filterOverrides: { regimes: ['geo'], status: 'all' },
+      reconstruction: 'observed',
+      scaleMode: 'semantic',
+    },
+  ],
+});

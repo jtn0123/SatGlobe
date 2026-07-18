@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { SatGlobeEngineAdapter } from '../engine/satglobe-engine-adapter';
 import { importSavedView, loadPersistedViews, persistViews } from '../domain/saved-view';
 import {
@@ -10,7 +10,7 @@ import {
   type SpaceObjectView,
   type StoryBeat,
 } from '../domain/types';
-import { starlinkBuildoutStory } from '../stories/starlink-buildout';
+import { storyLibrary } from '../stories';
 import { DiscoverPanel, getQuickLensState, type QuickLens } from './discover-panel';
 import { Icon } from './icon';
 import { Inspector } from './inspector';
@@ -40,7 +40,8 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
   const [notice, setNotice] = useState('');
   const [webglMissing, setWebglMissing] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
-  const story = starlinkBuildoutStory;
+  const [storyId, setStoryId] = useState(storyLibrary[0].id);
+  const story = storyLibrary.find(({ id }) => id === storyId) ?? storyLibrary[0];
 
   useEffect(() => adapter.subscribe(setEngine), [adapter]);
 
@@ -62,7 +63,7 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
   }, [adapter, engine.objectCount, engine.ready, query]);
 
   const onBeatApplied = useCallback((beat: StoryBeat) => {
-    const beatFilters = { ...structuredClone(DEFAULT_FILTERS), constellation: beat.constellation ?? '' };
+    const beatFilters = { ...structuredClone(DEFAULT_FILTERS), constellation: beat.constellation ?? '', ...beat.filterOverrides };
 
     setFiltersState(beatFilters);
     setScaleMode(beat.scaleMode);
@@ -73,6 +74,22 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
   }, [adapter, setFiltersState]);
 
   const { playback, dispatch, applyBeat } = useStoryPlayback(story, mode === 'story', onBeatApplied);
+  const changeStory = useCallback((id: string) => setStoryId(id), []);
+  /*
+   * Applying the new story's opening beat must wait for the re-render, when
+   * applyBeat's closure holds the new manifest; the ref keeps this from firing
+   * on unrelated dependency changes.
+   */
+  const prevStoryIdRef = useRef(storyId);
+
+  useEffect(() => {
+    if (prevStoryIdRef.current !== storyId) {
+      prevStoryIdRef.current = storyId;
+      if (mode === 'story') {
+        applyBeat(0);
+      }
+    }
+  }, [applyBeat, mode, storyId]);
   const beat = story.beats[playback.beatIndex];
 
   const switchMode = useCallback((nextMode: AppMode) => {
@@ -217,7 +234,7 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
       <div className="sg-small-screen-note" role="note">SatGlobe is designed for larger screens — panels are limited at this size.</div>
       {/* display:contents wrapper; keeps the booting shell out of the tab order behind the loading overlay */}
       <div className="sg-boot-guard" inert={!engine.ready || undefined}>
-      <TopBar mode={mode} newestElementAge={newestElementAge} objectCount={engine.objectCount} onModeChange={switchMode} onStoryOpen={openStory} ready={engine.ready} />
+      <TopBar mode={mode} newestElementAge={newestElementAge} objectCount={engine.objectCount} onModeChange={switchMode} onStoryOpen={openStory} ready={engine.ready} storyCount={storyLibrary.length} />
 
       <DiscoverPanel
         createView={createView}
@@ -246,7 +263,7 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
 
       {mode === 'presentation' && <PresentationTitle encoding={engine.encoding} objectCount={engine.visibleCount} onOpenWorkshop={openWorkshop} />}
 
-      {mode === 'story' && <StoryDeck beatIndex={playback.beatIndex} onAuthoredView={() => adapter.setCamera(beat.camera)} onBeatChange={applyBeat} onOpenWorkshop={openWorkshop} onPlayingChange={togglePlaying} onSourcesChange={toggleSources} playing={playback.playing} progress={playback.progress} showSources={playback.showSources} story={story} />}
+      {mode === 'story' && <StoryDeck beatIndex={playback.beatIndex} onAuthoredView={() => adapter.setCamera(beat.camera)} onBeatChange={applyBeat} onOpenWorkshop={openWorkshop} onPlayingChange={togglePlaying} onSourcesChange={toggleSources} onStoryChange={changeStory} playing={playback.playing} progress={playback.progress} showSources={playback.showSources} stories={storyLibrary} story={story} />}
 
       {showShortcuts && <KeyboardLegend onClose={() => setShowShortcuts(false)} />}
       </div>

@@ -146,6 +146,8 @@ export interface StoryBeat {
   camera: CameraPose;
   encoding: VisualEncoding;
   constellation?: string;
+  /** Optional per-beat departures from DEFAULT_FILTERS (e.g. showing debris for a collision chapter). */
+  filterOverrides?: Pick<Partial<FilterState>, 'objectKinds' | 'status' | 'regimes'>;
   reconstruction: 'observed' | 'reconstructed';
   scaleMode: ScaleMode;
 }
