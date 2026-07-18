@@ -7,6 +7,8 @@ import { gpsConstellationStory } from './gps-constellation';
 import { fengyunAsatStory } from './fengyun-asat';
 import { cosmosIridiumStory } from './cosmos-iridium';
 import { geoBeltStory } from './geo-belt';
+import { gnssFamiliesStory } from './gnss-families';
+import { landsatContinuityStory } from './landsat-continuity';
 
 /**
  * The story library, in presentation order. Every manifest is validated at
@@ -22,4 +24,6 @@ export const storyLibrary: readonly StoryManifestV1[] = [
   fengyunAsatStory,
   cosmosIridiumStory,
   geoBeltStory,
+  gnssFamiliesStory,
+  landsatContinuityStory,
 ];
