@@ -105,7 +105,23 @@ export class Satellite extends SpaceObject {
   perigee!: Kilometers;
   period!: Minutes;
   rightAscension!: Degrees;
-  satrec!: SatelliteRecord;
+  /**
+   * Backing store for the lazy satrec. Sgp4.createSatrec is ~6 µs per object,
+   * which is a quarter-second of blocked main thread across a 33k catalog —
+   * so TLE-sourced satellites defer it to first propagation use. The position
+   * cruncher builds its own satrecs from the TLE strings and never reads this.
+   */
+  private satrecCache_?: SatelliteRecord;
+
+  get satrec(): SatelliteRecord {
+    this.satrecCache_ ??= Sgp4.createSatrec(this.tle1, this.tle2);
+
+    return this.satrecCache_;
+  }
+
+  set satrec(value: SatelliteRecord) {
+    this.satrecCache_ = value;
+  }
   /** The canonical satellite catalog number. May be a 5-digit numeric, alpha-5,
    * 6-digit numeric, or an extended (7+ digit) ID such as CelesTrak supplemental
    * 9-digit IDs. */
@@ -416,7 +432,8 @@ export class Satellite extends SpaceObject {
     this.semiMinorAxis = (this.semiMajorAxis * Math.sqrt(1 - this.eccentricity ** 2)) as Kilometers;
     this.apogee = (this.semiMajorAxis * (1 + this.eccentricity) - 6371) as Kilometers;
     this.perigee = (this.semiMajorAxis * (1 - this.eccentricity) - 6371) as Kilometers;
-    this.satrec = Sgp4.createSatrec(tle1, tle2);
+    // satrec is created lazily from tle1/tle2 on first read (see the getter).
+    this.satrecCache_ = undefined;
   }
 
   private parseOmmAndUpdateOrbit_(omm: OmmDataFormat) {
