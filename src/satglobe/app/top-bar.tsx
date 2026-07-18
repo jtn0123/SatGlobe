@@ -13,7 +13,7 @@ interface TopBarProps {
 }
 
 /** Renders global mode controls and local-catalog health. */
-function TopBarBase({ ready, objectCount, mode, newestElementAge, storyCount, onModeChange, onStoryOpen }: TopBarProps) {
+function TopBarBase({ ready, objectCount, mode, newestElementAge, storyCount, onModeChange, onStoryOpen }: Readonly<TopBarProps>) {
   return (
     <header className="sg-topbar">
       <button className="sg-brand" onClick={() => onModeChange('workshop')} type="button">
