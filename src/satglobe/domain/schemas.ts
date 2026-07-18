@@ -60,6 +60,11 @@ const factSchema = z.object({
 }).strict();
 
 const orbitCatalogIdSchema = z.string().regex(/^\d{1,6}$/u, 'Expected a numeric catalog id');
+const authoredConstellationSchema = z.string()
+  .max(120)
+  .refine((constellation) => constellation.trim().length > 0, 'Expected a non-blank constellation filter');
+const authoredLaunchCohortSchema = z.string()
+  .regex(/^\d{4}-(?:\d{3})?$/u, 'Expected a YYYY-NNN launch cohort or YYYY- year prefix');
 
 const beatSchema = z.object({
   id: authoredIdSchema,
@@ -71,8 +76,8 @@ const beatSchema = z.object({
   durationMs: z.number().int().min(1_000).max(120_000),
   camera: cameraPoseSchema,
   encoding: z.enum(['object-type', 'orbit-regime', 'launch-cohort', 'orbital-plane', 'data-age', 'starlink']),
-  constellation: z.string().max(120).optional(),
-  launchCohort: z.string().max(120).optional(),
+  constellation: authoredConstellationSchema.optional(),
+  launchCohort: authoredLaunchCohortSchema.optional(),
   simulationTimeOffsetHours: z.number().finite().min(-8_760).max(8_760).optional(),
   orbitCatalogId: orbitCatalogIdSchema.optional(),
   orbitCatalogIds: z.array(orbitCatalogIdSchema)

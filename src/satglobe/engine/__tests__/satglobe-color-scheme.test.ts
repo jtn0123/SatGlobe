@@ -1,7 +1,7 @@
 import { PayloadStatus, SpaceObjectType, type BaseObject } from '@ootk/src/main';
 import { Pickable } from '@app/engine/core/interfaces';
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_FILTERS } from '../../domain/types';
+import { DEFAULT_FILTERS, type VisualEncoding } from '../../domain/types';
 import { launchCohortColor } from '../launch-cohort-color';
 import { SatGlobeColorScheme } from '../satglobe-color-scheme';
 
@@ -30,5 +30,17 @@ describe('SatGlobe launch cohort encoding', () => {
     expect(result).toEqual({ color: launchCohortColor('2019-074B'), pickable: Pickable.Yes });
     expect(scheme.update(satellite('2019-074C')).color).toEqual(result.color);
     expect(scheme.update(satellite('2019-075A')).color).not.toEqual(result.color);
+  });
+
+  it('falls back to object-type colors when a runtime encoding is missing', () => {
+    const missingEncoding = new SatGlobeColorScheme(
+      structuredClone(DEFAULT_FILTERS),
+      undefined as unknown as VisualEncoding,
+    );
+    const objectType = new SatGlobeColorScheme(structuredClone(DEFAULT_FILTERS), 'object-type');
+    const object = satellite('2019-074B');
+
+    expect(missingEncoding.calculateParams()).toBeNull();
+    expect(missingEncoding.update(object)).toEqual(objectType.update(object));
   });
 });

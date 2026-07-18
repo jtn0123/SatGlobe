@@ -8,8 +8,8 @@
  * verifies the public adapter state, and captures audit screenshots.
  *
  * Environment overrides:
- *   SATGLOBE_STORY_URL          production-static URL (default http://127.0.0.1:5544)
- *   SATGLOBE_STORY_START_SERVER 0 to use an already-running production server
+ *   SATGLOBE_STORY_URL          production-static URL (must remain http://127.0.0.1:5544)
+ *   SATGLOBE_STORY_START_SERVER must remain enabled so evidence comes from this process's build
  *   SATGLOBE_STORY_HEADLESS     1 to hide Chromium (headed by default)
  *   SATGLOBE_STORY_OUTPUT_DIR   root for commit-keyed screenshot/manifest runs
  *   SATGLOBE_STORY_TIMEOUT_MS   server and semantic-wait timeout
@@ -92,6 +92,17 @@ interface ProductionBuildRecord {
   verifiedAt?: string;
 }
 
+interface ServedRootRecord {
+  appUrl: typeof DEFAULT_APP_URL;
+  firstVerifiedAt: string;
+  httpBodyByteCount: number;
+  httpBodySha256: string;
+  localFile: 'dist/index.html';
+  ownership: 'walker-owned-static-server';
+  proof: 'http-body-byte-equal-local-file';
+  verifiedAt?: string;
+}
+
 interface ScreenshotRecord {
   beatId: string;
   beatIndex: number;
@@ -168,6 +179,7 @@ interface VerificationManifest {
   runKey: string;
   runtimeFailures: RuntimeFailureDiagnostic[];
   screenshots: ScreenshotRecord[];
+  servedRoot?: ServedRootRecord;
   status: 'complete' | 'failed' | 'running';
   storyIds: string[];
   viewport: typeof VIEWPORT;
@@ -348,7 +360,7 @@ async function buildProductionProfile(): Promise<ProductionBuildRecord> {
   };
 }
 
-/** Re-hashes the served tree after capture so the recorded identity cannot drift. */
+/** Re-hashes the complete local build tree after capture so its identity cannot drift. */
 async function verifyProductionBuild(build: ProductionBuildRecord): Promise<string> {
   const current = await digestProductionBuild();
 
@@ -407,11 +419,23 @@ async function writeManifest(manifest: VerificationManifest): Promise<void> {
   await rename(temporary, destination);
 }
 
-/** Refuses to start when another process already answers at the default audit URL. */
-async function assertNoExistingServer(): Promise<void> {
-  if (!envFlag('SATGLOBE_STORY_START_SERVER', APP_URL === DEFAULT_APP_URL)) {
-    return;
+/** Refuses targets whose bytes are not owned by this verification process. */
+function assertOwnedServerConfiguration(): void {
+  if (APP_URL !== DEFAULT_APP_URL) {
+    throw new Error(
+      `Refusing custom story target ${APP_URL}: durable evidence requires the walker-owned server at ${DEFAULT_APP_URL}.`,
+    );
   }
+  if (!envFlag('SATGLOBE_STORY_START_SERVER', true)) {
+    throw new Error(
+      'Refusing SATGLOBE_STORY_START_SERVER=0: durable evidence requires a server started from this run\'s local dist build.',
+    );
+  }
+}
+
+/** Refuses to start when another process already answers at the audit URL. */
+async function assertNoExistingServer(): Promise<void> {
+  assertOwnedServerConfiguration();
   let response: Response | null = null;
 
   try {
@@ -420,19 +444,12 @@ async function assertNoExistingServer(): Promise<void> {
     return;
   }
   await response.body?.cancel();
-  throw new Error(`Refusing to start: another process already responds at ${APP_URL}. Stop it or set SATGLOBE_STORY_START_SERVER=0 intentionally.`);
+  throw new Error(`Refusing to start: another process already responds at ${APP_URL}. Stop that process, then rerun so the walker can own the audited server.`);
 }
 
 /** Starts the same static SatGlobe server used by the production E2E lane. */
-function startStaticServer(): StaticServerProcess | null {
-  const shouldStart = envFlag('SATGLOBE_STORY_START_SERVER', APP_URL === DEFAULT_APP_URL);
-
-  if (!shouldStart) {
-    return null;
-  }
-  if (APP_URL !== DEFAULT_APP_URL) {
-    throw new Error('SATGLOBE_STORY_START_SERVER can only serve the default URL; set it to 0 for a custom URL.');
-  }
+function startStaticServer(): StaticServerProcess {
+  assertOwnedServerConfiguration();
   const require = createRequire(import.meta.url);
   const tsxCli = require.resolve('tsx/cli');
 
@@ -471,16 +488,14 @@ function startStaticServer(): StaticServerProcess | null {
 }
 
 /** Polls the server semantically and verifies SatGlobe's production CSP. */
-async function waitForStaticServer(server: StaticServerProcess | null): Promise<void> {
+async function waitForStaticServer(server: StaticServerProcess): Promise<void> {
   const deadline = Date.now() + TIMEOUT_MS;
   let lastFailure = 'no response';
 
-  if (server) {
-    await withTimeout(server.ready, TIMEOUT_MS, 'Production-static server bind');
-  }
+  await withTimeout(server.ready, TIMEOUT_MS, 'Production-static server bind');
 
   while (Date.now() < deadline) {
-    if (server?.child.exitCode !== null && server?.child.exitCode !== undefined) {
+    if (server.child.exitCode !== null && server.child.exitCode !== undefined) {
       throw new Error(`Production-static server exited before readiness (code ${server.child.exitCode}).`);
     }
     try {
@@ -508,6 +523,72 @@ async function waitForStaticServer(server: StaticServerProcess | null): Promise<
     });
   }
   throw new Error(`Production-static app was not ready at ${APP_URL}: ${lastFailure}`);
+}
+
+/** Fetches the owned HTTP root and proves that its body is the local dist entry point. */
+async function readOwnedServedRoot(
+  server: StaticServerProcess,
+): Promise<Pick<ServedRootRecord, 'httpBodyByteCount' | 'httpBodySha256'>> {
+  if (server.child.exitCode !== null || server.child.signalCode !== null) {
+    throw new Error('Walker-owned production-static server exited before its HTTP root could be verified.');
+  }
+  const response = await fetch(DEFAULT_APP_URL, {
+    cache: 'no-store',
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+  });
+
+  if (!response.ok) {
+    await response.body?.cancel();
+    throw new Error(`Walker-owned production-static root returned HTTP ${response.status}.`);
+  }
+  const httpBody = Buffer.from(await response.arrayBuffer());
+  const localBody = await readFile(resolve(DIST_DIR, 'index.html'));
+  const httpBodySha256 = createHash('sha256').update(httpBody).digest('hex');
+  const localBodySha256 = createHash('sha256').update(localBody).digest('hex');
+
+  if (!httpBody.equals(localBody)) {
+    throw new Error(
+      'Walker-owned HTTP root does not byte-match dist/index.html: ' +
+      `${httpBodySha256}/${httpBody.byteLength} != ${localBodySha256}/${localBody.byteLength}.`,
+    );
+  }
+
+  return { httpBodyByteCount: httpBody.byteLength, httpBodySha256 };
+}
+
+/** Records an honest HTTP-entry-point identity, separate from the complete build-tree digest. */
+async function identifyOwnedServedRoot(server: StaticServerProcess): Promise<ServedRootRecord> {
+  const servedRoot = await readOwnedServedRoot(server);
+
+  return {
+    ...servedRoot,
+    appUrl: DEFAULT_APP_URL,
+    firstVerifiedAt: new Date().toISOString(),
+    localFile: 'dist/index.html',
+    ownership: 'walker-owned-static-server',
+    proof: 'http-body-byte-equal-local-file',
+  };
+}
+
+/** Refetches the owned HTTP root and rejects a changed body before finalizing evidence. */
+async function verifyOwnedServedRoot(
+  servedRoot: ServedRootRecord,
+  server: StaticServerProcess,
+): Promise<string> {
+  const current = await readOwnedServedRoot(server);
+
+  if (
+    servedRoot.httpBodySha256 !== current.httpBodySha256 ||
+    servedRoot.httpBodyByteCount !== current.httpBodyByteCount
+  ) {
+    throw new Error(
+      'Walker-owned HTTP root changed during story verification: ' +
+      `${servedRoot.httpBodySha256}/${servedRoot.httpBodyByteCount} -> ` +
+      `${current.httpBodySha256}/${current.httpBodyByteCount}.`,
+    );
+  }
+
+  return new Date().toISOString();
 }
 
 /** Waits a bounded interval for one child-process close event. */
@@ -549,7 +630,7 @@ async function stopStaticServer(server: StaticServerProcess | null): Promise<voi
 async function shutdownRuntime(browser: Browser | null, server: StaticServerProcess | null): Promise<void> {
   const failures: unknown[] = [];
 
-  if (browser) {
+  if (browser?.isConnected()) {
     try {
       await withTimeout(browser.close(), SHUTDOWN_TIMEOUT_MS, 'Chromium shutdown');
     } catch (error) {
@@ -769,25 +850,36 @@ async function waitForPaint(page: Page): Promise<void> {
 /** Waits until CSS animations/transitions stay inactive across two frames. */
 async function waitForDocumentAnimations(page: Page): Promise<void> {
   // Polling on animation frames catches transitions created while a prior one
-  // completes, while the deadline keeps a broken infinite animation actionable.
+  // completes, while an independent timer also handles suspended frame callbacks.
   await page.evaluate(`new Promise((resolveAnimations, rejectAnimations) => {
-    const deadline = performance.now() + ${ANIMATION_TIMEOUT_MS};
+    let animationFrame = 0;
     let quietFrames = 0;
+    let settled = false;
+    const settle = (error) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      if (animationFrame !== 0) window.cancelAnimationFrame(animationFrame);
+      if (error) rejectAnimations(error);
+      else resolveAnimations();
+    };
+    const timeout = setTimeout(() => {
+      settle(new Error('Document animations did not settle within ${ANIMATION_TIMEOUT_MS} ms.'));
+    }, ${ANIMATION_TIMEOUT_MS});
     const onFrame = () => {
+      animationFrame = 0;
+      if (settled) return;
       const activeAnimations = document.getAnimations().filter((animation) =>
         animation.playState === 'pending' || animation.playState === 'running');
 
       quietFrames = activeAnimations.length === 0 ? quietFrames + 1 : 0;
       if (quietFrames >= 2) {
-        resolveAnimations();
+        settle();
       }
-      else if (performance.now() >= deadline) {
-        rejectAnimations(new Error('Document animations did not settle within ${ANIMATION_TIMEOUT_MS} ms.'));
-      }
-      else window.requestAnimationFrame(onFrame);
+      else animationFrame = window.requestAnimationFrame(onFrame);
     };
 
-    window.requestAnimationFrame(onFrame);
+    animationFrame = window.requestAnimationFrame(onFrame);
   })`);
 }
 
@@ -1041,6 +1133,8 @@ await writeManifest(manifest);
 const terminationController = installTerminationController();
 
 const verificationPromise = (async (): Promise<void> => {
+  setPhase(manifest, 'server:ownership');
+  assertOwnedServerConfiguration();
   setPhase(manifest, 'build:production');
   await writeManifest(manifest);
   const productionBuild = await buildProductionProfile();
@@ -1052,10 +1146,15 @@ const verificationPromise = (async (): Promise<void> => {
   await assertNoExistingServer();
   assertNotTerminating(terminationController);
   setPhase(manifest, 'server:start');
-  server = startStaticServer();
-  await waitForStaticServer(server);
+  const ownedServer = startStaticServer();
+
+  server = ownedServer;
+  await waitForStaticServer(ownedServer);
+  Object.assign(manifest, { servedRoot: await identifyOwnedServedRoot(ownedServer) });
+  await writeManifest(manifest);
   assertNotTerminating(terminationController);
   setPhase(manifest, 'browser:launch');
+  await writeManifest(manifest);
   browser = await chromium.launch({
     // This process owns bounded signal finalization; Playwright's default
     // handlers re-raise the signal before the manifest can be marked failed.
@@ -1063,6 +1162,7 @@ const verificationPromise = (async (): Promise<void> => {
     handleSIGINT: false,
     handleSIGTERM: false,
     headless: envFlag('SATGLOBE_STORY_HEADLESS', false),
+    timeout: TIMEOUT_MS,
   });
   assertNotTerminating(terminationController);
   const context = await browser.newContext({
@@ -1076,6 +1176,14 @@ const verificationPromise = (async (): Promise<void> => {
   await walkStories(page, manifest);
   assertNotTerminating(terminationController);
   assertNoRuntimeFailures(manifest);
+  setPhase(manifest, 'server:verify-root-unchanged');
+  if (!manifest.servedRoot) {
+    throw new Error('Walker-owned served-root identity was not recorded before browser evidence capture.');
+  }
+  const servedRoot = manifest.servedRoot;
+  const servedRootVerifiedAt = await verifyOwnedServedRoot(servedRoot, ownedServer);
+
+  Object.assign(servedRoot, { verifiedAt: servedRootVerifiedAt });
   setPhase(manifest, 'build:verify-unchanged');
   const buildVerifiedAt = await verifyProductionBuild(productionBuild);
 
@@ -1116,22 +1224,25 @@ try {
   };
 }
 
-const terminationError = terminationController.getError();
+let terminationError = terminationController.getError();
 
 if (terminationError) {
   setPhase(manifest, `signal:${terminationError.signal}`);
+  // The signal can win the race while an awaited resource acquisition is
+  // still pending. The first shutdown interrupts already-published resources;
+  // waiting here lets a late chromium.launch() publish its Browser reference.
+  // Only after the task settles is a second, idempotent shutdown conclusive.
+  await verificationPromise.catch(() => undefined);
+  setPhase(manifest, `signal:${terminationError.signal}:final-cleanup`);
   try {
-    await withTimeout(
-      verificationPromise.catch(() => undefined),
-      SHUTDOWN_TIMEOUT_MS,
-      'Interrupted verification shutdown',
-    );
-  } catch (terminationCleanupError) {
+    await shutdownRuntime(browser, server);
+  } catch (finalCleanupError) {
     runError = runError
-      ? new AggregateError([runError, terminationCleanupError], 'Story audit interruption and task shutdown both failed.')
-      : terminationCleanupError;
+      ? new AggregateError([runError, finalCleanupError], 'Story audit interruption and final runtime cleanup both failed.')
+      : finalCleanupError;
   }
   runError ??= terminationError;
+  setPhase(manifest, `signal:${terminationError.signal}`);
   manifest.failure = await failureDiagnostic(page, manifest, runError);
 }
 
@@ -1151,6 +1262,22 @@ if (runError) {
   setPhase(manifest, 'complete');
   manifest.status = 'complete';
   await writeManifest(manifest);
+  // A handled signal may arrive while the atomic success manifest is being
+  // written. Re-read synchronously after that final await, then remove the
+  // handlers without yielding so success cannot be reported from a stale
+  // pre-write termination snapshot.
+  terminationError = terminationController.getError();
   terminationController.dispose();
-  console.log(`Verified ${storyLibrary.length} stories / ${manifest.screenshots.length} beats. Manifest: ${relative(ROOT_DIR, artifactPath('manifest.json'))}`);
+  if (terminationError) {
+    setPhase(manifest, `signal:${terminationError.signal}`);
+    manifest.completedAt = new Date().toISOString();
+    manifest.status = 'failed';
+    manifest.error = terminationError.message;
+    manifest.failure = await failureDiagnostic(page, manifest, terminationError);
+    await writeManifest(manifest);
+    process.exitCode = { SIGHUP: 129, SIGINT: 130, SIGTERM: 143 }[terminationError.signal];
+    console.error(manifest.error);
+  } else {
+    console.log(`Verified ${storyLibrary.length} stories / ${manifest.screenshots.length} beats. Manifest: ${relative(ROOT_DIR, artifactPath('manifest.json'))}`);
+  }
 }

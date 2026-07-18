@@ -19,6 +19,30 @@ describe('optional story beat controls', () => {
     expect(parsed.beats[0].orbitCatalogIds).toEqual(['64202', '67588']);
   });
 
+  it.each(['2024-001', '2024-'])('accepts canonical authored launch cohort %s', (launchCohort) => {
+    const story = structuredClone(starlinkBuildoutStory);
+
+    story.beats[0].launchCohort = launchCohort;
+
+    expect(storyManifestV1Schema.parse(story).beats[0].launchCohort).toBe(launchCohort);
+  });
+
+  it.each(['', ' ', '\t'])('rejects blank authored constellation %j', (constellation) => {
+    const story = structuredClone(starlinkBuildoutStory);
+
+    story.beats[0].constellation = constellation;
+
+    expect(storyManifestV1Schema.safeParse(story).success).toBe(false);
+  });
+
+  it.each(['2024', '24-001', '2024-1', '2024-0001', '2024-001A', ' 2024-001'])('rejects malformed authored launch cohort %j', (launchCohort) => {
+    const story = structuredClone(starlinkBuildoutStory);
+
+    story.beats[0].launchCohort = launchCohort;
+
+    expect(storyManifestV1Schema.safeParse(story).success).toBe(false);
+  });
+
   it('rejects offsets outside the authored-story range and oversized cohort filters', () => {
     const invalidOffset = structuredClone(starlinkBuildoutStory);
     const invalidCohort = structuredClone(starlinkBuildoutStory);

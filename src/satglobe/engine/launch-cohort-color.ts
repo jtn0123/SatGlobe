@@ -6,12 +6,12 @@ const UINT32_RANGE = 0x1_0000_0000;
 /** Normalizes NORAD YY-NNN/YYNNN and YYYY-NNN launch designators to one YYYY-NNN cohort key. */
 export function normalizeLaunchCohort(internationalDesignator: string | undefined): string | null {
   const designator = internationalDesignator?.trim().toUpperCase() ?? '';
-  const longForm = (/^(?<year>\d{4})-?(?<sequence>\d{3})(?:[A-Z].*)?$/u).exec(designator);
+  const longForm = (/^(?<year>\d{4})-?(?<sequence>\d{3})(?:[A-Z]{1,3})?$/u).exec(designator);
 
   if (longForm) {
     return `${longForm.groups!.year}-${longForm.groups!.sequence}`;
   }
-  const shortForm = (/^(?<year>\d{2})-?(?<sequence>\d{3})(?:[A-Z].*)?$/u).exec(designator);
+  const shortForm = (/^(?<year>\d{2})-?(?<sequence>\d{3})(?:[A-Z]{1,3})?$/u).exec(designator);
 
   if (!shortForm) {
     return null;

@@ -112,7 +112,13 @@ export class SatGlobeColorScheme extends ColorScheme {
       };
     }
 
-    return this.schemes_[this.encoding_].update(obj, params);
+    const delegatedScheme = this.schemes_[this.encoding_ as keyof typeof this.schemes_];
+
+    if (!delegatedScheme) {
+      return { color: objectColors[objectKindFromSpaceObjectType(obj.type)], pickable: Pickable.Yes };
+    }
+
+    return delegatedScheme.update(obj, params);
   }
 
   private hidden_(): ColorInformation {

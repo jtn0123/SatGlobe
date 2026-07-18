@@ -1,6 +1,10 @@
+import { once } from 'node:events';
 import { existsSync, readFileSync } from 'node:fs';
+import { request, type Server } from 'node:http';
+import type { AddressInfo } from 'node:net';
 import { resolve } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { runDevServer, startServer } from '../dev-server';
 import {
   LIVE_RELOAD_CLIENT_PATH,
   LIVE_RELOAD_CLIENT_SOURCE,
@@ -15,10 +19,57 @@ const INDEX_TEMPLATE_PATH = resolve(process.cwd(), 'public/index.html');
 const SERVICE_WORKER_BOOTSTRAP_PATH = resolve(process.cwd(), 'public/service-worker-bootstrap.js');
 const NGINX_CONFIG_PATH = resolve(process.cwd(), 'configs/satglobe/nginx.conf');
 
-function findInlineExecutableScripts(html: string): RegExpMatchArray[] {
-  return [...html.matchAll(/<script(?<attributes>[^>]*)>(?<body>[\s\S]*?)<\/script>/giu)]
-    .filter(({ groups }) => !(/\bsrc\s*=/iu).test(groups?.attributes ?? '')
-      && !(/\btype\s*=\s*(?:"application\/ld\+json"|'application\/ld\+json')/iu).test(groups?.attributes ?? ''));
+interface HttpResponse {
+  body: string;
+  headers: Record<string, string | string[] | undefined>;
+  status: number;
+}
+
+/** Make one bounded request against the live server. */
+function requestServer(port: number, path: string): Promise<HttpResponse> {
+  return new Promise((resolveResponse, reject) => {
+    const req = request({ host: '127.0.0.1', path, port }, (res) => {
+      let body = '';
+
+      res.setEncoding('utf8');
+      res.on('data', (chunk: string) => {
+        body += chunk;
+      });
+      res.on('end', () => resolveResponse({
+        body,
+        headers: res.headers,
+        status: res.statusCode ?? 0,
+      }));
+      res.on('error', reject);
+    });
+
+    req.setTimeout(500, () => req.destroy(new Error(`Request timed out: ${path}`)));
+    req.on('error', reject);
+    req.end();
+  });
+}
+
+/** Close a test server and fail if shutdown itself fails. */
+function closeServer(server: Server): Promise<void> {
+  return new Promise((resolveClose, reject) => {
+    server.close((error) => {
+      if (error) {
+        reject(error);
+
+        return;
+      }
+
+      resolveClose();
+    });
+  });
+}
+
+/** Find executable inline scripts using the browser's HTML parser. */
+function findInlineExecutableScripts(html: string): HTMLScriptElement[] {
+  const parsed = new DOMParser().parseFromString(html, 'text/html');
+
+  return [...parsed.querySelectorAll('script')]
+    .filter((script) => !script.hasAttribute('src') && script.type.toLowerCase() !== 'application/ld+json');
 }
 
 describe('dev-server HTML responses', () => {
@@ -42,7 +93,7 @@ describe('dev-server HTML responses', () => {
     expect(response).not.toContain('new EventSource');
     expect(response).toContain('</script></body>');
     expect(LIVE_RELOAD_CLIENT_SOURCE).toContain('new EventSource("/__reload")');
-    expect(SATGLOBE_CSP).toContain("script-src 'self'");
+    expect(SATGLOBE_CSP).toContain('script-src \'self\'');
   });
 
   it('keeps local SatGlobe and nginx Content-Security-Policy directives identical', () => {
@@ -69,7 +120,7 @@ describe('dev-server HTML responses', () => {
     expect(bootstrap).toContain('postMessage({ type: \'SKIP_WAITING\' })');
 
     const nginxConfig = readFileSync(NGINX_CONFIG_PATH, 'utf8');
-    const bootstrapLocation = nginxConfig.match(/location = \/service-worker-bootstrap\.js \{(?<body>[\s\S]*?)\n  \}/u)?.groups?.body;
+    const bootstrapLocation = nginxConfig.match(/location = \/service-worker-bootstrap\.js \{(?<body>[\s\S]*?)\n {2}\}/u)?.groups?.body;
 
     expect(bootstrapLocation).toContain('expires epoch;');
     expect(bootstrapLocation).not.toMatch(/^\s*add_header\b/mu);
@@ -77,12 +128,90 @@ describe('dev-server HTML responses', () => {
 
   it('checks script tags and attributes without case-sensitive gaps', () => {
     const scripts = findInlineExecutableScripts([
-      '<SCRIPT>window.inline = true;</SCRIPT>',
+      '<SCRIPT>window.inline = true;</SCRIPT >',
       '<SCRIPT SRC="./same-origin.js"></SCRIPT>',
       '<SCRIPT TYPE="APPLICATION/LD+JSON">{"name":"SatGlobe"}</SCRIPT>',
     ].join(''));
 
     expect(scripts).toHaveLength(1);
-    expect(scripts[0]?.groups?.body).toBe('window.inline = true;');
+    expect(scripts[0]?.textContent).toBe('window.inline = true;');
+  });
+});
+
+describe('dev-server startup', () => {
+  /** Create side-effect-free startup collaborators for orchestration tests. */
+  function createRuntime() {
+    return {
+      runBuildWatch: vi.fn(),
+      startServer: vi.fn(),
+      watchConfigDir: vi.fn(),
+      watchDist: vi.fn(),
+    };
+  }
+
+  it('watches the selected profile configuration in development mode', () => {
+    const runtime = createRuntime();
+
+    runDevServer(['--profile=satglobe'], runtime);
+
+    expect(runtime.runBuildWatch).toHaveBeenCalledWith(['--profile=satglobe']);
+    expect(runtime.startServer).toHaveBeenCalledWith(securityHeadersFor('satglobe'), true);
+    expect(runtime.watchDist).toHaveBeenCalledOnce();
+    expect(runtime.watchConfigDir).toHaveBeenCalledOnce();
+    expect(runtime.watchConfigDir).toHaveBeenCalledWith('satglobe');
+  });
+
+  it('does not start build or config watchers in static mode', () => {
+    const runtime = createRuntime();
+
+    runDevServer(['--static', '--profile=satglobe'], runtime);
+
+    expect(runtime.startServer).toHaveBeenCalledWith(securityHeadersFor('satglobe'), false);
+    expect(runtime.runBuildWatch).not.toHaveBeenCalled();
+    expect(runtime.watchDist).not.toHaveBeenCalled();
+    expect(runtime.watchConfigDir).not.toHaveBeenCalled();
+  });
+});
+
+describe('dev-server static HTTP boundary', () => {
+  let address: AddressInfo;
+  let server: Server;
+
+  beforeAll(async () => {
+    server = startServer({}, false, 0);
+    await once(server, 'listening');
+    address = server.address() as AddressInfo;
+  });
+
+  afterAll(async () => {
+    await closeServer(server);
+  });
+
+  it('binds to IPv4 loopback', () => {
+    expect(address.address).toBe('127.0.0.1');
+    expect(address.family).toBe('IPv4');
+  });
+
+  it('does not serve a decoded path that escapes dist', async () => {
+    const posixTraversal = await requestServer(address.port, '/%2e%2e%2fpackage.json');
+    const windowsTraversal = await requestServer(address.port, '/%2e%2e%5cpackage.json');
+
+    expect(posixTraversal).toMatchObject({ body: 'Not found', status: 404 });
+    expect(windowsTraversal).toMatchObject({ body: 'Not found', status: 404 });
+  });
+
+  it('does not dispatch the plugin handler in static mode', async () => {
+    const plugin = await requestServer(address.port, '/__plugin/not-a-command');
+
+    expect(plugin).toMatchObject({ body: 'Not found', status: 404 });
+    expect(plugin.headers['content-type']).toBeUndefined();
+  });
+
+  it('does not open the live-reload event stream in static mode', async () => {
+    const reload = await requestServer(address.port, '/__reload');
+    const reloadClient = await requestServer(address.port, LIVE_RELOAD_CLIENT_PATH);
+
+    expect(reload).toMatchObject({ body: 'Not found', status: 404 });
+    expect(reloadClient).toMatchObject({ body: 'Not found', status: 404 });
   });
 });

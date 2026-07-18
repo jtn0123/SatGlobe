@@ -7,6 +7,7 @@ describe('launch cohort colors', () => {
     expect(normalizeLaunchCohort('24001A')).toBe('2024-001');
     expect(normalizeLaunchCohort('99025X')).toBe('1999-025');
     expect(normalizeLaunchCohort('2024-001')).toBe('2024-001');
+    expect(normalizeLaunchCohort('2024-001ABC')).toBe('2024-001');
   });
 
   it('gives every object from the same launch the same deterministic color', () => {
@@ -41,6 +42,9 @@ describe('launch cohort colors', () => {
 
   it('uses one neutral color for absent and malformed designators', () => {
     expect(normalizeLaunchCohort('not-a-designator')).toBeNull();
+    expect(normalizeLaunchCohort('2019-074A/invalid')).toBeNull();
+    expect(normalizeLaunchCohort('2019-074A1')).toBeNull();
+    expect(normalizeLaunchCohort('2019-074ABCD')).toBeNull();
     expect(launchCohortColor(undefined)).toEqual(launchCohortColor('bad'));
   });
 });

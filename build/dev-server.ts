@@ -2,8 +2,8 @@ import { spawn } from 'node:child_process';
 import { cpSync, existsSync, watch } from 'node:fs';
 import { createServer, type ServerResponse } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
-import { dirname, extname, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { dirname, extname, isAbsolute, join, relative, resolve, sep } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
   LIVE_RELOAD_CLIENT_PATH,
   LIVE_RELOAD_CLIENT_SOURCE,
@@ -17,6 +17,7 @@ import { handlePluginEndpoint } from './plugin-install-endpoint';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const rootDir = resolve(__dirname, '..');
 const PORT = 5544;
+const LOOPBACK_HOST = '127.0.0.1';
 const distDir = resolve(rootDir, 'dist');
 
 // Maps config directory filenames to their dist/ destinations
@@ -47,7 +48,33 @@ const mimeTypes: Record<string, string> = {
 // SSE clients for livereload
 const sseClients = new Set<ServerResponse>();
 
-function startServer(securityHeaders: Record<string, string>, liveReloadEnabled: boolean) {
+/** End an unhandled request without exposing which server boundary rejected it. */
+function sendNotFound(res: ServerResponse): void {
+  if (!res.headersSent) {
+    res.writeHead(404);
+  }
+  res.end('Not found');
+}
+
+/** Resolve one decoded URL pathname only when the result remains inside dist/. */
+function resolveStaticPath(pathname: string): string | null {
+  const decodedPath = decodeURIComponent(pathname === '/' ? '/index.html' : pathname)
+    // URL paths use forward slashes, but a decoded backslash is a separator on Windows.
+    // Normalizing it here makes traversal handling identical on every host platform.
+    .replaceAll('\\', '/');
+  const rootedPath = decodedPath.startsWith('/') ? decodedPath : `/${decodedPath}`;
+  const candidate = resolve(distDir, `.${rootedPath}`);
+  const distRelativePath = relative(distDir, candidate);
+
+  if (distRelativePath === '..' || distRelativePath.startsWith(`..${sep}`) || isAbsolute(distRelativePath)) {
+    return null;
+  }
+
+  return candidate;
+}
+
+/** Serve the current dist directory with the requested headers and reload behavior. */
+export function startServer(securityHeaders: Record<string, string>, liveReloadEnabled: boolean, port = PORT) {
   const server = createServer(async (req, res) => {
     // Swallow socket-level errors (client aborts, RST). Without this listener a
     // write to a closed/aborted socket emits an unhandled 'error' that crashes the
@@ -60,7 +87,13 @@ function startServer(securityHeaders: Record<string, string>, liveReloadEnabled:
 
     // The SatGlobe CSP disallows executable inline scripts. Serve the development
     // reload client from a same-origin endpoint so live reload remains compatible.
-    if (liveReloadEnabled && pathname === LIVE_RELOAD_CLIENT_PATH) {
+    if (pathname === LIVE_RELOAD_CLIENT_PATH) {
+      if (!liveReloadEnabled) {
+        sendNotFound(res);
+
+        return;
+      }
+
       res.writeHead(200, {
         'Content-Type': 'application/javascript',
         'Cache-Control': 'no-store',
@@ -73,6 +106,12 @@ function startServer(securityHeaders: Record<string, string>, liveReloadEnabled:
 
     // SSE endpoint for livereload
     if (pathname === '/__reload') {
+      if (!liveReloadEnabled) {
+        sendNotFound(res);
+
+        return;
+      }
+
       res.writeHead(200, {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
@@ -86,13 +125,26 @@ function startServer(securityHeaders: Record<string, string>, liveReloadEnabled:
 
     // One-click plugin install (dev-server only; localhost + same-origin guarded).
     if (pathname.startsWith('/__plugin/')) {
+      if (!liveReloadEnabled) {
+        sendNotFound(res);
+
+        return;
+      }
+
       await handlePluginEndpoint(req, res, pathname, rootDir);
 
       return;
     }
 
     try {
-      let filePath = join(distDir, decodeURIComponent(pathname === '/' ? '/index.html' : pathname));
+      let filePath = resolveStaticPath(pathname);
+
+      if (!filePath) {
+        sendNotFound(res);
+
+        return;
+      }
+
       const fileStat = await stat(filePath).catch(() => null);
 
       if (fileStat?.isDirectory()) {
@@ -113,10 +165,7 @@ function startServer(securityHeaders: Record<string, string>, liveReloadEnabled:
       // Guard against "headers already sent" when the response was partially
       // written before the failure — calling writeHead again would throw out of
       // the catch and crash the process.
-      if (!res.headersSent) {
-        res.writeHead(404);
-      }
-      res.end('Not found');
+      sendNotFound(res);
     }
   });
 
@@ -136,17 +185,24 @@ function startServer(securityHeaders: Record<string, string>, liveReloadEnabled:
     logWithStyle(`Unhandled rejection (server kept alive): ${String(reason)}`, ConsoleStyles.ERROR);
   });
 
-  server.listen(PORT, () => {
-    logWithStyle(`Serving dist/ at http://localhost:${PORT}`, ConsoleStyles.SUCCESS);
+  server.listen(port, LOOPBACK_HOST, () => {
+    const address = server.address();
+    const listeningPort = typeof address === 'object' && address ? address.port : port;
+
+    logWithStyle(`Serving dist/ at http://${LOOPBACK_HOST}:${listeningPort}`, ConsoleStyles.SUCCESS);
   });
+
+  return server;
 }
 
+/** Notify every connected live-reload client that the build output changed. */
 function notifyClients() {
   for (const client of sseClients) {
     client.write('data: reload\n\n');
   }
 }
 
+/** Watch generated build output and debounce live-reload notifications. */
 function watchDist() {
   let debounce: ReturnType<typeof setTimeout> | null = null;
 
@@ -192,6 +248,7 @@ function watchConfigDir(profileName: string) {
   });
 }
 
+/** Reconcile generated assets and start the build toolchain in watch mode. */
 function runBuildWatch(args: string[]): void {
   const buildArgs = args.length > 0 ? args : ['development'];
 
@@ -241,33 +298,55 @@ function runBuildWatch(args: string[]): void {
   });
 }
 
+/** Read the selected profile name from CLI arguments. */
 function getProfileName(args: string[]): string | null {
   const profileArg = args.find((arg) => arg.startsWith('--profile='));
 
   return profileArg ? profileArg.split('=')[1] : null;
 }
 
-const cliArgs = process.argv.slice(2);
-const liveReloadEnabled = liveReloadEnabledFor(cliArgs);
-const isStaticOnly = !liveReloadEnabled;
-const requestedProfile = getProfileName(cliArgs);
-const securityHeaders = securityHeadersFor(requestedProfile);
+export interface DevServerRuntime {
+  runBuildWatch: typeof runBuildWatch;
+  startServer: typeof startServer;
+  watchConfigDir: typeof watchConfigDir;
+  watchDist: typeof watchDist;
+}
 
-if (isStaticOnly) {
-  startServer(securityHeaders, liveReloadEnabled);
-} else {
+const defaultRuntime: DevServerRuntime = {
+  runBuildWatch,
+  startServer,
+  watchConfigDir,
+  watchDist,
+};
+
+/** Start the static server or the full development server for the supplied CLI arguments. */
+export function runDevServer(cliArgs: string[], runtime: DevServerRuntime = defaultRuntime): void {
+  const liveReloadEnabled = liveReloadEnabledFor(cliArgs);
+  const requestedProfile = getProfileName(cliArgs);
+  const securityHeaders = securityHeadersFor(requestedProfile);
+
+  if (!liveReloadEnabled) {
+    runtime.startServer(securityHeaders, liveReloadEnabled);
+
+    return;
+  }
+
   const args = cliArgs.filter((arg) => arg !== '--static');
   const profileName = getProfileName(args);
 
   // Start build in watch mode (non-blocking)
-  runBuildWatch(args);
+  runtime.runBuildWatch(args);
 
   // Start server and file watchers
-  startServer(securityHeaders, liveReloadEnabled);
-  watchDist();
+  runtime.startServer(securityHeaders, liveReloadEnabled);
+  runtime.watchDist();
 
   // Watch config directory for non-rspack file changes
   if (profileName) {
-    watchConfigDir(profileName);
+    runtime.watchConfigDir(profileName);
   }
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  runDevServer(process.argv.slice(2));
 }
