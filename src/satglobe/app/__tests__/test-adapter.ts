@@ -50,6 +50,7 @@ export function makeAdapter({ state: stateOverrides = {}, objects = [] }: TestAd
     clearSelection: vi.fn((): void => undefined),
     setSimulationTime: vi.fn((_iso: string): void => undefined),
     setPlaybackRate: vi.fn((_rate: number): void => undefined),
+    captureSnapshot: vi.fn((): Promise<Blob> => Promise.resolve(new Blob(['snapshot'], { type: 'image/png' }))),
     setCamera: vi.fn((_pose: Parameters<SatGlobeEngineAdapter['setCamera']>[0]): void => undefined),
     setFilters: vi.fn((_filters: Parameters<SatGlobeEngineAdapter['setFilters']>[0]): void => undefined),
     setEncoding: vi.fn((_encoding: Parameters<SatGlobeEngineAdapter['setEncoding']>[0]): void => undefined),

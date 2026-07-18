@@ -13,6 +13,7 @@ import {
   type VisualEncoding,
 } from '../domain/types';
 import { LENS_APPLY_MEASURE, measureSync } from '../runtime/performance-measure';
+import { downloadSnapshot } from '../runtime/snapshot-download';
 import { storySimulationAnchor, storySimulationTime } from '../domain/story-time';
 import { storyLibrary } from '../stories';
 import { DiscoverPanel, getQuickLensState, type QuickLens } from './discover-panel';
@@ -108,6 +109,75 @@ function useQuickLensHandlers(
   return { conjunctionLens, quickLens };
 }
 
+/** Owns the UI guard and object-URL download lifecycle for one requested frame. */
+function useSnapshotExport(
+  adapter: SatGlobeEngineAdapter,
+  ready: boolean,
+  context: string,
+  onNotice: (notice: string) => void,
+) {
+  const [busy, setBusy] = useState(false);
+  const mountedRef = useRef(true);
+  const pendingRef = useRef(false);
+
+  useEffect(() => {
+    mountedRef.current = true;
+
+    return () => {
+      mountedRef.current = false;
+      pendingRef.current = false;
+    };
+  }, []);
+  const request = useCallback(() => {
+    if (!ready || pendingRef.current) {
+      return;
+    }
+    pendingRef.current = true;
+    setBusy(true);
+    onNotice('');
+    const onFailure = (error: unknown) => {
+      const detail = error instanceof Error && error.message ? ` ${error.message}` : '';
+
+      if (mountedRef.current) {
+        onNotice(`Snapshot failed.${detail} No file was downloaded.`);
+      }
+    };
+    const onSettled = () => {
+      pendingRef.current = false;
+      if (mountedRef.current) {
+        setBusy(false);
+      }
+    };
+    let capture: Promise<Blob>;
+
+    try {
+      capture = adapter.captureSnapshot();
+    } catch (error) {
+      onFailure(error);
+      onSettled();
+
+      return;
+    }
+    capture
+      .then((blob) => {
+        if (!mountedRef.current) {
+          return null;
+        }
+
+        return downloadSnapshot(blob, context);
+      })
+      .then((filename) => {
+        if (filename && mountedRef.current) {
+          onNotice(`Downloaded canvas-only snapshot as ${filename}. Interface panels and captions were not included.`);
+        }
+      })
+      .catch(onFailure)
+      .finally(onSettled);
+  }, [adapter, context, onNotice, ready]);
+
+  return { busy, request };
+}
+
 /** Coordinates SatGlobe's workshop, presentation, and story states. */
 export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
   const [engine, setEngine] = useState<EngineState>(adapter.getState());
@@ -123,6 +193,7 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
   const [storyId, setStoryId] = useState(storyLibrary[0].id);
   const story = storyLibrary.find(({ id }) => id === storyId) ?? storyLibrary[0];
   const storyTimeAnchorRef = useRef(engine.simulationTime);
+  const { busy: snapshotBusy, request: requestSnapshot } = useSnapshotExport(adapter, engine.ready, mode === 'story' ? story.id : 'view', setNotice);
   const { conjunctionLens, quickLens } = useQuickLensHandlers(adapter, setFiltersWithEncodingImmediate, engine.conjunctions.catalogIds, engine.conjunctionHighlightActive);
   const { applyLaunchYear, launchBounds } = useLaunchTimelapse(adapter, setFiltersWithEncodingImmediate);
 
@@ -336,7 +407,7 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
       <div className="sg-small-screen-note" role="note">SatGlobe is designed for larger screens — panels are limited at this size.</div>
       {/* display:contents wrapper; keeps the booting shell out of the tab order behind the loading overlay */}
       <div className="sg-boot-guard" inert={!engine.ready || undefined}>
-      <TopBar mode={mode} newestElementAge={newestElementAge} objectCount={engine.objectCount} onModeChange={switchMode} onStoryOpen={openStory} ready={engine.ready} storyCount={storyLibrary.length} />
+      <TopBar mode={mode} newestElementAge={newestElementAge} objectCount={engine.objectCount} onModeChange={switchMode} onSnapshot={requestSnapshot} onStoryOpen={openStory} ready={engine.ready} snapshotBusy={snapshotBusy} storyCount={storyLibrary.length} />
 
       {launchTimelapseVisible && launchBounds && <LaunchTimelapse activeYear={filters.launchYearMax} bounds={launchBounds} onYearChange={applyLaunchYear} />}
 
@@ -385,7 +456,7 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
       </div>
       {notice && (
         <div className="sg-notice" data-testid="app-notice">
-          <span aria-live="polite" role="status">{notice}</span>
+          <span aria-live={notice.startsWith('Snapshot failed.') ? 'assertive' : 'polite'} role={notice.startsWith('Snapshot failed.') ? 'alert' : 'status'}>{notice}</span>
           <button aria-label="Dismiss notice" className="sg-icon-button" onClick={() => setNotice('')} type="button">
             <Icon name="close" size={14} />
           </button>

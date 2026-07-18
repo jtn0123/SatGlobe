@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Download, type Page } from '@playwright/test';
 import { conjunctionFeedV1Schema } from '../domain/conjunctions';
 import type { ConjunctionFeedV1, ConjunctionObjectRef } from '../domain/types';
 import {
@@ -30,6 +30,94 @@ interface WorkshopTestContext {
 
 const workshopContextByPage = new WeakMap<Page, WorkshopTestContext>();
 let bundledFixtureSubjectsPromise: Promise<BundledFixtureSubjects> | null = null;
+
+interface CanvasBackingSize {
+  height: number;
+  width: number;
+}
+
+/** Reads the PNG header and asks Chromium to decode and sample the exported pixels. */
+async function expectDecodedSnapshot(
+  page: Page,
+  download: Download,
+  expectedContext: string,
+  backingSize: CanvasBackingSize,
+): Promise<void> {
+  const filePath = await download.path();
+
+  if (!filePath) {
+    throw new Error('Playwright did not retain the downloaded PNG.');
+  }
+  const bytes = await readFile(filePath);
+
+  expect(download.suggestedFilename()).toMatch(new RegExp(`^satglobe-${expectedContext}-\\d{8}T\\d{6}Z\\.png$`, 'u'));
+  expect([...bytes.subarray(0, 8)]).toEqual([137, 80, 78, 71, 13, 10, 26, 10]);
+  expect(bytes.readUInt32BE(8)).toBe(13);
+  expect(bytes.subarray(12, 16).toString('ascii')).toBe('IHDR');
+  expect(bytes.readUInt32BE(16)).toBe(backingSize.width);
+  expect(bytes.readUInt32BE(20)).toBe(backingSize.height);
+
+  const decoded = await page.evaluate(async (base64) => {
+    const binary = atob(base64);
+    const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
+    const bitmap = await createImageBitmap(new Blob([bytes], { type: 'image/png' }));
+    const sample = document.createElement('canvas');
+
+    sample.width = 64;
+    sample.height = 64;
+    const context = sample.getContext('2d', { willReadFrequently: true });
+
+    if (!context) {
+      bitmap.close();
+      throw new Error('Chromium could not create a 2D sampling context.');
+    }
+    context.drawImage(bitmap, 0, 0, sample.width, sample.height);
+    const pixels = context.getImageData(0, 0, sample.width, sample.height).data;
+    let luminanceTotal = 0;
+    let luminanceSquaredTotal = 0;
+    let opaquePixels = 0;
+
+    for (let offset = 0; offset < pixels.length; offset += 4) {
+      const luminance = pixels[offset] * 0.2126 + pixels[offset + 1] * 0.7152 + pixels[offset + 2] * 0.0722;
+
+      luminanceTotal += luminance;
+      luminanceSquaredTotal += luminance * luminance;
+      if (pixels[offset + 3] > 0) {
+        opaquePixels++;
+      }
+    }
+    const sampleCount = pixels.length / 4;
+    const mean = luminanceTotal / sampleCount;
+    const decodedSize = { height: bitmap.height, width: bitmap.width };
+
+    bitmap.close();
+
+    return {
+      height: decodedSize.height,
+      opaquePixels,
+      variance: luminanceSquaredTotal / sampleCount - mean * mean,
+      width: decodedSize.width,
+    };
+  }, bytes.toString('base64'));
+
+  expect(decoded.width).toBe(backingSize.width);
+  expect(decoded.height).toBe(backingSize.height);
+  expect(decoded.opaquePixels).toBeGreaterThan(0);
+  expect(decoded.variance).toBeGreaterThan(0.01);
+}
+
+/** Captures the current production frame and validates its backing-store dimensions. */
+async function captureAndExpectSnapshot(page: Page, expectedContext: string): Promise<void> {
+  const backingSize = await page.locator('#keeptrack-canvas').evaluate((canvas) => ({
+    height: (canvas as HTMLCanvasElement).height,
+    width: (canvas as HTMLCanvasElement).width,
+  }));
+  const pendingDownload = page.waitForEvent('download');
+
+  await page.getByTestId('snapshot-export').click();
+  await expectDecodedSnapshot(page, await pendingDownload, expectedContext, backingSize);
+  await expect(page.getByTestId('app-notice')).toContainText('Downloaded canvas-only snapshot');
+}
 
 /** Shares one immutable catalog read across the production journeys. */
 function loadBundledFixtureSubjects(): Promise<BundledFixtureSubjects> {
@@ -220,6 +308,32 @@ test.describe('SatGlobe workshop', () => {
 
     expect(response.ok()).toBe(true);
     expect(conjunctionFeedV1Schema.parse(await response.json()).conjunctions.length).toBeGreaterThan(0);
+  });
+
+  test('exports decoded full-resolution PNG frames without retaining the drawing buffer', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 720 });
+    const contextSettings = await page.locator('#keeptrack-canvas').evaluate((canvas) => {
+      const gl = (canvas as HTMLCanvasElement).getContext('webgl2');
+
+      return {
+        actual: gl?.getContextAttributes()?.preserveDrawingBuffer,
+        configured: window.settingsManager.isPreserveDrawingBuffer,
+      };
+    });
+
+    expect(contextSettings).toEqual({ actual: false, configured: false });
+
+    await page.getByRole('button', { name: 'Present' }).click();
+    await expect(page.getByText('A living orbital environment')).toBeVisible();
+    await captureAndExpectSnapshot(page, 'view');
+
+    await page.getByTestId('story-mode').click();
+    await expect(page.getByTestId('story-deck')).toContainText('Before the shell');
+    await page.getByRole('button', { name: 'Next beat' }).click();
+    await expect(page.getByTestId('story-deck')).toContainText('One launch, one catalog cohort');
+    const storyId = await page.getByTestId('story-picker').inputValue();
+
+    await captureAndExpectSnapshot(page, storyId);
   });
 
   test('filters, inspects, presents, tells a story, and exports a view', async ({ page }) => {

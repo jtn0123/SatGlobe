@@ -64,6 +64,18 @@ button {
   vertical-align: middle;
 }
 
+.sg-visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
 .sg-topbar {
   position: absolute;
   z-index: 10;
@@ -188,12 +200,46 @@ button {
   background: currentColor;
 }
 
+.sg-topbar-actions {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sg-snapshot-button {
+  width: 36px;
+  height: 36px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--sg-line, rgba(176, 208, 202, 0.18));
+  background: rgba(0, 0, 0, 0.22);
+  color: var(--sg-cyan, #8ad5cf);
+  cursor: pointer;
+}
+
+.sg-snapshot-button:hover:not(:disabled),
+.sg-snapshot-button:focus-visible {
+  border-color: rgba(138, 213, 207, 0.58);
+  background: rgba(138, 213, 207, 0.12);
+}
+
+.sg-snapshot-button[aria-busy='true'] .sg-icon {
+  animation: sg-spin 900ms linear infinite;
+}
+
+.sg-snapshot-button:disabled {
+  color: var(--sg-ink-muted, #b9c0bd);
+  cursor: wait;
+  opacity: 0.62;
+}
+
 .sg-mode-switcher {
   position: relative !important;
   inset: auto !important;
   width: auto !important;
   height: auto !important;
-  justify-self: end;
   display: flex;
   align-items: center;
   padding: 3px;

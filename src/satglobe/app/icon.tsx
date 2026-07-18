@@ -1,4 +1,4 @@
-export type IconName = 'search' | 'chevron' | 'layers' | 'clock' | 'bookmark' | 'export' | 'import' | 'close' | 'play' | 'pause' | 'previous' | 'next' | 'focus' | 'info';
+export type IconName = 'search' | 'chevron' | 'layers' | 'clock' | 'bookmark' | 'export' | 'import' | 'close' | 'play' | 'pause' | 'previous' | 'next' | 'focus' | 'info' | 'camera';
 
 const iconPaths: Record<IconName, string> = {
   search: 'M11 4a7 7 0 1 0 4.9 12l4 4 1.1-1.1-4-4A7 7 0 0 0 11 4Zm0 2a5 5 0 1 1 0 10 5 5 0 0 1 0-10Z',
@@ -15,6 +15,7 @@ const iconPaths: Record<IconName, string> = {
   next: 'M16 5h2v14h-2V5ZM6 5l9 7-9 7V5Z',
   focus: 'M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5',
   info: 'M11 10h2v8h-2v-8Zm0-4h2v2h-2V6ZM12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Z',
+  camera: 'M9 4 7.5 6H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-3.5L15 4H9Zm3 4.5a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9Zm0 2a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Z',
 };
 
 /** Renders a compact inline icon from the SatGlobe visual language. */

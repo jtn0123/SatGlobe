@@ -223,6 +223,11 @@ export class SatGlobeEngineAdapter {
     ServiceLocator.getTimeManager().changePropRate(rate, false);
   }
 
+  /** Captures the next completed WebGL frame without retaining the drawing buffer. */
+  captureSnapshot(): Promise<Blob> {
+    return ServiceLocator.getRenderer().captureNextFrame();
+  }
+
   setCamera(pose: CameraPose): void {
     const camera = ServiceLocator.getMainCamera();
     const { state } = camera;
@@ -335,6 +340,7 @@ export class SatGlobeEngineAdapter {
 
   dispose(): void {
     this.disposed_ = true;
+    ServiceLocator.getRenderer().cancelFrameCapture();
     if (this.interval_ !== null) {
       window.clearInterval(this.interval_);
     }
