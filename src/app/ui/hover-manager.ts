@@ -1,4 +1,5 @@
 import { country2flagIcon } from '@app/app/data/catalogs/countries';
+import { escapeHtml } from '@app/engine/utils/escape-html';
 import { DetailedSensor } from '@app/app/sensors/DetailedSensor';
 import { CameraType } from '@app/engine/camera/camera-type';
 import { SolarBody } from '@app/engine/core/interfaces';
@@ -81,7 +82,7 @@ export class HoverManager {
 
     this.satHoverBoxNode1.textContent = obj.name;
     this.satHoverBoxNode2.innerHTML =
-      `${obj.country + SensorMath.distanceString(obj, catalogManagerInstance.getObject(ServiceLocator.getSensorManager().currentSensors[0]?.id) as DetailedSensor)}`;
+      `${escapeHtml(obj.country) + SensorMath.distanceString(obj, catalogManagerInstance.getObject(ServiceLocator.getSensorManager().currentSensors[0]?.id) as DetailedSensor)}`;
     this.satHoverBoxNode3.textContent = '';
     this.satHoverBoxNode3.style.display = 'none';
   }
@@ -220,7 +221,7 @@ export class HoverManager {
   }
 
   private missile_(missile: MissileObject) {
-    this.satHoverBoxNode1.innerHTML = `<span>${missile.name}</span><span>${missile.desc}</span>`;
+    this.satHoverBoxNode1.innerHTML = `<span>${escapeHtml(missile.name)}</span><span>${escapeHtml(missile.desc)}</span>`;
     this.satHoverBoxNode2.textContent = '';
     this.satHoverBoxNode2.style.display = 'none';
     this.satHoverBoxNode3.textContent = '';
@@ -262,7 +263,7 @@ export class HoverManager {
 
       this.satHoverBoxNode1.innerHTML = html`
         <span id="hoverbox-fi"></span>
-        <span>${sat.name}</span>
+        <span>${escapeHtml(sat.name)}</span>
         <span style='color:${color};'>${confidenceScoreString}</span>
       `;
 
@@ -297,7 +298,7 @@ export class HoverManager {
 
     this.satHoverBoxNode3.innerHTML = html`
         <span id="hoverbox-fi"></span>
-        <span>${country}</span>
+        <span>${escapeHtml(country)}</span>
       `;
 
     getEl('hoverbox-fi')!.classList.value = `fi ${country2flagIcon(sat.country)}`;
@@ -393,7 +394,7 @@ export class HoverManager {
       const isTelescope = sensor.type === SpaceObjectType.OPTICAL;
 
       this.satHoverBoxNode2.textContent = sensor.country ?? 'Unknown';
-      this.satHoverBoxNode3.innerHTML = (!isTelescope && sensor.freqBand) ? `${sensor.system} (${sensor.freqBand})` : sensor.system ?? 'Unknown';
+      this.satHoverBoxNode3.innerHTML = (!isTelescope && sensor.freqBand) ? `${escapeHtml(sensor.system ?? 'Unknown')} (${escapeHtml(sensor.freqBand)})` : escapeHtml(sensor.system ?? 'Unknown');
     }
   }
 

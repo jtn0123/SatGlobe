@@ -65,6 +65,20 @@ describe('code_snippet', () => {
     expect(getEl('sat-hoverbox3')).toBeDefined();
   });
 
+  // Hostile catalog-derived names must render inert (same class as the search-manager fix).
+  it('escapes catalog-derived strings in the hover box', () => {
+    hoverManager.init();
+    const hostile = { name: '<img src=x onerror="window.pwned=1">', desc: '<script>window.pwned=1</script>' };
+
+    // eslint-disable-next-line dot-notation -- private-method access under TS requires bracket notation
+    hoverManager['missile_'](hostile as never);
+    const node1 = getEl('sat-hoverbox1')!;
+
+    expect(node1.querySelector('img')).toBeNull();
+    expect(node1.querySelector('script')).toBeNull();
+    expect(node1.textContent).toContain('<img src=x onerror=');
+  });
+
   // Tests that currentHoverId is updated and updateHover_() is called.
   it('test_set_hover_id', () => {
     hoverManager.setHoverId(1);

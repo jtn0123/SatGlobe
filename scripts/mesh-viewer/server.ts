@@ -148,7 +148,8 @@ const server = http.createServer((req, res) => {
   }
 });
 
-server.listen(port, () => {
+// Loopback only: a dev tool has no business being LAN-reachable.
+server.listen(port, '127.0.0.1', () => {
   const address = `http://localhost:${port}`;
 
   // eslint-disable-next-line no-console

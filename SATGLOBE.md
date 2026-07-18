@@ -6,13 +6,15 @@ SatGlobe turns the KeepTrack orbital engine into a local-first, presentation-rea
 
 Requirements: Node.js 24, npm, Git with Git LFS, and a browser with WebGL 2.
 
+**Git LFS is required** — without it the catalog checks out as a tiny pointer file and the app renders an empty sky.
+
 ```bash
 git lfs install
-git submodule update --init src/engine/ootk
 npm ci
-npm run generate-t7e
 npm run start:satglobe
 ```
+
+The dev server regenerates translations on start; the orbital toolkit (`src/engine/ootk`) is vendored in the tree, so no submodule setup is needed.
 
 Open `http://localhost:5544`. The private KeepTrack Pro submodule is not required and is intentionally absent from SatGlobe.
 
@@ -30,7 +32,7 @@ The application loads the checked-in `public/tle/tle.json` snapshot. Browser run
 - Workshop provides local catalog search, quick lenses, combined object and orbital filters, data-driven color encodings, an object inspector, time control, and portable saved-view JSON.
 - Present collapses the instrument panels into a calm title composition without changing engine state.
 - Story plays the validated five-beat “Building a shell” Starlink narrative over the same scene. Historical beats display `Reconstructed`; the current beat uses the installed propagated catalog.
-- `F` toggles presentation, `Escape` returns to Workshop, and the arrow/space controls navigate a story when Story mode is open.
+- `/` focuses the catalog search, `?` shows the shortcuts legend, `F` toggles presentation, `Escape` returns to Workshop, and the arrow/space controls navigate a story when Story mode is open.
 
 Satellite marks use semantic scale by default. They are enlarged for legibility. True-scale comparison is a disclosure state: most real spacecraft are too small to remain visible at planetary scale.
 

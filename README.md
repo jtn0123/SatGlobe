@@ -20,13 +20,13 @@ SatGlobe does not call predicted positions live telemetry. Browser positions are
 
 Requirements: Node.js 24, npm, Git with Git LFS, and a browser with WebGL 2.
 
+**Git LFS is required** — without it the 19 MB catalog checks out as a pointer file and the app renders an empty sky. The orbital toolkit (`src/engine/ootk`) is vendored in the tree; no submodule setup is needed.
+
 ```bash
 git clone https://github.com/jtn0123/SatGlobe.git
 cd SatGlobe
 git lfs install
-git submodule update --init src/engine/ootk
 npm ci
-npm run generate-t7e
 npm run start:satglobe
 ```
 
@@ -45,6 +45,8 @@ The application reads bundled catalogs, imagery, fonts, and story data. It has n
 
 | Key | Action |
 | --- | --- |
+| `/` | Focus the catalog search |
+| `?` | Show / hide the shortcuts legend |
 | `F` | Toggle the quiet presentation view |
 | `Escape` | Return to the Workshop |
 | `←` / `→` | Previous / next story beat (Story mode) |

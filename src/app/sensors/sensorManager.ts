@@ -23,6 +23,7 @@
  * /////////////////////////////////////////////////////////////////////////////
  */
 
+import { escapeHtml } from '@app/engine/utils/escape-html';
 import { SatMath, SunStatus } from '@app/app/analysis/sat-math';
 import { sensors } from '@app/app/data/catalogs/sensors';
 import { DetailedSensor } from '@app/app/sensors/DetailedSensor';
@@ -383,7 +384,7 @@ export class SensorManager {
       const sensorInfoTitleDom = getEl('sensor-info-title', true);
 
       if (sensorInfoTitleDom) {
-        sensorInfoTitleDom.innerHTML = `<a href=''>${this.currentSensors[0].name}</a>`;
+        sensorInfoTitleDom.innerHTML = `<a href=''>${escapeHtml(this.currentSensors[0].name)}</a>`;
         const url = this.currentSensors[0]?.url;
 
         if (url && url.length > 0) {
@@ -442,7 +443,7 @@ export class SensorManager {
             const sensorInfoTitleDom = getEl('sensor-info-title', true);
 
             if (sensorInfoTitleDom) {
-              sensorInfoTitleDom.innerHTML = `<a href=''>${this.currentSensors[0].name}</a>`;
+              sensorInfoTitleDom.innerHTML = `<a href=''>${escapeHtml(this.currentSensors[0].name)}</a>`;
               const url = this.currentSensors[0].url;
 
               if (url && url.length > 0) {
