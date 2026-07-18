@@ -8,6 +8,9 @@ const chromiumArgs = process.env.CI
 export default defineConfig({
   testDir: './src',
   testMatch: '**/__tests__/*.spec.ts',
+  // Keep disposable Playwright traces/screenshots away from durable SatGlobe
+  // story evidence stored in the sibling test-results/satglobe-story-shots/.
+  outputDir: './test-results/playwright',
   // No-op unless E2E_COVERAGE=1; clears/generates the monocart V8 coverage report.
   globalSetup: './test/e2e/coverage-setup.ts',
   globalTeardown: './test/e2e/coverage-teardown.ts',

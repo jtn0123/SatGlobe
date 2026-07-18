@@ -4,7 +4,7 @@ import { EventBus } from '@app/engine/events/event-bus';
 import { EventBusEvent } from '@app/engine/events/event-bus-events';
 import { errorManagerInstance } from '@app/engine/utils/errorManager';
 import { SelectSatManager } from '@app/plugins/select-sat-manager/select-sat-manager';
-import { BaseObject, PayloadStatus, Satellite } from '@ootk/src/main';
+import { BaseObject, PayloadStatus, Radians, Satellite } from '@ootk/src/main';
 import { prepareFilterMatcher } from '../domain/filters';
 import { classifyOrbit, tleEpochToIso } from '../domain/orbits';
 import {
@@ -159,12 +159,24 @@ export class SatGlobeEngineAdapter {
   }
 
   setCamera(pose: CameraPose): void {
-    const state = ServiceLocator.getMainCamera().state;
+    const camera = ServiceLocator.getMainCamera();
+    const { state } = camera;
 
-    state.camPitchTarget = pose.pitch as typeof state.camPitchTarget;
-    state.camYawTarget = pose.yaw as typeof state.camYawTarget;
+    // Authored poses are absolute at the current simulation epoch. A time jump
+    // must establish a new GMST baseline instead of rotating this fresh yaw by
+    // the delta from the preceding frame.
+    state.hasPrevGmst = false;
+    // KeepTrack starts with left auto-rotation enabled. Leaving it active while
+    // chasing an authored yaw creates a permanent offset instead of a settled
+    // view, so an explicit SatGlobe camera command also stops that ambient spin.
+    camera.autoRotate(false);
+    // camSnap restores the target-following flag that pointer drags disable, so
+    // a later story beat or "Authored view" action moves the real camera again.
+    camera.camSnap(pose.pitch as Radians, pose.yaw as Radians);
+    // KeepTrack's zoom guard cancels a target when this direction bit still
+    // describes the preceding gesture/beat instead of the authored target.
+    state.isZoomIn = pose.zoom < state.zoomLevel;
     state.zoomTarget = pose.zoom;
-    this.patchState_({ camera: pose });
   }
 
   setFilters(filters: FilterState): void {
@@ -293,9 +305,13 @@ export class SatGlobeEngineAdapter {
       // Time and camera services register in phases during startup; retry next tick.
       return;
     }
-    const pitch = Number(camera.camPitchTarget);
-    const yaw = Number(camera.camYawTarget);
-    const zoom = camera.zoomTarget;
+    // Public state represents the rendered pose, not the destination. Pointer
+    // drags and authored transitions both move these current values; exposing
+    // targets here made saved views and authoring captures silently stale and
+    // let screenshot verification pass before the camera arrived.
+    const pitch = Number(camera.camPitch);
+    const yaw = Number(camera.camYaw);
+    const zoom = camera.zoomLevel;
     const current = this.state_;
     const timeChanged = current.simulationTime !== simulationTimeIso;
     const cameraChanged = current.camera.pitch !== pitch || current.camera.yaw !== yaw || current.camera.zoom !== zoom;

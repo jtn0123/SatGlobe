@@ -32,14 +32,21 @@ test.describe('SatGlobe workshop', () => {
     await expect(page.getByTestId('encoding-select')).toHaveValue('orbital-plane');
 
     const search = page.getByTestId('catalog-search');
+    const readZoom = () => page.evaluate(() => window.satGlobe?.getState().camera.zoom ?? Number.NaN);
+
+    await expect.poll(async () => {
+      const first = await readZoom();
+
+      await page.waitForTimeout(100);
+
+      return Math.abs((await readZoom()) - first);
+    }).toBeLessThan(0.00005);
     const cameraBeforeSelection = await page.evaluate(() => window.satGlobe?.getState().camera);
 
     await search.fill('STARLINK-1008');
     await page.getByTestId('search-results').getByRole('button').first().click();
     await expect(page.getByTestId('object-inspector')).toContainText('STARLINK');
-    const cameraAfterSelection = await page.evaluate(() => window.satGlobe?.getState().camera);
-
-    expect(cameraAfterSelection?.zoom).toBeCloseTo(cameraBeforeSelection?.zoom ?? 0, 4);
+    await expect.poll(readZoom).toBeCloseTo(cameraBeforeSelection?.zoom ?? 0, 4);
     expect(await page.evaluate(() => window.settingsManager.isFocusOnSatelliteWhenSelected)).toBe(false);
     expect(await page.evaluate(() => window.settingsManager.noMeshManager)).toBe(true);
     await expect(page.getByTestId('scale-disclosure')).toContainText('SEMANTIC SCALE');
@@ -54,7 +61,7 @@ test.describe('SatGlobe workshop', () => {
     await page.getByTestId('story-mode').click();
     await expect(page.getByTestId('story-deck')).toContainText('Before the shell');
     await page.getByRole('button', { name: 'Next beat' }).click();
-    await expect(page.getByTestId('story-deck')).toContainText('A train appears');
+    await expect(page.getByTestId('story-deck')).toContainText('One launch, one catalog cohort');
     await page.getByTestId('story-play').click();
     await expect(page.getByTestId('story-play')).toHaveAttribute('aria-label', 'Pause story');
     await page.getByRole('button', { name: 'Open workshop' }).click();

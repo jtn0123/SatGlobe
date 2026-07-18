@@ -146,6 +146,14 @@ export interface StoryBeat {
   camera: CameraPose;
   encoding: VisualEncoding;
   constellation?: string;
+  /** Optional launch-date/designator substring applied through the existing catalog filter. */
+  launchCohort?: string;
+  /** Hours from the simulation-time anchor captured when the current story session began. */
+  simulationTimeOffsetHours?: number;
+  /** Optional catalog object whose propagated orbit line makes a sparse story subject legible. */
+  orbitCatalogId?: string;
+  /** Optional catalog objects whose propagated orbit lines make a multi-plane story subject legible. */
+  orbitCatalogIds?: string[];
   /** Optional per-beat departures from DEFAULT_FILTERS (e.g. showing debris for a collision chapter). */
   filterOverrides?: Pick<Partial<FilterState>, 'objectKinds' | 'status' | 'regimes'>;
   reconstruction: 'observed' | 'reconstructed';

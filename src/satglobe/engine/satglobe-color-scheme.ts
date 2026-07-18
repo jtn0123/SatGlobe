@@ -2,13 +2,11 @@ import { ColorInformation, Pickable, rgbaArray } from '@app/engine/core/interfac
 import { BaseObject, Satellite } from '@ootk/src/main';
 import { ColorScheme, ColorSchemeParams } from '@app/engine/rendering/color-schemes/color-scheme';
 import { GpAgeColorScheme } from '@app/engine/rendering/color-schemes/gp-age-color-scheme';
-import { MissionColorScheme } from '@app/engine/rendering/color-schemes/mission-color-scheme';
-import { ObjectTypeColorScheme } from '@app/engine/rendering/color-schemes/object-type-color-scheme';
 import { OrbitalPlaneDensityColorScheme } from '@app/engine/rendering/color-schemes/orbital-plane-density-color-scheme';
-import { StarlinkColorScheme } from '@app/engine/rendering/color-schemes/starlink-color-scheme';
 import { prepareFilterMatcher, type FilterableSpaceObject, type FilterMatcher } from '../domain/filters';
 import { classifyOrbit } from '../domain/orbits';
 import type { FilterState, ObjectKind, OrbitRegime, VisualEncoding } from '../domain/types';
+import { launchCohortColor } from './launch-cohort-color';
 import { isKnownActivePayloadStatus, objectKindFromSpaceObjectType } from './satglobe-object-state';
 
 const regimeColors: Record<OrbitRegime, rgbaArray> = {
@@ -45,7 +43,7 @@ export class SatGlobeColorScheme extends ColorScheme {
    * objects per recolor. Keyed weakly so catalog reloads release entries.
    */
   private readonly filterableViews_ = new WeakMap<Satellite, FilterableSpaceObject>();
-  private readonly schemes_: Record<Exclude<VisualEncoding, 'orbit-regime'>, ColorScheme>;
+  private readonly schemes_: Record<'orbital-plane' | 'data-age', ColorScheme>;
 
   constructor(filters: FilterState, encoding: VisualEncoding) {
     super({
@@ -58,13 +56,9 @@ export class SatGlobeColorScheme extends ColorScheme {
     this.encoding_ = encoding;
     this.matcher_ = prepareFilterMatcher(filters);
     this.schemes_ = {
-      'object-type': new ObjectTypeColorScheme(),
-      'launch-cohort': new MissionColorScheme(),
       'orbital-plane': new OrbitalPlaneDensityColorScheme(),
       'data-age': new GpAgeColorScheme(),
-      starlink: new StarlinkColorScheme(),
     };
-    this.schemes_.starlink.objectTypeFlags.starlinkNot = false;
   }
 
   setState(filters: FilterState, encoding: VisualEncoding): void {
@@ -73,7 +67,7 @@ export class SatGlobeColorScheme extends ColorScheme {
   }
 
   calculateParams() {
-    if (this.encoding_ === 'orbit-regime') {
+    if (this.encoding_ !== 'orbital-plane' && this.encoding_ !== 'data-age') {
       return null;
     }
 
@@ -100,6 +94,10 @@ export class SatGlobeColorScheme extends ColorScheme {
       return { color: objectColors[objectKindFromSpaceObjectType(obj.type)], pickable: Pickable.Yes };
     }
 
+    if (this.encoding_ === 'launch-cohort') {
+      return { color: launchCohortColor(sat.intlDes), pickable: Pickable.Yes };
+    }
+
     if (this.encoding_ === 'starlink') {
       const isOperational = isKnownActivePayloadStatus(sat.status);
       const isStarlink = sat.name.toLocaleLowerCase().startsWith('starlink');
@@ -114,7 +112,13 @@ export class SatGlobeColorScheme extends ColorScheme {
       };
     }
 
-    return this.schemes_[this.encoding_].update(obj, params);
+    const delegatedScheme = this.schemes_[this.encoding_ as keyof typeof this.schemes_];
+
+    if (!delegatedScheme) {
+      return { color: objectColors[objectKindFromSpaceObjectType(obj.type)], pickable: Pickable.Yes };
+    }
+
+    return delegatedScheme.update(obj, params);
   }
 
   private hidden_(): ColorInformation {

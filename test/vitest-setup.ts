@@ -22,7 +22,9 @@ const docBody = documentHTML.substring(documentHTML.indexOf(body) + body.length,
 const dom = new JSDOM(documentHTML, {
   pretendToBeVisual: true,
   runScripts: 'dangerously',
-  resources: 'usable',
+  // Unit tests install their browser globals explicitly below. Loading the
+  // template's external scripts would make every worker reach the public app
+  // origin and can leave JSDOM resource-error logs pending during teardown.
   url: 'https://app.keeptrack.space',
 });
 

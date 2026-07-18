@@ -1,36 +1,24 @@
 import { spawn } from 'node:child_process';
 import { cpSync, existsSync, watch } from 'node:fs';
 import { createServer, type ServerResponse } from 'node:http';
-import { readFile, stat } from 'node:fs/promises';
-import { dirname, extname, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { readFile, realpath, stat } from 'node:fs/promises';
+import { dirname, extname, isAbsolute, join, relative, resolve, sep } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import {
+  LIVE_RELOAD_CLIENT_PATH,
+  LIVE_RELOAD_CLIENT_SOURCE,
+  liveReloadEnabledFor,
+  prepareHtmlResponse,
+  securityHeadersFor,
+} from './dev-server-response';
 import { ConsoleStyles, logWithStyle } from './lib/build-error';
 import { handlePluginEndpoint } from './plugin-install-endpoint';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const rootDir = resolve(__dirname, '..');
 const PORT = 5544;
+const LOOPBACK_HOST = '127.0.0.1';
 const distDir = resolve(rootDir, 'dist');
-
-const RELOAD_SCRIPT = `<script>new EventSource("/__reload").onmessage=()=>location.reload()</script>`;
-
-/*
- * Security headers for the satglobe profile, mirroring configs/satglobe/nginx.conf
- * (keep the two in sync). Served from the dev server too so the offline contract
- * holds in `start:satglobe` and `start:satglobe:static`, not just Docker.
- */
-const SATGLOBE_CSP = [
-  "default-src 'self' blob:",
-  "img-src 'self' data: blob:",
-  "style-src 'self' 'unsafe-inline'",
-  "script-src 'self' 'unsafe-eval' blob:",
-  "worker-src 'self' blob:",
-  "connect-src 'self'",
-  "font-src 'self'",
-  "frame-ancestors 'none'",
-  "object-src 'none'",
-  "base-uri 'self'",
-].join('; ');
 
 // Maps config directory filenames to their dist/ destinations
 const CONFIG_FILE_DESTINATIONS: Record<string, string> = {
@@ -60,7 +48,58 @@ const mimeTypes: Record<string, string> = {
 // SSE clients for livereload
 const sseClients = new Set<ServerResponse>();
 
-function startServer(securityHeaders: Record<string, string> = {}) {
+/** End an unhandled request without exposing which server boundary rejected it. */
+function sendNotFound(res: ServerResponse): void {
+  if (!res.headersSent) {
+    res.writeHead(404);
+  }
+  res.end('Not found');
+}
+
+/** Return whether one path remains at or below an already-resolved directory. */
+function isWithinDirectory(directory: string, candidate: string): boolean {
+  const directoryRelativePath = relative(directory, candidate);
+
+  return directoryRelativePath === '' || (
+    directoryRelativePath !== '..' &&
+    !directoryRelativePath.startsWith(`..${sep}`) &&
+    !isAbsolute(directoryRelativePath)
+  );
+}
+
+/** Resolve one decoded URL pathname only when its canonical file remains inside dist/. */
+async function resolveStaticPath(pathname: string): Promise<string | null> {
+  const decodedPath = decodeURIComponent(pathname === '/' ? '/index.html' : pathname)
+    // URL paths use forward slashes, but a decoded backslash is a separator on Windows.
+    // Normalizing it here makes traversal handling identical on every host platform.
+    .replaceAll('\\', '/');
+  const rootedPath = decodedPath.startsWith('/') ? decodedPath : `/${decodedPath}`;
+  const candidate = resolve(distDir, `.${rootedPath}`);
+
+  if (!isWithinDirectory(distDir, candidate)) {
+    return null;
+  }
+
+  try {
+    const canonicalDistDir = await realpath(distDir);
+    let canonicalCandidate = await realpath(candidate);
+
+    if (!isWithinDirectory(canonicalDistDir, canonicalCandidate)) {
+      return null;
+    }
+
+    if ((await stat(canonicalCandidate)).isDirectory()) {
+      canonicalCandidate = await realpath(join(canonicalCandidate, 'index.html'));
+    }
+
+    return isWithinDirectory(canonicalDistDir, canonicalCandidate) ? canonicalCandidate : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Serve the current dist directory with the requested headers and reload behavior. */
+export function startServer(securityHeaders: Record<string, string>, liveReloadEnabled: boolean, port = PORT) {
   const server = createServer(async (req, res) => {
     // Swallow socket-level errors (client aborts, RST). Without this listener a
     // write to a closed/aborted socket emits an unhandled 'error' that crashes the
@@ -71,8 +110,33 @@ function startServer(securityHeaders: Record<string, string> = {}) {
 
     const pathname = new URL(req.url!, `http://localhost:${PORT}`).pathname;
 
+    // The SatGlobe CSP disallows executable inline scripts. Serve the development
+    // reload client from a same-origin endpoint so live reload remains compatible.
+    if (pathname === LIVE_RELOAD_CLIENT_PATH) {
+      if (!liveReloadEnabled) {
+        sendNotFound(res);
+
+        return;
+      }
+
+      res.writeHead(200, {
+        'Content-Type': 'application/javascript',
+        'Cache-Control': 'no-store',
+        ...securityHeaders,
+      });
+      res.end(LIVE_RELOAD_CLIENT_SOURCE);
+
+      return;
+    }
+
     // SSE endpoint for livereload
     if (pathname === '/__reload') {
+      if (!liveReloadEnabled) {
+        sendNotFound(res);
+
+        return;
+      }
+
       res.writeHead(200, {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
@@ -86,27 +150,32 @@ function startServer(securityHeaders: Record<string, string> = {}) {
 
     // One-click plugin install (dev-server only; localhost + same-origin guarded).
     if (pathname.startsWith('/__plugin/')) {
+      if (!liveReloadEnabled) {
+        sendNotFound(res);
+
+        return;
+      }
+
       await handlePluginEndpoint(req, res, pathname, rootDir);
 
       return;
     }
 
     try {
-      let filePath = join(distDir, decodeURIComponent(pathname === '/' ? '/index.html' : pathname));
-      const fileStat = await stat(filePath).catch(() => null);
+      const filePath = await resolveStaticPath(pathname);
 
-      if (fileStat?.isDirectory()) {
-        filePath = join(filePath, 'index.html');
+      if (!filePath) {
+        sendNotFound(res);
+
+        return;
       }
 
-      let data = await readFile(filePath);
+      let data: Buffer = await readFile(filePath);
       const ext = extname(filePath).toLowerCase();
 
-      // Inject livereload script into HTML responses
+      // Static HTML must remain byte-for-byte build output; only development gets live reload.
       if (ext === '.html') {
-        const html = data.toString().replace('</body>', `${RELOAD_SCRIPT}</body>`);
-
-        data = Buffer.from(html);
+        data = prepareHtmlResponse(data, liveReloadEnabled);
       }
 
       res.writeHead(200, { 'Content-Type': mimeTypes[ext] || 'application/octet-stream', ...securityHeaders });
@@ -115,10 +184,7 @@ function startServer(securityHeaders: Record<string, string> = {}) {
       // Guard against "headers already sent" when the response was partially
       // written before the failure — calling writeHead again would throw out of
       // the catch and crash the process.
-      if (!res.headersSent) {
-        res.writeHead(404);
-      }
-      res.end('Not found');
+      sendNotFound(res);
     }
   });
 
@@ -138,17 +204,24 @@ function startServer(securityHeaders: Record<string, string> = {}) {
     logWithStyle(`Unhandled rejection (server kept alive): ${String(reason)}`, ConsoleStyles.ERROR);
   });
 
-  server.listen(PORT, () => {
-    logWithStyle(`Serving dist/ at http://localhost:${PORT}`, ConsoleStyles.SUCCESS);
+  server.listen(port, LOOPBACK_HOST, () => {
+    const address = server.address();
+    const listeningPort = typeof address === 'object' && address ? address.port : port;
+
+    logWithStyle(`Serving dist/ at http://${LOOPBACK_HOST}:${listeningPort}`, ConsoleStyles.SUCCESS);
   });
+
+  return server;
 }
 
+/** Notify every connected live-reload client that the build output changed. */
 function notifyClients() {
   for (const client of sseClients) {
     client.write('data: reload\n\n');
   }
 }
 
+/** Watch generated build output and debounce live-reload notifications. */
 function watchDist() {
   let debounce: ReturnType<typeof setTimeout> | null = null;
 
@@ -194,6 +267,7 @@ function watchConfigDir(profileName: string) {
   });
 }
 
+/** Reconcile generated assets and start the build toolchain in watch mode. */
 function runBuildWatch(args: string[]): void {
   const buildArgs = args.length > 0 ? args : ['development'];
 
@@ -243,39 +317,55 @@ function runBuildWatch(args: string[]): void {
   });
 }
 
+/** Read the selected profile name from CLI arguments. */
 function getProfileName(args: string[]): string | null {
   const profileArg = args.find((arg) => arg.startsWith('--profile='));
 
   return profileArg ? profileArg.split('=')[1] : null;
 }
 
-const isStaticOnly = process.argv.includes('--static');
-const requestedProfile = getProfileName(process.argv.slice(2));
-const securityHeaders: Record<string, string> = requestedProfile === 'satglobe'
-  ? {
-    'Content-Security-Policy': SATGLOBE_CSP,
-    'X-Content-Type-Options': 'nosniff',
-    'Referrer-Policy': 'no-referrer',
-    // Enables the JS self-profiling API locally so perf work can sample real stacks.
-    'Document-Policy': 'js-profiling',
-  }
-  : {};
+export interface DevServerRuntime {
+  runBuildWatch: typeof runBuildWatch;
+  startServer: typeof startServer;
+  watchConfigDir: typeof watchConfigDir;
+  watchDist: typeof watchDist;
+}
 
-if (isStaticOnly) {
-  startServer(securityHeaders);
-} else {
-  const args = process.argv.slice(2).filter((arg) => arg !== '--static');
+const defaultRuntime: DevServerRuntime = {
+  runBuildWatch,
+  startServer,
+  watchConfigDir,
+  watchDist,
+};
+
+/** Start the static server or the full development server for the supplied CLI arguments. */
+export function runDevServer(cliArgs: string[], runtime: DevServerRuntime = defaultRuntime): void {
+  const liveReloadEnabled = liveReloadEnabledFor(cliArgs);
+  const requestedProfile = getProfileName(cliArgs);
+  const securityHeaders = securityHeadersFor(requestedProfile);
+
+  if (!liveReloadEnabled) {
+    runtime.startServer(securityHeaders, liveReloadEnabled);
+
+    return;
+  }
+
+  const args = cliArgs.filter((arg) => arg !== '--static');
   const profileName = getProfileName(args);
 
   // Start build in watch mode (non-blocking)
-  runBuildWatch(args);
+  runtime.runBuildWatch(args);
 
   // Start server and file watchers
-  startServer(securityHeaders);
-  watchDist();
+  runtime.startServer(securityHeaders, liveReloadEnabled);
+  runtime.watchDist();
 
   // Watch config directory for non-rspack file changes
   if (profileName) {
-    watchConfigDir(profileName);
+    runtime.watchConfigDir(profileName);
   }
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  runDevServer(process.argv.slice(2));
 }

@@ -57,25 +57,7 @@
     <script src=" settings/settingsOverride.js"></script>
 
     <!-- Early SW update check: reload before the app bundle loads if a new version is waiting -->
-    <script>
-      if ('serviceWorker' in navigator && location.protocol === 'https:') {
-        (function () {
-          var hadController = !!navigator.serviceWorker.controller;
-
-          navigator.serviceWorker.addEventListener('controllerchange', function () {
-            if (hadController) {
-              location.reload();
-            }
-          });
-
-          navigator.serviceWorker.getRegistration().then(function (reg) {
-            if (reg && reg.waiting) {
-              reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-            }
-          });
-        })();
-      }
-    </script>
+    <script defer src="./service-worker-bootstrap.js"></script>
   </head>
 
   <body>

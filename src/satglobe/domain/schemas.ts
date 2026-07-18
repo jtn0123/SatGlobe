@@ -1,5 +1,10 @@
 import { z } from 'zod';
 
+const authoredIdSchema = z.string()
+  .min(1)
+  .max(120)
+  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/u, 'Expected a lowercase kebab-case id');
+
 const cameraPoseSchema = z.object({
   pitch: z.number().finite(),
   yaw: z.number().finite(),
@@ -40,7 +45,7 @@ export const savedViewV1Schema = z.object({
 }).strict();
 
 const sourceSchema = z.object({
-  id: z.string().min(1),
+  id: authoredIdSchema,
   title: z.string().min(1),
   url: z.url(),
   retrievedAt: z.iso.date(),
@@ -48,23 +53,38 @@ const sourceSchema = z.object({
 }).strict();
 
 const factSchema = z.object({
-  id: z.string().min(1),
+  id: authoredIdSchema,
   text: z.string().min(1),
-  sourceIds: z.array(z.string().min(1)).min(1),
+  sourceIds: z.array(authoredIdSchema).min(1),
   caveat: z.string().optional(),
 }).strict();
 
+const orbitCatalogIdSchema = z.string().regex(/^\d{1,6}$/u, 'Expected a numeric catalog id');
+const authoredConstellationSchema = z.string()
+  .max(120)
+  .refine((constellation) => constellation.trim().length > 0, 'Expected a non-blank constellation filter');
+const authoredLaunchCohortSchema = z.string()
+  .regex(/^\d{4}-(?:\d{3})?$/u, 'Expected a YYYY-NNN launch cohort or YYYY- year prefix');
+
 const beatSchema = z.object({
-  id: z.string().min(1),
+  id: authoredIdSchema,
   eyebrow: z.string().min(1),
   title: z.string().min(1),
   dateLabel: z.string().min(1),
   narration: z.string().min(1),
-  factIds: z.array(z.string().min(1)).min(1),
+  factIds: z.array(authoredIdSchema).min(1),
   durationMs: z.number().int().min(1_000).max(120_000),
   camera: cameraPoseSchema,
   encoding: z.enum(['object-type', 'orbit-regime', 'launch-cohort', 'orbital-plane', 'data-age', 'starlink']),
-  constellation: z.string().optional(),
+  constellation: authoredConstellationSchema.optional(),
+  launchCohort: authoredLaunchCohortSchema.optional(),
+  simulationTimeOffsetHours: z.number().finite().min(-8_760).max(8_760).optional(),
+  orbitCatalogId: orbitCatalogIdSchema.optional(),
+  orbitCatalogIds: z.array(orbitCatalogIdSchema)
+    .min(1)
+    .max(12)
+    .refine((ids) => new Set(ids).size === ids.length, 'Expected unique catalog ids')
+    .optional(),
   filterOverrides: z.object({
     objectKinds: z.array(z.enum(['payload', 'rocket-body', 'debris', 'other'])).min(1).optional(),
     status: z.enum(['all', 'active', 'inactive']).optional(),
@@ -76,7 +96,7 @@ const beatSchema = z.object({
 
 export const storyManifestV1Schema = z.object({
   schemaVersion: z.literal(1),
-  id: z.string().min(1),
+  id: authoredIdSchema,
   title: z.string().min(1),
   dek: z.string().min(1),
   reconstructionPolicy: z.enum(['observed', 'sourced-reconstruction']),
@@ -86,6 +106,21 @@ export const storyManifestV1Schema = z.object({
 }).strict().superRefine((story, context) => {
   const sourceIds = new Set(story.sources.map(({ id }) => id));
   const factIds = new Set(story.facts.map(({ id }) => id));
+
+  for (const [collection, items] of [
+    ['sources', story.sources],
+    ['facts', story.facts],
+    ['beats', story.beats],
+  ] as const) {
+    const seen = new Set<string>();
+
+    items.forEach(({ id }, index) => {
+      if (seen.has(id)) {
+        context.addIssue({ code: 'custom', message: `Duplicate ${collection} id ${id}`, path: [collection, index, 'id'] });
+      }
+      seen.add(id);
+    });
+  }
 
   story.facts.forEach((fact, factIndex) => fact.sourceIds.forEach((sourceId) => {
     if (!sourceIds.has(sourceId)) {

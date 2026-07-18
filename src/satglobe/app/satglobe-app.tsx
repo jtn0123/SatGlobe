@@ -5,11 +5,13 @@ import {
   DEFAULT_FILTERS,
   type AppMode,
   type EngineState,
+  type FilterState,
   type SavedViewV1,
   type ScaleMode,
   type SpaceObjectView,
   type StoryBeat,
 } from '../domain/types';
+import { storySimulationAnchor, storySimulationTime } from '../domain/story-time';
 import { storyLibrary } from '../stories';
 import { DiscoverPanel, getQuickLensState, type QuickLens } from './discover-panel';
 import { Icon } from './icon';
@@ -28,6 +30,54 @@ interface SatGlobeAppProps {
   adapter: SatGlobeEngineAdapter;
 }
 
+/** Resolves portable story metadata without substituting an unrelated installed story. */
+function resolveSavedStory(view: SavedViewV1) {
+  const requestedStory = view.presentation.mode === 'story';
+  const story = requestedStory ? storyLibrary.find(({ id }) => id === view.presentation.storyId) ?? null : null;
+  const requestedBeatIndex = view.presentation.storyBeat ?? 0;
+  const beatAvailable = story !== null && requestedBeatIndex < story.beats.length;
+  const beatIndex = beatAvailable ? requestedBeatIndex : null;
+  const beat = story && beatIndex !== null ? story.beats[beatIndex] : null;
+  const unavailable = requestedStory && (!story || !beatAvailable);
+  let reason = 'This saved view does not identify an installed story.';
+
+  if (view.presentation.storyId && !story) {
+    reason = `Story “${view.presentation.storyId}” is not installed.`;
+  } else if (story && !beatAvailable) {
+    reason = `Beat ${requestedBeatIndex + 1} of story “${story.title}” is not installed.`;
+  }
+
+  return {
+    beat,
+    beatIndex,
+    mode: unavailable ? 'workshop' as const : view.presentation.mode,
+    notice: unavailable ? `${reason} Restored its absolute view in Workshop instead.` : null,
+    story: unavailable ? null : story,
+  };
+}
+
+/** Builds a complete filter state and applies the optional sparse-subject orbit cue. */
+function applyStoryBeatVisuals(adapter: SatGlobeEngineAdapter, beat: StoryBeat): FilterState {
+  adapter.clearOrbits();
+  const orbitCatalogIds = new Set([
+    ...(beat.orbitCatalogId ? [beat.orbitCatalogId] : []),
+    ...(beat.orbitCatalogIds ?? []),
+  ]);
+
+  for (const catalogId of orbitCatalogIds) {
+    adapter.drawOrbit(catalogId);
+  }
+
+  return { ...structuredClone(DEFAULT_FILTERS), constellation: beat.constellation ?? '', launchCohort: beat.launchCohort ?? '', ...beat.filterOverrides };
+}
+
+/** Recovers the retained beat's fixed anchor when Story is reopened. */
+function recoverRetainedStoryAnchor(adapter: SatGlobeEngineAdapter, beats: readonly StoryBeat[], beatIndex: number): string {
+  const retainedBeat = beats[beatIndex] ?? beats[0];
+
+  return storySimulationAnchor(adapter.getState().simulationTime, retainedBeat?.simulationTimeOffsetHours ?? 0);
+}
+
 /** Coordinates SatGlobe's workshop, presentation, and story states. */
 export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
   const [engine, setEngine] = useState<EngineState>(adapter.getState());
@@ -42,8 +92,14 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [storyId, setStoryId] = useState(storyLibrary[0].id);
   const story = storyLibrary.find(({ id }) => id === storyId) ?? storyLibrary[0];
+  const storyTimeAnchorRef = useRef(engine.simulationTime);
 
   useEffect(() => adapter.subscribe(setEngine), [adapter]);
+
+  // Replacing the engine boundary starts a fresh time reference for the next story beat.
+  useEffect(() => {
+    storyTimeAnchorRef.current = adapter.getState().simulationTime;
+  }, [adapter]);
 
   // Saved views survive reloads; persistence failures degrade to session-only.
   useEffect(() => persistViews(savedViews), [savedViews]);
@@ -63,8 +119,11 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
   }, [adapter, engine.objectCount, engine.ready, query]);
 
   const onBeatApplied = useCallback((beat: StoryBeat) => {
-    const beatFilters = { ...structuredClone(DEFAULT_FILTERS), constellation: beat.constellation ?? '', ...beat.filterOverrides };
+    const beatFilters = applyStoryBeatVisuals(adapter, beat);
 
+    if (beat.simulationTimeOffsetHours !== undefined) {
+      adapter.setSimulationTime(storySimulationTime(storyTimeAnchorRef.current, beat.simulationTimeOffsetHours));
+    }
     setFiltersImmediate(beatFilters);
     setScaleMode(beat.scaleMode);
     adapter.setScaleMode(beat.scaleMode);
@@ -73,19 +132,29 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
   }, [adapter, setFiltersImmediate]);
 
   const { playback, dispatch, applyBeat } = useStoryPlayback(story, mode === 'story', onBeatApplied);
-  const changeStory = useCallback((id: string) => setStoryId(id), []);
+  const changeStory = useCallback((id: string) => {
+    if (id !== storyId) {
+      storyTimeAnchorRef.current = adapter.getState().simulationTime;
+      setStoryId(id);
+    }
+  }, [adapter, storyId]);
   /*
    * Applying the new story's opening beat must wait for the re-render, when
    * applyBeat's closure holds the new manifest; the ref keeps this from firing
    * on unrelated dependency changes.
    */
   const prevStoryIdRef = useRef(storyId);
+  const pendingStoryBeatRef = useRef<{ storyId: string; beatIndex: number } | null>(null);
 
   useEffect(() => {
     if (prevStoryIdRef.current !== storyId) {
       prevStoryIdRef.current = storyId;
       if (mode === 'story') {
-        applyBeat(0);
+        const pending = pendingStoryBeatRef.current;
+        const beatIndex = pending?.storyId === storyId ? pending.beatIndex : 0;
+
+        pendingStoryBeatRef.current = null;
+        applyBeat(beatIndex);
       }
     }
   }, [applyBeat, mode, storyId]);
@@ -97,8 +166,10 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
     document.body.classList.toggle('sg-story', nextMode === 'story');
     if (nextMode === 'story') {
       dispatch({ type: 'stop' });
+    } else {
+      adapter.clearOrbits();
     }
-  }, [dispatch]);
+  }, [adapter, dispatch]);
 
   // Stable handlers so memoized children skip re-rendering on unrelated state changes.
   const clearSelection = useCallback(() => adapter.clearSelection(), [adapter]);
@@ -172,20 +243,39 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
   }, [createView]);
 
   const applyView = useCallback((view: SavedViewV1) => {
+    const { beat: restoredBeat, beatIndex: restoredBeatIndex, mode: restoredMode, notice: unavailableStoryNotice, story: restoredStory } = resolveSavedStory(view);
+
+    if (restoredBeat) {
+      storyTimeAnchorRef.current = storySimulationAnchor(view.simulationTime, restoredBeat.simulationTimeOffsetHours ?? 0);
+    }
     setFiltersImmediate(view.filters);
     setScaleMode(view.scaleMode);
     adapter.setScaleMode(view.scaleMode);
     adapter.setCamera(view.camera);
-    adapter.setSimulationTime(view.simulationTime);
+    if (!restoredBeat || restoredBeat.simulationTimeOffsetHours === undefined) {
+      adapter.setSimulationTime(view.simulationTime);
+    }
     adapter.setEncoding(view.encoding);
+    adapter.clearSelection();
     if (view.selectedObjectIds[0]) {
       adapter.selectObject(view.selectedObjectIds[0]);
     }
-    switchMode(view.presentation.mode);
-    if (view.presentation.storyBeat !== undefined) {
-      applyBeat(view.presentation.storyBeat);
+    switchMode(restoredMode);
+    if (restoredStory && restoredBeatIndex !== null) {
+      if (restoredStory.id === story.id) {
+        applyBeat(restoredBeatIndex);
+      } else {
+        pendingStoryBeatRef.current = { storyId: restoredStory.id, beatIndex: restoredBeatIndex };
+        setStoryId(restoredStory.id);
+      }
     }
-  }, [adapter, applyBeat, setFiltersImmediate, switchMode]);
+    if (unavailableStoryNotice) {
+      pendingStoryBeatRef.current = null;
+      setNotice(unavailableStoryNotice);
+    }
+
+    return unavailableStoryNotice;
+  }, [adapter, applyBeat, setFiltersImmediate, story, switchMode]);
 
   const importFile = useCallback(async (file?: File) => {
     if (!file) {
@@ -193,9 +283,10 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
     }
     try {
       const imported = importSavedView(await file.text(), adapter.getObjects());
+      const storyWarning = applyView(imported.view);
+      const warnings = [storyWarning, ...imported.warnings].filter(Boolean).join(' ');
 
-      applyView(imported.view);
-      setNotice(imported.warnings[0] ?? `Imported “${imported.view.name}”.`);
+      setNotice(warnings || `Imported “${imported.view.name}”.`);
     } catch (error) {
       setNotice(error instanceof Error ? error.message : 'Could not import this preset.');
     }
@@ -215,9 +306,15 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
 
   const newestElementAge = ageInDays(engine.newestElementEpoch);
   const openStory = useCallback(() => {
+    if (mode !== 'story') {
+      // The selected beat survives a trip through Workshop. Recover its
+      // session anchor before reapplying it so a +24 h beat remains +24 h
+      // instead of compounding to +48 h on every re-entry.
+      storyTimeAnchorRef.current = recoverRetainedStoryAnchor(adapter, story.beats, playback.beatIndex);
+    }
     switchMode('story');
     applyBeat(playback.beatIndex);
-  }, [applyBeat, playback.beatIndex, switchMode]);
+  }, [adapter, applyBeat, mode, playback.beatIndex, story.beats, switchMode]);
   const toggleScale = useCallback(() => setScaleMode((value) => {
     const next = value === 'semantic' ? 'true' : 'semantic';
 

@@ -1,4 +1,5 @@
 import { spawnSync } from 'node:child_process';
+import { fixedGitExecutable } from '../../../build/lib/fixed-executables';
 import { CliError } from './log';
 
 interface GitResult {
@@ -8,14 +9,12 @@ interface GitResult {
 }
 
 /**
- * Run a git command. Uses `shell: true` on Windows (matching build/get-submodules.ts
- * and build/dev-server.ts) so the `git` shim resolves. Captures output by default;
- * pass `inherit: true` to stream clone/fetch progress to the terminal.
+ * Run a git command from a fixed system location rather than caller-controlled PATH.
+ * Captures output by default; pass `inherit: true` to stream clone/fetch progress.
  */
 export function git(args: string[], opts: { cwd?: string; inherit?: boolean; allowFail?: boolean } = {}): GitResult {
-  const res = spawnSync('git', args, {
+  const res = spawnSync(fixedGitExecutable(), args, {
     cwd: opts.cwd,
-    shell: process.platform === 'win32',
     encoding: 'utf8',
     stdio: opts.inherit ? ['ignore', 'inherit', 'inherit'] : 'pipe',
   });
@@ -59,9 +58,9 @@ export function fastForward(cwd: string, ref: string): void {
 /** The remote's default branch name (e.g. "main"), falling back to "main". */
 export function remoteDefaultBranch(cwd: string): string {
   const res = git(['rev-parse', '--abbrev-ref', 'origin/HEAD'], { cwd, allowFail: true });
-  const match = /^origin\/(.+)$/u.exec(res.stdout);
+  const match = (/^origin\/(?<branch>.+)$/u).exec(res.stdout);
 
-  return match ? match[1] : 'main';
+  return match?.groups?.branch ?? 'main';
 }
 
 /** Initialize a new git repo in `cwd` (used by the scaffolder). */

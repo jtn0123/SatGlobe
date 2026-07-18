@@ -1,10 +1,12 @@
 import { Configuration, DefinePlugin, DefinePluginOptions, HtmlRspackPlugin, LightningCssMinimizerRspackPlugin, ProgressPlugin, SwcJsMinimizerRspackPlugin } from '@rspack/core';
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import DotEnv from 'dotenv-webpack';
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { shortCommitSha } from './lib/build-provenance';
 import { BuildConfig } from './lib/config-manager';
+import { fixedGitExecutable } from './lib/fixed-executables';
 import { reporter } from './lib/reporter';
 export class WebpackManager {
   static readonly DEFAULT_MODE = 'development';
@@ -18,7 +20,12 @@ export class WebpackManager {
     const dirName = dirname(fileName);
     const appVersion = JSON.parse(readFileSync(resolve(dirName, '../package.json'), 'utf-8')).version;
 
-    const commitHash = execSync('git rev-parse --short HEAD').toString().trim();
+    const fullCommitHash = process.env.SATGLOBE_COMMIT_SHA ?? execFileSync(
+      fixedGitExecutable(),
+      ['rev-parse', 'HEAD'],
+      { cwd: resolve(dirName, '..'), encoding: 'utf8' },
+    ).trim();
+    const commitHash = shortCommitSha(fullCommitHash);
 
     this.versionDefine_ = new DefinePlugin({
       __VERSION__: JSON.stringify(appVersion),
