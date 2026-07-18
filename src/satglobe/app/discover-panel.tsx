@@ -147,7 +147,32 @@ function DiscoverPanelBase({
         </FilterSection>
         <FilterSection label="Inclination" open={false}>
           <div className="sg-range-values"><span>{filters.inclinationDeg.min}°</span><span>{filters.inclinationDeg.max}°</span></div>
-          <input aria-label="Maximum inclination" max="180" min="1" onChange={(event) => setFilters({ ...filters, inclinationDeg: { ...filters.inclinationDeg, max: Number(event.target.value) } })} type="range" value={filters.inclinationDeg.max} />
+          <input
+            aria-label="Minimum inclination"
+            aria-valuetext={`${filters.inclinationDeg.min} degrees`}
+            max="179"
+            min="0"
+            onChange={(event) => {
+              const min = Math.min(Number(event.target.value), filters.inclinationDeg.max - 1);
+
+              setFilters({ ...filters, inclinationDeg: { ...filters.inclinationDeg, min } });
+            }}
+            type="range"
+            value={filters.inclinationDeg.min}
+          />
+          <input
+            aria-label="Maximum inclination"
+            aria-valuetext={`${filters.inclinationDeg.max} degrees`}
+            max="180"
+            min="1"
+            onChange={(event) => {
+              const max = Math.max(Number(event.target.value), filters.inclinationDeg.min + 1);
+
+              setFilters({ ...filters, inclinationDeg: { ...filters.inclinationDeg, max } });
+            }}
+            type="range"
+            value={filters.inclinationDeg.max}
+          />
         </FilterSection>
       </section>
 

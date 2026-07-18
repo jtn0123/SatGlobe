@@ -121,6 +121,25 @@ describe('DiscoverPanel', () => {
     expect(props.onQuickLens).toHaveBeenCalledWith('starlink');
   });
 
+  it('exposes sliders for both inclination bounds and keeps min below max', () => {
+    const props = makeProps();
+
+    render(<DiscoverPanel {...props} />);
+    fireEvent.change(screen.getByLabelText('Minimum inclination'), { target: { value: '45' } });
+    expect(props.setFilters).toHaveBeenCalledWith(expect.objectContaining({
+      inclinationDeg: expect.objectContaining({ min: 45 }),
+    }));
+
+    // A min dragged past the max clamps to max - 1 instead of crossing it.
+    const crossing = makeProps({ filters: { ...structuredClone(DEFAULT_FILTERS), inclinationDeg: { min: 0, max: 50 } } });
+
+    render(<DiscoverPanel {...crossing} />);
+    fireEvent.change(screen.getAllByLabelText('Minimum inclination')[1], { target: { value: '170' } });
+    expect(crossing.setFilters).toHaveBeenCalledWith(expect.objectContaining({
+      inclinationDeg: expect.objectContaining({ min: 49, max: 50 }),
+    }));
+  });
+
   it('removes the hidden panel from the accessibility tree via inert', () => {
     render(<DiscoverPanel {...makeProps({ inert: true })} />);
     expect(screen.getByTestId('discover-panel').hasAttribute('inert')).toBe(true);
