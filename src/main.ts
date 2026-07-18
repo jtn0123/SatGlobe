@@ -72,20 +72,15 @@ function startKeepTrack(): void {
   });
 }
 
-/** Waits for localization without blocking catalog or service-worker startup. */
-async function startKeepTrackWhenLocalized(): Promise<void> {
-  try {
-    await localizationReady;
-  } catch (error: unknown) {
-    errorManagerInstance.warn('Could not load the selected locale; continuing with English.', error);
-  }
-  startKeepTrack();
-}
-
-// Start catalog/service-worker work immediately, but do not boot translated UI
-// until the detected locale is ready. English is bundled as the safe fallback.
-startKeepTrackWhenLocalized();
-
 if (__EDITION__ !== 'satglobe') {
   registerServiceWorker();
 }
+
+// Catalog/service-worker work is already in flight. Do not boot translated UI
+// until the detected locale is ready. English is bundled as the safe fallback.
+try {
+  await localizationReady;
+} catch (error: unknown) {
+  errorManagerInstance.warn('Could not load the selected locale; continuing with English.', error);
+}
+startKeepTrack();
