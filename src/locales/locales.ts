@@ -85,6 +85,7 @@ const opts: InitOptions = {
   },
   fallbackLng: 'en',
   debug: false,
+  showSupportNotice: false,
   defaultNS: 'translation',
   load: 'languageOnly',
   ns: ['translation'],

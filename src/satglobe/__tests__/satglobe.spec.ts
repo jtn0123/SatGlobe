@@ -393,7 +393,7 @@ test.describe('SatGlobe failure states', () => {
 });
 
 test.describe('SatGlobe localization chunks', () => {
-  test('loads the selected non-English locale from the same origin before boot', async ({ page }) => {
+  test('resolves and loads the selected regional locale from the same origin before boot', async ({ page }) => {
     const externalRequests: string[] = [];
     const localeChunkRequests: string[] = [];
     let releaseItalianChunk: () => void = () => undefined;
@@ -401,7 +401,7 @@ test.describe('SatGlobe localization chunks', () => {
       releaseItalianChunk = resolve;
     });
 
-    await page.addInitScript(() => localStorage.setItem('i18nextLng', 'it'));
+    await page.addInitScript(() => localStorage.setItem('i18nextLng', 'it-IT'));
     await page.route('**/*', async (route) => {
       const url = new URL(route.request().url());
 
@@ -438,13 +438,13 @@ test.describe('SatGlobe localization chunks', () => {
     expect(new URL(response.url()).origin).toBe(new URL(page.url()).origin);
     expect(localeChunkRequests).toHaveLength(1);
     expect(new URL(localeChunkRequests[0]).pathname).toMatch(/\/js\/locale-it\.[^/]+\.js$/u);
-    expect(await page.evaluate(() => localStorage.getItem('i18nextLng'))).toBe('it');
+    expect(await page.evaluate(() => localStorage.getItem('i18nextLng'))).toBe('it-IT');
     expect(await page.evaluate(() => typeof window.keepTrack)).toBe('object');
     expect(externalRequests).toEqual([]);
   });
 
-  test('falls back to bundled English and completes boot when a locale chunk fails', async ({ page }) => {
-    await page.addInitScript(() => localStorage.setItem('i18nextLng', 'it'));
+  test('falls back to bundled English when the selected regional locale chunk fails', async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem('i18nextLng', 'it-IT'));
     await page.route(/\/js\/locale-it\.[^/]+\.js$/u, (route) => route.abort());
 
     await page.goto('/');

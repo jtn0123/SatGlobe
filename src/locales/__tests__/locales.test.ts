@@ -1,5 +1,5 @@
 import { Localization, SUPPORTED_LOCALES, localizationReady, type LocaleInformation, type SupportedLocale } from '@app/locales/locales';
-import i18next from 'i18next';
+import i18next, { type BackendModule, type LanguageDetectorModule, type ResourceKey } from 'i18next';
 
 const ANTARCTICA_SENTINELS = {
   en: 'Antarctica',
@@ -48,6 +48,7 @@ describe.sequential('Locales', () => {
 
   it('starts with only the bundled English resource registered', () => {
     expect(Object.keys(i18next.store.data)).toEqual(['en']);
+    expect(i18next.options.showSupportNotice).toBe(false);
   });
 
   it('loads a selected non-English locale on demand', async () => {
@@ -73,6 +74,126 @@ describe.sequential('Locales', () => {
     expect(i18next.resolvedLanguage).toBe(code);
     expect(i18next.hasResourceBundle(code, 'translation')).toBe(true);
     expect(i18next.t('countries.AQ')).toBe(ANTARCTICA_SENTINELS[code]);
+  });
+
+  it('keeps the later explicit language request active when an older lazy load resolves last', async () => {
+    const createGate = () => {
+      let release = (_resource: ResourceKey): void => undefined;
+      const promise = new Promise<ResourceKey>((resolve) => {
+        release = resolve;
+      });
+
+      return { promise, release };
+    };
+    const italianGate = createGate();
+    const germanGate = createGate();
+    const gates = new Map([
+      ['it', italianGate],
+      ['de', germanGate],
+    ]);
+    const backendReads: string[] = [];
+    const cachedLanguages: string[] = [];
+    const languageChanges: string[] = [];
+    const detector: LanguageDetectorModule = {
+      type: 'languageDetector',
+      detect: () => 'en',
+      cacheUserLanguage: (language) => cachedLanguages.push(language),
+    };
+    const backend: BackendModule = {
+      type: 'backend',
+      init: () => undefined,
+      read: (language, _namespace, callback) => {
+        backendReads.push(language);
+        const gate = gates.get(language);
+
+        if (!gate) {
+          callback(new Error(`Unexpected locale read: ${language}`), false);
+
+          return;
+        }
+        gate.promise.then((resource) => callback(null, resource));
+      },
+    };
+    const isolated = i18next.createInstance();
+
+    isolated.use(detector).use(backend);
+    await isolated.init({
+      defaultNS: 'translation',
+      fallbackLng: 'en',
+      load: 'languageOnly',
+      ns: ['translation'],
+      partialBundledLanguages: true,
+      resources: {
+        en: { translation: { countries: { AQ: ANTARCTICA_SENTINELS.en } } },
+      },
+      showSupportNotice: false,
+      supportedLngs: ['en', 'de', 'it'],
+    });
+    isolated.on('languageChanged', (language) => languageChanges.push(language));
+
+    const italianChange = isolated.changeLanguage('it-IT');
+
+    await vi.waitFor(() => expect(backendReads).toContain('it'));
+    const germanChange = isolated.changeLanguage('de');
+
+    await vi.waitFor(() => expect(backendReads).toContain('de'));
+    germanGate.release({ countries: { AQ: ANTARCTICA_SENTINELS.de } });
+    await germanChange;
+    italianGate.release({ countries: { AQ: ANTARCTICA_SENTINELS.it } });
+    await italianChange;
+
+    expect(isolated.language).toBe('de');
+    expect(isolated.resolvedLanguage).toBe('de');
+    expect(isolated.t('countries.AQ')).toBe(ANTARCTICA_SENTINELS.de);
+    expect(isolated.hasResourceBundle('de', 'translation')).toBe(true);
+    expect(isolated.hasResourceBundle('it', 'translation')).toBe(true);
+    expect(cachedLanguages.at(-1)).toBe('de');
+    expect(languageChanges).toEqual(['de']);
+  });
+
+  it('resolves a detected regional tag through the language-only backend', async () => {
+    const backendReads: string[] = [];
+    const cachedLanguages: string[] = [];
+    const detector: LanguageDetectorModule = {
+      type: 'languageDetector',
+      detect: () => 'it-IT',
+      cacheUserLanguage: (language) => cachedLanguages.push(language),
+    };
+    const backend: BackendModule = {
+      type: 'backend',
+      init: () => undefined,
+      read: (language, _namespace, callback) => {
+        backendReads.push(language);
+        if (language === 'it') {
+          callback(null, { countries: { AQ: ANTARCTICA_SENTINELS.it } });
+
+          return;
+        }
+        callback(new Error(`Unexpected locale read: ${language}`), false);
+      },
+    };
+    const isolated = i18next.createInstance();
+
+    isolated.use(detector).use(backend);
+    await isolated.init({
+      defaultNS: 'translation',
+      fallbackLng: 'en',
+      load: 'languageOnly',
+      ns: ['translation'],
+      partialBundledLanguages: true,
+      resources: {
+        en: { translation: { countries: { AQ: ANTARCTICA_SENTINELS.en } } },
+      },
+      showSupportNotice: false,
+      supportedLngs: ['en', 'de', 'it'],
+    });
+
+    expect(isolated.language).toBe('it-IT');
+    expect(isolated.resolvedLanguage).toBe('it');
+    expect(isolated.t('countries.AQ')).toBe(ANTARCTICA_SENTINELS.it);
+    expect(isolated.hasResourceBundle('it', 'translation')).toBe(true);
+    expect(backendReads).toEqual(['it']);
+    expect(cachedLanguages).toEqual(['it-IT']);
   });
 
   it('pre-caches all translations without throwing', async () => {
