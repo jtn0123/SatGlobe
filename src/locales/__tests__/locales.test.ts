@@ -48,7 +48,30 @@ describe.sequential('Locales', () => {
 
   it('starts with only the bundled English resource registered', () => {
     expect(Object.keys(i18next.store.data)).toEqual(['en']);
-    expect(i18next.options.showSupportNotice).toBe(false);
+  });
+
+  it('initializes without a Locize support notice', async () => {
+    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => undefined);
+
+    try {
+      const isolated = i18next.createInstance();
+
+      await isolated.init({
+        fallbackLng: 'en',
+        lng: 'en',
+        resources: {
+          en: { translation: { countries: { AQ: ANTARCTICA_SENTINELS.en } } },
+        },
+      });
+
+      const loggedLocizeNotice = infoSpy.mock.calls
+        .flat()
+        .some((argument) => String(argument).toLowerCase().includes('locize'));
+
+      expect(loggedLocizeNotice).toBe(false);
+    } finally {
+      infoSpy.mockRestore();
+    }
   });
 
   it('loads a selected non-English locale on demand', async () => {
@@ -126,7 +149,6 @@ describe.sequential('Locales', () => {
       resources: {
         en: { translation: { countries: { AQ: ANTARCTICA_SENTINELS.en } } },
       },
-      showSupportNotice: false,
       supportedLngs: ['en', 'de', 'it'],
     });
     isolated.on('languageChanged', (language) => languageChanges.push(language));
@@ -184,7 +206,6 @@ describe.sequential('Locales', () => {
       resources: {
         en: { translation: { countries: { AQ: ANTARCTICA_SENTINELS.en } } },
       },
-      showSupportNotice: false,
       supportedLngs: ['en', 'de', 'it'],
     });
 
