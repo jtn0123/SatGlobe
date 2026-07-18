@@ -94,6 +94,11 @@ describe('SatGlobe catalog refresh', () => {
     expect(new Date(epochFromCatalog(row)).toISOString()).toBe('2026-07-20T02:43:32.333Z');
   });
 
+  it('rejects an empty catalog before deriving snapshot provenance', () => {
+    expect(() => newestElementEpochFromCatalog([])).toThrow(TypeError);
+    expect(() => newestElementEpochFromCatalog([])).toThrow('Catalog does not contain a valid newest element epoch.');
+  });
+
   it.each([
     '2026-02-30T02:43:32.333088',
     '2026-07-20 02:43:32.333088',

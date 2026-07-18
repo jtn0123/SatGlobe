@@ -203,7 +203,7 @@ export function newestElementEpochFromCatalog(rows: CatalogRow[]): string {
     newestEpoch = Math.max(newestEpoch, epochFromCatalog(row));
   });
   if (!Number.isFinite(newestEpoch)) {
-    throw new Error('Catalog does not contain a valid newest element epoch.');
+    throw new TypeError('Catalog does not contain a valid newest element epoch.');
   }
 
   return new Date(newestEpoch).toISOString();
