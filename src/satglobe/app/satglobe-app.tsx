@@ -128,7 +128,7 @@ function useSnapshotExport(
       pendingRef.current = false;
     };
   }, []);
-  const request = useCallback(() => {
+  const request = useCallback(async () => {
     if (!ready || pendingRef.current) {
       return;
     }
@@ -148,31 +148,23 @@ function useSnapshotExport(
         setBusy(false);
       }
     };
-    let capture: Promise<Blob>;
 
     try {
-      capture = adapter.captureSnapshot();
+      const blob = await adapter.captureSnapshot();
+
+      if (!mountedRef.current) {
+        return;
+      }
+      const filename = downloadSnapshot(blob, context);
+
+      if (mountedRef.current) {
+        onNotice(`Downloaded canvas-only snapshot as ${filename}. Interface panels and captions were not included.`);
+      }
     } catch (error) {
       onFailure(error);
+    } finally {
       onSettled();
-
-      return;
     }
-    capture
-      .then((blob) => {
-        if (!mountedRef.current) {
-          return null;
-        }
-
-        return downloadSnapshot(blob, context);
-      })
-      .then((filename) => {
-        if (filename && mountedRef.current) {
-          onNotice(`Downloaded canvas-only snapshot as ${filename}. Interface panels and captions were not included.`);
-        }
-      })
-      .catch(onFailure)
-      .finally(onSettled);
   }, [adapter, context, onNotice, ready]);
 
   return { busy, request };

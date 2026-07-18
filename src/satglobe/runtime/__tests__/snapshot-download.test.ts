@@ -7,6 +7,13 @@ describe('snapshot download', () => {
       .toBe('satglobe-gps-story-01-20260718T123456Z.png');
   });
 
+  it('trims boundary hyphens without changing a long internal hyphen run', () => {
+    const internalHyphens = '-'.repeat(8_192);
+
+    expect(snapshotFilename(`---A${internalHyphens}Z---`, new Date('2026-07-18T12:34:56.789Z')))
+      .toBe(`satglobe-a${internalHyphens}z-20260718T123456Z.png`);
+  });
+
   it('clicks a temporary PNG link and always revokes its object URL', () => {
     const click = vi.fn();
     const remove = vi.fn();

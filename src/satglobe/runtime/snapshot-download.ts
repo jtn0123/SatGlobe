@@ -1,8 +1,23 @@
 const PNG_MIME_TYPE = 'image/png';
 
+/** Trims only boundary hyphens in one linear pass over each edge. */
+function trimBoundaryHyphens(value: string): string {
+  let start = 0;
+  let end = value.length;
+
+  while (value[start] === '-') {
+    start++;
+  }
+  while (end > start && value[end - 1] === '-') {
+    end--;
+  }
+
+  return value.slice(start, end);
+}
+
 /** Builds a filesystem-safe, sortable UTC filename for a captured frame. */
 export function snapshotFilename(context = 'view', now = new Date()): string {
-  const safeContext = context.toLowerCase().replace(/[^a-z0-9-]+/gu, '-').replace(/^-+|-+$/gu, '') || 'view';
+  const safeContext = trimBoundaryHyphens(context.toLowerCase().replace(/[^a-z0-9-]+/gu, '-')) || 'view';
   const timestamp = now.toISOString().replace(/[-:]/gu, '').replace(/\.\d{3}Z$/u, 'Z');
 
   return `satglobe-${safeContext}-${timestamp}.png`;

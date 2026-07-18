@@ -273,6 +273,21 @@ describe('SatGlobeApp', () => {
     expect((screen.getByTestId('snapshot-export') as HTMLButtonElement).disabled).toBe(false);
   });
 
+  it('settles the snapshot guard when the adapter throws before returning a promise', async () => {
+    const { methods } = renderApp();
+
+    methods.captureSnapshot.mockImplementationOnce(() => {
+      throw new Error('Renderer unavailable');
+    });
+    const button = screen.getByTestId('snapshot-export') as HTMLButtonElement;
+
+    fireEvent.click(button);
+    await vi.waitFor(() => expect(screen.getByRole('alert').textContent).toContain('Renderer unavailable'));
+
+    expect(button.disabled).toBe(false);
+    expect(button.getAttribute('aria-busy')).toBeNull();
+  });
+
   it('does not download or update shell state when capture settles after unmount', async () => {
     let finishCapture: ((blob: Blob) => void) | null = null;
     const createObjectURL = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:unused');
