@@ -1,7 +1,18 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DiscoverPanel, getQuickLensState, type DiscoverPanelProps } from '../discover-panel';
-import { DEFAULT_FILTERS, type SpaceObjectView } from '../../domain/types';
+import { DEFAULT_FILTERS, type FilterState, type SpaceObjectView } from '../../domain/types';
+
+const NON_DEFAULT_FILTERS: FilterState = {
+  objectKinds: ['payload', 'debris'],
+  status: 'inactive',
+  regimes: ['leo', 'geo'],
+  altitudeKm: { min: 321, max: 98_765 },
+  inclinationDeg: { min: 10, max: 150 },
+  launchCohort: '2010-2019',
+  constellation: 'starlink',
+  countryOrOperator: 'SpaceX',
+};
 
 const makeView = (overrides: Partial<SpaceObjectView> = {}): SpaceObjectView => ({
   catalogId: '25544',
@@ -39,7 +50,8 @@ const makeProps = (overrides: Partial<DiscoverPanelProps> = {}): DiscoverPanelPr
   onQueryChange: vi.fn(),
   onSelectResult: vi.fn(),
   onQuickLens: vi.fn(),
-  setFilters: vi.fn(),
+  setFiltersImmediate: vi.fn(),
+  setFiltersDebounced: vi.fn(),
   onEncodingChange: vi.fn(),
   onSaveView: vi.fn(),
   onApplyView: vi.fn(),
@@ -121,23 +133,78 @@ describe('DiscoverPanel', () => {
     expect(props.onQuickLens).toHaveBeenCalledWith('starlink');
   });
 
-  it('exposes sliders for both inclination bounds and keeps min below max', () => {
-    const props = makeProps();
+  it('routes both inclination sliders through the debounced setter and keeps the bounds ordered', () => {
+    const props = makeProps({ filters: structuredClone(NON_DEFAULT_FILTERS) });
 
     render(<DiscoverPanel {...props} />);
     fireEvent.change(screen.getByLabelText('Minimum inclination'), { target: { value: '45' } });
-    expect(props.setFilters).toHaveBeenCalledWith(expect.objectContaining({
-      inclinationDeg: expect.objectContaining({ min: 45 }),
-    }));
+    fireEvent.change(screen.getByLabelText('Maximum inclination'), { target: { value: '120' } });
+
+    expect(props.setFiltersDebounced).toHaveBeenNthCalledWith(1, {
+      ...NON_DEFAULT_FILTERS,
+      inclinationDeg: { min: 45, max: 150 },
+    });
+    expect(props.setFiltersDebounced).toHaveBeenNthCalledWith(2, {
+      ...NON_DEFAULT_FILTERS,
+      inclinationDeg: { min: 10, max: 120 },
+    });
+    expect(props.setFiltersImmediate).not.toHaveBeenCalled();
 
     // A min dragged past the max clamps to max - 1 instead of crossing it.
-    const crossing = makeProps({ filters: { ...structuredClone(DEFAULT_FILTERS), inclinationDeg: { min: 0, max: 50 } } });
+    const crossing = makeProps({
+      filters: { ...structuredClone(NON_DEFAULT_FILTERS), inclinationDeg: { min: 10, max: 50 } },
+    });
 
     render(<DiscoverPanel {...crossing} />);
     fireEvent.change(screen.getAllByLabelText('Minimum inclination')[1], { target: { value: '170' } });
-    expect(crossing.setFilters).toHaveBeenCalledWith(expect.objectContaining({
-      inclinationDeg: expect.objectContaining({ min: 49, max: 50 }),
-    }));
+    expect(crossing.setFiltersDebounced).toHaveBeenCalledWith({
+      ...NON_DEFAULT_FILTERS,
+      inclinationDeg: { min: 49, max: 50 },
+    });
+    expect(crossing.setFiltersImmediate).not.toHaveBeenCalled();
+  });
+
+  it('routes the filter heading reset through the immediate setter', () => {
+    const props = makeProps();
+
+    render(<DiscoverPanel {...props} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Reset' }));
+
+    expect(props.setFiltersImmediate).toHaveBeenCalledWith(DEFAULT_FILTERS);
+    expect(props.setFiltersDebounced).not.toHaveBeenCalled();
+  });
+
+  it('routes the empty-results reset through the immediate setter', () => {
+    const props = makeProps({ visibleCount: 0 });
+
+    render(<DiscoverPanel {...props} />);
+    fireEvent.click(screen.getByRole('button', { name: 'reset them' }));
+
+    expect(props.setFiltersImmediate).toHaveBeenCalledWith(DEFAULT_FILTERS);
+    expect(props.setFiltersDebounced).not.toHaveBeenCalled();
+  });
+
+  it('routes object class, operational status, and orbital regime through the immediate setter', () => {
+    const props = makeProps({ filters: structuredClone(NON_DEFAULT_FILTERS) });
+
+    render(<DiscoverPanel {...props} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Rocket bodies' }));
+    fireEvent.click(screen.getByTestId('status-all'));
+    fireEvent.click(screen.getByRole('button', { name: 'LEO' }));
+
+    expect(props.setFiltersImmediate).toHaveBeenNthCalledWith(1, {
+      ...NON_DEFAULT_FILTERS,
+      objectKinds: ['payload', 'debris', 'rocket-body'],
+    });
+    expect(props.setFiltersImmediate).toHaveBeenNthCalledWith(2, {
+      ...NON_DEFAULT_FILTERS,
+      status: 'all',
+    });
+    expect(props.setFiltersImmediate).toHaveBeenNthCalledWith(3, {
+      ...NON_DEFAULT_FILTERS,
+      regimes: ['geo'],
+    });
+    expect(props.setFiltersDebounced).not.toHaveBeenCalled();
   });
 
   it('removes the hidden panel from the accessibility tree via inert', () => {

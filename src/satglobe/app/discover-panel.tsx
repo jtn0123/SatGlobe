@@ -67,7 +67,8 @@ export interface DiscoverPanelProps {
   onQueryChange: (query: string) => void;
   onSelectResult: (catalogId: string) => void;
   onQuickLens: (lens: QuickLens) => void;
-  setFilters: (filters: FilterState) => void;
+  setFiltersImmediate: (filters: FilterState) => void;
+  setFiltersDebounced: (filters: FilterState) => void;
   onEncodingChange: (encoding: VisualEncoding) => void;
   onSaveView: () => void;
   onApplyView: (view: SavedViewV1) => void;
@@ -78,7 +79,7 @@ export interface DiscoverPanelProps {
 /** The workshop's search, lens, filter, encoding, and saved-view instrument panel. */
 function DiscoverPanelBase({
   inert, visibleCount, query, results, filters, encoding, savedViews,
-  onQueryChange, onSelectResult, onQuickLens, setFilters, onEncodingChange,
+  onQueryChange, onSelectResult, onQuickLens, setFiltersImmediate, setFiltersDebounced, onEncodingChange,
   onSaveView, onApplyView, createView, onImportFile,
 }: DiscoverPanelProps) {
   const fileInput = useRef<HTMLInputElement>(null);
@@ -88,7 +89,7 @@ function DiscoverPanelBase({
     <aside className="sg-panel sg-side-panel sg-discover" data-testid="discover-panel" inert={inert || undefined}>
       <div className="sg-panel-title"><div><span className="sg-panel-index">01</span><h1>Discover</h1></div><span className="sg-count" data-testid="visible-count">{formatNumber(visibleCount)} visible</span></div>
       {visibleCount === 0 && (
-        <p className="sg-empty-hint" data-testid="empty-hint">No objects match the current filters — <button onClick={() => setFilters(structuredClone(DEFAULT_FILTERS))} type="button">reset them</button>.</p>
+        <p className="sg-empty-hint" data-testid="empty-hint">No objects match the current filters — <button onClick={() => setFiltersImmediate(structuredClone(DEFAULT_FILTERS))} type="button">reset them</button>.</p>
       )}
       <label className="sg-search">
         <Icon name="search" />
@@ -115,14 +116,14 @@ function DiscoverPanelBase({
       </section>
 
       <section className="sg-filters">
-        <div className="sg-section-heading"><span><Icon name="layers" size={15} /> FILTERS</span><button onClick={() => setFilters(structuredClone(DEFAULT_FILTERS))} type="button">Reset</button></div>
+        <div className="sg-section-heading"><span><Icon name="layers" size={15} /> FILTERS</span><button onClick={() => setFiltersImmediate(structuredClone(DEFAULT_FILTERS))} type="button">Reset</button></div>
         <FilterSection label="Object class">
           {(Object.keys(objectKindLabels) as ObjectKind[]).slice(0, 3).map((kind) => (
             <ToggleRow checked={filters.objectKinds.includes(kind)} key={kind} label={objectKindLabels[kind]} onChange={() => {
               const objectKinds = filters.objectKinds.includes(kind) ? filters.objectKinds.filter((value) => value !== kind) : [...filters.objectKinds, kind];
 
               if (objectKinds.length) {
-                setFilters({ ...filters, objectKinds });
+                setFiltersImmediate({ ...filters, objectKinds });
               }
             }} />
           ))}
@@ -134,7 +135,7 @@ function DiscoverPanelBase({
               ['inactive', 'Inactive / unknown'],
               ['all', 'All records'],
             ] as const).map(([value, label]) => (
-              <button aria-pressed={filters.status === value} data-testid={`status-${value}`} key={value} onClick={() => setFilters({ ...filters, status: value })} type="button">{label}</button>
+              <button aria-pressed={filters.status === value} data-testid={`status-${value}`} key={value} onClick={() => setFiltersImmediate({ ...filters, status: value })} type="button">{label}</button>
             ))}
           </div>
         </FilterSection>
@@ -144,7 +145,7 @@ function DiscoverPanelBase({
               const regimes = filters.regimes.includes(regime) ? filters.regimes.filter((value) => value !== regime) : [...filters.regimes, regime];
 
               if (regimes.length) {
-                setFilters({ ...filters, regimes });
+                setFiltersImmediate({ ...filters, regimes });
               }
             }} />
           ))}
@@ -159,7 +160,7 @@ function DiscoverPanelBase({
             onChange={(event) => {
               const min = Math.min(Number(event.target.value), filters.inclinationDeg.max - 1);
 
-              setFilters({ ...filters, inclinationDeg: { ...filters.inclinationDeg, min } });
+              setFiltersDebounced({ ...filters, inclinationDeg: { ...filters.inclinationDeg, min } });
             }}
             type="range"
             value={filters.inclinationDeg.min}
@@ -172,7 +173,7 @@ function DiscoverPanelBase({
             onChange={(event) => {
               const max = Math.max(Number(event.target.value), filters.inclinationDeg.min + 1);
 
-              setFilters({ ...filters, inclinationDeg: { ...filters.inclinationDeg, max } });
+              setFiltersDebounced({ ...filters, inclinationDeg: { ...filters.inclinationDeg, max } });
             }}
             type="range"
             value={filters.inclinationDeg.max}
