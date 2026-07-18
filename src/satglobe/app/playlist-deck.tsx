@@ -23,7 +23,7 @@ function PlaylistDeckBase({
   onEntryChange,
   onOpenWorkshop,
   onPlayingChange,
-}: PlaylistDeckProps) {
+}: Readonly<PlaylistDeckProps>) {
   const entry = playlist.entries[entryIndex];
 
   return (

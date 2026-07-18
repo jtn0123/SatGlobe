@@ -369,7 +369,9 @@ async function measurePlaylistPlayback(browser: Browser) {
           filterApplyCount++;
         } else if (entry.name === recolorName) {
           recolorCount++;
-          recolorCauses.push(String((entry.detail as { cause?: unknown } | null)?.cause ?? 'unknown'));
+          const cause = (entry.detail as { cause?: unknown } | null)?.cause;
+
+          recolorCauses.push(typeof cause === 'string' ? cause : 'unknown');
         } else if (entry.name === countName) {
           countUpdateCount++;
         }

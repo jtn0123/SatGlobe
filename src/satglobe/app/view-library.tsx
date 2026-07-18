@@ -42,7 +42,7 @@ export function ViewLibrary({
   onPlayPlaylist,
   onSavePlaylist,
   onSaveView,
-}: ViewLibraryProps) {
+}: Readonly<ViewLibraryProps>) {
   const viewFileInput = useRef<HTMLInputElement>(null);
   const playlistFileInput = useRef<HTMLInputElement>(null);
   const [importingView, setImportingView] = useState(false);
