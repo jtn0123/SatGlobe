@@ -73,17 +73,35 @@ export function useStoryPlayback(
     if (!playing || !isStoryMode) {
       return undefined;
     }
+    const advance = () => {
+      if (beatIndex < story.beats.length - 1) {
+        applyBeat(beatIndex + 1);
+      } else {
+        dispatch({ type: 'togglePlaying' });
+      }
+    };
+
+    /*
+     * prefers-reduced-motion: play still works, but each beat holds and then
+     * jumps (one discrete step per beat) instead of animating progress ticks.
+     */
+    if (typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      const remainingMs = Math.max(0, (1 - progress) * beat.durationMs);
+      const timer = window.setTimeout(() => {
+        dispatch({ type: 'setProgress', progress: 1 });
+        advance();
+      }, remainingMs);
+
+      return () => window.clearTimeout(timer);
+    }
+
     const startedAt = performance.now() - progress * beat.durationMs;
     const timer = window.setInterval(() => {
       const nextProgress = Math.min(1, (performance.now() - startedAt) / beat.durationMs);
 
       dispatch({ type: 'setProgress', progress: nextProgress });
       if (nextProgress >= 1) {
-        if (beatIndex < story.beats.length - 1) {
-          applyBeat(beatIndex + 1);
-        } else {
-          dispatch({ type: 'togglePlaying' });
-        }
+        advance();
       }
     }, 100);
 

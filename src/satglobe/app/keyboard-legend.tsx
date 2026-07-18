@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import { Icon } from './icon';
+import { useDialogFocus } from './use-dialog-focus';
 
 const shortcuts: Array<[string, string]> = [
   ['/', 'Focus the catalog search'],
@@ -12,8 +13,10 @@ const shortcuts: Array<[string, string]> = [
 
 /** Compact keyboard-shortcut reference, toggled with "?". */
 function KeyboardLegendBase({ onClose }: { onClose: () => void }) {
+  const dialogRef = useDialogFocus<HTMLDivElement>();
+
   return (
-    <div aria-label="Keyboard shortcuts" className="sg-keyboard-legend" data-testid="keyboard-legend" role="dialog">
+    <div aria-label="Keyboard shortcuts" aria-modal="true" className="sg-keyboard-legend" data-testid="keyboard-legend" ref={dialogRef} role="dialog">
       <div className="sg-inspector-head">
         <div><div className="sg-panel-kicker">KEYBOARD</div><h2>Shortcuts</h2></div>
         <button aria-label="Close shortcuts" className="sg-icon-button" onClick={onClose} type="button"><Icon name="close" /></button>
