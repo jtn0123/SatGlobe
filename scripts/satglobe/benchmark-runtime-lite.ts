@@ -162,14 +162,16 @@ async function measureInteraction(browser: Browser, trigger: string, response: s
       const [lensName, filterName, recolorName, countName] = names;
       const entries = performance.getEntriesByType('measure') as PerformanceMeasure[];
       let lens: PerformanceMeasure | null = null;
+      let lensCount = 0;
 
       for (const entry of entries) {
         if (entry.name === lensName) {
           lens = entry;
+          lensCount++;
         }
       }
-      if (!lens) {
-        return null;
+      if (lensCount !== 1 || lens === null) {
+        throw new Error(`Expected one ${lensName} entry, got ${lensCount}`);
       }
       const lensEnd = lens.startTime + lens.duration;
       let filterApplyMs = 0;
@@ -210,10 +212,6 @@ async function measureInteraction(browser: Browser, trigger: string, response: s
         recolorCauses,
       };
     }, [LENS_APPLY_MEASURE, FILTER_APPLY_MEASURE, RECOLOR_MEASURE, COUNT_UPDATE_MEASURE] as const);
-
-    if (!phaseSample) {
-      throw new Error(`No ${LENS_APPLY_MEASURE} entry was recorded for ${trigger}`);
-    }
 
     longTotals.push(t.longTasks.reduce((a, b) => a + b, 0));
     longMaxes.push(t.longTasks.length ? Math.max(...t.longTasks) : 0);
