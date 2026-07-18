@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
-import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
+import { createReadStream } from 'node:fs';
+import { mkdir, rename, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import Papa from 'papaparse';
 
@@ -9,6 +10,9 @@ export const SOCRATES_RAW_URL = 'https://celestrak.org/SOCRATES/sort-minRange.cs
 export const SOCRATES_METADATA_URL = 'https://celestrak.org/SOCRATES/jsonDir.php';
 export const SOCRATES_CACHE_MAX_AGE_MS = 8 * 60 * 60 * 1_000;
 export const SOCRATES_MAX_CONJUNCTIONS = 25;
+export const SOCRATES_MAX_SOURCE_BYTES = 64 * 1_024 * 1_024;
+export const SOCRATES_MAX_METADATA_BYTES = 256 * 1_024;
+export const SOCRATES_MAX_ERROR_BODY_BYTES = 16 * 1_024;
 
 const EXPECTED_HEADERS = [
   'NORAD_CAT_ID_1',
@@ -23,7 +27,6 @@ const EXPECTED_HEADERS = [
   'MAX_PROB',
   'DILUTION',
 ] as const;
-const MAX_SOURCE_BYTES = 64 * 1_024 * 1_024;
 const CACHE_SCHEMA_VERSION = 1;
 
 type SocratesCsvRow = Record<(typeof EXPECTED_HEADERS)[number], string>;
@@ -82,6 +85,13 @@ interface ProviderMetadata {
   size: number;
 }
 
+interface BoundedText {
+  text: string;
+  byteLength: number;
+}
+
+class BoundedReadError extends Error {}
+
 interface LoadSocratesOptions {
   input?: string;
   /** Provider FILE_MTIME for an exact saved raw input; filesystem mtime is not provenance. */
@@ -101,6 +111,127 @@ interface ParseSocratesOptions {
 
 function sha256(value: string | Uint8Array): string {
   return createHash('sha256').update(value).digest('hex');
+}
+
+function sizeLimitMessage(label: string, maximumBytes: number): string {
+  return `${label} exceeds ${maximumBytes.toLocaleString()} bytes.`;
+}
+
+function decodeUtf8(bytes: Uint8Array, label: string): string {
+  try {
+    return new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes);
+  } catch {
+    throw new BoundedReadError(`${label} is not valid UTF-8.`);
+  }
+}
+
+function assertBoundedContentLength(response: Response, maximumBytes: number, label: string): void {
+  const rawLength = response.headers.get('content-length');
+
+  if (rawLength === null) {
+    return;
+  }
+  const normalized = rawLength.trim();
+
+  if (!(/^\d+$/u).test(normalized) || !Number.isSafeInteger(Number(normalized))) {
+    throw new BoundedReadError(`${label} has an invalid Content-Length header.`);
+  }
+  if (Number(normalized) > maximumBytes) {
+    throw new BoundedReadError(sizeLimitMessage(label, maximumBytes));
+  }
+}
+
+async function readBoundedResponseText(
+  response: Response,
+  maximumBytes: number,
+  label: string,
+): Promise<BoundedText> {
+  assertBoundedContentLength(response, maximumBytes, label);
+  const reader = response.body?.getReader();
+
+  if (!reader) {
+    return { text: '', byteLength: 0 };
+  }
+  const bytes = new Uint8Array(maximumBytes);
+  let byteLength = 0;
+
+  try {
+    for (;;) {
+      let result: ReadableStreamReadResult<Uint8Array>;
+
+      try {
+        // eslint-disable-next-line no-await-in-loop -- response chunks must be consumed in wire order.
+        result = await reader.read();
+      } catch (error) {
+        throw new BoundedReadError(`${label} could not be read completely: ${error instanceof Error ? error.message : String(error)}`);
+      }
+      if (result.done) {
+        break;
+      }
+      const nextByteLength = byteLength + result.value.byteLength;
+
+      if (nextByteLength > maximumBytes) {
+        try {
+          // eslint-disable-next-line no-await-in-loop -- cancel immediately once the byte ceiling is crossed.
+          await reader.cancel();
+        } catch {
+          // Preserve the size-limit failure if the transport also rejects cancellation.
+        }
+        throw new BoundedReadError(sizeLimitMessage(label, maximumBytes));
+      }
+      bytes.set(result.value, byteLength);
+      byteLength = nextByteLength;
+    }
+  } finally {
+    reader.releaseLock();
+  }
+
+  return { text: decodeUtf8(bytes.subarray(0, byteLength), label), byteLength };
+}
+
+async function readBoundedFileText(file: string, maximumBytes: number, label: string): Promise<BoundedText> {
+  const fileStatus = await stat(file);
+
+  if (!fileStatus.isFile()) {
+    throw new Error(`${label} is not a regular file.`);
+  }
+  if (!Number.isSafeInteger(fileStatus.size) || fileStatus.size < 0) {
+    throw new Error(`${label} has an invalid file size.`);
+  }
+  if (fileStatus.size > maximumBytes) {
+    throw new BoundedReadError(sizeLimitMessage(label, maximumBytes));
+  }
+  const stream = createReadStream(file, { highWaterMark: 64 * 1_024 });
+  const contents = new Uint8Array(fileStatus.size);
+  let byteLength = 0;
+
+  try {
+    for await (const chunk of stream) {
+      const bytes = chunk instanceof Uint8Array ? chunk : Buffer.from(String(chunk), 'utf8');
+      const nextByteLength = byteLength + bytes.byteLength;
+
+      if (nextByteLength > maximumBytes) {
+        stream.destroy();
+        throw new BoundedReadError(sizeLimitMessage(label, maximumBytes));
+      }
+      if (nextByteLength > fileStatus.size) {
+        stream.destroy();
+        throw new Error(`${label} grew beyond its initial ${fileStatus.size.toLocaleString()}-byte size while being read.`);
+      }
+      contents.set(bytes, byteLength);
+      byteLength = nextByteLength;
+    }
+  } catch (error) {
+    if (error instanceof BoundedReadError) {
+      throw error;
+    }
+    throw new Error(`${label} could not be read completely: ${error instanceof Error ? error.message : String(error)}`);
+  }
+  if (byteLength !== fileStatus.size) {
+    throw new Error(`${label} changed size while being read (${fileStatus.size.toLocaleString()} to ${byteLength.toLocaleString()} bytes).`);
+  }
+
+  return { text: decodeUtf8(contents, label), byteLength };
 }
 
 function isoTimestamp(value: unknown, field: string): string {
@@ -480,17 +611,17 @@ function cacheMetadata(value: unknown): CacheMetadata | null {
 
 async function readCache(directory: string): Promise<{ raw: string; metadata: CacheMetadata } | null> {
   try {
-    const [raw, metadataRaw] = await Promise.all([
-      readFile(path.join(directory, 'socrates.csv'), 'utf8'),
-      readFile(path.join(directory, 'socrates.metadata.json'), 'utf8'),
+    const [rawSource, metadataSource] = await Promise.all([
+      readBoundedFileText(path.join(directory, 'socrates.csv'), SOCRATES_MAX_SOURCE_BYTES, 'SOCRATES cached source'),
+      readBoundedFileText(path.join(directory, 'socrates.metadata.json'), SOCRATES_MAX_METADATA_BYTES, 'SOCRATES cache metadata'),
     ]);
-    const metadata = cacheMetadata(JSON.parse(metadataRaw));
+    const metadata = cacheMetadata(JSON.parse(metadataSource.text));
 
-    if (!metadata || Buffer.byteLength(raw) !== metadata.size || sha256(raw) !== metadata.checksum) {
+    if (!metadata || rawSource.byteLength !== metadata.size || sha256(rawSource.text) !== metadata.checksum) {
       return null;
     }
 
-    return { raw, metadata };
+    return { raw: rawSource.text, metadata };
   } catch {
     return null;
   }
@@ -524,7 +655,19 @@ async function fetchResponse(url: string, fetchSource: typeof fetch): Promise<Re
   }
 
   if (!response.ok) {
-    const providerMessage = (await response.text()).trim();
+    let providerMessage: string;
+
+    try {
+      providerMessage = (await readBoundedResponseText(
+        response,
+        SOCRATES_MAX_ERROR_BODY_BYTES,
+        `SOCRATES HTTP ${response.status} error body`,
+      )).text.trim();
+    } catch (error) {
+      throw new Error(
+        `SOCRATES source returned HTTP ${response.status}: ${url}\n${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
     const providerDetails = providerMessage ? `\n${providerMessage}` : '';
 
     throw new Error(`SOCRATES source returned HTTP ${response.status}: ${url}${providerDetails}`);
@@ -559,11 +702,8 @@ async function loadLocalSource(
   now: Date,
 ): Promise<LoadedSocratesSource> {
   const file = path.resolve(input);
-  const raw = await readFile(file, 'utf8');
+  const raw = (await readBoundedFileText(file, SOCRATES_MAX_SOURCE_BYTES, 'SOCRATES input')).text;
 
-  if (Buffer.byteLength(raw) > MAX_SOURCE_BYTES) {
-    throw new Error(`SOCRATES input exceeds ${MAX_SOURCE_BYTES.toLocaleString()} bytes.`);
-  }
   if (!inputUpdatedAt) {
     throw new Error('A local SOCRATES input requires its provider FILE_MTIME via --socrates-updated-at.');
   }
@@ -615,7 +755,11 @@ export async function loadSocratesSource(options: LoadSocratesOptions = {}): Pro
     return validatedLoadedSource(loadedFromCache(cached), now);
   }
   const metadataResponse = await fetchResponse(SOCRATES_METADATA_URL, fetchSource);
-  const provider = parseProviderMetadata(await metadataResponse.text());
+  const provider = parseProviderMetadata((await readBoundedResponseText(
+    metadataResponse,
+    SOCRATES_MAX_METADATA_BYTES,
+    'SOCRATES metadata response',
+  )).text);
 
   if (cached?.metadata.updatedAt === provider.updatedAt && cached.metadata.size === provider.size) {
     const loaded = validatedLoadedSource(loadedFromCache(cached), now);
@@ -626,12 +770,13 @@ export async function loadSocratesSource(options: LoadSocratesOptions = {}): Pro
 
     return loaded;
   }
-  if (provider.size > MAX_SOURCE_BYTES) {
-    throw new Error(`SOCRATES metadata reports ${provider.size.toLocaleString()} bytes; safety limit is ${MAX_SOURCE_BYTES.toLocaleString()}.`);
+  if (provider.size > SOCRATES_MAX_SOURCE_BYTES) {
+    throw new Error(`SOCRATES metadata reports ${provider.size.toLocaleString()} bytes; safety limit is ${SOCRATES_MAX_SOURCE_BYTES.toLocaleString()}.`);
   }
   const rawResponse = await fetchResponse(SOCRATES_RAW_URL, fetchSource);
-  const raw = await rawResponse.text();
-  const size = Buffer.byteLength(raw);
+  const rawSource = await readBoundedResponseText(rawResponse, provider.size, 'SOCRATES raw response');
+  const raw = rawSource.text;
+  const size = rawSource.byteLength;
 
   if (size !== provider.size) {
     throw new Error(`SOCRATES download size ${size.toLocaleString()} does not match provider metadata ${provider.size.toLocaleString()}.`);

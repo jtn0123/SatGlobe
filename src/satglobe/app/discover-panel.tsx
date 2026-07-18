@@ -18,6 +18,7 @@ export type QuickLens = 'starlink' | 'geo' | 'debris';
 /** Keeps the fourth lens truthful across loading, freshness, and failure states. */
 export function getConjunctionLensPresentation(
   conjunctions: ConjunctionState,
+  conjunctionHighlightActive: boolean,
   highlightedObjectCount: number,
 ): { disabled: boolean; label: string } {
   if (conjunctions.status === 'loading') {
@@ -26,7 +27,7 @@ export function getConjunctionLensPresentation(
   if (conjunctions.status === 'unavailable') {
     return { disabled: true, label: 'Screening unavailable' };
   }
-  if (highlightedObjectCount > 0) {
+  if (conjunctionHighlightActive) {
     return { disabled: false, label: `${formatNumber(highlightedObjectCount)} highlighted` };
   }
   const pairNoun = conjunctions.lensPairCount === 1 ? 'pair' : 'pairs';
@@ -91,6 +92,7 @@ export interface DiscoverPanelProps {
   filters: FilterState;
   encoding: VisualEncoding;
   conjunctions: ConjunctionState;
+  conjunctionHighlightActive: boolean;
   highlightedObjectCount: number;
   savedViews: SavedViewV1[];
   onQueryChange: (query: string) => void;
@@ -108,13 +110,17 @@ export interface DiscoverPanelProps {
 
 /** The workshop's search, lens, filter, encoding, and saved-view instrument panel. */
 function DiscoverPanelBase({
-  inert, visibleCount, query, results, filters, encoding, conjunctions, highlightedObjectCount, savedViews,
+  inert, visibleCount, query, results, filters, encoding, conjunctions, conjunctionHighlightActive, highlightedObjectCount, savedViews,
   onQueryChange, onSelectResult, onQuickLens, onConjunctionLens, setFiltersImmediate, setFiltersDebounced, onEncodingChange,
   onSaveView, onApplyView, createView, onImportFile,
 }: DiscoverPanelProps) {
   const fileInput = useRef<HTMLInputElement>(null);
   const [importing, setImporting] = useState(false);
-  const conjunctionLens = getConjunctionLensPresentation(conjunctions, highlightedObjectCount);
+  const conjunctionLens = getConjunctionLensPresentation(
+    conjunctions,
+    conjunctionHighlightActive,
+    highlightedObjectCount,
+  );
 
   return (
     <aside className="sg-panel sg-side-panel sg-discover" data-testid="discover-panel" inert={inert || undefined}>
@@ -144,7 +150,7 @@ function DiscoverPanelBase({
           <button onClick={() => onQuickLens('geo')} type="button"><span className="sg-lens-glyph sg-lens-geo"><i /></span><strong>GEO belt</strong><small>The high ring</small></button>
           <button onClick={() => onQuickLens('debris')} type="button"><span className="sg-lens-glyph sg-lens-debris"><i /><i /><i /><i /></span><strong>Debris field</strong><small>Context layer</small></button>
           <button
-            aria-pressed={highlightedObjectCount > 0}
+            aria-pressed={conjunctionHighlightActive}
             data-conjunction-status={conjunctions.status}
             data-dropped-pair-count={conjunctions.droppedPairCount}
             data-highlighted-count={highlightedObjectCount}

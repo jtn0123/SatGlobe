@@ -1,4 +1,4 @@
-import { access, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { access, mkdtemp, readFile, rm, truncate, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -7,6 +7,9 @@ import { catalogIdFromTle } from './catalog-refresh';
 import {
   loadSocratesSource,
   parseSocratesCsv,
+  SOCRATES_MAX_ERROR_BODY_BYTES,
+  SOCRATES_MAX_METADATA_BYTES,
+  SOCRATES_MAX_SOURCE_BYTES,
   SOCRATES_METADATA_URL,
   SOCRATES_RAW_URL,
   validateSocratesFeed,
@@ -47,6 +50,36 @@ function row(overrides: Partial<Record<string, string>> = {}): string {
 
 function csv(rows: string[], prefix = ''): string {
   return `${prefix}${HEADER}\r\n${rows.join('\r\n')}\r\n`;
+}
+
+function providerMetadata(size: number): string {
+  return JSON.stringify([
+    {
+      FILE_NAME: 'sort-minRange.csv',
+      FILE_SIZE: size,
+      FILE_MTIME: '2026-07-18 01:13:28 UTC',
+    },
+  ]);
+}
+
+function repeatedStreamResponse(
+  chunk: Uint8Array,
+  repetitions: number,
+  init: ResponseInit = {},
+): Response {
+  let emitted = 0;
+
+  return new Response(new ReadableStream<Uint8Array>({
+    pull(controller) {
+      if (emitted >= repetitions) {
+        controller.close();
+
+        return;
+      }
+      controller.enqueue(chunk);
+      emitted++;
+    },
+  }), init);
 }
 
 afterEach(async () => {
@@ -339,6 +372,97 @@ return Promise.reject(new Error(`Unexpected URL ${url}`));
       writeCache: false,
     })).rejects.toThrow(/left the official CelesTrak origin/u);
     expect(request.mock.calls[0]?.[1]).toMatchObject({ redirect: 'error' });
+  });
+
+  it('rejects an oversized streamed raw source before buffering past the source limit', async () => {
+    const mebibyte = new Uint8Array(1_024 * 1_024).fill('x'.charCodeAt(0));
+    const request = vi.fn((input: RequestInfo | URL) => Promise.resolve(
+      String(input) === SOCRATES_METADATA_URL
+        ? new Response(providerMetadata(SOCRATES_MAX_SOURCE_BYTES), { status: 200 })
+        : repeatedStreamResponse(mebibyte, SOCRATES_MAX_SOURCE_BYTES / mebibyte.byteLength + 1, { status: 200 }),
+    ));
+
+    await expect(loadSocratesSource({
+      cacheDirectory: path.join(tmpdir(), `satglobe-socrates-oversized-raw-${process.pid}-${Date.now()}`),
+      fetchSource: request as unknown as typeof fetch,
+      now: NOW,
+      writeCache: false,
+    })).rejects.toThrow(/raw response exceeds/u);
+  });
+
+  it('rejects malformed UTF-8 and a provider-size-truncated raw source', async () => {
+    const malformed = Uint8Array.from([0xc3, 0x28]);
+    const malformedRequest = vi.fn((input: RequestInfo | URL) => Promise.resolve(
+      String(input) === SOCRATES_METADATA_URL
+        ? new Response(providerMetadata(malformed.byteLength), { status: 200 })
+        : repeatedStreamResponse(malformed, 1, { status: 200 }),
+    ));
+
+    await expect(loadSocratesSource({
+      cacheDirectory: path.join(tmpdir(), `satglobe-socrates-malformed-raw-${process.pid}-${Date.now()}`),
+      fetchSource: malformedRequest as unknown as typeof fetch,
+      now: NOW,
+      writeCache: false,
+    })).rejects.toThrow(/raw response is not valid UTF-8/u);
+
+    const raw = csv([row()]);
+    const truncatedRequest = vi.fn((input: RequestInfo | URL) => Promise.resolve(new Response(
+      String(input) === SOCRATES_METADATA_URL ? providerMetadata(Buffer.byteLength(raw) + 1) : raw,
+      { status: 200 },
+    )));
+
+    await expect(loadSocratesSource({
+      cacheDirectory: path.join(tmpdir(), `satglobe-socrates-truncated-raw-${process.pid}-${Date.now()}`),
+      fetchSource: truncatedRequest as unknown as typeof fetch,
+      now: NOW,
+      writeCache: false,
+    })).rejects.toThrow(/does not match provider metadata/u);
+  });
+
+  it('bounds streamed metadata and HTTP error diagnostics independently', async () => {
+    const metadataChunk = new Uint8Array(64 * 1_024).fill('m'.charCodeAt(0));
+    const oversizedMetadata = vi.fn<typeof fetch>().mockResolvedValue(repeatedStreamResponse(
+      metadataChunk,
+      Math.floor(SOCRATES_MAX_METADATA_BYTES / metadataChunk.byteLength) + 1,
+      { status: 200 },
+    ));
+
+    await expect(loadSocratesSource({
+      cacheDirectory: path.join(tmpdir(), `satglobe-socrates-oversized-metadata-${process.pid}-${Date.now()}`),
+      fetchSource: oversizedMetadata,
+      now: NOW,
+      writeCache: false,
+    })).rejects.toThrow(/metadata response exceeds/u);
+
+    const errorChunk = new Uint8Array(4 * 1_024).fill('e'.charCodeAt(0));
+    const oversizedError = vi.fn<typeof fetch>().mockResolvedValue(repeatedStreamResponse(
+      errorChunk,
+      Math.floor(SOCRATES_MAX_ERROR_BODY_BYTES / errorChunk.byteLength) + 1,
+      { status: 503 },
+    ));
+
+    await expect(loadSocratesSource({
+      cacheDirectory: path.join(tmpdir(), `satglobe-socrates-oversized-error-${process.pid}-${Date.now()}`),
+      fetchSource: oversizedError,
+      now: NOW,
+      writeCache: false,
+    })).rejects.toThrow(/HTTP 503[\s\S]*error body exceeds/u);
+  });
+
+  it('rejects an oversized sparse local input from stat before reading its contents', async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'satglobe-socrates-oversized-input-'));
+    const input = path.join(directory, 'socrates.csv');
+
+    temporaryDirectories.push(directory);
+    await writeFile(input, '', 'utf8');
+    await truncate(input, SOCRATES_MAX_SOURCE_BYTES + 1);
+
+    await expect(loadSocratesSource({
+      input,
+      inputUpdatedAt: SOURCE.updatedAt,
+      inputRetrievedAt: SOURCE.retrievedAt,
+      now: NOW,
+    })).rejects.toThrow(/input exceeds/u);
   });
 
   it('performs a cache-free verification without writing source files', async () => {

@@ -922,7 +922,7 @@ button {
 
 .sg-conjunction-partner span,
 .sg-conjunction-source span {
-  font-family: ui-monospace, 'SFMono-Regular', monospace;
+  font-family: ui-monospace, SFMono-Regular, monospace;
   font-size: var(--sg-micro);
 }
 

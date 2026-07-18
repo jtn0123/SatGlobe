@@ -77,6 +77,7 @@ export class SatGlobeEngineAdapter {
     camera: DEFAULT_CAMERA,
     newestElementEpoch: '',
     conjunctions: INITIAL_CONJUNCTION_STATE,
+    conjunctionHighlightActive: false,
     highlightedObjectCount: 0,
   };
   private objects_: SpaceObjectView[] = [];
@@ -236,14 +237,18 @@ export class SatGlobeEngineAdapter {
   setFilters(filters: FilterState): void {
     this.conjunctionHighlightActive_ = false;
     this.highlightedCatalogIds_ = new Set();
-    this.patchState_({ filters: structuredClone(filters), highlightedObjectCount: 0 }, false);
+    this.patchState_({
+      filters: structuredClone(filters),
+      conjunctionHighlightActive: false,
+      highlightedObjectCount: 0,
+    }, false);
     this.applyVisualState_(this.rebuildFilterVisibility_());
   }
 
   setEncoding(encoding: VisualEncoding): void {
     this.conjunctionHighlightActive_ = false;
     this.highlightedCatalogIds_ = new Set();
-    this.patchState_({ encoding, highlightedObjectCount: 0 }, false);
+    this.patchState_({ encoding, conjunctionHighlightActive: false, highlightedObjectCount: 0 }, false);
     this.applyVisualState_(this.filterVisibleCatalogIds_.size);
   }
 
@@ -254,9 +259,20 @@ export class SatGlobeEngineAdapter {
    */
   setHighlight(catalogIds: readonly string[]): void {
     const canonicalIds = this.canonicalHighlightIds_(catalogIds);
+    const conjunctionHighlightActive = canonicalIds.size > 0;
+    const activeChanged = conjunctionHighlightActive !== this.conjunctionHighlightActive_;
 
-    this.conjunctionHighlightActive_ = canonicalIds.size > 0;
-    if (!this.replaceHighlightIds_(canonicalIds)) {
+    this.conjunctionHighlightActive_ = conjunctionHighlightActive;
+    const highlightChanged = this.replaceHighlightIds_(canonicalIds);
+
+    if (activeChanged) {
+      this.patchState_({ conjunctionHighlightActive }, false);
+    }
+    if (!highlightChanged) {
+      if (activeChanged) {
+        this.emit_();
+      }
+
       return;
     }
 
@@ -360,6 +376,7 @@ export class SatGlobeEngineAdapter {
       this.patchState_({
         objectCount: this.objects_.length,
         visibleCount: this.visibleCountWithHighlight_(),
+        conjunctionHighlightActive: this.conjunctionHighlightActive_,
         highlightedObjectCount: this.highlightedCatalogIds_.size,
         conjunctions,
         newestElementEpoch: Number.isFinite(newestEpochMs) ? new Date(newestEpochMs).toISOString() : '',

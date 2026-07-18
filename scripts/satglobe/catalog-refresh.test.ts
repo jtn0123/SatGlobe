@@ -1,15 +1,17 @@
-import { access, copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { access, copyFile, link, mkdir, mkdtemp, readFile, rename, rm, unlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { FormatTle } from '../../src/engine/ootk/src/coordinate/FormatTle';
 import {
   catalogIdFromTle,
+  acquireInstallLock,
   epochFromCatalog,
   loadSource,
   ommToCatalogRow,
   parseArgs,
   refreshCatalog,
+  releaseInstallLock,
   stageAndInstallArtifacts,
   summarizeRejections,
   type OmmRow,
@@ -18,6 +20,13 @@ import {
 /* eslint-disable jsdoc/require-jsdoc -- Test fixture builders are intentionally local. */
 
 const temporaryDirectories: string[] = [];
+
+async function createTestInstallLock(lockFile: string, pid: number, token: string): Promise<void> {
+  const ownerFile = `${lockFile}.${token}.owner`;
+
+  await writeFile(ownerFile, `${JSON.stringify({ token, pid, startedAt: '2026-07-18T00:00:00.000Z' })}\n`, 'utf8');
+  await link(ownerFile, lockFile);
+}
 
 afterEach(async () => {
   await Promise.all(temporaryDirectories.splice(0).map((directory) => rm(directory, { force: true, recursive: true })));
@@ -228,14 +237,18 @@ describe('SatGlobe catalog refresh', () => {
   it('refuses a concurrent artifact install while the output lock is held', async () => {
     const directory = await mkdtemp(path.join(tmpdir(), 'satglobe-catalog-lock-'));
     const lockFile = path.join(directory, '.satglobe-refresh.lock');
+    const heldLock = await acquireInstallLock(lockFile);
 
     temporaryDirectories.push(directory);
-    await writeFile(lockFile, `${JSON.stringify({ pid: process.pid, startedAt: new Date().toISOString() })}\n`, 'utf8');
-    await expect(stageAndInstallArtifacts(directory, [
-      { target: path.join(directory, 'candidate.json'), contents: '{}\n' },
-      { target: path.join(directory, 'manifest.json'), contents: '{}\n', manifest: true },
-    ])).rejects.toThrow(/holds the install lock/u);
-    await expect(access(path.join(directory, 'candidate.json'))).rejects.toMatchObject({ code: 'ENOENT' });
+    try {
+      await expect(stageAndInstallArtifacts(directory, [
+        { target: path.join(directory, 'candidate.json'), contents: '{}\n' },
+        { target: path.join(directory, 'manifest.json'), contents: '{}\n', manifest: true },
+      ])).rejects.toThrow(/holds the install lock/u);
+      await expect(access(path.join(directory, 'candidate.json'))).rejects.toMatchObject({ code: 'ENOENT' });
+    } finally {
+      await releaseInstallLock(heldLock);
+    }
   });
 
   it('reclaims a lock whose recorded owner process is no longer alive', async () => {
@@ -245,7 +258,7 @@ describe('SatGlobe catalog refresh', () => {
     const manifest = path.join(directory, 'manifest.json');
 
     temporaryDirectories.push(directory);
-    await writeFile(lockFile, '{"pid":99999999,"startedAt":"2026-07-18T00:00:00.000Z"}\n', 'utf8');
+    await createTestInstallLock(lockFile, 99_999_999, '00000000-0000-4000-8000-000000000001');
     await stageAndInstallArtifacts(directory, [
       { target: candidate, contents: '{"candidate":true}\n' },
       { target: manifest, contents: '{"manifest":true}\n', manifest: true },
@@ -254,5 +267,112 @@ describe('SatGlobe catalog refresh', () => {
     await expect(readFile(candidate, 'utf8')).resolves.toBe('{"candidate":true}\n');
     await expect(readFile(manifest, 'utf8')).resolves.toBe('{"manifest":true}\n');
     await expect(access(lockFile)).rejects.toMatchObject({ code: 'ENOENT' });
+  });
+
+  it('allows only one of two contenders to reclaim the same stale lock', async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'satglobe-catalog-lock-race-'));
+    const lockFile = path.join(directory, '.satglobe-refresh.lock');
+
+    temporaryDirectories.push(directory);
+    await createTestInstallLock(lockFile, 99_999_999, '00000000-0000-4000-8000-000000000002');
+    const results = await Promise.allSettled([
+      acquireInstallLock(lockFile),
+      acquireInstallLock(lockFile),
+    ]);
+    const acquired = results.filter((result) => result.status === 'fulfilled');
+    const refused = results.filter((result) => result.status === 'rejected');
+
+    expect(acquired).toHaveLength(1);
+    expect(refused).toHaveLength(1);
+    const winner = acquired[0];
+
+    expect(winner?.status).toBe('fulfilled');
+    if (winner?.status === 'fulfilled') {
+      expect(JSON.parse(await readFile(lockFile, 'utf8'))).toMatchObject({ token: winner.value.token });
+      await releaseInstallLock(winner.value);
+    }
+    await expect(access(lockFile)).rejects.toMatchObject({ code: 'ENOENT' });
+  });
+
+  it('blocks a second reclaimer while the first is verified but has not unlinked the stale generation', async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'satglobe-catalog-lock-barrier-'));
+    const lockFile = path.join(directory, '.satglobe-refresh.lock');
+    let markProofVerified: (() => void) | undefined;
+    let continueFirstReclaimer: (() => void) | undefined;
+    const proofVerified = new Promise<void>((resolve) => {
+      markProofVerified = resolve;
+    });
+    const allowFirstReclaimerToUnlink = new Promise<void>((resolve) => {
+      continueFirstReclaimer = resolve;
+    });
+
+    temporaryDirectories.push(directory);
+    await createTestInstallLock(lockFile, 99_999_999, '00000000-0000-4000-8000-000000000004');
+    const firstAcquisition = acquireInstallLock(lockFile, {
+      afterProofVerified: async () => {
+        markProofVerified?.();
+        await allowFirstReclaimerToUnlink;
+      },
+    });
+
+    await proofVerified;
+    try {
+      await expect(acquireInstallLock(lockFile)).rejects.toThrow(/holds the install lock/u);
+    } finally {
+      continueFirstReclaimer?.();
+    }
+    const firstLock = await firstAcquisition;
+
+    expect(JSON.parse(await readFile(lockFile, 'utf8'))).toMatchObject({ token: firstLock.token });
+    await releaseInstallLock(firstLock);
+  });
+
+  it('immediately recovers a stale proof abandoned by a failed acquisition in the same process', async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'satglobe-catalog-lock-abandoned-'));
+    const lockFile = path.join(directory, '.satglobe-refresh.lock');
+
+    temporaryDirectories.push(directory);
+    await createTestInstallLock(lockFile, 99_999_999, '00000000-0000-4000-8000-000000000007');
+    await expect(acquireInstallLock(lockFile, {
+      afterProofVerified: () => Promise.reject(new Error('injected post-verification failure')),
+    })).rejects.toThrow(/injected post-verification failure/u);
+
+    const recovered = await acquireInstallLock(lockFile);
+
+    expect(JSON.parse(await readFile(lockFile, 'utf8'))).toMatchObject({ token: recovered.token });
+    await releaseInstallLock(recovered);
+    await expect(access(lockFile)).rejects.toMatchObject({ code: 'ENOENT' });
+  });
+
+  it('recovers an ownership proof left by a reclaimer that exited', async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'satglobe-catalog-lock-dead-reclaimer-'));
+    const lockFile = path.join(directory, '.satglobe-refresh.lock');
+    const ownerToken = '00000000-0000-4000-8000-000000000005';
+    const deadClaimantToken = '00000000-0000-4000-8000-000000000006';
+
+    temporaryDirectories.push(directory);
+    await createTestInstallLock(lockFile, 99_999_999, ownerToken);
+    await rename(
+      `${lockFile}.${ownerToken}.owner`,
+      `${lockFile}.${ownerToken}.reclaim-99999998-${deadClaimantToken}`,
+    );
+    const recovered = await acquireInstallLock(lockFile);
+
+    expect(JSON.parse(await readFile(lockFile, 'utf8'))).toMatchObject({ token: recovered.token });
+    await releaseInstallLock(recovered);
+  });
+
+  it('does not release a replacement lock owned by another refresh', async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'satglobe-catalog-lock-release-'));
+    const lockFile = path.join(directory, '.satglobe-refresh.lock');
+    const first = await acquireInstallLock(lockFile);
+    const replacementToken = '00000000-0000-4000-8000-000000000003';
+
+    temporaryDirectories.push(directory);
+    await unlink(lockFile);
+    await createTestInstallLock(lockFile, process.pid, replacementToken);
+    await releaseInstallLock(first);
+
+    expect(JSON.parse(await readFile(lockFile, 'utf8'))).toMatchObject({ token: replacementToken });
   });
 });

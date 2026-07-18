@@ -335,10 +335,17 @@ describe('SatGlobeEngineAdapter', () => {
     fakeBus.emit(EventBusEvent.onKeepTrackReady);
     runIdle!();
     await vi.waitFor(() => expect(adapter?.getState().conjunctions.status).toBe('current'));
+    const filters = structuredClone(adapter.getState().filters);
+
+    filters.constellation = 'starlink';
+    adapter.setFilters(filters);
     adapter.setHighlight(adapter.getState().conjunctions.catalogIds);
+    services.colorSchemes.setColorScheme.mockClear();
 
     expect(adapter.getState().conjunctions).toMatchObject({ lensPairCount: 2 });
+    expect(adapter.getState().conjunctionHighlightActive).toBe(true);
     expect(adapter.getState().highlightedObjectCount).toBe(3);
+    expect(adapter.getState().visibleCount).toBe(3);
 
     vi.setSystemTime(new Date('2022-01-02T00:00:00.001Z'));
     vi.advanceTimersByTime(600);
@@ -349,6 +356,8 @@ describe('SatGlobeEngineAdapter', () => {
       catalogIds: ['44714', '30001'],
     });
     expect(adapter.getState().highlightedObjectCount).toBe(2);
+    expect(adapter.getState().visibleCount).toBe(2);
+    expect(services.colorSchemes.setColorScheme).toHaveBeenCalledOnce();
 
     vi.setSystemTime(new Date('2022-01-03T00:00:00.001Z'));
     vi.advanceTimersByTime(600);
@@ -359,6 +368,8 @@ describe('SatGlobeEngineAdapter', () => {
       catalogIds: ['44714', '99999', '30001'],
     });
     expect(adapter.getState().highlightedObjectCount).toBe(3);
+    expect(adapter.getState().visibleCount).toBe(3);
+    expect(services.colorSchemes.setColorScheme).toHaveBeenCalledTimes(2);
   });
 
   it('re-resolves retained feed references and an active lens after a catalog reload', async () => {
@@ -602,6 +613,7 @@ describe('SatGlobeEngineAdapter', () => {
     listener.mockClear();
     adapter.setHighlight([' 30001 ', '44714', '30001', 'not-installed']);
 
+    expect(adapter.getState().conjunctionHighlightActive).toBe(true);
     expect(adapter.getState().highlightedObjectCount).toBe(2);
     expect(adapter.getState().visibleCount).toBe(2);
     expect(services.colorSchemes.setColorScheme).toHaveBeenCalledOnce();
@@ -616,6 +628,14 @@ describe('SatGlobeEngineAdapter', () => {
     expect(services.colorSchemes.setColorScheme).toHaveBeenCalledOnce();
     expect(filterSweep).not.toHaveBeenCalled();
     expect(listener).toHaveBeenCalledOnce();
+
+    adapter.setHighlight([]);
+
+    expect(adapter.getState().conjunctionHighlightActive).toBe(false);
+    expect(adapter.getState().highlightedObjectCount).toBe(0);
+    expect(services.colorSchemes.setColorScheme).toHaveBeenCalledTimes(2);
+    expect(filterSweep).not.toHaveBeenCalled();
+    expect(listener).toHaveBeenCalledTimes(2);
   });
 
   it('clears conjunction highlighting inside one filter or encoding visual-state apply', () => {
@@ -634,6 +654,7 @@ describe('SatGlobeEngineAdapter', () => {
 
     adapter.setFilters(structuredClone(adapter.getState().filters));
 
+    expect(adapter.getState().conjunctionHighlightActive).toBe(false);
     expect(adapter.getState().highlightedObjectCount).toBe(0);
     expect(adapter.getState().visibleCount).toBe(1);
     expect(services.colorSchemes.setColorScheme).toHaveBeenCalledOnce();
@@ -642,6 +663,7 @@ describe('SatGlobeEngineAdapter', () => {
     services.colorSchemes.setColorScheme.mockClear();
     adapter.setEncoding('orbit-regime');
 
+    expect(adapter.getState().conjunctionHighlightActive).toBe(false);
     expect(adapter.getState().highlightedObjectCount).toBe(0);
     expect(services.colorSchemes.setColorScheme).toHaveBeenCalledOnce();
   });

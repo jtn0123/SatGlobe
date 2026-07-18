@@ -406,13 +406,22 @@ describe('SatGlobeApp', () => {
     expect(methods.setEncoding).toHaveBeenCalledWith('orbital-plane');
   });
 
-  it('applies the conjunction lens with one highlight call and preserves filters and encoding', () => {
+  it('toggles the conjunction lens on and off while preserving filters and encoding', () => {
     const { methods } = renderApp({ state: { conjunctions: AVAILABLE_CONJUNCTIONS } });
+    const lens = screen.getByTestId('conjunction-lens');
 
-    fireEvent.click(screen.getByTestId('conjunction-lens'));
+    expect(lens.getAttribute('aria-pressed')).toBe('false');
+    fireEvent.click(lens);
 
     expect(methods.setHighlight).toHaveBeenCalledOnce();
     expect(methods.setHighlight).toHaveBeenCalledWith(AVAILABLE_CONJUNCTIONS.catalogIds);
+    expect(lens.getAttribute('aria-pressed')).toBe('true');
+
+    fireEvent.click(lens);
+
+    expect(methods.setHighlight).toHaveBeenCalledTimes(2);
+    expect(methods.setHighlight).toHaveBeenLastCalledWith([]);
+    expect(lens.getAttribute('aria-pressed')).toBe('false');
     expect(methods.setFilters).not.toHaveBeenCalled();
     expect(methods.setEncoding).not.toHaveBeenCalled();
   });

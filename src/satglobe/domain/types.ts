@@ -284,6 +284,8 @@ export interface EngineState {
   encoding: VisualEncoding;
   camera: CameraPose;
   conjunctions: ConjunctionState;
+  /** True while the conjunction lens owns the static highlight, independent of its current object count. */
+  conjunctionHighlightActive: boolean;
   highlightedObjectCount: number;
 }
 

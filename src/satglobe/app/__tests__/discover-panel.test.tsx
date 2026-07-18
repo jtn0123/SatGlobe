@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DiscoverPanel, getQuickLensState, type DiscoverPanelProps } from '../discover-panel';
 import { INITIAL_CONJUNCTION_STATE, createUnavailableConjunctionState } from '../../domain/conjunctions';
-import { DEFAULT_FILTERS, type AvailableConjunctionState, type FilterState, type SpaceObjectView } from '../../domain/types';
+import { DEFAULT_FILTERS, type AvailableConjunctionState, type FilterState, type ResolvedConjunctionPair, type SpaceObjectView } from '../../domain/types';
 
 const NON_DEFAULT_FILTERS: FilterState = {
   objectKinds: ['payload', 'debris'],
@@ -48,6 +48,7 @@ const makeProps = (overrides: Partial<DiscoverPanelProps> = {}): DiscoverPanelPr
   filters: structuredClone(DEFAULT_FILTERS),
   encoding: 'object-type',
   conjunctions: INITIAL_CONJUNCTION_STATE,
+  conjunctionHighlightActive: false,
   highlightedObjectCount: 0,
   savedViews: [],
   onQueryChange: vi.fn(),
@@ -64,20 +65,41 @@ const makeProps = (overrides: Partial<DiscoverPanelProps> = {}): DiscoverPanelPr
   ...overrides,
 });
 
+const SUBJECT = makeView();
+const PARTNER = makeView({ catalogId: '43013', name: 'TEST PARTNER' });
+const makePair = (timeOfClosestApproach: string): ResolvedConjunctionPair => ({
+  id: 'a'.repeat(24),
+  object1: { catalogId: SUBJECT.catalogId, name: SUBJECT.name, dseDays: 0.5, object: SUBJECT },
+  object2: { catalogId: PARTNER.catalogId, name: PARTNER.name, dseDays: 0.75, object: PARTNER },
+  timeOfClosestApproach,
+  missDistanceKm: 0.25,
+  relativeSpeedKmS: 12.5,
+  maximumProbability: 0.001,
+  dilutionThreshold: 0.01,
+});
+
+const SOURCE = {
+  provider: 'CelesTrak' as const,
+  rawUrl: 'https://celestrak.org/SOCRATES/sort-minRange.csv' as const,
+  updatedAt: '2026-07-18T08:00:00.000Z',
+  retrievedAt: '2026-07-18T08:05:00.000Z',
+  checksum: 'a'.repeat(64),
+};
+
 const AVAILABLE_CONJUNCTIONS: AvailableConjunctionState = {
   status: 'current',
-  conjunctions: [],
-  lensPairCount: 0,
+  conjunctions: [makePair('2026-07-19T08:00:00.000Z')],
+  lensPairCount: 1,
   catalogIds: ['25544', '43013'],
   droppedPairCount: 1,
-  source: {
-    provider: 'CelesTrak',
-    rawUrl: 'https://celestrak.org/SOCRATES/sort-minRange.csv',
-    updatedAt: '2026-07-18T08:00:00.000Z',
-    retrievedAt: '2026-07-18T08:05:00.000Z',
-    checksum: 'a'.repeat(64),
-  },
+  source: SOURCE,
   error: null,
+};
+
+const ARCHIVAL_CONJUNCTIONS: AvailableConjunctionState = {
+  ...AVAILABLE_CONJUNCTIONS,
+  status: 'archival',
+  conjunctions: [makePair('2026-07-17T08:00:00.000Z')],
 };
 
 describe('getQuickLensState', () => {
@@ -154,22 +176,27 @@ describe('DiscoverPanel', () => {
   });
 
   it.each([
-    ['loading', INITIAL_CONJUNCTION_STATE, true, 'Loading screening'],
-    ['unavailable', createUnavailableConjunctionState('missing'), true, 'Screening unavailable'],
-    ['current', AVAILABLE_CONJUNCTIONS, false, '0 upcoming pairs'],
-    ['stale', { ...AVAILABLE_CONJUNCTIONS, status: 'stale' as const }, false, '0 stale upcoming pairs'],
-    ['archival', { ...AVAILABLE_CONJUNCTIONS, status: 'archival' as const }, false, '0 latest past pairs'],
-  ])('renders a truthful %s conjunction-lens state', (_status, conjunctions, disabled, label) => {
+    ['loading', 'loading', INITIAL_CONJUNCTION_STATE, true, 'Loading screening'],
+    ['unavailable', 'unavailable', createUnavailableConjunctionState('missing'), true, 'Screening unavailable'],
+    ['current', 'current', AVAILABLE_CONJUNCTIONS, false, '1 upcoming pair'],
+    ['stale', 'stale', { ...AVAILABLE_CONJUNCTIONS, status: 'stale' as const }, false, '1 stale upcoming pair'],
+    ['archival', 'archival', ARCHIVAL_CONJUNCTIONS, false, '1 latest past pair'],
+    ['empty archival', 'archival', { ...ARCHIVAL_CONJUNCTIONS, conjunctions: [], lensPairCount: 0, catalogIds: [] }, true, '0 latest past pairs'],
+  ])('renders a truthful %s conjunction-lens state', (_case, status, conjunctions, disabled, label) => {
     render(<DiscoverPanel {...makeProps({ conjunctions })} />);
     const button = screen.getByTestId('conjunction-lens') as HTMLButtonElement;
 
     expect(button.disabled).toBe(disabled);
-    expect(button.getAttribute('data-conjunction-status')).toBe(_status);
+    expect(button.getAttribute('data-conjunction-status')).toBe(status);
     expect(screen.getByTestId('conjunction-lens-status').textContent).toContain(label);
   });
 
   it('applies the conjunction lens through its dedicated callback and reports highlight/drop counts', () => {
-    const props = makeProps({ conjunctions: AVAILABLE_CONJUNCTIONS, highlightedObjectCount: 2 });
+    const props = makeProps({
+      conjunctions: AVAILABLE_CONJUNCTIONS,
+      conjunctionHighlightActive: true,
+      highlightedObjectCount: 2,
+    });
 
     render(<DiscoverPanel {...props} />);
     fireEvent.click(screen.getByTestId('conjunction-lens'));
@@ -177,8 +204,20 @@ describe('DiscoverPanel', () => {
     expect(props.onConjunctionLens).toHaveBeenCalledOnce();
     expect(props.onQuickLens).not.toHaveBeenCalled();
     expect(screen.getByTestId('conjunction-lens-status').textContent).toBe('2 highlighted');
+    expect(screen.getByTestId('conjunction-lens').getAttribute('aria-pressed')).toBe('true');
     expect(screen.getByTestId('conjunction-lens').getAttribute('data-highlighted-count')).toBe('2');
     expect(screen.getByTestId('conjunction-lens').getAttribute('data-dropped-pair-count')).toBe('1');
+  });
+
+  it('does not treat an unrelated nonzero highlight count as an active conjunction lens', () => {
+    render(<DiscoverPanel {...makeProps({
+      conjunctions: AVAILABLE_CONJUNCTIONS,
+      conjunctionHighlightActive: false,
+      highlightedObjectCount: 2,
+    })} />);
+
+    expect(screen.getByTestId('conjunction-lens').getAttribute('aria-pressed')).toBe('false');
+    expect(screen.getByTestId('conjunction-lens-status').textContent).toBe('1 upcoming pair');
   });
 
   it('announces asynchronous lens status and uses singular pair grammar', () => {

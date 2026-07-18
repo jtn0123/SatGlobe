@@ -1,7 +1,7 @@
 #!/usr/bin/env npx tsx
 
-import { createHash } from 'node:crypto';
-import { copyFile, mkdir, mkdtemp, open, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
+import { createHash, randomUUID } from 'node:crypto';
+import { copyFile, link, mkdir, mkdtemp, open, readFile, readdir, rename, rm, stat, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import Papa from 'papaparse';
@@ -477,11 +477,38 @@ interface StagedArtifact extends RefreshArtifact {
 }
 
 interface InstallLockOwner {
+  token: string;
   pid: number;
   startedAt: string;
 }
 
-const INCOMPLETE_LOCK_STALE_AFTER_MS = 60_000;
+interface InstallLockIdentity {
+  device: bigint;
+  inode: bigint;
+}
+
+export interface InstallLock {
+  lockFile: string;
+  ownerFile: string;
+  token: string;
+  identity: InstallLockIdentity;
+}
+
+export interface InstallLockAcquisitionHooks {
+  afterProofVerified?: () => Promise<void>;
+}
+
+interface InstallLockProof {
+  file: string;
+  claimantPid?: number;
+  claimantToken?: string;
+}
+
+type InspectedInstallLock =
+  | { state: 'missing' | 'live' }
+  | { state: 'stale'; identity: InstallLockIdentity; ownerToken: string; proofFile: string };
+
+const INSTALL_LOCK_TOKEN_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u;
 
 function processIsAlive(pid: number): boolean {
   try {
@@ -493,73 +520,263 @@ function processIsAlive(pid: number): boolean {
   }
 }
 
-async function createInstallLock(lockFile: string): Promise<boolean> {
-  let handle: Awaited<ReturnType<typeof open>>;
+function installLockOwnerFile(lockFile: string, token: string): string {
+  return `${lockFile}.${token}.owner`;
+}
+
+function sameInstallLockIdentity(left: InstallLockIdentity | null, right: InstallLockIdentity): boolean {
+  return left?.device === right.device && left.inode === right.inode;
+}
+
+async function installLockIdentity(file: string): Promise<InstallLockIdentity | null> {
+  try {
+    const fileStat = await stat(file, { bigint: true });
+
+    return { device: fileStat.dev, inode: fileStat.ino };
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      return null;
+    }
+    throw error;
+  }
+}
+
+async function createInstallLockCandidate(lockFile: string): Promise<InstallLock> {
+  const token = randomUUID();
+  const ownerFile = installLockOwnerFile(lockFile, token);
+  const handle = await open(ownerFile, 'wx');
 
   try {
-    handle = await open(lockFile, 'wx');
+    const owner: InstallLockOwner = { token, pid: process.pid, startedAt: new Date().toISOString() };
+
+    await handle.writeFile(`${JSON.stringify(owner)}\n`, 'utf8');
+  } catch (error) {
+    await rm(ownerFile, { force: true });
+    throw error;
+  } finally {
+    await handle.close();
+  }
+  const identity = await installLockIdentity(ownerFile);
+
+  if (!identity) {
+    throw new Error(`Catalog refresh lock owner file disappeared during acquisition: ${ownerFile}`);
+  }
+
+  return { lockFile, ownerFile, token, identity };
+}
+
+async function findInstallLockProof(
+  lockFile: string,
+  ownerToken: string,
+  identity: InstallLockIdentity,
+): Promise<InstallLockProof | null> {
+  const directory = path.dirname(lockFile);
+  const prefix = `${path.basename(lockFile)}.${ownerToken}.`;
+  const entries = (await readdir(directory)).filter((entry) => entry.startsWith(prefix));
+  const candidates = await Promise.all(entries.map(async (entry) => {
+    const file = path.join(directory, entry);
+
+    return { file, identity: await installLockIdentity(file) };
+  }));
+  const proofs = candidates.filter((candidate) => sameInstallLockIdentity(candidate.identity, identity));
+
+  if (proofs.length !== 1) {
+    return null;
+  }
+  const proof = proofs[0];
+  const suffix = path.basename(proof.file).slice(prefix.length);
+
+  if (suffix === 'owner') {
+    return { file: proof.file };
+  }
+  const claimantMatch = (/^reclaim-(?<pid>\d+)-(?<token>[0-9a-f-]+)$/u).exec(suffix);
+
+  if (
+    !claimantMatch?.groups ||
+    !INSTALL_LOCK_TOKEN_PATTERN.test(claimantMatch.groups.token) ||
+    !Number.isSafeInteger(Number(claimantMatch.groups.pid)) ||
+    Number(claimantMatch.groups.pid) <= 0
+  ) {
+    return null;
+  }
+
+  return {
+    file: proof.file,
+    claimantPid: Number(claimantMatch.groups.pid),
+    claimantToken: claimantMatch.groups.token,
+  };
+}
+
+async function installLockClaimantIsActive(lockFile: string, proof: InstallLockProof): Promise<boolean> {
+  if (proof.claimantPid === undefined || proof.claimantToken === undefined || !processIsAlive(proof.claimantPid)) {
+    return false;
+  }
+  try {
+    const candidate = JSON.parse(
+      await readFile(installLockOwnerFile(lockFile, proof.claimantToken), 'utf8'),
+    ) as Partial<InstallLockOwner>;
+
+    return candidate.token === proof.claimantToken && candidate.pid === proof.claimantPid;
+  } catch (error) {
+    return (error as NodeJS.ErrnoException).code !== 'ENOENT';
+  }
+}
+
+async function inspectInstallLock(lockFile: string): Promise<InspectedInstallLock> {
+  let owner: Partial<InstallLockOwner>;
+  let identity: InstallLockIdentity | null;
+
+  try {
+    owner = JSON.parse(await readFile(lockFile, 'utf8')) as Partial<InstallLockOwner>;
+    identity = await installLockIdentity(lockFile);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      return { state: 'missing' };
+    }
+
+    return { state: 'live' };
+  }
+  if (
+    !identity ||
+    typeof owner.token !== 'string' ||
+    !INSTALL_LOCK_TOKEN_PATTERN.test(owner.token) ||
+    !Number.isSafeInteger(owner.pid) ||
+    Number(owner.pid) <= 0
+  ) {
+    return { state: 'live' };
+  }
+  const proof = await findInstallLockProof(lockFile, owner.token, identity);
+
+  if (
+    !proof ||
+    processIsAlive(Number(owner.pid)) ||
+    await installLockClaimantIsActive(lockFile, proof)
+  ) {
+    return { state: 'live' };
+  }
+
+  return { state: 'stale', identity, ownerToken: owner.token, proofFile: proof.file };
+}
+
+async function tryCreateInstallLock(lock: InstallLock): Promise<boolean> {
+  try {
+    await link(lock.ownerFile, lock.lockFile);
+
+    return true;
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'EEXIST') {
       return false;
     }
     throw error;
   }
+}
+
+async function removeObservedInstallLock(
+  lockFile: string,
+  proofFile: string,
+  ownerToken: string,
+  identity: InstallLockIdentity,
+  claimantToken: string,
+  hooks: InstallLockAcquisitionHooks = {},
+): Promise<boolean> {
+  const claimedProof = `${lockFile}.${ownerToken}.reclaim-${process.pid}-${claimantToken}`;
 
   try {
-    const owner: InstallLockOwner = { pid: process.pid, startedAt: new Date().toISOString() };
-
-    await handle.writeFile(`${JSON.stringify(owner)}\n`, 'utf8');
+    await rename(proofFile, claimedProof);
   } catch (error) {
-    await rm(lockFile, { force: true });
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      return false;
+    }
+    throw error;
+  }
+  let preserveProof = false;
+
+  try {
+    const [currentLock, currentProof] = await Promise.all([
+      installLockIdentity(lockFile),
+      installLockIdentity(claimedProof),
+    ]);
+
+    if (!sameInstallLockIdentity(currentLock, identity) || !sameInstallLockIdentity(currentProof, identity)) {
+      return false;
+    }
+    await hooks.afterProofVerified?.();
+    // The renamed proof is the advisory-protocol baton: participating
+    // contenders see this live claimant and cannot replace the canonical path
+    // between verification and unlink.
+    try {
+      await unlink(lockFile);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+        return false;
+      }
+      throw error;
+    }
+
+    return true;
+  } catch (error) {
+    preserveProof = true;
     throw error;
   } finally {
-    await handle.close();
+    if (!preserveProof) {
+      await rm(claimedProof, { force: true });
+    }
   }
-
-  return true;
 }
 
-async function inspectInstallLock(lockFile: string): Promise<'live' | 'stale' | 'missing'> {
-  try {
-    const owner = JSON.parse(await readFile(lockFile, 'utf8')) as Partial<InstallLockOwner>;
-
-    if (Number.isSafeInteger(owner.pid) && Number(owner.pid) > 0) {
-      return processIsAlive(Number(owner.pid)) ? 'live' : 'stale';
-    }
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-      return 'missing';
-    }
+async function claimInstallLock(
+  lock: InstallLock,
+  hooks: InstallLockAcquisitionHooks,
+  retriesRemaining = 4,
+): Promise<void> {
+  if (await tryCreateInstallLock(lock)) {
+    return;
   }
+  const observed = await inspectInstallLock(lock.lockFile);
+
+  if (observed.state === 'live') {
+    throw new Error(`Another catalog refresh holds the install lock: ${lock.lockFile}`);
+  }
+  if (retriesRemaining <= 0) {
+    throw new Error(`Could not acquire the catalog refresh install lock: ${lock.lockFile}`);
+  }
+  if (observed.state === 'stale') {
+    await removeObservedInstallLock(
+      lock.lockFile,
+      observed.proofFile,
+      observed.ownerToken,
+      observed.identity,
+      lock.token,
+      hooks,
+    );
+  }
+  await claimInstallLock(lock, hooks, retriesRemaining - 1);
+}
+
+export async function acquireInstallLock(
+  lockFile: string,
+  hooks: InstallLockAcquisitionHooks = {},
+): Promise<InstallLock> {
+  const lock = await createInstallLockCandidate(lockFile);
 
   try {
-    const lockStat = await stat(lockFile);
+    await claimInstallLock(lock, hooks);
 
-    return Date.now() - lockStat.mtimeMs > INCOMPLETE_LOCK_STALE_AFTER_MS ? 'stale' : 'live';
+    return lock;
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-      return 'missing';
-    }
+    await rm(lock.ownerFile, { force: true });
     throw error;
   }
 }
 
-async function acquireInstallLock(lockFile: string, retriesRemaining = 2): Promise<void> {
-  if (await createInstallLock(lockFile)) {
-    return;
-  }
-  const state = await inspectInstallLock(lockFile);
-
-  if (state === 'live') {
-    throw new Error(`Another catalog refresh holds the install lock: ${lockFile}`);
-  }
-  if (retriesRemaining <= 0) {
-    throw new Error(`Could not acquire the catalog refresh install lock: ${lockFile}`);
-  }
-  if (state === 'stale') {
-    await rm(lockFile, { force: true });
-  }
-  await acquireInstallLock(lockFile, retriesRemaining - 1);
+export async function releaseInstallLock(lock: InstallLock): Promise<void> {
+  await removeObservedInstallLock(
+    lock.lockFile,
+    lock.ownerFile,
+    lock.token,
+    lock.identity,
+    lock.token,
+  );
 }
 
 async function installedFileExists(file: string): Promise<boolean> {
@@ -599,7 +816,7 @@ export async function stageAndInstallArtifacts(outputDirectory: string, artifact
   }
   const lockFile = path.join(outputDirectory, '.satglobe-refresh.lock');
 
-  await acquireInstallLock(lockFile);
+  const installLock = await acquireInstallLock(lockFile);
   let stageDirectory: string | null = null;
   let preserveStageForRecovery = false;
   const ordered = [...artifacts].sort((left, right) => Number(Boolean(left.manifest)) - Number(Boolean(right.manifest)));
@@ -637,10 +854,13 @@ export async function stageAndInstallArtifacts(outputDirectory: string, artifact
       throw error;
     }
   } finally {
-    if (stageDirectory && !preserveStageForRecovery) {
-      await rm(stageDirectory, { force: true, recursive: true });
+    try {
+      if (stageDirectory && !preserveStageForRecovery) {
+        await rm(stageDirectory, { force: true, recursive: true });
+      }
+    } finally {
+      await releaseInstallLock(installLock);
     }
-    await rm(lockFile, { force: true });
   }
 }
 
