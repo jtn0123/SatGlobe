@@ -21,6 +21,8 @@
  */
 
 import { KeepTrack } from './keeptrack';
+import { errorManagerInstance } from './engine/utils/errorManager';
+import { localizationReady } from './locales/locales';
 import { registerServiceWorker } from './pwa/service-worker-registration';
 import { mountSatGlobe } from './satglobe/bootstrap';
 
@@ -51,22 +53,34 @@ if (__EDITION__ === 'satglobe') {
   startCatalogPrefetch();
 }
 
-const keepTrackInstance = KeepTrack.getInstance();
+/** Initializes the engine and UI after the detected locale has settled. */
+function startKeepTrack(): void {
+  const keepTrackInstance = KeepTrack.getInstance();
 
-// Load the main website class
-keepTrackInstance.init(window.settingsOverride);
+  // Load the main website class
+  keepTrackInstance.init(window.settingsOverride);
 
-// Expose to window for debugging
-window.keepTrack = keepTrackInstance;
+  // Expose to window for debugging
+  window.keepTrack = keepTrackInstance;
 
-// Initialize the website
-KeepTrack.initCss().then(() => {
-  keepTrackInstance.run();
-  if (__EDITION__ === 'satglobe') {
-    mountSatGlobe();
-  }
-});
+  // Initialize the website
+  KeepTrack.initCss().then(() => {
+    keepTrackInstance.run();
+    if (__EDITION__ === 'satglobe') {
+      mountSatGlobe();
+    }
+  });
+}
 
 if (__EDITION__ !== 'satglobe') {
   registerServiceWorker();
 }
+
+// Catalog/service-worker work is already in flight. Do not boot translated UI
+// until the detected locale is ready. English is bundled as the safe fallback.
+try {
+  await localizationReady;
+} catch (error: unknown) {
+  errorManagerInstance.warn('Could not load the selected locale; continuing with English.', error);
+}
+startKeepTrack();

@@ -1,56 +1,21 @@
-import i18next, { InitOptions } from 'i18next';
+import i18next, { BackendModule, InitOptions, ResourceKey } from 'i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
-import de from './de.json';
 import en from './en.json';
-import es from './es.json';
-import fr from './fr.json';
-import ja from './ja.json';
-import it from './it.json';
 import { Keys, t7e } from './keys';
-import ko from './ko.json';
-import pl from './pl.json';
-import cs from './cs.json';
-import ru from './ru.json';
-import uk from './uk.json';
-import zh from './zh.json';
 
-const opts: InitOptions = {
-  interpolation: {
-    escapeValue: false,
-  },
-  fallbackLng: 'en',
-  debug: false,
-  resources: {
-    de: { translation: de },
-    en: { translation: en },
-    fr: { translation: fr },
-    es: { translation: es },
-    ja: { translation: ja },
-    ko: { translation: ko },
-    uk: { translation: uk },
-    ru: { translation: ru },
-    zh: { translation: zh },
-    pl: { translation: pl },
-    cs: { translation: cs },
-    it: { translation: it },
-  },
-};
+const SUPPORTED_LOCALE_CODES = ['en', 'de', 'es', 'fr', 'ja', 'ko', 'ru', 'uk', 'zh', 'pl', 'cs', 'it'] as const;
 
-i18next.use(LanguageDetector).init(opts);
+type SupportedLocaleCode = typeof SUPPORTED_LOCALE_CODES[number];
+type AsyncLocaleCode = Exclude<SupportedLocaleCode, 'en'>;
 
 export interface SupportedLocale {
-  /** BCP-47 base code matching a key in i18next `resources` above. */
-  code: string;
+  /** BCP-47 base code matching a supported i18next resource. */
+  code: SupportedLocaleCode;
   /** Endonym shown in language pickers (always rendered in its own script). */
   nativeName: string;
 }
 
-/**
- * Canonical list of UI languages. Keep this in lockstep with the `resources`
- * map above - it is the single source of truth for language pickers (e.g. the
- * Debug menu's locale switcher) so the option list cannot drift from what is
- * actually bundled.
- */
+/** Canonical list of UI languages used by both i18next and language pickers. */
 export const SUPPORTED_LOCALES: SupportedLocale[] = [
   { code: 'en', nativeName: 'English' },
   { code: 'de', nativeName: 'Deutsch' },
@@ -65,6 +30,86 @@ export const SUPPORTED_LOCALES: SupportedLocale[] = [
   { code: 'cs', nativeName: 'Čeština' },
   { code: 'it', nativeName: 'Italiano' },
 ];
+
+const localeLoaders: Record<AsyncLocaleCode, () => Promise<{ default: ResourceKey }>> = {
+  cs: () => import(/* webpackChunkName: "locale-cs" */ './cs.json'),
+  de: () => import(/* webpackChunkName: "locale-de" */ './de.json'),
+  es: () => import(/* webpackChunkName: "locale-es" */ './es.json'),
+  fr: () => import(/* webpackChunkName: "locale-fr" */ './fr.json'),
+  it: () => import(/* webpackChunkName: "locale-it" */ './it.json'),
+  ja: () => import(/* webpackChunkName: "locale-ja" */ './ja.json'),
+  ko: () => import(/* webpackChunkName: "locale-ko" */ './ko.json'),
+  pl: () => import(/* webpackChunkName: "locale-pl" */ './pl.json'),
+  ru: () => import(/* webpackChunkName: "locale-ru" */ './ru.json'),
+  uk: () => import(/* webpackChunkName: "locale-uk" */ './uk.json'),
+  zh: () => import(/* webpackChunkName: "locale-zh" */ './zh.json'),
+};
+const localeLoadErrors = new Map<AsyncLocaleCode, Error>();
+
+const localeBackend: BackendModule = {
+  type: 'backend',
+  init: () => undefined,
+  read: (language, _namespace, callback) => {
+    const code = language.split('-')[0];
+
+    if (code === 'en') {
+      callback(null, en);
+
+      return;
+    }
+    if (!Object.hasOwn(localeLoaders, code)) {
+      callback(new Error(`Unsupported locale: ${language}`), false);
+
+      return;
+    }
+
+    const localeCode = code as AsyncLocaleCode;
+
+    localeLoaders[localeCode]()
+      .then((module) => {
+        localeLoadErrors.delete(localeCode);
+        callback(null, module.default);
+      })
+      .catch((error: unknown) => {
+        const loadError = error instanceof Error ? error : new Error(`Could not load locale: ${language}`);
+
+        localeLoadErrors.set(localeCode, loadError);
+        callback(loadError, false);
+      });
+  },
+};
+
+const opts: InitOptions = {
+  interpolation: {
+    escapeValue: false,
+  },
+  fallbackLng: 'en',
+  debug: false,
+  defaultNS: 'translation',
+  load: 'languageOnly',
+  ns: ['translation'],
+  partialBundledLanguages: true,
+  supportedLngs: [...SUPPORTED_LOCALE_CODES],
+  resources: {
+    en: { translation: en },
+  },
+};
+
+i18next.use(LanguageDetector).use(localeBackend);
+const initialization = i18next.init(opts);
+
+export const localizationReady = initialization.then(async (translation) => {
+  const requestedCode = i18next.language?.split('-')[0] as SupportedLocaleCode | undefined;
+
+  if (requestedCode && requestedCode !== 'en' && !i18next.hasResourceBundle(requestedCode, 'translation')) {
+    const loadError = localeLoadErrors.get(requestedCode) ?? new Error(`Could not load locale: ${requestedCode}`);
+
+    await i18next.changeLanguage('en');
+    throw loadError;
+  }
+
+  return translation;
+});
 
 export interface LocaleInformation {
   plugins: {
