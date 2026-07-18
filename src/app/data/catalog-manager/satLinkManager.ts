@@ -18,9 +18,7 @@ const calculateEarthClearanceAngle = (firstPosition: Vector3Tuple, secondPositio
     secondPosition[1] - firstPosition[1],
     secondPosition[2] - firstPosition[2],
   ];
-  const denominator =
-    Math.sqrt(radialToEarth[0] ** 2 + radialToEarth[1] ** 2 + radialToEarth[2] ** 2) *
-    Math.sqrt(firstToSecond[0] ** 2 + firstToSecond[1] ** 2 + firstToSecond[2] ** 2);
+  const denominator = Math.hypot(...radialToEarth) * Math.hypot(...firstToSecond);
   const cosine = dotProduct3(radialToEarth, firstToSecond) / denominator;
 
   if (!Number.isFinite(cosine)) {

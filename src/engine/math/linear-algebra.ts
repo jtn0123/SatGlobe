@@ -10,10 +10,50 @@ export type Matrix4 = [
 ];
 
 const MATRIX_ORDER = 4;
+const AUGMENTED_ORDER = MATRIX_ORDER * 2;
+
+type AugmentedMatrix4 = number[][];
 
 /** Computes a three-dimensional dot product without runtime code generation. */
 export const dotProduct3 = (left: Vector3Tuple, right: Vector3Tuple): number =>
   left[2] * right[2] + (left[1] * right[1] + left[0] * right[0]);
+
+/** Selects the strongest available pivot in one column. */
+const findPivotRow = (matrix: AugmentedMatrix4, column: number): number => {
+  let pivotRow = column;
+
+  for (let row = column + 1; row < MATRIX_ORDER; row++) {
+    if (Math.abs(matrix[row][column]) > Math.abs(matrix[pivotRow][column])) {
+      pivotRow = row;
+    }
+  }
+
+  return pivotRow;
+};
+
+/** Scales a pivot row so its leading value becomes one. */
+const normalizePivotRow = (matrix: AugmentedMatrix4, column: number): void => {
+  const pivot = matrix[column][column];
+
+  for (let index = 0; index < AUGMENTED_ORDER; index++) {
+    matrix[column][index] /= pivot;
+  }
+};
+
+/** Clears one pivot column from every non-pivot row. */
+const eliminatePivotColumn = (matrix: AugmentedMatrix4, column: number): void => {
+  for (let row = 0; row < MATRIX_ORDER; row++) {
+    if (row === column) {
+      continue;
+    }
+
+    const factor = matrix[row][column];
+
+    for (let index = 0; index < AUGMENTED_ORDER; index++) {
+      matrix[row][index] -= factor * matrix[column][index];
+    }
+  }
+};
 
 /**
  * Inverts a 4 by 4 matrix with Gauss-Jordan elimination and partial pivoting.
@@ -26,43 +66,22 @@ export const invertMatrix4 = (matrix: Matrix4): Matrix4 | null => {
     return null;
   }
 
-  const augmented = matrix.map((row, rowIndex) => [
+  const augmented: AugmentedMatrix4 = matrix.map((row, rowIndex) => [
     ...row,
     ...Array.from({ length: MATRIX_ORDER }, (_, columnIndex) => Number(rowIndex === columnIndex)),
   ]);
   const pivotTolerance = Number.EPSILON * MATRIX_ORDER * scale;
 
   for (let column = 0; column < MATRIX_ORDER; column++) {
-    let pivotRow = column;
-
-    for (let row = column + 1; row < MATRIX_ORDER; row++) {
-      if (Math.abs(augmented[row][column]) > Math.abs(augmented[pivotRow][column])) {
-        pivotRow = row;
-      }
-    }
+    const pivotRow = findPivotRow(augmented, column);
 
     if (Math.abs(augmented[pivotRow][column]) <= pivotTolerance) {
       return null;
     }
 
     [augmented[column], augmented[pivotRow]] = [augmented[pivotRow], augmented[column]];
-    const pivot = augmented[column][column];
-
-    for (let index = 0; index < MATRIX_ORDER * 2; index++) {
-      augmented[column][index] /= pivot;
-    }
-
-    for (let row = 0; row < MATRIX_ORDER; row++) {
-      if (row === column) {
-        continue;
-      }
-
-      const factor = augmented[row][column];
-
-      for (let index = 0; index < MATRIX_ORDER * 2; index++) {
-        augmented[row][index] -= factor * augmented[column][index];
-      }
-    }
+    normalizePivotRow(augmented, column);
+    eliminatePivotColumn(augmented, column);
   }
 
   const inverse = augmented.map((row) => row.slice(MATRIX_ORDER)) as Matrix4;
