@@ -46,6 +46,7 @@ function SourcesDrawerShell({ children }: { children: React.ReactNode }) {
   );
 }
 
+/** Compact story transport: beats, scrubber, playback, and the sources drawer. */
 function StoryDeckBase(props: StoryDeckProps) {
   const { beatIndex, playing, progress, showSources, story } = props;
   const beat = story.beats[beatIndex];

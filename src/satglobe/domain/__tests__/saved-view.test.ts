@@ -46,7 +46,9 @@ describe('persisted saved views', () => {
 
     return {
       getItem: (key: string) => store.get(key) ?? null,
-      setItem: (key: string, value: string) => void store.set(key, value),
+      setItem: (key: string, value: string) => {
+        store.set(key, value);
+      },
       dump: () => Object.fromEntries(store),
     };
   };
