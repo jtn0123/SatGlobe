@@ -21,15 +21,16 @@ describe('labels', () => {
     expect(formatCalendarDate('TBD')).toBe('TBD');
   });
 
-  it('ageInDays measures against the pinned clock and clamps at zero', () => {
+  it('ageInDays preserves the sign of past and future epochs', () => {
     expect(ageInDays('2021-12-31T00:00:00Z')).toBeCloseTo(1, 5);
-    expect(ageInDays('2022-06-01T00:00:00Z')).toBe(0);
+    expect(ageInDays('2022-06-01T00:00:00Z')).toBeCloseTo(-151, 5);
     expect(ageInDays('garbage')).toBeNull();
   });
 
-  it('describeEpoch picks precision by magnitude and handles missing epochs', () => {
+  it('describeEpoch labels past and future data without hiding clock anomalies', () => {
     expect(describeEpoch('2021-12-31T00:00:00Z')).toBe('1.0 days old');
     expect(describeEpoch('2021-11-01T00:00:00Z')).toBe('61 days old');
+    expect(describeEpoch('2022-06-01T00:00:00Z')).toBe('151 days in future');
     expect(describeEpoch('')).toBe('Epoch unavailable');
     expect(describeEpoch('garbage')).toBe('Epoch unavailable');
   });

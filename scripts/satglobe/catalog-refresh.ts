@@ -7,11 +7,17 @@ import { pathToFileURL } from 'node:url';
 import Papa from 'papaparse';
 import { convertA5to6Digit } from '../../src/engine/ootk/src/coordinate/alpha5';
 import { FormatTle } from '../../src/engine/ootk/src/coordinate/FormatTle';
+import {
+  catalogRefreshManifestSchema,
+  catalogRefreshManifestV2Schema,
+  type CatalogRefreshManifest,
+  type CatalogRefreshManifestV2,
+} from './catalog-manifest';
 import { buildSocratesFeed, validateSocratesFeed } from './socrates-refresh';
 
 /* eslint-disable jsdoc/require-jsdoc -- Refresh helpers are private or expose self-describing typed contracts. */
 
-type CatalogRow = Record<string, unknown> & {
+export type CatalogRow = Record<string, unknown> & {
   tle1: string;
   tle2: string;
   name?: string;
@@ -42,28 +48,6 @@ interface RefreshOptions {
   socratesInput?: string;
   socratesUpdatedAt?: string;
   socratesRetrievedAt?: string;
-}
-
-interface RefreshSummary {
-  schemaVersion: 1;
-  snapshotId: string;
-  generatedAt: string;
-  previousObjectCount: number;
-  objectCount: number;
-  added: number;
-  updated: number;
-  unchanged: number;
-  rejected: number;
-  rejectionReasons: Record<string, number>;
-  sources: Array<{ id: string; url: string; recordCount: number; checksum: string }>;
-  conjunctions: {
-    snapshotId: string;
-    eventCount: number;
-    updatedAt: string;
-    retrievedAt: string;
-    checksum: string;
-  };
-  checksum: string;
 }
 
 const ACTIVE_URL = 'https://celestrak.org/NORAD/elements/gp.php?GROUP=ACTIVE&FORMAT=CSV';
@@ -211,6 +195,25 @@ export function epochFromCatalog(row: CatalogRow): number {
   return epoch;
 }
 
+/** Returns the maximum epoch represented by the rows that will actually be installed. */
+export function newestElementEpochFromCatalog(rows: CatalogRow[]): string {
+  let newestEpoch = Number.NEGATIVE_INFINITY;
+
+  rows.forEach((row) => {
+    newestEpoch = Math.max(newestEpoch, epochFromCatalog(row));
+  });
+  if (!Number.isFinite(newestEpoch)) {
+    throw new Error('Catalog does not contain a valid newest element epoch.');
+  }
+
+  return new Date(newestEpoch).toISOString();
+}
+
+/** Binds a catalog snapshot identity to its newest installed epoch and exact bytes. */
+export function catalogSnapshotId(newestElementEpoch: string, digest: string): string {
+  return `satglobe-${newestElementEpoch.slice(0, 10)}-${digest.slice(0, 12)}`;
+}
+
 function ommObjectIdToTleInternationalDesignator(objectId: string | undefined): string {
   if (!objectId) {
     return '';
@@ -230,17 +233,45 @@ function requiredFiniteNumber(omm: OmmRow, field: string): number {
   return value;
 }
 
-function epochParts(epoch: string): { year: number; dayOfYear: number } {
-  const instant = new Date(epoch);
-  const epochMs = instant.getTime();
+const OMM_EPOCH_PATTERN = /^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})T(?<hour>\d{2}):(?<minute>\d{2}):(?<second>\d{2})(?:\.(?<fraction>\d{1,9}))?Z?$/u;
+
+/** Parses CelesTrak's timezone-less OMM timestamp as UTC without host-timezone fallback. */
+export function parseOmmEpochUtc(epoch: string): { epochMs: number; year: number; dayOfYear: number } {
+  const match = OMM_EPOCH_PATTERN.exec(epoch);
+
+  if (!match?.groups) {
+    throw new Error('Invalid OMM epoch');
+  }
+  const year = Number(match.groups.year);
+  const month = Number(match.groups.month);
+  const day = Number(match.groups.day);
+  const hour = Number(match.groups.hour);
+  const minute = Number(match.groups.minute);
+  const second = Number(match.groups.second);
+  const wholeSecondMs = Date.UTC(year, month - 1, day, hour, minute, second);
+  const instant = new Date(wholeSecondMs);
+
+  if (
+    year < 1_957 ||
+    !Number.isFinite(wholeSecondMs) ||
+    instant.getUTCFullYear() !== year ||
+    instant.getUTCMonth() !== month - 1 ||
+    instant.getUTCDate() !== day ||
+    instant.getUTCHours() !== hour ||
+    instant.getUTCMinutes() !== minute ||
+    instant.getUTCSeconds() !== second
+  ) {
+    throw new Error('Invalid OMM epoch');
+  }
+  const fractionalMs = match.groups.fraction ? Number(`0.${match.groups.fraction}`) * 1_000 : 0;
+  const epochMs = wholeSecondMs + fractionalMs;
 
   if (!Number.isFinite(epochMs)) {
     throw new Error('Invalid OMM epoch');
   }
-  const year = instant.getUTCFullYear();
-  const dayOfYear = (epochMs - Date.UTC(year, 0, 0)) / 86_400_000;
+  const dayOfYear = ((epochMs - Date.UTC(year, 0, 1)) / 86_400_000) + 1;
 
-  return { year, dayOfYear };
+  return { epochMs, year, dayOfYear };
 }
 
 export function validateBaseCatalog(rows: CatalogRow[]): Map<string, CatalogRow> {
@@ -268,7 +299,7 @@ export function ommToCatalogRow(omm: OmmRow, existing?: CatalogRow): CatalogRow 
   const id = normalizeId(String(omm.NORAD_CAT_ID));
   const numericId = Number(id);
   const scc = (/^\d+$/u).test(id) && numericId > 339_999 ? id.slice(-5) : id;
-  const { year, dayOfYear } = epochParts(omm.EPOCH);
+  const { year, dayOfYear } = parseOmmEpochUtc(omm.EPOCH);
   const { tle1, tle2 } = FormatTle.createTle({
     inc: requiredFiniteNumber(omm, 'INCLINATION'),
     meanmo: requiredFiniteNumber(omm, 'MEAN_MOTION'),
@@ -326,11 +357,8 @@ function mergeSource(
     const existing = catalog.get(id);
 
     try {
-      const incomingEpoch = new Date(omm.EPOCH).getTime();
+      const incomingEpoch = parseOmmEpochUtc(omm.EPOCH).epochMs;
 
-      if (!Number.isFinite(incomingEpoch)) {
-        throw new Error('Invalid OMM epoch');
-      }
       if (existing && incomingEpoch < epochFromCatalog(existing)) {
         rejections.push({ source: sourceId, catalogId: id, name: omm.OBJECT_NAME, reason: 'Epoch regression' });
 
@@ -864,24 +892,55 @@ export async function stageAndInstallArtifacts(outputDirectory: string, artifact
   }
 }
 
-function validateSerializedOutputs(catalogJson: string, conjunctionJson: string, summaryJson: string): void {
+export function validateCatalogManifest(
+  catalogJson: string,
+  manifestJson: string,
+  options: { allowLegacySchema?: boolean } = {},
+): CatalogRefreshManifest {
   const catalog = JSON.parse(catalogJson) as CatalogRow[];
-  const conjunctions = JSON.parse(conjunctionJson) as unknown;
-  const summary = JSON.parse(summaryJson) as unknown;
+  const decodedManifest = JSON.parse(manifestJson) as unknown;
 
   validateBaseCatalog(catalog);
-  validateSocratesFeed(conjunctions);
-  if (typeof summary !== 'object' || summary === null || !('snapshotId' in summary) || !('checksum' in summary)) {
-    throw new Error('Refresh manifest failed its serialized-output validation.');
+  const manifest = options.allowLegacySchema
+    ? catalogRefreshManifestSchema.parse(decodedManifest)
+    : catalogRefreshManifestV2Schema.parse(decodedManifest);
+  const actualChecksum = checksum(catalogJson);
+  const actualNewestElementEpoch = newestElementEpochFromCatalog(catalog);
+  const declaredNewestElementEpoch = manifest.schemaVersion === 1 ? manifest.generatedAt : manifest.newestElementEpoch;
+
+  if (manifest.checksum !== actualChecksum) {
+    throw new Error('Catalog manifest checksum does not match the installed catalog bytes.');
   }
+  if (manifest.objectCount !== catalog.length) {
+    throw new Error('Catalog manifest objectCount does not match the installed catalog rows.');
+  }
+  if (declaredNewestElementEpoch !== actualNewestElementEpoch) {
+    const field = manifest.schemaVersion === 1 ? 'generatedAt' : 'newestElementEpoch';
+
+    throw new Error(`Catalog manifest ${field} does not match the maximum installed TLE epoch.`);
+  }
+  const expectedSnapshotId = catalogSnapshotId(actualNewestElementEpoch, actualChecksum);
+
+  if (manifest.snapshotId !== expectedSnapshotId) {
+    throw new Error(`Catalog manifest snapshotId must match the installed epoch and checksum (${expectedSnapshotId}).`);
+  }
+
+  return manifest;
 }
 
-export async function refreshCatalog(options: RefreshOptions): Promise<RefreshSummary> {
+function validateSerializedOutputs(catalogJson: string, conjunctionJson: string, manifestJson: string): void {
+  const conjunctions = JSON.parse(conjunctionJson) as unknown;
+
+  validateCatalogManifest(catalogJson, manifestJson);
+  validateSocratesFeed(conjunctions);
+}
+
+export async function refreshCatalog(options: RefreshOptions): Promise<CatalogRefreshManifestV2> {
   const baseRaw = await readFile(options.output, 'utf8');
   const baseRows = JSON.parse(baseRaw) as CatalogRow[];
   const catalog = validateBaseCatalog(baseRows);
   const previousObjectCount = catalog.size;
-  const refreshTime = new Date();
+  const refreshStartedAt = new Date();
   const [activeRaw, starlinkRaw, conjunctionFeed] = await Promise.all([
     loadSource(
       options.activeInput,
@@ -903,7 +962,7 @@ export async function refreshCatalog(options: RefreshOptions): Promise<RefreshSu
       input: options.socratesInput,
       inputUpdatedAt: options.socratesUpdatedAt,
       inputRetrievedAt: options.socratesRetrievedAt,
-      now: refreshTime,
+      now: refreshStartedAt,
       writeCache: !options.verifyOnly,
     }),
   ]);
@@ -919,17 +978,17 @@ export async function refreshCatalog(options: RefreshOptions): Promise<RefreshSu
     throw new Error(`Suspicious object-count drop: ${previousObjectCount} → ${rows.length}. Previous snapshot retained.`);
   }
 
-  // A stable timestamp derived from source epochs keeps identical inputs deterministic.
-  const sourceEpochs = [...active.rows, ...starlink.rows].map((row) => new Date(row.EPOCH).getTime()).filter(Number.isFinite);
-  const generatedAt = new Date(Math.max(...sourceEpochs)).toISOString();
   const catalogJson = `${JSON.stringify(rows)}\n`;
   const conjunctionJson = `${JSON.stringify(conjunctionFeed, null, 2)}\n`;
   const digest = checksum(catalogJson);
-  const snapshotId = `satglobe-${generatedAt.slice(0, 10)}-${digest.slice(0, 12)}`;
-  const summary: RefreshSummary = {
-    schemaVersion: 1,
+  const newestElementEpoch = newestElementEpochFromCatalog(rows);
+  const refreshedAt = new Date().toISOString();
+  const snapshotId = catalogSnapshotId(newestElementEpoch, digest);
+  const summary: CatalogRefreshManifestV2 = {
+    schemaVersion: 2,
     snapshotId,
-    generatedAt,
+    refreshedAt,
+    newestElementEpoch,
     previousObjectCount,
     objectCount: rows.length,
     added: activeStats.added + starlinkStats.added,
@@ -955,6 +1014,9 @@ export async function refreshCatalog(options: RefreshOptions): Promise<RefreshSu
   const manifestJson = `${JSON.stringify(summary, null, 2)}\n`;
   const rejectedJson = `${JSON.stringify(rejected, null, 2)}\n`;
   const summaryJson = `${JSON.stringify({
+    schemaVersion: 2,
+    refreshedAt,
+    newestElementEpoch,
     previousObjectCount,
     objectCount: rows.length,
     added: summary.added,
