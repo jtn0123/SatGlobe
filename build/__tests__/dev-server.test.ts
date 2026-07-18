@@ -15,6 +15,12 @@ const INDEX_TEMPLATE_PATH = resolve(process.cwd(), 'public/index.html');
 const SERVICE_WORKER_BOOTSTRAP_PATH = resolve(process.cwd(), 'public/service-worker-bootstrap.js');
 const NGINX_CONFIG_PATH = resolve(process.cwd(), 'configs/satglobe/nginx.conf');
 
+function findInlineExecutableScripts(html: string): RegExpMatchArray[] {
+  return [...html.matchAll(/<script(?<attributes>[^>]*)>(?<body>[\s\S]*?)<\/script>/giu)]
+    .filter(({ groups }) => !(/\bsrc\s*=/iu).test(groups?.attributes ?? '')
+      && !(/\btype\s*=\s*(?:"application\/ld\+json"|'application\/ld\+json')/iu).test(groups?.attributes ?? ''));
+}
+
 describe('dev-server HTML responses', () => {
   it('does not inject the live-reload client in static mode', () => {
     const liveReloadEnabled = liveReloadEnabledFor(['--static', '--profile=satglobe']);
@@ -51,8 +57,7 @@ describe('dev-server HTML responses', () => {
 
   it('loads the early service-worker bootstrap from same-origin JS instead of executable inline code', () => {
     const indexTemplate = readFileSync(INDEX_TEMPLATE_PATH, 'utf8');
-    const inlineExecutableScripts = [...indexTemplate.matchAll(/<script(?<attributes>[^>]*)>(?<body>[\s\S]*?)<\/script>/gu)]
-      .filter(({ groups }) => !(/\bsrc\s*=/u).test(groups?.attributes ?? '') && !(/type="application\/ld\+json"/u).test(groups?.attributes ?? ''));
+    const inlineExecutableScripts = findInlineExecutableScripts(indexTemplate);
 
     expect(inlineExecutableScripts).toEqual([]);
     expect(indexTemplate).toContain('<script defer src="./service-worker-bootstrap.js"></script>');
@@ -68,5 +73,16 @@ describe('dev-server HTML responses', () => {
 
     expect(bootstrapLocation).toContain('expires epoch;');
     expect(bootstrapLocation).not.toMatch(/^\s*add_header\b/mu);
+  });
+
+  it('checks script tags and attributes without case-sensitive gaps', () => {
+    const scripts = findInlineExecutableScripts([
+      '<SCRIPT>window.inline = true;</SCRIPT>',
+      '<SCRIPT SRC="./same-origin.js"></SCRIPT>',
+      '<SCRIPT TYPE="APPLICATION/LD+JSON">{"name":"SatGlobe"}</SCRIPT>',
+    ].join(''));
+
+    expect(scripts).toHaveLength(1);
+    expect(scripts[0]?.groups?.body).toBe('window.inline = true;');
   });
 });
