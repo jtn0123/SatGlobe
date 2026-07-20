@@ -14,6 +14,7 @@ import {
   ISideMenuConfig,
 } from '@app/engine/plugins/core/plugin-capabilities';
 import { html } from '@app/engine/utils/development/formatter';
+import { escapeHtml } from '@app/engine/utils/escape-html';
 import { getEl } from '@app/engine/utils/get-el';
 import { PersistenceManager, StorageKey } from '@app/engine/utils/persistence-manager';
 import { t7e } from '@app/locales/keys';
@@ -642,8 +643,8 @@ export class SatConstellations extends KeepTrackPlugin {
 
     for (const sat of displaySats) {
       tableHtml += `<tr class="sc-table-row link" data-sat-id="${sat.id}">`;
-      tableHtml += `<td>${sat.sccNum}</td>`;
-      tableHtml += `<td>${sat.name}</td>`;
+      tableHtml += `<td>${escapeHtml(sat.sccNum)}</td>`;
+      tableHtml += `<td>${escapeHtml(sat.name)}</td>`;
       tableHtml += `<td>${sat.inclination.toFixed(1)}</td>`;
       tableHtml += `<td>${sat.rightAscension.toFixed(1)}</td>`;
       tableHtml += `<td>${sat.perigee.toFixed(0)}</td>`;

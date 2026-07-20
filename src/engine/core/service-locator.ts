@@ -17,6 +17,7 @@ import type { MeshManager } from '../rendering/mesh-manager';
 import type { SatLabelManager } from '../rendering/sat-label-manager';
 import type { ViewportManager } from '../rendering/viewport-manager';
 import type { WebGLRenderer } from '../rendering/webgl-renderer';
+import type { Engine } from '../engine';
 import type { Scene } from './scene';
 import type { TimeManager } from './time-manager';
 
@@ -56,4 +57,6 @@ export class ServiceLocator {
   static readonly getViewportManager = () => Container.getInstance().get<ViewportManager>(Singletons.ViewportManager) as ViewportManager | null;
   static readonly getMeshManager = () => Container.getInstance().get<MeshManager>(Singletons.MeshManager);
   static readonly getSatLabelManager = () => Container.getInstance().get<SatLabelManager>(Singletons.SatLabelManager);
+  /** May be undefined in unit tests that never construct an Engine. */
+  static readonly getEngine = () => Container.getInstance().get<Engine | undefined>(Singletons.Engine);
 }

@@ -13,6 +13,7 @@
  */
 
 import { html } from '@app/engine/utils/development/formatter';
+import { escapeHtml } from '@app/engine/utils/escape-html';
 import { Satellite } from '@ootk/src/main';
 import { EventSummary, FragmentSortKey, SortDir } from './breakup-analysis-core';
 import { BreakupEvent } from './breakup-events';
@@ -222,9 +223,9 @@ export const buildFragmentTable = (sats: Satellite[], opts: FragmentTableOptions
 
   for (const sat of displayResults) {
     rows += html`
-      <tr class="breakup-analysis-debris-row link" data-scc="${sat.sccNum}">
-        <td>${sat.sccNum}</td>
-        <td class="ba-cell-left">${sat.name}</td>
+      <tr class="breakup-analysis-debris-row link" data-scc="${escapeHtml(sat.sccNum)}">
+        <td>${escapeHtml(sat.sccNum)}</td>
+        <td class="ba-cell-left">${escapeHtml(sat.name)}</td>
         <td>${sat.getTypeString()}</td>
         <td>${sat.perigee.toFixed(0)}</td>
         <td>${sat.apogee.toFixed(0)}</td>

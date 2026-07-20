@@ -23,6 +23,7 @@
  */
 
 import { SatMath } from '@app/app/analysis/sat-math';
+import { CloseObjectsThreadManager } from '@app/app/threads/close-objects-thread-manager';
 import { MenuMode } from '@app/engine/core/interfaces';
 import { ServiceLocator } from '@app/engine/core/service-locator';
 import { EventBus } from '@app/engine/events/event-bus';
@@ -34,10 +35,13 @@ import {
   ISideMenuConfig,
 } from '@app/engine/plugins/core/plugin-capabilities';
 import { html } from '@app/engine/utils/development/formatter';
+import { errorManagerInstance } from '@app/engine/utils/errorManager';
 import { getEl } from '@app/engine/utils/get-el';
 import { getUnique } from '@app/engine/utils/get-unique';
-import { showLoading } from '@app/engine/utils/showLoading';
+import { hideLoading, showLoading } from '@app/engine/utils/showLoading';
+import { KeepTrack } from '@app/keeptrack';
 import { t7e } from '@app/locales/keys';
+import type { CoSatelliteData } from '@app/webworker/close-objects-messages';
 import { Kilometers, Satellite, TemeVec3 } from '@ootk/src/main';
 import scatterPlotPng from '@public/img/icons/scatter-plot.png';
 
@@ -47,6 +51,14 @@ export class CloseObjectsPlugin extends KeepTrackPlugin {
 
   protected searchRadius_ = 50; // km - overridable by Pro
   protected closeObjectSearchStrCache_: string | null = null;
+  protected threadManager_: CloseObjectsThreadManager | null = null;
+
+  /** Matches the legacy synchronous pipeline's +30 min verification pass. */
+  protected static readonly VERIFY_OFFSET_MS_ = 30 * 60 * 1000;
+  /** Pairs closer than this at verification are duplicate TLEs, not conjunctions. */
+  protected static readonly MIN_MISS_DISTANCE_KM_ = 0.05;
+  /** Hides the loading overlay if the worker never reports back. */
+  protected static readonly WORKER_TIMEOUT_MS_ = 60_000;
 
   // =========================================================================
   // Composition-based configuration methods
@@ -158,7 +170,8 @@ export class CloseObjectsPlugin extends KeepTrackPlugin {
 
   protected uiManagerFinal_() {
     getEl('co-find-btn')?.addEventListener('click', () => {
-      showLoading(() => this.findCsoBtnClick_());
+      // -1 keeps the overlay up until the async search hides it itself.
+      showLoading(() => this.findCsoBtnClick_(), -1);
     });
   }
 
@@ -167,8 +180,99 @@ export class CloseObjectsPlugin extends KeepTrackPlugin {
   // =========================================================================
 
   protected findCsoBtnClick_() {
-    const searchStr = this.findCloseObjects_();
+    if (this.closeObjectSearchStrCache_ !== null) {
+      this.finishSearch_(this.closeObjectSearchStrCache_);
 
+      return;
+    }
+
+    /*
+     * The broad phase stays on the main thread: positions are already in
+     * memory and the sorted sweep is cheap. The SGP4-heavy verification runs
+     * in the dedicated worker so a 20k+ catalog no longer freezes the UI.
+     */
+    let satList = CloseObjectsPlugin.getValidSats_();
+
+    satList = getUnique(satList);
+    satList.sort((a, b) => a.position.x - b.position.x);
+    const candidates = CloseObjectsPlugin.getPossibleCSOs_(satList, this.searchRadius_);
+
+    if (candidates.length === 0) {
+      this.finishSearch_('');
+
+      return;
+    }
+
+    const satIndex = new Map<Satellite, number>();
+    const sats: CoSatelliteData[] = [];
+    const pairs: [number, number][] = [];
+
+    for (const { sat1, sat2 } of candidates) {
+      for (const sat of [sat1, sat2]) {
+        if (!satIndex.has(sat)) {
+          satIndex.set(sat, sats.length);
+          sats.push({ tle1: sat.tle1, tle2: sat.tle2, sccNum: sat.sccNum, name: sat.name ?? '', perigee: sat.perigee, apogee: sat.apogee });
+        }
+      }
+      pairs.push([satIndex.get(sat1)!, satIndex.get(sat2)!]);
+    }
+
+    if (!this.threadManager_) {
+      this.threadManager_ = new CloseObjectsThreadManager(KeepTrack.getInstance().threads);
+      this.threadManager_.init();
+    }
+
+    const watchdog = window.setTimeout(() => {
+      errorManagerInstance.warn('Close objects search timed out waiting on the worker.');
+      hideLoading();
+    }, CloseObjectsPlugin.WORKER_TIMEOUT_MS_);
+
+    this.threadManager_.startSearch(
+      {
+        sats,
+        pairs,
+        searchRadiusKm: this.searchRadius_,
+        minMissDistanceKm: CloseObjectsPlugin.MIN_MISS_DISTANCE_KM_,
+        simEpochMs: ServiceLocator.getTimeManager()?.simulationTimeObj?.getTime() ?? Date.now(),
+        verifyOffsetMs: CloseObjectsPlugin.VERIFY_OFFSET_MS_,
+        // The OSS side menu only needs the verified pair list - skip the TCA phase.
+        tcaWindowMs: 60 * 60 * 1000,
+        coarseStepMs: 30_000,
+        tolMs: 1000,
+        maxTcaPairs: 0,
+      },
+      {
+        onVerified: (results) => {
+          window.clearTimeout(watchdog);
+          const sccNums = new Set<string>();
+
+          for (const row of results) {
+            sccNums.add(row.sat1Scc);
+            sccNums.add(row.sat2Scc);
+          }
+          const searchStr = Array.from(sccNums).join(',');
+
+          this.closeObjectSearchStrCache_ = searchStr;
+          this.finishSearch_(searchStr);
+        },
+        onTcaChunk: () => {
+          // TCA details are a Pro-table concern; the OSS menu ignores them.
+        },
+        onComplete: () => {
+          // The verified list already resolved this run.
+        },
+        onError: (message) => {
+          window.clearTimeout(watchdog);
+          errorManagerInstance.warn(`Close objects search failed: ${message}`);
+          hideLoading();
+        },
+      },
+    );
+  }
+
+  /** Hides the loading overlay and hands the result to the search bar. */
+  protected finishSearch_(searchStr: string): void {
+    hideLoading();
     ServiceLocator.getUiManager().doSearch(searchStr);
   }
 
@@ -182,9 +286,9 @@ export class CloseObjectsPlugin extends KeepTrackPlugin {
     satList = getUnique(satList);
     satList.sort((a, b) => a.position.x - b.position.x);
 
+    // The forward-only sweep emits each pair once, so no dedupe pass is needed.
     const csoList = CloseObjectsPlugin.getPossibleCSOs_(satList, this.searchRadius_);
-    const csoListUnique = getUnique(csoList);
-    const csoStrArr = CloseObjectsPlugin.getActualCSOs_(csoListUnique, this.searchRadius_);
+    const csoStrArr = CloseObjectsPlugin.getActualCSOs_(csoList, this.searchRadius_);
 
     const csoListUniqueArr = Array.from(new Set(csoStrArr));
     const searchStr = csoListUniqueArr.join(',');
@@ -235,12 +339,14 @@ export class CloseObjectsPlugin extends KeepTrackPlugin {
       const posZmin = pos1.z - searchRadius;
       const posZmax = pos1.z + searchRadius;
 
-      for (let j = Math.max(0, i - 200); j < satList.length; j++) {
+      /*
+       * satList is sorted by position.x, so a forward-only sweep from i + 1
+       * visits every unordered pair exactly once and the posXmax break stays
+       * valid. (The previous "start 200 behind" lookback added ~200·n wasted
+       * iterations and emitted reversed duplicate pairs.)
+       */
+      for (let j = i + 1; j < satList.length; j++) {
         const sat2 = satList[j];
-
-        if (sat1 === sat2) {
-          continue;
-        }
         const pos2 = sat2.position;
 
         if (pos2.x > posXmax) {

@@ -1,5 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { SatGlobeErrorBoundary } from './app/error-boundary';
 import { SatGlobeApp } from './app/satglobe-app';
 import { SatGlobeEngineAdapter } from './engine/satglobe-engine-adapter';
 import './app/satglobe-app.css';
@@ -20,7 +21,9 @@ export function mountSatGlobe(): void {
   window.satGlobe = adapter;
   createRoot(root).render(
     <StrictMode>
-      <SatGlobeApp adapter={adapter} />
+      <SatGlobeErrorBoundary>
+        <SatGlobeApp adapter={adapter} />
+      </SatGlobeErrorBoundary>
     </StrictMode>,
   );
 }

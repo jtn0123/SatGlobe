@@ -114,6 +114,26 @@ describe('CatalogLoader.load orchestration', () => {
     // The 401 throws "Failed to fetch" and the catch fetches the local tle.json.
     expect(fetch).toHaveBeenCalledWith(expect.stringContaining('tle/tle.json'));
   });
+
+  it('falls back to the offline catalog on a non-Chrome network error message', async () => {
+    // Firefox wording differs from Chrome's "Failed to fetch".
+    apiFetchSpy.mockRejectedValue(new TypeError('NetworkError when attempting to fetch resource.'));
+    setSettings();
+
+    await CatalogLoader.load();
+
+    expect(fetch).toHaveBeenCalledWith(expect.stringContaining('tle/tle.json'));
+  });
+
+  it('falls back to the offline catalog when the primary response is not JSON', async () => {
+    // A 5xx HTML error page makes response.json() throw a SyntaxError.
+    apiFetchSpy.mockResolvedValue({ ...okResponse(), json: () => Promise.reject(new SyntaxError('Unexpected token <')) } as never);
+    setSettings();
+
+    await CatalogLoader.load();
+
+    expect(fetch).toHaveBeenCalledWith(expect.stringContaining('tle/tle.json'));
+  });
 });
 
 describe('CatalogLoader.getAdditionalCatalogs_', () => {

@@ -36,6 +36,12 @@
         maximum-scale=1.0, user-scalable=no"
     />
     <meta http-equiv="CACHE-CONTROL" content="NO-CACHE" />
+    <!--
+      Last-resort security baseline for deployments that serve this file without
+      the profile-level CSP headers (only the satglobe nginx config ships one).
+      frame-ancestors cannot be expressed via <meta>, so this covers the safe subset.
+    -->
+    <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'" />
     <title>Keep Track - 3D Satellite Toolkit</title>
 
     <script type="application/ld+json">

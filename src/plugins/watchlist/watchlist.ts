@@ -33,6 +33,7 @@ import { SensorToSatLine } from '@app/engine/rendering/line-manager/sensor-to-sa
 import { clickAndDragWidth } from '@app/engine/utils/click-and-drag';
 import { html } from '@app/engine/utils/development/formatter';
 import { errorManagerInstance } from '@app/engine/utils/errorManager';
+import { escapeHtml } from '@app/engine/utils/escape-html';
 import { getEl, hideEl, showEl } from '@app/engine/utils/get-el';
 import { isThisNode } from '@app/engine/utils/isThisNode';
 import { PersistenceManager, StorageKey } from '@app/engine/utils/persistence-manager';
@@ -591,7 +592,7 @@ export class WatchlistPlugin extends KeepTrackPlugin implements ISettingsContrib
              <span class="sat-sccnum" data-sat-sccnum="${sat.id}" style="cursor: pointer;">${sat.sccNum}</span>
           </div>
           <div class="col s7 m7 l7">
-             <span class="sat-name" data-sat-name="${sat.id}" style="cursor: pointer;">${sat.name || t7e('Common.unknown')}</span>
+             <span class="sat-name" data-sat-name="${sat.id}" style="cursor: pointer;">${escapeHtml(sat.name) || t7e('Common.unknown')}</span>
           </div>
           <div class="col s2 m2 l2 center-align remove-icon">
             <img class="watchlist-remove" data-sat-id="${sat.id}" src="${bookmarkRemovePng}" style="cursor: pointer;"></img>

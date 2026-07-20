@@ -60,6 +60,9 @@ export class Engine {
 
     this.soundManager = existingSoundManager ?? new SoundManager();
 
+    // Registered so engine-layer code (e.g. base-plugin pause/resume) can reach
+    // the engine without importing the KeepTrack application root (import cycle).
+    Container.getInstance().registerSingleton(Singletons.Engine, this);
     Container.getInstance().registerSingleton(Singletons.TimeManager, this.timeManager);
     Container.getInstance().registerSingleton(Singletons.WebGLRenderer, this.renderer);
     Container.getInstance().registerSingleton(Singletons.MeshManager, this.renderer.meshManager);
