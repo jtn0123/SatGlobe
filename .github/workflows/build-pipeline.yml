@@ -79,7 +79,9 @@ jobs:
         run: npm run generate-t7e
 
       - name: Run full vitest suite with coverage thresholds
-        run: npx vitest run --coverage
+        # Invoke the locally installed binary (not npx, which can fetch and run
+        # unpinned packages on demand - sonar githubactions:S6505/S8543).
+        run: ./node_modules/.bin/vitest run --coverage
 
       - name: Upload coverage report
         if: always()
@@ -117,7 +119,8 @@ jobs:
         run: npm run generate-t7e
 
       - name: Install Playwright Chromium
-        run: npx playwright install chromium --with-deps
+        # Locally installed binary, not npx (sonar githubactions:S6505/S8543).
+        run: ./node_modules/.bin/playwright install chromium --with-deps
 
       - name: Build the satglobe production bundle
         run: npm run build:satglobe
@@ -144,6 +147,9 @@ jobs:
     steps:
       - name: Check out source
         uses: actions/checkout@v6
+        with:
+          # This job needs no LFS pull or push, so drop the token from git config.
+          persist-credentials: false
 
       - name: Set up Node.js
         uses: actions/setup-node@v6

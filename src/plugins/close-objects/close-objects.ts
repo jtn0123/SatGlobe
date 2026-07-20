@@ -52,6 +52,7 @@ export class CloseObjectsPlugin extends KeepTrackPlugin {
   protected searchRadius_ = 50; // km - overridable by Pro
   protected closeObjectSearchStrCache_: string | null = null;
   protected threadManager_: CloseObjectsThreadManager | null = null;
+  protected watchdog_: number | null = null;
 
   /** Matches the legacy synchronous pipeline's +30 min verification pass. */
   protected static readonly VERIFY_OFFSET_MS_ = 30 * 60 * 1000;
@@ -180,6 +181,13 @@ export class CloseObjectsPlugin extends KeepTrackPlugin {
   // =========================================================================
 
   protected findCsoBtnClick_() {
+    /*
+     * startSearch supersedes any in-flight run (its callbacks never fire), so
+     * a stale watchdog from a superseded run must not hide the overlay while
+     * a newer search is still working.
+     */
+    this.clearWatchdog_();
+
     if (this.closeObjectSearchStrCache_ !== null) {
       this.finishSearch_(this.closeObjectSearchStrCache_);
 
@@ -222,7 +230,8 @@ export class CloseObjectsPlugin extends KeepTrackPlugin {
       this.threadManager_.init();
     }
 
-    const watchdog = window.setTimeout(() => {
+    this.watchdog_ = window.setTimeout(() => {
+      this.watchdog_ = null;
       errorManagerInstance.warn('Close objects search timed out waiting on the worker.');
       hideLoading();
     }, CloseObjectsPlugin.WORKER_TIMEOUT_MS_);
@@ -243,7 +252,7 @@ export class CloseObjectsPlugin extends KeepTrackPlugin {
       },
       {
         onVerified: (results) => {
-          window.clearTimeout(watchdog);
+          this.clearWatchdog_();
           const sccNums = new Set<string>();
 
           for (const row of results) {
@@ -262,12 +271,20 @@ export class CloseObjectsPlugin extends KeepTrackPlugin {
           // The verified list already resolved this run.
         },
         onError: (message) => {
-          window.clearTimeout(watchdog);
+          this.clearWatchdog_();
           errorManagerInstance.warn(`Close objects search failed: ${message}`);
           hideLoading();
         },
       },
     );
+  }
+
+  /** Cancels the pending worker watchdog, if any. */
+  protected clearWatchdog_(): void {
+    if (this.watchdog_ !== null) {
+      window.clearTimeout(this.watchdog_);
+      this.watchdog_ = null;
+    }
   }
 
   /** Hides the loading overlay and hands the result to the search bar. */

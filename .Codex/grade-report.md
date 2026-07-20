@@ -3,12 +3,12 @@
 - **Repository:** jtn0123/SatGlobe (fork of KeepTrack.space v13.4.0, upstream commit `f06b30bd`)
 - **Audited commit:** `c9fdf79de6ec442178ca06a92de16ff820ac1f01` (2026-07-18)
 - **Audit date:** 2026-07-20
-- **Method:** Nine-category read-only audit performed by parallel specialized reviewers, every finding verified against the cited file and line before inclusion. No source code was modified. Scale: ~1,408 TypeScript files in `src/`, 614 test files, 72 npm scripts, 8 build profiles.
+- **Method:** Nine-category read-only audit of commit `c9fdf79` performed by parallel specialized reviewers, every finding verified against the cited file and line before inclusion. The audit itself modified no source code; the remediation recorded in the log at the end of this document was applied afterward on this branch. Scale: ~1,408 TypeScript files in `src/`, 614 test files, 72 npm scripts, 8 build profiles.
 - **Grading policy (per request):** Security and Testing & Reliability are double-weighted in the overall grade.
 
 ---
 
-## Overall Grade: **B+**
+## Overall Grade (pre-remediation, at commit `c9fdf79`): **B+**
 
 | Weighted computation | |
 |---|---|
@@ -117,11 +117,12 @@ Within each category, findings are ordered by impact, then expected grade lift, 
 - **Where:** `src/plugins/draw-lines/draw-lines.ts`, literal 0x00 byte at offset 15241, inside a template literal used as a map-key separator.
 - **What's wrong:** `grep` classifies the file as binary and silently skips it in repo-wide searches (it bit this audit twice).
 - **Impact:** Minor
-- **Fix:** Replace the raw byte with the `' '` escape — identical runtime value.
+- **Fix:** Replace the raw byte with the `'\u0000'` escape — identical runtime value.
 - **Effort:** S
 - **Grade lift:** negligible; hygiene.
 
 ### Strengths
+
 1. **Lint-enforced anti-corruption layer.** `eslint.config.mjs:314-321` implements ADR 0001: everything under `src/satglobe` except `src/satglobe/engine` is forbidden from importing `@app/*`, `@engine/*`, `@ootk/*`, even `keepTrackApi` — verified true in practice (`src/satglobe/domain/*.ts` imports only zod and siblings; every upstream touch lives in the 716-line adapter). Integration into upstream is a single edition-gated call (`src/main.ts:27`, `:70`). This is how you fork: upstream can rebase without touching product code.
 2. **Declarative, lazily-loaded plugin manifest with compile-time edition gating.** `src/plugins/plugin-manifest.ts:20-50` registers every plugin as a `PluginDescriptor` with `() => import(...)` thunks; pro plugins gated by `__IS_PRO__` so rspack never resolves the private submodule path in OSS builds (`src/plugins-pro.d.ts` documents the ambient-fallback trick).
 3. **The historical god object has been genuinely decomposed, with types.** `keepTrackApi` is now 122 lines over `ServiceLocator` (`src/engine/core/service-locator.ts:40-43`), a 26-line `Container`, a 61-line `PluginRegistry`, and an `EventBus` with a fully typed payload map (`src/engine/events/event-bus.ts:12-40`) — compile-time-checked events rather than upstream's stringly-typed callbacks.
@@ -191,6 +192,7 @@ Within each category, findings are ordered by impact, then expected grade lift, 
 *(The plugin-install endpoint's Origin-bypass and `ref` injection are graded under Security as E5.)*
 
 ### Strengths
+
 1. **Transactional, provenance-checked data-refresh pipeline.** `stageAndInstallArtifacts` (`scripts/satglobe/catalog-refresh.ts:811-865`) stages six outputs, backs up installed versions, installs the manifest last, rolls back on partial failure — under an advisory install lock with a UUID-token/inode-identity stale-lock reclaim protocol (`:511-780`). Sanity rails: ≥30k-row floor (`:247-249`), >5% object-count-drop abort (`:918-920`), re-parse of every serialized output before install (`:867-877`). Tests: `catalog-refresh.test.ts` (378 lines), `socrates-refresh.test.ts` (516 lines).
 2. **Defense-in-depth static file serving.** `resolveStaticPath` (`build/dev-server.ts:71-99`): lexical containment check, realpath canonical re-check (defeats symlink escape), re-check after directory→index resolution, Windows backslash normalization; shared helper `scripts/lib/safe-path.ts:17-44`; 13 tests in `build/__tests__/dev-server.test.ts`.
 3. **Disciplined webworker protocol.** Per-worker typed message unions (`src/webworker/orbit-cruncher-messages.ts:83-88`), catalog-swap `seqNum` staleness protocol (`orbitCruncher.ts:20-23,41-50`), transfer-list `postMessage` (`:85-91`), centralized `onerror` → errorManager (`src/engine/threads/web-worker-thread.ts:41-56`). All ten workers have matching test files.
@@ -268,6 +270,7 @@ Within each category, findings are ordered by impact, then expected grade lift, 
 - **Grade lift:** minor.
 
 ### Strengths
+
 1. **Real accessibility engineering.** `use-dialog-focus.ts:13-53` (mount-focus, Tab trap, opener-focus restore); `inert` boot guard (`satglobe-app.tsx:340`) and inerted panels (`discover-panel.tsx:126`, `inspector.tsx:40,66`); `aria-pressed` toggles (`discover-panel.tsx:68,153,189`); live regions (`satglobe-app.tsx:381,396`); reduced motion honored in CSS (`satglobe-app.css:1568-1577`) *and* behavior — playback degrades to discrete beat steps (`use-story-playback.ts:94-102`).
 2. **Disciplined state architecture.** Documented reducer with index clamping so renders can never read past a story's beat array (`use-story-playback.ts:30-45,62-69`); immediate vs slider-debounced engine writes with timer cleanup (`use-workshop-filters.ts:25-40`); adapter emits only on observable change — an idle scene costs zero React renders (`satglobe-engine-adapter.ts:462-465`).
 3. **Legacy layer is careful where it counts.** Search-result rendering escapes every user-influenced string including match highlighting (`search-manager.ts:465`, `:504,558,565-581`); `ui-manager.ts:151-160` documents and fixes a real upstream Materialize Toast double-dismiss crash with a `WeakSet`.
@@ -347,6 +350,7 @@ Within each category, findings are ordered by impact, then expected grade lift, 
 - **Grade lift:** minor.
 
 ### Strengths
+
 1. **New-code domain tests are exemplary.** `src/satglobe/domain/__tests__/conjunctions.test.ts` (311 lines; 879 across 7 domain files): schema round-trip equality (`:103`), rejection of self-pairs/duplicate IDs/checksum mismatches (`:123-147`), exact freshness-boundary assertion with an injected clock (`:164-170`), `Object.isFrozen` immutability checks (`:300-301`), memoization verified by mock call counts (`:191`). No snapshots, no smoke.
 2. **The SatGlobe E2E journey tests real reliability contracts.** `src/satglobe/__tests__/satglobe.spec.ts`: zero external network requests asserted via route interception (`:141-146,152`), a parse-time performance budget (`:168-173`), an explicit failure-state journey proving the error UI replaces an infinite spinner (`:333-345`), locale-chunk failure fallback to English (`:398-406`). Deterministic suite-wide clock (`test/vitest-setup.ts:15`, `TZ=GMT` at `:11`).
 3. **Runtime reliability engineering is real.** Global error + unhandledrejection traps on by default (`src/engine/engine.ts:87-117`; `src/settings/core-settings.ts:107`; rethrow in Node so tests fail loudly); the conjunction loader enforces a 256 KiB streaming ceiling with same-origin and redirect checks (`src/satglobe/runtime/conjunction-loader.ts:16-65,91-107`); its caller adds a 2 s AbortController timeout and degrades to a typed `unavailable` state (`satglobe-engine-adapter.ts:103-104,624-634`).
@@ -397,9 +401,9 @@ Within each category, findings are ordered by impact, then expected grade lift, 
 - **Effort:** S
 - **Grade lift:** minor.
 
-**E6 — The `` html`` `` template tag looks like a sanitizer but is `String.raw`**
+**E6 — The `html` template tag looks like a sanitizer but is `String.raw`**
 - **Where:** `src/engine/utils/development/formatter.ts:7-15`.
-- **What's wrong:** Developers familiar with lit-html reasonably assume `` html`<td>${sat.name}</td>` `` escapes interpolations; it does nothing — the direct cause of the breakup-analysis instance in E1.
+- **What's wrong:** Developers familiar with lit-html reasonably assume ``html`<td>${sat.name}</td>` `` escapes interpolations; it does nothing — the direct cause of the breakup-analysis instance in E1.
 - **Impact:** Minor (footgun with Major downstream consequences)
 - **Fix:** Make the tag escape non-literal placeholders by default (with an explicit `raw()` opt-out), or rename it `rawHtml` and document it.
 - **Effort:** S
@@ -429,6 +433,7 @@ Within each category, findings are ordered by impact, then expected grade lift, 
 - **Grade lift:** negligible.
 
 ### Strengths
+
 - **Hardened dev servers:** both bind 127.0.0.1 explicitly (`build/dev-server.ts:207`; `scripts/mesh-viewer/server.ts:155` — "a dev tool has no business being LAN-reachable"); two-layer traversal defense (`dev-server.ts:71-99`); no directory listing; 13 tests.
 - **Real CSP with parity testing:** `SATGLOBE_CSP` (`build/dev-server-response.ts:9-20`) — `frame-ancestors 'none'`, `object-src 'none'`, `base-uri 'self'`, no `'unsafe-inline'` scripts; a test enforces byte parity with `configs/satglobe/nginx.conf:12`; plus nosniff and `Referrer-Policy: no-referrer`.
 - **Exemplary SatGlobe-authored remote-data handling:** `conjunction-loader.ts` (256 KiB streaming ceiling, `redirect: 'error'`, post-response origin re-verification, fatal-mode UTF-8 decode, zod parsing); `schemas.ts` uniformly `.strict()` with regex-constrained IDs and bounded lengths.
@@ -513,6 +518,7 @@ Within each category, findings are ordered by impact, then expected grade lift, 
 **Verified non-issues:** echarts-gl 2.1.0's peer range includes `^6.0.0`, so it is compatible with echarts 6.1.0; `openmeteo`, `@e965/xlsx`, and `new-github-issue-url` are all genuinely used (`src/plugins/timeline-sensor/sensor-timeline.ts:32`, `src/engine/utils/saveVariable.ts:101`, `src/engine/utils/errorManager.ts:2`); `draggabilly@3.0.0` is at latest (frozen since 2022 — watch, not urgent).
 
 ### Strengths
+
 1. **Genuinely current core toolchain** — nearly every dependency's wanted == latest per `npm outdated`; Node 24 pinned consistently across `.nvmrc`, volta (`package.json:216-218`), and CI (`build-pipeline.yml:39`).
 2. **Healthy supply chain:** exactly one lockfile (v3, ~1,046 resolved packages), regenerated three days before this audit; `npm audit` reports 0 vulnerabilities.
 3. **Deliberate bundle-size discipline:** every plugin loads via dynamic `import()` through a manifest (`src/plugins/plugin-manifest.ts:819-854`), keeping echarts/echarts-gl out of the entry; `@e965/xlsx` is dynamically imported with an explicit comment (`src/engine/utils/saveVariable.ts:95-101`).
@@ -585,6 +591,7 @@ Within each category, findings are ordered by impact, then expected grade lift, 
 *(Scoping note: `src/satglobe/domain/conjunctions.ts` is not a screening algorithm — it is a zod-validated loader for a pre-computed, 25-event-capped SOCRATES feed (`conjunctions.ts:50`); no O(n²) risk there. The pairwise machinery lives in the close-objects plugin/worker covered by G1/G2.)*
 
 ### Strengths
+
 1. **Worker propagation architecture is genuinely sophisticated.** Camera data throttled to 200 ms into the worker (`src/engine/engine.ts:204-236`); frustum + Earth-occlusion culling inside the worker (`src/webworker/positionCruncher.ts:427-529`); off-screen satellites propagated every 10th cycle with per-index staggering and velocity extrapolation between (`:620-629`); correct invalidation on time jumps (`:220-224`); transfer-list posts with documented rationale (`:960-1010`); per-cycle Sun ECI caching (`:853-861`) and a measured replacement of a 20-iteration geodetic loop with a spherical bound check (`:778-796`).
 2. **React shell hygiene is near-exemplary for a frame-driven app.** 600 ms poll emitting only on observable change ("idle scene produces … zero React re-renders (ADR 0002 idle budget)", `satglobe-engine-adapter.ts:461-473`); reference-identity-preserving snapshots (`:149-157`); 7/7 components `React.memo`'d; 120 ms trailing debounce on slider recolors (`use-workshop-filters.ts:31-38`). Nothing re-renders per animation frame.
 3. **Performance is measured, budgeted, and gated — not guessed.** `scripts/satglobe/benchmark-runtime-lite.ts` enforces `MIN_IDLE_MEDIAN_FPS = 59.8` and `MAX_CONJUNCTION_LENS_P95_MS = 100` against the built bundle; `scripts/sgp4-benchmark/` benchmarks the TS propagator against USSF WASM builds; the production build fails on JS assets over 6.5 MiB (`build/webpack-manager.ts:86-91`); `FrameProfiler` wraps every hot stage through `engine.ts` and `dots-manager.ts`.
@@ -623,6 +630,7 @@ Within each category, findings are ordered by impact, then expected grade lift, 
 - **Impact:** Minor · **Fix:** Add a short entry map pointing to SATGLOBE.md, the ADRs, and `verify:satglobe`. · **Effort:** S
 
 ### Strengths
+
 1. **README is fork-accurate, not upstream residue:** `README.md:19-31` gives correct, tested setup (Node 24, `git lfs install`, `npm ci`, `npm run start:satglobe`) and calls out the single worst onboarding trap first — without LFS "the 19 MB catalog checks out as a pointer file and the app renders an empty sky" (`README.md:23`).
 2. **AGPL fork obligations handled correctly:** `NOTICE-SATGLOBE.md:3` records the exact modification start date, upstream release (v13.4.0) and commit (`f06b30bd`); the network-source obligation is restated at `README.md:104` and `docs/adr/0001-satglobe-source-fork.md:27`; upstream copyright notices preserved in place.
 3. **SECURITY.md is fork-aware:** routes engine-layer vulnerabilities upstream while keeping SatGlobe-scope reports on private GitHub advisories (`SECURITY.md:12`), and accurately scopes the attack surface (`:22-24`).
@@ -664,6 +672,7 @@ Within each category, findings are ordered by impact, then expected grade lift, 
 - **Impact:** Minor · **Fix:** Remove or repair the publish/release trio. · **Effort:** S
 
 ### Strengths
+
 1. **`verify:satglobe` is a genuine one-command local CI mirror:** `package.json:79` chains repo typecheck, strict satglobe typecheck, story-walker lint+typecheck, the full `--max-warnings 0` lint gate, focused unit tests, and the production build; CI runs exactly this command (`build-pipeline.yml:49`) — "green locally = green in CI" actually holds.
 2. **Architecture enforced by lint, with rationale comments throughout:** `eslint.config.mjs:313-321` implements the ADR 0001 boundary via `no-restricted-imports` with instructive messages; relaxed rules carry explanations and ratchet plans (`:62` complexity 40→45 with reason; `:109` "876 violations… dedicated sweep"; `:202`); JSDoc gating is real (`jsdoc/require-jsdoc: 'error'` at `:275`; only 2 disables in all of src/; 33 of 36 non-test satglobe files documented).
 3. **Husky hooks solve real, specific failure modes:** `.husky/commit-msg` rejects PowerShell here-string-corrupted subjects (the changelog is regenerated from git history); `.husky/pre-commit` documents its `--no-verify` escape hatch; `.husky/pre-push` guards the LFS catalog contract.
@@ -732,15 +741,15 @@ The top 15 findings from the consolidated priority list were implemented on this
 | E1 | ✅ Fixed | Catalog-derived names/ids now pass through `escapeHtml` at all five cited sinks (`sat-info-box.ts`, `watchlist.ts`, `sat-constellations.ts`, `breakup-analysis-table.ts`). |
 | E2 | ✅ Fixed | Baseline CSP `<meta>` (`object-src 'none'; base-uri 'self'`) added to `public/index.html`; all non-satglobe dev-server profiles now get a real CSP (no inline scripts) + nosniff + referrer policy via `BASELINE_CSP` in `build/dev-server-response.ts`. |
 | D1 | ✅ Fixed | New `.github/workflows/e2e-nightly.yml` runs all 86 Playwright specs nightly (+ manual dispatch) against a production build, with report upload. |
-| D2 | ✅ Fixed | New `vitest.ootk.config.ts` + `npm run test:ootk` + blocking CI job run the vendored ootk suite (1,974 tests). Found real rot on first run: TZ-dependent snapshots (regenerated under the repo's TZ=GMT convention), an error-message drift in `ModifiedGoodingIOD.test.ts` (aligned with source), and one non-converging IOD fixture (skipped with explanation). |
+| D2 | 🟡 Mostly fixed | New `vitest.ootk.config.ts` + `npm run test:ootk` + blocking CI job run the vendored ootk suite (1,974 tests). Found real rot on first run: TZ-dependent snapshots (regenerated under the repo's TZ=GMT convention), an error-message drift in `ModifiedGoodingIOD.test.ts` (aligned with source), and one non-converging IOD fixture. Residual gap: that fixture is `it.skip`ped pending convergent test data, so one of 1,996 tests remains unexecuted. |
 | C1 | ✅ Fixed | Global shortcut handler (extracted to `handleGlobalShortcut`) now ignores Cmd/Ctrl/Alt combos, textarea/contentEditable targets, and leaves Space to focused buttons. |
 | C2 | ✅ Fixed | `SatGlobeErrorBoundary` (new `src/satglobe/app/error-boundary.tsx`, with tests) wraps the shell in `bootstrap.tsx`, reusing the engine-error presentation with a Reload button. |
 | C3/G4 | ✅ Fixed | `createView` reads `adapter.getState()` at call time (no `engine` dep); `StoryDeck`'s `onAuthoredView` is now a stable `useCallback`. |
-| G1 | ✅ Fixed | `findCsoBtnClick_` keeps the cheap broad phase on the main thread and hands SGP4 verification to `CloseObjectsThreadManager`/`closeObjectsWorker` (with watchdog timeout and streaming `onVerified` → search). Legacy sync pipeline retained for the pro subclass. |
+| G1 | 🟡 Fixed for OSS | `findCsoBtnClick_` keeps the cheap broad phase on the main thread and hands SGP4 verification to `CloseObjectsThreadManager`/`closeObjectsWorker` (with watchdog timeout and streaming `onVerified` → search). Residual gap: the legacy synchronous pipeline (`findCloseObjects_`/`getActualCSOs_`) is deliberately retained because the private pro submodule may subclass it — migrating pro requires coordinating with that repo. |
 | G2 | ✅ Fixed | Broad-phase sweep is now `j = i + 1` forward-only with the `posXmax` break — each unordered pair visited once, no reversed duplicates, no 200-element lookback. |
 | D4 | ✅ Fixed | Catalog loader falls back to the bundled `tle/tle.json` on ANY primary-source failure (network wording differences, JSON parse errors), with new tests for the Firefox-wording and non-JSON cases. |
 | A2 | ✅ Fixed | `base-plugin.ts` no longer imports `@app/keeptrack` — engine pause/resume goes through the Container (`Singletons.Engine` + `ServiceLocator.getEngine()`), breaking the `keeptrack ↔ engine ↔ plugins` cycle. |
-| A1 | ✅ Ratchet in place | New `scripts/check-engine-boundary.ts` + checked-in baseline (82 files / 152 upward imports) fails CI on any NEW engine→app import; prints ratchet-down reminders as files improve. Burn-down of the existing 82 files remains future work. |
+| A1 | 🟡 Ratchet in place | New `scripts/check-engine-boundary.ts` + checked-in baseline (82 files / 152 upward imports) fails CI on any NEW engine→app import; prints ratchet-down reminders as files improve. The baseline counts more than the audit's "125 imports / 42 files" figure because the ratchet's scope is deliberately wider: it also counts type-only imports, dynamic `import()`s, relative-path escapes, and imports of `@app/plugins-pro/*` and `main.ts`, across the whole engine tree minus tests/ootk. Burn-down of the existing 82 files remains future work. |
 | F2 | ✅ Fixed | `papaparse` moved to `dependencies` (it is imported by production code). |
 | F3 | ✅ Fixed | `tsup` removed (nothing referenced it); broken `prepublishOnly` (`build:lib` never existed) removed. |
 | I3 | ✅ Fixed | lint-staged now runs `eslint --max-warnings 0`, matching the CI gate. |

@@ -11,6 +11,10 @@ name: Nightly full E2E
     - cron: '30 6 * * *'
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -43,13 +47,14 @@ jobs:
         run: npm run generate-t7e
 
       - name: Install Playwright Chromium
-        run: npx playwright install chromium --with-deps
+        # Locally installed binary, not npx (sonar githubactions:S6505/S8543).
+        run: ./node_modules/.bin/playwright install chromium --with-deps
 
       - name: Build the production bundle
         run: npm run build
 
       - name: Run the full Playwright suite
-        run: npx playwright test
+        run: ./node_modules/.bin/playwright test
 
       - name: Upload Playwright report
         if: failure()

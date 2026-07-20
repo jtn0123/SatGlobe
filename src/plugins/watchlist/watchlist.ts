@@ -589,7 +589,7 @@ export class WatchlistPlugin extends KeepTrackPlugin implements ISettingsContrib
       watchlistListHTML += `
         <div class="row">
           <div class="col s3 m3 l3">
-             <span class="sat-sccnum" data-sat-sccnum="${sat.id}" style="cursor: pointer;">${sat.sccNum}</span>
+             <span class="sat-sccnum" data-sat-sccnum="${sat.id}" style="cursor: pointer;">${escapeHtml(sat.sccNum)}</span>
           </div>
           <div class="col s7 m7 l7">
              <span class="sat-name" data-sat-name="${sat.id}" style="cursor: pointer;">${escapeHtml(sat.name) || t7e('Common.unknown')}</span>
