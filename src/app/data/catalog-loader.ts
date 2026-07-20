@@ -306,20 +306,25 @@ export class CatalogLoader {
             vimpelCatalog: jsCatalog,
           }))
           .catch(async (error) => {
-            if (error.message === 'Failed to fetch') {
-              errorManagerInstance.warn('Failed to download latest catalog! Using offline catalog which may be out of date!');
-              await fetch(`${settingsManager.installDirectory}tle/tle.json`)
-                .then((response) => response.json())
-                .then((data) => CatalogLoader.parse({
-                  keepTrackTle: data,
-                  keepTrackExtra: extraSats,
-                  keepTrackAscii: asciiCatalog,
-                  externalCatalog,
-                  vimpelCatalog: jsCatalog,
-                }));
-            } else {
-              errorManagerInstance.error(error, 'tleManagerInstance.loadCatalog');
-            }
+            /*
+             * Any primary-source failure falls back to the bundled catalog.
+             * Matching one exact message ("Failed to fetch") missed Firefox's
+             * network-error wording and JSON parse errors on 5xx pages,
+             * leaving the app catalog-less while a working copy shipped.
+             */
+            errorManagerInstance.warn(`Failed to download latest catalog (${(error as Error).message})! Using offline catalog which may be out of date!`);
+            await fetch(`${settingsManager.installDirectory}tle/tle.json`)
+              .then((response) => response.json())
+              .then((data) => CatalogLoader.parse({
+                keepTrackTle: data,
+                keepTrackExtra: extraSats,
+                keepTrackAscii: asciiCatalog,
+                externalCatalog,
+                vimpelCatalog: jsCatalog,
+              }))
+              .catch((fallbackError) => {
+                errorManagerInstance.error(fallbackError, 'tleManagerInstance.loadCatalog');
+              });
           });
       }
     } catch {

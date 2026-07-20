@@ -99,6 +99,63 @@ function useQuickLensHandlers(
   return { conjunctionLens, quickLens };
 }
 
+interface ShortcutContext {
+  mode: AppMode;
+  beatIndex: number;
+  applyBeat: (index: number) => void;
+  togglePlaying: () => void;
+  toggleShortcuts: () => void;
+  closeShortcuts: () => void;
+  switchMode: (mode: AppMode) => void;
+}
+
+/**
+ * Handles the shell's global keyboard shortcuts. stopPropagation keeps
+ * KeepTrack's own global input manager from double-handling them (C6); the
+ * handled flag gates preventDefault for keys with browser defaults.
+ */
+function handleGlobalShortcut(event: KeyboardEvent, ctx: ShortcutContext): void {
+  // Never shadow browser/OS shortcuts (Cmd/Ctrl+F find, Alt combos, etc.).
+  if (event.metaKey || event.ctrlKey || event.altKey) {
+    return;
+  }
+  const target = event.target;
+
+  if (
+    target instanceof window.HTMLInputElement ||
+    target instanceof window.HTMLSelectElement ||
+    target instanceof window.HTMLTextAreaElement ||
+    (target instanceof window.HTMLElement && target.isContentEditable)
+  ) {
+    return;
+  }
+  let handled = true;
+
+  if (event.key === '/') {
+    document.querySelector<HTMLInputElement>('[data-testid="catalog-search"]')?.focus();
+  } else if (event.key === '?') {
+    ctx.toggleShortcuts();
+  } else if (event.key === 'f') {
+    ctx.switchMode(ctx.mode === 'presentation' ? 'workshop' : 'presentation');
+  } else if (event.key === 'Escape') {
+    ctx.closeShortcuts();
+    ctx.switchMode('workshop');
+  } else if (ctx.mode === 'story' && event.key === 'ArrowRight') {
+    ctx.applyBeat(ctx.beatIndex + 1);
+  } else if (ctx.mode === 'story' && event.key === 'ArrowLeft') {
+    ctx.applyBeat(ctx.beatIndex - 1);
+  } else if (ctx.mode === 'story' && event.key === ' ' && !(target instanceof window.HTMLButtonElement)) {
+    // A focused button keeps its native Space activation.
+    ctx.togglePlaying();
+  } else {
+    handled = false;
+  }
+  if (handled) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+}
+
 /** Coordinates SatGlobe's workshop, presentation, and story states. */
 export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
   const [engine, setEngine] = useState<EngineState>(adapter.getState());
@@ -203,59 +260,45 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
     setQuery('');
   }, [adapter]);
   const setEncoding = useCallback((encoding: Parameters<SatGlobeEngineAdapter['setEncoding']>[0]) => adapter.setEncoding(encoding), [adapter]);
+  const applyAuthoredView = useCallback(() => adapter.setCamera(beat.camera), [adapter, beat]);
 
   useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.target instanceof window.HTMLInputElement || event.target instanceof window.HTMLSelectElement) {
-        return;
-      }
-      /*
-       * The shell owns these keys. stopPropagation keeps KeepTrack's own
-       * global input manager from double-handling them (C6); the handled
-       * flag also gates preventDefault for keys with browser defaults.
-       */
-      let handled = true;
-
-      if (event.key === '/') {
-        document.querySelector<HTMLInputElement>('[data-testid="catalog-search"]')?.focus();
-      } else if (event.key === '?') {
-        setShowShortcuts((show) => !show);
-      } else if (event.key === 'f') {
-        switchMode(mode === 'presentation' ? 'workshop' : 'presentation');
-      } else if (event.key === 'Escape') {
-        setShowShortcuts(false);
-        switchMode('workshop');
-      } else if (mode === 'story' && event.key === 'ArrowRight') {
-        applyBeat(playback.beatIndex + 1);
-      } else if (mode === 'story' && event.key === 'ArrowLeft') {
-        applyBeat(playback.beatIndex - 1);
-      } else if (mode === 'story' && event.key === ' ') {
-        dispatch({ type: 'togglePlaying' });
-      } else {
-        handled = false;
-      }
-      if (handled) {
-        event.preventDefault();
-        event.stopPropagation();
-      }
-    };
+    const onKeyDown = (event: KeyboardEvent) => handleGlobalShortcut(event, {
+      mode,
+      beatIndex: playback.beatIndex,
+      applyBeat,
+      togglePlaying: () => dispatch({ type: 'togglePlaying' }),
+      toggleShortcuts: () => setShowShortcuts((show) => !show),
+      closeShortcuts: () => setShowShortcuts(false),
+      switchMode,
+    });
 
     window.addEventListener('keydown', onKeyDown);
 
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [applyBeat, dispatch, mode, playback.beatIndex, switchMode]);
 
-  const createView = useCallback((): SavedViewV1 => ({
-    schemaVersion: 1,
-    name: engine.selectedObject ? `${engine.selectedObject.name} study` : 'Orbital workshop view',
-    camera: engine.camera,
-    simulationTime: engine.simulationTime,
-    filters,
-    encoding: engine.encoding,
-    selectedObjectIds: engine.selectedObject ? [engine.selectedObject.catalogId] : [],
-    scaleMode,
-    presentation: { mode, panelsVisible: mode === 'workshop', storyId: mode === 'story' ? story.id : undefined, storyBeat: mode === 'story' ? playback.beatIndex : undefined },
-  }), [engine, filters, mode, playback.beatIndex, scaleMode, story.id]);
+  const createView = useCallback((): SavedViewV1 => {
+    /*
+     * Read the engine snapshot at call time instead of closing over the polled
+     * `engine` state: depending on `engine` would mint a new callback identity
+     * on every 600 ms poll tick and defeat DiscoverPanel's memo while the
+     * simulation clock runs.
+     */
+    const engineState = adapter.getState();
+
+    return {
+      schemaVersion: 1,
+      name: engineState.selectedObject ? `${engineState.selectedObject.name} study` : 'Orbital workshop view',
+      camera: engineState.camera,
+      simulationTime: engineState.simulationTime,
+      filters,
+      encoding: engineState.encoding,
+      selectedObjectIds: engineState.selectedObject ? [engineState.selectedObject.catalogId] : [],
+      scaleMode,
+      presentation: { mode, panelsVisible: mode === 'workshop', storyId: mode === 'story' ? story.id : undefined, storyBeat: mode === 'story' ? playback.beatIndex : undefined },
+    };
+  }, [adapter, filters, mode, playback.beatIndex, scaleMode, story.id]);
 
   const saveView = useCallback(() => {
     const view = createView();
@@ -372,7 +415,7 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
 
       {mode === 'presentation' && <PresentationTitle encoding={engine.encoding} objectCount={engine.visibleCount} onOpenWorkshop={openWorkshop} />}
 
-      {mode === 'story' && <StoryDeck beatIndex={playback.beatIndex} onAuthoredView={() => adapter.setCamera(beat.camera)} onBeatChange={applyBeat} onOpenWorkshop={openWorkshop} onPlayingChange={togglePlaying} onSourcesChange={toggleSources} onStoryChange={changeStory} playing={playback.playing} progress={playback.progress} showSources={playback.showSources} stories={storyLibrary} story={story} />}
+      {mode === 'story' && <StoryDeck beatIndex={playback.beatIndex} onAuthoredView={applyAuthoredView} onBeatChange={applyBeat} onOpenWorkshop={openWorkshop} onPlayingChange={togglePlaying} onSourcesChange={toggleSources} onStoryChange={changeStory} playing={playback.playing} progress={playback.progress} showSources={playback.showSources} stories={storyLibrary} story={story} />}
 
       {showShortcuts && <KeyboardLegend onClose={() => setShowShortcuts(false)} />}
       </div>

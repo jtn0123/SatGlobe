@@ -1,0 +1,65 @@
+---
+# Nightly run of the FULL Playwright suite (86 spec files). The PR pipeline
+# runs only the SatGlobe journey spec; the remaining plugin/app journeys live
+# here so they cannot rot invisibly. Failures surface on the Actions tab and
+# in the uploaded report; promote stabilized specs into the PR pipeline and
+# quarantine (skip + issue) any that prove flaky.
+name: Nightly full E2E
+
+"on":
+  schedule:
+    - cron: '30 6 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  e2e-full:
+    name: Full Playwright suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+
+      # Scoped LFS pull: fetch only the catalog snapshot. Two pre-existing
+      # astroux png pointers have no blobs in this fork's LFS storage (GitHub
+      # does not copy LFS objects on fork), so a blanket lfs:true checkout
+      # fails on them.
+      - name: Fetch LFS catalog snapshot
+        run: git lfs pull --include="public/tle/tle.json"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Generate translation types
+        run: npm run generate-t7e
+
+      - name: Install Playwright Chromium
+        # Locally installed binary, not npx (sonar githubactions:S6505/S8543).
+        run: ./node_modules/.bin/playwright install chromium --with-deps
+
+      - name: Build the production bundle
+        run: npm run build
+
+      - name: Run the full Playwright suite
+        run: ./node_modules/.bin/playwright test
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: playwright-report-nightly
+          path: playwright-report/
+          retention-days: 14

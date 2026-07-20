@@ -1,4 +1,5 @@
 import { SatMath } from '@app/app/analysis/sat-math';
+import { CloseObjectsThreadManager } from '@app/app/threads/close-objects-thread-manager';
 import { ServiceLocator } from '@app/engine/core/service-locator';
 import { getEl } from '@app/engine/utils/get-el';
 import { hasBottomIcon, hasHelp, hasSecondaryMenu, hasSideMenu } from '@app/engine/plugins/core/plugin-capabilities';
@@ -167,6 +168,36 @@ describe('CloseObjectsPlugin search algorithm', () => {
     p().findCsoBtnClick_();
 
     expect(doSearch).toHaveBeenCalledWith('1,2');
+  });
+
+  it('findCsoBtnClick_ hands verification to the worker and searches the verified pairs', () => {
+    const workerSat = (x: number, scc: string) => ({
+      ...sat(x, scc), tle1: `1 ${scc}`, tle2: `2 ${scc}`, name: `SAT ${scc}`, perigee: 400, apogee: 410,
+    });
+    const sats = [workerSat(100, '1'), workerSat(120, '2'), workerSat(9000, '3')];
+    const catalog = ServiceLocator.getCatalogManager();
+
+    catalog.orbitalSats = sats.length as never;
+    catalog.getSat = ((i: number) => sats[i]) as never;
+
+    const doSearch = vi.fn();
+
+    ServiceLocator.getUiManager().doSearch = doSearch;
+
+    const startSearch = vi.spyOn(CloseObjectsThreadManager.prototype, 'startSearch').mockImplementation(((_params: unknown, cbs: { onVerified: (rows: unknown[]) => void }) => {
+      cbs.onVerified([{ sat1Scc: '1', sat2Scc: '2' }]);
+
+      return 1;
+    }) as never);
+
+    p().findCsoBtnClick_();
+
+    expect(startSearch).toHaveBeenCalledTimes(1);
+    // Only the two nearby satellites become a candidate pair for the worker.
+    expect((startSearch.mock.calls[0][0] as { pairs: [number, number][] }).pairs).toEqual([[0, 1]]);
+    expect(doSearch).toHaveBeenCalledWith('1,2');
+    // The verified result is cached for instant re-runs.
+    expect(p().closeObjectSearchStrCache_).toBe('1,2');
   });
 
   it('uiManagerFinal_ wires the find button and bottomIconCallback delegates', () => {

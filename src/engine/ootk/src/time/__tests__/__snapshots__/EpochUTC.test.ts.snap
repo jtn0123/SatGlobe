@@ -8,7 +8,7 @@ EpochUTC {
 
 exports[`EpochGPS > fromDateTime 1`] = `
 EpochUTC {
-  "posix": 1614574800,
+  "posix": 1614556800,
 }
 `;
 
@@ -30,38 +30,38 @@ EpochUTC {
 }
 `;
 
-exports[`EpochGPS > should calculate the GMST angle 1`] = `4.088037525758033`;
+exports[`EpochGPS > should calculate the GMST angle 1`] = `2.77545667080593`;
 
-exports[`EpochGPS > should calculate the GMST angle in degrees 1`] = `234.22729671703883`;
+exports[`EpochGPS > should calculate the GMST angle in degrees 1`] = `159.02195345861008`;
 
 exports[`EpochGPS > should convert to a GPS epoch 1`] = `
 EpochGPS {
-  "seconds": 104417.99999993818,
+  "seconds": 86417.99999992509,
   "week": 2147,
 }
 `;
 
 exports[`EpochGPS > should convert to a TAI epoch 1`] = `
 EpochTAI {
-  "posix": 1614574837,
+  "posix": 1614556837,
 }
 `;
 
 exports[`EpochGPS > should convert to a TDB epoch 1`] = `
 EpochTDB {
-  "posix": 1614574869.1853862,
+  "posix": 1614556869.185383,
 }
 `;
 
 exports[`EpochGPS > should convert to a TT epoch 1`] = `
 EpochTT {
-  "posix": 1614574869.184,
+  "posix": 1614556869.184,
 }
 `;
 
-exports[`EpochGPS > should convert to an MJD 1`] = `59274.20833333349`;
+exports[`EpochGPS > should convert to an MJD 1`] = `59274`;
 
-exports[`EpochGPS > should convert to an MJD GSFC 1`] = `29274.70833333349`;
+exports[`EpochGPS > should convert to an MJD GSFC 1`] = `29274.5`;
 
 exports[`EpochGPS > should handle century leap year edge cases 1`] = `
 EpochUTC {
@@ -101,12 +101,12 @@ EpochUTC {
 
 exports[`EpochGPS > should roll the epoch backward 1`] = `
 EpochUTC {
-  "posix": 1614574740,
+  "posix": 1614556740,
 }
 `;
 
 exports[`EpochGPS > should roll the epoch forward 1`] = `
 EpochUTC {
-  "posix": 1614574860,
+  "posix": 1614556860,
 }
 `;

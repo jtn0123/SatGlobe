@@ -258,6 +258,7 @@ export type ColorRuleSet = (obj: BaseObject, params?: ColorSchemeParams) => Colo
  */
 
 export enum Singletons {
+  Engine = 'Engine',
   CatalogManager = 'CatalogManager',
   OrbitManager = 'OrbitManager',
   GroupsManager = 'GroupManager',

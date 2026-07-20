@@ -13,6 +13,7 @@ import { IKeyboardShortcut } from '@app/engine/plugins/core/plugin-capabilities'
 import { DraggableBox } from '@app/engine/ui/draggable-box';
 import { html } from '@app/engine/utils/development/formatter';
 import { errorManagerInstance } from '@app/engine/utils/errorManager';
+import { escapeHtml } from '@app/engine/utils/escape-html';
 import { getEl, hideEl, setInnerHtml, showEl } from '@app/engine/utils/get-el';
 import { KeepTrack } from '@app/keeptrack';
 import { BaseObject, CatalogSource, Satellite } from '@ootk/src/main';
@@ -314,7 +315,8 @@ export class SatInfoBox extends KeepTrackPlugin {
 
     if (isVisible) {
       showEl(el.parentElement, 'flex');
-      el.innerHTML = value;
+      // Alt name/id originate in remote catalog data - textContent cannot inject markup.
+      el.textContent = value;
     } else {
       hideEl(el.parentElement);
     }
@@ -340,7 +342,8 @@ export class SatInfoBox extends KeepTrackPlugin {
     const isHasAltName: boolean = isShowAltName && !!((obj as Satellite)?.altName && (obj as Satellite).altName !== '');
     const isHasAltId: boolean = !!((obj as Satellite)?.altId && (obj as Satellite).altId !== '');
 
-    setInnerHtml(EL.NAME, obj.name);
+    // Object names originate in remote catalog data - escape before the innerHTML sink.
+    setInnerHtml(EL.NAME, escapeHtml(obj.name));
 
     if (obj instanceof Satellite || obj instanceof OemSatellite) {
       KeepTrack.getInstance().containerRoot.querySelectorAll('.sat-only-info')?.forEach((el) => {
@@ -378,22 +381,22 @@ export class SatInfoBox extends KeepTrackPlugin {
     } else if (obj instanceof OemSatellite) {
       const oemSat = obj as OemSatellite;
 
-      setInnerHtml(EL.INTL_DES, oemSat.intlDes || notAvailable);
-      setInnerHtml(EL.OBJNUM, oemSat.sccNum || notAvailable);
-      setInnerHtml(EL.SOURCE, oemSat.source || t7e('satInfoBox.oemFile' as Parameters<typeof t7e>[0]));
+      setInnerHtml(EL.INTL_DES, escapeHtml(oemSat.intlDes || '') || notAvailable);
+      setInnerHtml(EL.OBJNUM, escapeHtml(oemSat.sccNum || '') || notAvailable);
+      setInnerHtml(EL.SOURCE, escapeHtml(oemSat.source || '') || t7e('satInfoBox.oemFile' as Parameters<typeof t7e>[0]));
     } else {
       const sat = obj as Satellite;
 
-      setInnerHtml(EL.INTL_DES, sat.intlDes === 'none' ? notAvailable : sat.intlDes);
+      setInnerHtml(EL.INTL_DES, sat.intlDes === 'none' ? notAvailable : escapeHtml(sat.intlDes));
       if (sat.source && sat.source === CatalogSource.VIMPEL) {
         setInnerHtml(EL.OBJNUM, notAvailable);
         setInnerHtml(EL.INTL_DES, notAvailable);
       } else {
-        setInnerHtml(EL.OBJNUM, sat.sccNum);
+        setInnerHtml(EL.OBJNUM, escapeHtml(sat.sccNum));
         // satObjNumDom.setAttribute('data-tooltip', `${FormatTle.convert6DigitToA5(sat.sccNum)}`);
       }
 
-      setInnerHtml(EL.SOURCE, SatInfoBox.formatSourceName_(sat.source ?? CatalogSource.CELESTRAK));
+      setInnerHtml(EL.SOURCE, escapeHtml(SatInfoBox.formatSourceName_(sat.source ?? CatalogSource.CELESTRAK)));
 
       this.updateConfidenceDom_(sat);
     }

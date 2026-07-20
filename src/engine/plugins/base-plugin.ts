@@ -3,7 +3,6 @@ import { BottomMenu } from '@app/app/ui/bottom-menu';
 import { SoundNames } from '@app/engine/audio/sounds';
 import { MenuMode, Singletons } from '@app/engine/core/interfaces';
 import { adviceManagerInstance } from '@app/engine/utils/adviceManager';
-import { KeepTrack } from '@app/keeptrack';
 import { t7e, TranslationKey } from '@app/locales/keys';
 import { OfflineIconBehavior } from '@app/settings/core-settings';
 import { BaseObject } from '@ootk/src/main';
@@ -1573,7 +1572,7 @@ export abstract class KeepTrackPlugin {
     slideInRight(getEl(this.sideMenuElementName), 300);
 
     if (this.isRenderPausedOnOpen) {
-      KeepTrack.getInstance().engine.pause();
+      ServiceLocator.getEngine()?.pause();
     }
   }
 
@@ -1710,7 +1709,7 @@ export abstract class KeepTrackPlugin {
       EventBusEvent.hideSideMenus,
       (): void => {
         if (this.isRenderPausedOnOpen && this.isMenuButtonActive) {
-          KeepTrack.getInstance().engine.resume();
+          ServiceLocator.getEngine()?.resume();
         }
         slideCb();
         getEl(bottomIconElementName)?.classList.remove(KeepTrackPlugin.iconSelectedClassString);
