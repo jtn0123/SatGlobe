@@ -250,7 +250,13 @@ export class SensorTimeline extends KeepTrackPlugin {
     zIndex: 10,
   };
 
-  downloadIconCb = async () => {
+  downloadIconCb = () => {
+    this.downloadTimeline_().catch((error: unknown) => {
+      errorManagerInstance.log(`Failed to download sensor timeline: ${String(error)}`);
+    });
+  };
+
+  private async downloadTimeline_(): Promise<void> {
     // Get transits data
     const passes = await this.calculatePasses_();
     const sensorData = passes[0];
@@ -274,7 +280,7 @@ export class SensorTimeline extends KeepTrackPlugin {
 
     // Simulate a click on the link to trigger the download
     link.click();
-  };
+  }
 
 
   // Function to convert SensorPasses array to CSV

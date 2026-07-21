@@ -79,17 +79,14 @@ export class UiManager {
 
   static fullscreenToggle() {
     if (!document.fullscreenElement) {
-      try {
-        document.documentElement?.requestFullscreen().catch((err) => {
-          // Might fail on some browsers
-          errorManagerInstance.debug(err);
-        });
-      } catch (e) {
+      document.documentElement?.requestFullscreen().catch((error: unknown) => {
         // Might fail on some browsers
-        errorManagerInstance.debug(e);
-      }
+        errorManagerInstance.debug(String(error));
+      });
     } else {
-      document.exitFullscreen();
+      document.exitFullscreen().catch((error: unknown) => {
+        errorManagerInstance.debug(String(error));
+      });
     }
 
     setTimeout(() => {

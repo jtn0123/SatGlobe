@@ -72,12 +72,12 @@ const DEG2RAD = Math.PI / 180;
  * files byte-stable across runs, so re-baking produces a clean git diff instead of
  * churning every coordinate.
  */
-const makeRng = (seed: number): (() => number) => {
-  let a = seed >>> 0;
+export const makeRng = (seed: number): (() => number) => {
+  const state = new Int32Array([seed]);
 
   return () => {
-    a |= 0;
-    a = (a + 0x6d2b79f5) | 0;
+    state[0] += 0x6d2b79f5;
+    const a = state[0];
     let t = Math.imul(a ^ (a >>> 15), 1 | a);
 
     t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;

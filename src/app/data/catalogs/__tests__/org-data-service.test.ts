@@ -76,7 +76,9 @@ describe('OrgDataService (after remote load)', () => {
     (window as any).settingsManager = settingsManager;
     settingsManager.dataSources.orgs = 'https://test.local/orgs.json';
 
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: false, status: 500 } as Response);
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: false, status: 500 } as Response);
+
+    fetchSpy.mockClear();
 
     orgDataService.init();
     // A second init() short-circuits because a load is already in flight.
@@ -85,6 +87,7 @@ describe('OrgDataService (after remote load)', () => {
     await (orgDataService as any).loadPromise_;
 
     expect(orgDataService.isLoaded).toBe(false);
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
 
     vi.restoreAllMocks();
   });

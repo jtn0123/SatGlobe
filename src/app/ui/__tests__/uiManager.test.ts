@@ -8,12 +8,23 @@ import { defaultSensor } from '@test/environment/apiMocks';
 import { disableConsoleErrors, enableConsoleErrors, setupMinimumHtml, setupStandardEnvironment } from '@test/environment/standard-env';
 import { ServiceLocator } from '@app/engine/core/service-locator';
 import { KeepTrack } from '@app/keeptrack';
+import { errorManagerInstance } from '@app/engine/utils/errorManager';
 
 describe('uiManager', () => {
   // Should process fullscreenToggle
   it('process_fullscreen_toggle', () => {
     document.documentElement.requestFullscreen = vi.fn().mockImplementation(() => Promise.resolve());
     expect(() => UiManager.fullscreenToggle()).not.toThrow();
+  });
+
+  it('captures a rejected fullscreen request', async () => {
+    const rejection = new Error('fullscreen denied');
+    const debugSpy = vi.spyOn(errorManagerInstance, 'debug').mockImplementation(() => undefined);
+
+    document.documentElement.requestFullscreen = vi.fn().mockRejectedValue(rejection);
+    UiManager.fullscreenToggle();
+
+    await vi.waitFor(() => expect(debugSpy).toHaveBeenCalledWith(String(rejection)));
   });
 
   // Should process getsensorinfo

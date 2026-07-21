@@ -494,11 +494,6 @@ export class InputManager {
       }
     }
 
-    if (this.mouse.mouseSat !== -1 || clickedSatId !== -1) {
-      // Empty on purpose
-    } else {
-      // Intentional
-    }
     let isEarth = false;
 
     if (typeof this.mouse.latLon === 'undefined' || isNaN(this.mouse.latLon.lat) || isNaN(this.mouse.latLon.lon)) {
