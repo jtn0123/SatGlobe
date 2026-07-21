@@ -24,7 +24,7 @@ describe('uiManager', () => {
     document.documentElement.requestFullscreen = vi.fn().mockRejectedValue(rejection);
     UiManager.fullscreenToggle();
 
-    await vi.waitFor(() => expect(debugSpy).toHaveBeenCalledWith(String(rejection)));
+    await vi.waitFor(() => expect(debugSpy).toHaveBeenCalledWith(rejection.message));
   });
 
   // Should process getsensorinfo

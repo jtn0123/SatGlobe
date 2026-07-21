@@ -133,7 +133,7 @@ function extractHtmlTags(text: string): string[] {
     cursor = end + 1;
   }
 
-  return matches.sort();
+  return matches.sort((left, right) => left.localeCompare(right));
 }
 
 // ─── Phase 1: Deterministic checks ──────────────────────────────────────────

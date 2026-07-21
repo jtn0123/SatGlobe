@@ -81,11 +81,11 @@ export class UiManager {
     if (!document.fullscreenElement) {
       document.documentElement?.requestFullscreen().catch((error: unknown) => {
         // Might fail on some browsers
-        errorManagerInstance.debug(String(error));
+        errorManagerInstance.debug(error instanceof Error ? error.message : 'Fullscreen request failed.');
       });
     } else {
       document.exitFullscreen().catch((error: unknown) => {
-        errorManagerInstance.debug(String(error));
+        errorManagerInstance.debug(error instanceof Error ? error.message : 'Exiting fullscreen failed.');
       });
     }
 

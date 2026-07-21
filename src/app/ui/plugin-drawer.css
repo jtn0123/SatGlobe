@@ -826,7 +826,7 @@ body.drawer-mode:not(.is-mobile-mode) {
   }
 
   .drawer-rail-toggle:hover {
-    background: rgba(255, 255, 255, 0.08);
+    background: #2d333b;
     color: #d9dde2;
   }
 

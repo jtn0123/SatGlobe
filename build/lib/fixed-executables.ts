@@ -5,12 +5,12 @@ import { dirname, resolve, sep } from 'node:path';
 const require = createRequire(import.meta.url);
 
 const FIXED_GIT_CANDIDATES = process.platform === 'win32'
-  ? ['C:\\Program Files\\Git\\cmd\\git.exe', 'C:\\Program Files (x86)\\Git\\cmd\\git.exe']
+  ? [String.raw`C:\Program Files\Git\cmd\git.exe`, String.raw`C:\Program Files (x86)\Git\cmd\git.exe`]
   : ['/usr/bin/git'];
 
 const dockerCandidatesForPlatform = (): string[] => {
   if (process.platform === 'win32') {
-    return ['C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe'];
+    return [String.raw`C:\Program Files\Docker\Docker\resources\bin\docker.exe`];
   }
   if (process.platform === 'darwin') {
     return ['/Applications/Docker.app/Contents/Resources/bin/docker', '/usr/local/bin/docker'];
@@ -21,7 +21,7 @@ const dockerCandidatesForPlatform = (): string[] => {
 
 const openCandidatesForPlatform = (): string[] => {
   if (process.platform === 'win32') {
-    return ['C:\\Windows\\explorer.exe'];
+    return [String.raw`C:\Windows\explorer.exe`];
   }
   if (process.platform === 'darwin') {
     return ['/usr/bin/open'];

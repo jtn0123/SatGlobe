@@ -252,7 +252,9 @@ export class SensorTimeline extends KeepTrackPlugin {
 
   downloadIconCb = () => {
     this.downloadTimeline_().catch((error: unknown) => {
-      errorManagerInstance.log(`Failed to download sensor timeline: ${String(error)}`);
+      const message = error instanceof Error ? error.message : 'Unknown download error.';
+
+      errorManagerInstance.log(`Failed to download sensor timeline: ${message}`);
     });
   };
 

@@ -23,7 +23,7 @@ interface FileCov {
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
 const normalizePath = (raw: string): string => {
-  const p = raw.replace(/\\/gu, '/');
+  const p = raw.replaceAll('\\', '/');
   const sourceMarker = '/src/';
   const sourceIndex = p.indexOf(sourceMarker);
 
@@ -34,7 +34,7 @@ const normalizePath = (raw: string): string => {
     return p.slice(sourceIndex + 1);
   }
 
-  return p.replace(`${ROOT.replace(/\\/gu, '/')}/`, '');
+  return p.replace(`${ROOT.replaceAll('\\', '/')}/`, '');
 };
 
 // Combined report is a first-party source-code metric: keep only src/ TypeScript,
