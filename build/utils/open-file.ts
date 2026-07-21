@@ -1,17 +1,13 @@
-import { exec } from 'node:child_process';
+import { spawn } from 'node:child_process';
+import { fixedOpenExecutable } from '../lib/fixed-executables';
 
-export const openFile = (filePath: string) => {
-  const platform = process.platform;
+export const openFile = (filePath: string): void => {
+  const child = spawn(fixedOpenExecutable(), [filePath], {
+    detached: true,
+    stdio: 'ignore',
+    windowsHide: true,
+  });
 
-  let command: string;
-
-  if (platform === 'win32') {
-    command = `start "" "${filePath}"`;
-  } else if (platform === 'darwin') {
-    command = `open "${filePath}"`;
-  } else {
-    command = `xdg-open "${filePath}"`;
-  }
-
-  exec(command);
+  child.on('error', () => { /* Opening is best effort. */ });
+  child.unref();
 };

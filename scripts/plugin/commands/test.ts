@@ -1,8 +1,11 @@
 import { spawnSync } from 'node:child_process';
 import { relative } from 'node:path';
+import { fixedPackageExecutable } from '../../../build/lib/fixed-executables';
 import { CliError, log } from '../lib/log';
 import { REPO_ROOT } from '../lib/paths';
 import { resolvePlugin } from '../lib/resolve-plugin';
+
+const VITEST_CLI = fixedPackageExecutable('vitest');
 
 /**
  * Run an external plugin's unit tests through the host vitest harness. The main
@@ -24,11 +27,11 @@ export function testCommand(positionals: string[], flags: Record<string, string 
   }
 
   const dirFilter = relative(REPO_ROOT, resolved.dir).replaceAll('\\', '/');
-  const args = ['vitest', flags.watch ? 'watch' : 'run', '--config', 'vitest.external.config.ts', dirFilter];
+  const args = [flags.watch ? 'watch' : 'run', '--config', 'vitest.external.config.ts', dirFilter];
 
-  log.step(`vitest ${args.slice(1).join(' ')}`);
+  log.step(`vitest ${args.join(' ')}`);
 
-  const res = spawnSync('npx', args, { cwd: REPO_ROOT, shell: process.platform === 'win32', stdio: 'inherit' });
+  const res = spawnSync(process.execPath, [VITEST_CLI, ...args], { cwd: REPO_ROOT, stdio: 'inherit' });
 
   return res.status ?? 1;
 }

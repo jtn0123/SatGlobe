@@ -17,6 +17,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { openFile } from '../build/utils/open-file';
+import { fixedDockerExecutable } from '../build/lib/fixed-executables';
 
 const COMPOSE_FILE = 'docker-compose.sonar.yml';
 const SONAR_URL = process.env.SONAR_HOST_URL ?? 'http://localhost:9000';
@@ -41,11 +42,8 @@ const QUALITY_PROFILE_LANGUAGES: Array<{ lang: string; complexityRule: string; d
 ];
 
 const docker = (args: string[], env?: NodeJS.ProcessEnv): number => {
-  // Pass the command as a single shell string (cross-platform `docker` resolution on
-  // Windows) without an args array, which avoids the DEP0190 shell+args warning.
-  const result = spawnSync(['docker', ...args].join(' '), {
+  const result = spawnSync(fixedDockerExecutable(), args, {
     stdio: 'inherit',
-    shell: true,
     env: env ?? process.env,
   });
 

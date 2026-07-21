@@ -5,9 +5,12 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { ConsoleStyles, logWithStyle } from './lib/build-error';
+import { fixedGitExecutable } from './lib/fixed-executables';
+
+const GIT_EXECUTABLE = fixedGitExecutable();
 
 function sh(cmd: string, args: string[], opts: { allowFail?: boolean } = {}) {
-  const res = spawnSync(cmd, args, { stdio: 'inherit', shell: process.platform === 'win32' });
+  const res = spawnSync(cmd, args, { stdio: 'inherit' });
 
   if (res.status !== 0 && !opts.allowFail) {
     throw new Error(`Command failed: ${cmd} ${args.join(' ')}`);
@@ -67,14 +70,14 @@ function ensureSubmodules() {
   // Init only the required ones (by path), recurse for their nested children
   for (const s of required) {
     logWithStyle(`[submodules] Updating required: ${s.name} (${s.path})`, ConsoleStyles.INFO);
-    sh('git', ['submodule', 'update', '--init', '--recursive', '--depth', '1', '--jobs', '4', '--', s.path]);
+    sh(GIT_EXECUTABLE, ['submodule', 'update', '--init', '--recursive', '--depth', '1', '--jobs', '4', '--', s.path]);
     logWithStyle(`[submodules] Updated required submodule: ${s.name}`, ConsoleStyles.SUCCESS);
   }
 
   // Try the optional ones, but do not fail the build if they error out
   for (const s of optional) {
     logWithStyle(`[submodules] Attempting optional: ${s.name} (${s.path})`, ConsoleStyles.INFO);
-    const ok = sh('git', ['submodule', 'update', '--init', '--recursive', '--depth', '1', '--jobs', '4', '--', s.path], { allowFail: true });
+    const ok = sh(GIT_EXECUTABLE, ['submodule', 'update', '--init', '--recursive', '--depth', '1', '--jobs', '4', '--', s.path], { allowFail: true });
 
     if (!ok) {
       logWithStyle(`[submodules] Skipped optional submodule ${s.name}; continuing without it.`, ConsoleStyles.WARNING);
@@ -84,7 +87,7 @@ function ensureSubmodules() {
   }
 
   // Optional: print a summary
-  sh('git', ['submodule', 'status', '--recursive'], { allowFail: true });
+  sh(GIT_EXECUTABLE, ['submodule', 'status', '--recursive'], { allowFail: true });
 }
 
 ensureSubmodules();

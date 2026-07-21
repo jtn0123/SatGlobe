@@ -26,12 +26,13 @@
  * Exit code is non-zero when any language fails a heuristic (so it can gate CI);
  * pass --no-fail to always exit 0.
  */
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { type Browser, type ConsoleMessage, chromium } from 'playwright';
 import { DEFAULT_ALLOWLIST } from '../../test/e2e/console-listener';
+import { fixedGitExecutable } from '../../build/lib/fixed-executables';
 
 const BASE_URL = process.env.BASE_URL ?? 'http://localhost:5544';
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
@@ -96,7 +97,7 @@ const log = (msg: string): void => {
 
 const GIT_SHA = (() => {
   try {
-    return execSync('git rev-parse --short HEAD', { cwd: ROOT_DIR }).toString().trim();
+    return execFileSync(fixedGitExecutable(), ['rev-parse', '--short', 'HEAD'], { cwd: ROOT_DIR }).toString().trim();
   } catch {
     return 'unknown';
   }

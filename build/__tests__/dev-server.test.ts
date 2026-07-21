@@ -21,6 +21,7 @@ const HTML = '<!doctype html><html><body><main>SatGlobe</main></body></html>';
 const INDEX_TEMPLATE_PATH = resolve(process.cwd(), 'public/index.html');
 const SERVICE_WORKER_BOOTSTRAP_PATH = resolve(process.cwd(), 'public/service-worker-bootstrap.js');
 const NGINX_CONFIG_PATH = resolve(process.cwd(), 'configs/satglobe/nginx.conf');
+const SATGLOBE_DOCKERFILE_PATH = resolve(process.cwd(), 'Dockerfile.satglobe');
 
 interface HttpResponse {
   body: string;
@@ -107,6 +108,16 @@ describe('dev-server HTML responses', () => {
     expect(localPolicy).toBe(SATGLOBE_CSP);
     expect(nginxPolicy).toBe(SATGLOBE_CSP);
     expect(SATGLOBE_CSP.match(/script-src [^;]+/u)?.[0]).toBe('script-src \'self\' \'unsafe-eval\' blob:');
+  });
+
+  it('builds the production image without lifecycle scripts and runs nginx unprivileged', () => {
+    const dockerfile = readFileSync(SATGLOBE_DOCKERFILE_PATH, 'utf8');
+    const nginxConfig = readFileSync(NGINX_CONFIG_PATH, 'utf8');
+
+    expect(dockerfile).toContain('RUN npm ci --ignore-scripts');
+    expect(dockerfile).toContain('USER nginx');
+    expect(dockerfile).toContain('EXPOSE 8080');
+    expect(nginxConfig).toMatch(/^\s*listen 8080;$/mu);
   });
 
   it('loads the early service-worker bootstrap from same-origin JS instead of executable inline code', () => {

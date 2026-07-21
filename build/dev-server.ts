@@ -12,6 +12,7 @@ import {
   securityHeadersFor,
 } from './dev-server-response';
 import { ConsoleStyles, logWithStyle } from './lib/build-error';
+import { fixedPackageExecutable } from './lib/fixed-executables';
 import { handlePluginEndpoint } from './plugin-install-endpoint';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -19,6 +20,7 @@ const rootDir = resolve(__dirname, '..');
 const PORT = 5544;
 const LOOPBACK_HOST = '127.0.0.1';
 const distDir = resolve(rootDir, 'dist');
+const TSX_CLI = fixedPackageExecutable('tsx');
 
 // Maps config directory filenames to their dist/ destinations
 const CONFIG_FILE_DESTINATIONS: Record<string, string> = {
@@ -286,17 +288,15 @@ function runBuildWatch(args: string[]): void {
   // Reconcile external plugins first (restore clones a fork committed + regenerate
   // the manifest), then translations, then start the watch build. --skip-locales on
   // sync avoids a redundant t7e run since we run generate-translation right after.
-  const sync = spawn('npx', ['tsx', './scripts/plugin/index.ts', 'sync', '--skip-locales'], {
+  const sync = spawn(process.execPath, [TSX_CLI, './scripts/plugin/index.ts', 'sync', '--skip-locales'], {
     stdio: 'inherit',
-    shell: true,
     cwd,
   });
 
   sync.on('close', () => {
     // Run translations, then start build in watch mode
-    const t7e = spawn('npx', ['tsx', './build/generate-translation.ts'], {
+    const t7e = spawn(process.execPath, [TSX_CLI, './build/generate-translation.ts'], {
       stdio: 'inherit',
-      shell: true,
       cwd,
     });
 
@@ -308,9 +308,8 @@ function runBuildWatch(args: string[]): void {
       }
 
       // Start build in watch mode (runs indefinitely)
-      spawn('npx', ['tsx', './build/build-manager.ts', ...buildArgs], {
+      spawn(process.execPath, [TSX_CLI, './build/build-manager.ts', ...buildArgs], {
         stdio: 'inherit',
-        shell: true,
         cwd,
       });
     });

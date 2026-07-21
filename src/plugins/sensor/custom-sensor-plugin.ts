@@ -417,7 +417,7 @@ export class CustomSensorPlugin extends KeepTrackPlugin {
       return;
     }
 
-    const randomUUID = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    const randomUUID = crypto.randomUUID();
 
     // Only update the (SensorInfo) primary-sensor info DOM if this will become the
     // primary sensor. addSecondarySensor -> setSensor handles it for real primaries.

@@ -65,6 +65,9 @@ describe('CustomSensorPlugin.processCustomSensorSubmit_', () => {
     C.processCustomSensorSubmit_();
 
     expect(addSpy).toHaveBeenCalledTimes(1);
+    expect(addSpy.mock.calls[0][0].objName).toMatch(
+      /^Custom Sensor-[\da-f]{8}-[\da-f]{4}-4[\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/iu,
+    );
     expect(warnSpy).not.toHaveBeenCalled();
   });
 

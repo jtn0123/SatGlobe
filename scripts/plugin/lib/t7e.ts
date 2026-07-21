@@ -1,5 +1,8 @@
 import { spawnSync } from 'node:child_process';
+import { fixedPackageExecutable } from '../../../build/lib/fixed-executables';
 import { REPO_ROOT } from './paths';
+
+const TSX_CLI = fixedPackageExecutable('tsx');
 
 /**
  * Regenerate the merged locale bundles + typed keys.ts by running the host's
@@ -7,9 +10,8 @@ import { REPO_ROOT } from './paths';
  * locales under src/plugins-external are merged automatically.
  */
 export function runGenerateT7e(): boolean {
-  const res = spawnSync('npx', ['tsx', './build/generate-translation.ts'], {
+  const res = spawnSync(process.execPath, [TSX_CLI, './build/generate-translation.ts'], {
     cwd: REPO_ROOT,
-    shell: process.platform === 'win32',
     stdio: 'inherit',
   });
 

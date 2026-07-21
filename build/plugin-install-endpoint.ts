@@ -11,9 +11,11 @@
 import { spawn } from 'node:child_process';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { resolve } from 'node:path';
+import { fixedPackageExecutable } from './lib/fixed-executables';
 
 const ALLOWED_ORIGINS = new Set(['http://localhost:5544', 'http://127.0.0.1:5544']);
 const HTTPS_GIT_URL = /^https:\/\/[\w.@:/~-]+$/u;
+const TSX_CLI = fixedPackageExecutable('tsx');
 
 function sendJson(res: ServerResponse, status: number, body: unknown): void {
   res.writeHead(status, { 'Content-Type': 'application/json' });
@@ -88,13 +90,13 @@ async function handleInstall(req: IncomingMessage, res: ServerResponse, rootDir:
     return;
   }
 
-  const args = ['tsx', resolve(rootDir, 'scripts/plugin/index.ts'), 'add', repository, '--yes'];
+  const args = [TSX_CLI, resolve(rootDir, 'scripts/plugin/index.ts'), 'add', repository, '--yes'];
 
   if (parsed.ref) {
     args.push('--ref', String(parsed.ref));
   }
 
-  const child = spawn('npx', args, { cwd: rootDir, shell: process.platform === 'win32' });
+  const child = spawn(process.execPath, args, { cwd: rootDir });
   let output = '';
 
   child.stdout?.on('data', (d: Buffer) => {
