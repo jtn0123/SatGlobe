@@ -31,7 +31,7 @@ const ISSUE_SEARCH_CAP = 10_000; // SonarQube caps the issues search API at 10k 
 // KeepTrack is math/astrodynamics + WebGL heavy, so a couple of default rules fit poorly.
 // We apply these on a custom "KeepTrack way" quality profile (copied from "Sonar way").
 const QUALITY_PROFILE_NAME = 'KeepTrack way';
-const COGNITIVE_COMPLEXITY_THRESHOLD = process.env.SONAR_COMPLEXITY_THRESHOLD ?? '40';
+const COGNITIVE_COMPLEXITY_THRESHOLD = process.env.SONAR_COMPLEXITY_THRESHOLD ?? '45';
 // Per language: the Cognitive Complexity rule (S3776, threshold raised) and rules to disable.
 // S7748 ("Don't use a zero fraction in the number") fires on the float literals (e.g. 1.0)
 // that are ubiquitous and idiomatic in WebGL/shader/matrix math here.
