@@ -12,7 +12,7 @@ interface TimeDockProps {
 const STORY_TIME_HINT = 'Story beats control simulation time. Open Workshop to adjust it.';
 
 /** Renders shared simulation-time controls, locking manual time changes during authored stories. */
-function TimeDockBase({ adapter, simulationTime, storyLocked = false }: TimeDockProps) {
+function TimeDockBase({ adapter, simulationTime, storyLocked = false }: Readonly<TimeDockProps>) {
   const moveTime = (hours: number) => adapter.setSimulationTime(new Date(new Date(simulationTime).getTime() + hours * 3_600_000).toISOString());
 
   return (
