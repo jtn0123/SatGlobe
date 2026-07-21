@@ -4,7 +4,7 @@ SatGlobe uses SonarCloud automatic analysis for broad static analysis and the re
 
 ## Analysis scope
 
-The cloud scanner intentionally excludes `src/engine/ootk/.github/**`. Those files are retained provenance from the vendored OOTK project; GitHub does not execute nested workflow directories in the parent SatGlobe repository. The declarative story manifests remain included in normal analysis but excluded from copy-paste detection because their repeated beat/fact/source structure is the authored data schema.
+The cloud scanner intentionally excludes `src/engine/ootk/.github/**`. Those files are retained provenance from the vendored OOTK project; GitHub does not execute nested workflow directories in the parent SatGlobe repository. Because automatic analysis does not support this wildcard in `.sonarcloud.properties`, the pattern is configured under **Administration > General Settings > Analysis Scope > Files > Source File Exclusions** in the SonarCloud project settings. The declarative story manifests remain included in normal analysis but excluded from copy-paste detection because their repeated beat/fact/source structure is the authored data schema.
 
 ## Rule dispositions
 

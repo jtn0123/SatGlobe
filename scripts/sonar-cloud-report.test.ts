@@ -43,6 +43,34 @@ describe('sonar-cloud-report', () => {
     expect(issues).toHaveLength(501);
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(new URL(String(fetchMock.mock.calls[1][0])).searchParams.get('p')).toBe('2');
+    expect(fetchMock.mock.calls[0][1]?.signal).toBeInstanceOf(AbortSignal);
+    expect(fetchMock.mock.calls[1][1]?.signal).not.toBe(fetchMock.mock.calls[0][1]?.signal);
+  });
+
+  it('aborts a stalled page request after the request deadline', async () => {
+    vi.useFakeTimers();
+
+    try {
+      const fetchMock = vi.fn<typeof fetch>((_input, init) => {
+        const signal = init?.signal;
+
+        if (!signal) {
+          return Promise.reject(new Error('missing abort signal'));
+        }
+
+        return new Promise((_resolve, reject) => {
+          signal.addEventListener('abort', () => reject(new Error('aborted')), { once: true });
+        });
+      });
+      const request = fetchOpenIssues(fetchMock, 'https://example.invalid', 'example_project');
+      const rejection = expect(request).rejects.toThrow('aborted');
+
+      await vi.advanceTimersByTimeAsync(30_000);
+      await rejection;
+      expect(fetchMock.mock.calls[0][1]?.signal?.aborted).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('produces stable totals and a compact human summary', () => {

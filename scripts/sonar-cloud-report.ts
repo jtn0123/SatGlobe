@@ -12,6 +12,7 @@ const DEFAULT_API_URL = 'https://sonarcloud.io';
 const DEFAULT_PROJECT_KEY = 'jtn0123_SatGlobe';
 const PAGE_SIZE = 500;
 const SEARCH_CAP = 10_000;
+const REQUEST_TIMEOUT_MS = 30_000;
 
 export interface SonarCloudImpact {
   softwareQuality: string;
@@ -141,8 +142,16 @@ export const fetchOpenIssues = async (
     url.searchParams.set('p', String(page));
 
     // Pages must be fetched in order so the public API's total/cap contract remains stable.
-    // eslint-disable-next-line no-await-in-loop
-    const response = await fetchImpl(url);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    let response: Response;
+
+    try {
+      // eslint-disable-next-line no-await-in-loop
+      response = await fetchImpl(url, { signal: controller.signal });
+    } finally {
+      clearTimeout(timeout);
+    }
 
     if (!response.ok) {
       throw new Error(`SonarCloud issue request failed with HTTP ${response.status}.`);
