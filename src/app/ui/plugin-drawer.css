@@ -109,7 +109,8 @@ body.drawer-mode {
 
   /* ---- Drawer Panel ---- */
   .plugin-drawer {
-    display: block;
+    display: flex;
+    flex-direction: column;
     position: fixed;
     top: 0;
     left: 0;
@@ -128,12 +129,6 @@ body.drawer-mode {
 
   .plugin-drawer.open {
     transform: translateX(0);
-  }
-
-  /* Drawer uses flex column so inner scrolls and utility footer pins to bottom */
-  .plugin-drawer {
-    display: flex;
-    flex-direction: column;
   }
 
   /* Hide the drawer and hamburger when there are no items */
@@ -288,8 +283,6 @@ body.drawer-mode {
     background: rgba(255, 255, 255, 0.05);
   }
 
-  .drawer-group-label {}
-
   .drawer-group-chevron {
     transition: transform var(--kt-duration-normal, 200ms) var(--kt-easing-default, cubic-bezier(0.4, 0, 0.2, 1));
     font-size: 12px;
@@ -411,7 +404,7 @@ body.drawer-mode {
     min-width: 18px;
     height: 18px;
     border-radius: 9px;
-    background: var(--color-primary, #1e88e5);
+    background: #07558f;
     color: white;
     font-size: 10px;
     font-weight: 600;
@@ -834,7 +827,7 @@ body.drawer-mode:not(.is-mobile-mode) {
 
   .drawer-rail-toggle:hover {
     background: rgba(255, 255, 255, 0.08);
-    color: rgba(255, 255, 255, 0.7);
+    color: #d9dde2;
   }
 
   .drawer-rail-toggle-icon {

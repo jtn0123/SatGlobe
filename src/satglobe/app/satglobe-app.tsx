@@ -27,7 +27,7 @@ import { type StoryPlaybackAction, type StoryPlaybackState, useStoryPlayback } f
 import { useWorkshopFilters } from './use-workshop-filters';
 
 interface SatGlobeAppProps {
-  adapter: SatGlobeEngineAdapter;
+  readonly adapter: SatGlobeEngineAdapter;
 }
 
 /** Resolves portable story metadata without substituting an unrelated installed story. */

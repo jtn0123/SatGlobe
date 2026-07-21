@@ -834,6 +834,10 @@ button {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 5px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
 }
 
 .sg-status-options button {
@@ -1379,6 +1383,8 @@ button {
   background: rgba(5, 14, 18, 0.97);
   box-shadow: -30px 0 80px rgba(0, 0, 0, 0.4);
   pointer-events: auto;
+  color: inherit;
+  margin: 0;
 }
 
 .sg-source-drawer h2 {
@@ -1545,6 +1551,20 @@ body.sg-story .sg-scale-disclosure {
   border: 1px solid var(--sg-line, rgba(176, 208, 202, 0.18));
   background: var(--sg-panel-solid, #081217);
   pointer-events: auto;
+  color: inherit;
+  margin: 0;
+}
+
+.sg-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .sg-keyboard-legend kbd {

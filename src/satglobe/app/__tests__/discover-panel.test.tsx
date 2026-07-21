@@ -303,6 +303,7 @@ describe('DiscoverPanel', () => {
       regimes: ['geo'],
     });
     expect(props.setFiltersDebounced).not.toHaveBeenCalled();
+    expect(screen.getByTestId('status-all').closest('fieldset')?.querySelector('legend')?.textContent).toBe('Operational status');
   });
 
   it('removes the hidden panel from the accessibility tree via inert', () => {

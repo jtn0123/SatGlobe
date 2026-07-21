@@ -2,7 +2,7 @@ import type { ScaleMode } from '../domain/types';
 import { Icon } from './icon';
 
 /** Shows and toggles the visual scale disclosure shared by all modes. */
-export function ScaleDisclosure({ mode, onToggle }: { mode: ScaleMode; onToggle: () => void }) {
+export function ScaleDisclosure({ mode, onToggle }: Readonly<{ mode: ScaleMode; onToggle: () => void }>) {
   return (
     <div className="sg-scale-disclosure" data-testid="scale-disclosure">
       <Icon name="info" size={15} />

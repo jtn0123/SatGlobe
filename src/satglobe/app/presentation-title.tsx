@@ -3,7 +3,11 @@ import type { VisualEncoding } from '../domain/types';
 import { encodingLabels, formatNumber } from './labels';
 
 /** Renders the minimal editorial title used in presentation mode. */
-function PresentationTitleBase({ encoding, objectCount, onOpenWorkshop }: { encoding: VisualEncoding; objectCount: number; onOpenWorkshop: () => void }) {
+function PresentationTitleBase({
+  encoding,
+  objectCount,
+  onOpenWorkshop,
+}: Readonly<{ encoding: VisualEncoding; objectCount: number; onOpenWorkshop: () => void }>) {
   return (
     <section className="sg-presentation-title">
       <span>EARTH ORBIT / LOCAL SNAPSHOT</span>

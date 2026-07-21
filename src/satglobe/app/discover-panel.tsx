@@ -63,7 +63,7 @@ export function getQuickLensState(lens: QuickLens): { filters: FilterState; enco
 }
 
 /** Renders a filter row with an accessible pressed state. */
-function ToggleRow({ checked, label, meta, onChange }: { checked: boolean; label: string; meta?: string; onChange: () => void }) {
+function ToggleRow({ checked, label, meta, onChange }: Readonly<{ checked: boolean; label: string; meta?: string; onChange: () => void }>) {
   return (
     <button aria-pressed={checked} className="sg-toggle-row" onClick={onChange} type="button">
       <span className={`sg-check ${checked ? 'is-on' : ''}`}><span /></span>
@@ -74,7 +74,7 @@ function ToggleRow({ checked, label, meta, onChange }: { checked: boolean; label
 }
 
 /** Groups related filters in a native collapsible disclosure. */
-function FilterSection({ label, children, open = true }: { label: string; children: React.ReactNode; open?: boolean }) {
+function FilterSection({ label, children, open = true }: Readonly<{ label: string; children: React.ReactNode; open?: boolean }>) {
   return (
     <details className="sg-filter-section" open={open}>
       <summary>{label}<Icon name="chevron" size={14} /></summary>
@@ -83,7 +83,7 @@ function FilterSection({ label, children, open = true }: { label: string; childr
   );
 }
 
-export interface DiscoverPanelProps {
+export type DiscoverPanelProps = Readonly<{
   /** True while another mode owns the screen: removes the hidden panel from focus order and the accessibility tree. */
   inert?: boolean;
   visibleCount: number;
@@ -106,7 +106,7 @@ export interface DiscoverPanelProps {
   onApplyView: (view: SavedViewV1) => void;
   createView: () => SavedViewV1;
   onImportFile: (file?: File) => Promise<void> | void;
-}
+}>;
 
 /** The workshop's search, lens, filter, encoding, and saved-view instrument panel. */
 function DiscoverPanelBase({
@@ -180,7 +180,8 @@ function DiscoverPanelBase({
           ))}
         </FilterSection>
         <FilterSection label="Operational status">
-          <div className="sg-status-options" role="group" aria-label="Operational status">
+          <fieldset className="sg-status-options">
+            <legend className="sg-visually-hidden">Operational status</legend>
             {([
               ['active', 'Known active'],
               ['inactive', 'Inactive / unknown'],
@@ -188,7 +189,7 @@ function DiscoverPanelBase({
             ] as const).map(([value, label]) => (
               <button aria-pressed={filters.status === value} data-testid={`status-${value}`} key={value} onClick={() => setFiltersImmediate({ ...filters, status: value })} type="button">{label}</button>
             ))}
-          </div>
+          </fieldset>
         </FilterSection>
         <FilterSection label="Orbital regime" open={false}>
           {(Object.keys(regimeLabels) as OrbitRegime[]).map((regime) => (
