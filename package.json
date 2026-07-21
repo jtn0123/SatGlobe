@@ -96,6 +96,7 @@
     "sonar:scan": "npx tsx scripts/sonar.ts",
     "sonar:token": "npx tsx scripts/sonar.ts token",
     "sonar:issues": "npx tsx scripts/sonar.ts issues",
+    "sonar:cloud-report": "npx tsx scripts/sonar-cloud-report.ts",
     "sonar": "npm run test:coverage && npm run sonar:scan",
     "test:watch": "vitest",
     "test:watchCoverage": "vitest --coverage",
