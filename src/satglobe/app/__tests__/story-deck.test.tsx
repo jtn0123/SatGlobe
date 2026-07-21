@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { initMaterialSelects } from '../../../engine/ui/material-select';
 import { storyLibrary } from '../../stories';
@@ -63,5 +63,66 @@ describe('StoryDeck', () => {
     expect(deck.dataset.beatId).toBe(beat.id);
     expect(screen.getByTestId('story-beat-title').textContent).toBe(beat.title);
     expect(screen.getByTestId('story-beat-counter').textContent).toBe('05 / 05');
+  });
+
+  it('disables unavailable boundary navigation and offers replay on the final beat', () => {
+    const story = storyLibrary.find(({ id }) => id === 'iss-assembly')!;
+    const props = {
+      onAuthoredView: vi.fn(),
+      onBeatChange: vi.fn(),
+      onOpenWorkshop: vi.fn(),
+      onPlayingChange: vi.fn(),
+      onSourcesChange: vi.fn(),
+      onStoryChange: vi.fn(),
+      playing: false,
+      progress: 0,
+      showSources: false,
+      stories: storyLibrary,
+      story,
+    };
+    const { rerender } = render(<StoryDeck {...props} beatIndex={0} />);
+
+    expect((screen.getByRole('button', { name: 'Previous beat' }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole('button', { name: 'Next beat' }) as HTMLButtonElement).disabled).toBe(false);
+    expect((screen.getByRole('button', { name: 'Play story' }) as HTMLButtonElement).disabled).toBe(false);
+
+    rerender(<StoryDeck {...props} beatIndex={story.beats.length - 1} />);
+
+    expect((screen.getByRole('button', { name: 'Previous beat' }) as HTMLButtonElement).disabled).toBe(false);
+    expect((screen.getByRole('button', { name: 'Next beat' }) as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(screen.getByRole('button', { name: 'Replay story' }));
+    expect(props.onPlayingChange).toHaveBeenCalledOnce();
+  });
+
+  it('cycles focus forward through source links and dismisses only the sources dialog on Escape', () => {
+    const story = storyLibrary.find(({ id }) => id === 'iss-assembly')!;
+    const onSourcesChange = vi.fn();
+
+    render(
+      <StoryDeck
+        beatIndex={0}
+        onAuthoredView={vi.fn()}
+        onBeatChange={vi.fn()}
+        onOpenWorkshop={vi.fn()}
+        onPlayingChange={vi.fn()}
+        onSourcesChange={onSourcesChange}
+        onStoryChange={vi.fn()}
+        playing={false}
+        progress={0}
+        showSources
+        stories={storyLibrary}
+        story={story}
+      />,
+    );
+    const dialog = screen.getByRole('dialog', { name: 'Sources and technical facts' });
+    const close = screen.getByRole('button', { name: 'Close sources' });
+    const sourceLink = within(dialog).getAllByRole('link')[0];
+
+    expect(document.activeElement).toBe(close);
+    fireEvent.keyDown(close, { key: 'Tab' });
+    expect(document.activeElement).toBe(sourceLink);
+
+    fireEvent.keyDown(dialog, { key: 'Escape' });
+    expect(onSourcesChange).toHaveBeenCalledOnce();
   });
 });

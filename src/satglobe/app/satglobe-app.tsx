@@ -23,7 +23,7 @@ import { ScaleDisclosure } from './scale-disclosure';
 import { StoryDeck } from './story-deck';
 import { TimeDock } from './time-dock';
 import { TopBar } from './top-bar';
-import { useStoryPlayback } from './use-story-playback';
+import { type StoryPlaybackAction, type StoryPlaybackState, useStoryPlayback } from './use-story-playback';
 import { useWorkshopFilters } from './use-workshop-filters';
 
 interface SatGlobeAppProps {
@@ -156,6 +156,21 @@ function handleGlobalShortcut(event: KeyboardEvent, ctx: ShortcutContext): void 
   }
 }
 
+/** Makes play at the final beat an intentional replay instead of a transient no-op. */
+function useStoryPlayingToggle(
+  playback: StoryPlaybackState,
+  storyLength: number,
+  applyBeat: (index: number) => void,
+  dispatch: React.Dispatch<StoryPlaybackAction>,
+) {
+  return useCallback(() => {
+    if (!playback.playing && playback.beatIndex === storyLength - 1) {
+      applyBeat(0);
+    }
+    dispatch({ type: 'togglePlaying' });
+  }, [applyBeat, dispatch, playback.beatIndex, playback.playing, storyLength]);
+}
+
 /** Coordinates SatGlobe's workshop, presentation, and story states. */
 export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
   const [engine, setEngine] = useState<EngineState>(adapter.getState());
@@ -253,7 +268,7 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
   // Stable handlers so memoized children skip re-rendering on unrelated state changes.
   const clearSelection = useCallback(() => adapter.clearSelection(), [adapter]);
   const openWorkshop = useCallback(() => switchMode('workshop'), [switchMode]);
-  const togglePlaying = useCallback(() => dispatch({ type: 'togglePlaying' }), [dispatch]);
+  const togglePlaying = useStoryPlayingToggle(playback, story.beats.length, applyBeat, dispatch);
   const toggleSources = useCallback(() => dispatch({ type: 'toggleSources' }), [dispatch]);
   const selectResult = useCallback((catalogId: string) => {
     adapter.selectObject(catalogId);
@@ -267,7 +282,7 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
       mode,
       beatIndex: playback.beatIndex,
       applyBeat,
-      togglePlaying: () => dispatch({ type: 'togglePlaying' }),
+      togglePlaying,
       toggleShortcuts: () => setShowShortcuts((show) => !show),
       closeShortcuts: () => setShowShortcuts(false),
       switchMode,
@@ -276,7 +291,7 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
     window.addEventListener('keydown', onKeyDown);
 
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [applyBeat, dispatch, mode, playback.beatIndex, switchMode]);
+  }, [applyBeat, mode, playback.beatIndex, switchMode, togglePlaying]);
 
   const createView = useCallback((): SavedViewV1 => {
     /*
@@ -411,7 +426,7 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
 
       <ScaleDisclosure mode={scaleMode} onToggle={toggleScale} />
 
-      <TimeDock adapter={adapter} simulationTime={engine.simulationTime} />
+      <TimeDock adapter={adapter} simulationTime={engine.simulationTime} storyLocked={mode === 'story'} />
 
       {mode === 'presentation' && <PresentationTitle encoding={engine.encoding} objectCount={engine.visibleCount} onOpenWorkshop={openWorkshop} />}
 

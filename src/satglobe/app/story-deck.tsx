@@ -39,8 +39,8 @@ interface StoryDeckProps {
 
 /** Renders guided playback without replacing the underlying orbital scene. */
 /** Wraps the sources drawer with modal-dialog focus behavior. */
-function SourcesDrawerShell({ children }: { children: React.ReactNode }) {
-  const dialogRef = useDialogFocus<HTMLElement>();
+function SourcesDrawerShell({ children, onDismiss }: { children: React.ReactNode; onDismiss: () => void }) {
+  const dialogRef = useDialogFocus<HTMLElement>(onDismiss);
 
   return (
     <aside aria-label="Sources and technical facts" aria-modal="true" className="sg-source-drawer" ref={dialogRef} role="dialog">
@@ -53,6 +53,14 @@ function SourcesDrawerShell({ children }: { children: React.ReactNode }) {
 function StoryDeckBase(props: StoryDeckProps) {
   const { beatIndex, playing, progress, showSources, story } = props;
   const beat = story.beats[beatIndex];
+  const finalBeat = beatIndex === story.beats.length - 1;
+  let playbackLabel = 'Play story';
+
+  if (playing) {
+    playbackLabel = 'Pause story';
+  } else if (finalBeat) {
+    playbackLabel = 'Replay story';
+  }
 
   return (
     <section className="sg-story-deck" data-beat-id={beat.id} data-story-id={story.id} data-testid="story-deck">
@@ -68,9 +76,9 @@ function StoryDeckBase(props: StoryDeckProps) {
       </div>
       <div className="sg-story-copy"><span>{beat.dateLabel}</span><h2 data-testid="story-beat-title">{beat.title}</h2><p>{beat.narration}</p></div>
       <div className="sg-story-controls">
-        <button aria-label="Previous beat" onClick={() => props.onBeatChange(beatIndex - 1)} type="button"><Icon name="previous" /></button>
-        <button aria-label={playing ? 'Pause story' : 'Play story'} className="sg-story-play" data-testid="story-play" onClick={props.onPlayingChange} type="button"><Icon name={playing ? 'pause' : 'play'} /></button>
-        <button aria-label="Next beat" onClick={() => props.onBeatChange(beatIndex + 1)} type="button"><Icon name="next" /></button>
+        <button aria-label="Previous beat" disabled={beatIndex === 0} onClick={() => props.onBeatChange(beatIndex - 1)} type="button"><Icon name="previous" /></button>
+        <button aria-label={playbackLabel} className="sg-story-play" data-testid="story-play" onClick={props.onPlayingChange} type="button"><Icon name={playing ? 'pause' : 'play'} /></button>
+        <button aria-label="Next beat" disabled={finalBeat} onClick={() => props.onBeatChange(beatIndex + 1)} type="button"><Icon name="next" /></button>
         <div className="sg-story-scrub">
           <div className="sg-story-progress"><span style={{ width: `${progress * 100}%` }} /></div>
           <div className="sg-story-beats">{story.beats.map((item, index) => <button aria-label={`Go to ${item.title}`} className={index <= beatIndex ? 'is-past' : ''} key={item.id} onClick={() => props.onBeatChange(index)} type="button"><span /></button>)}</div>
@@ -80,7 +88,7 @@ function StoryDeckBase(props: StoryDeckProps) {
         <button className="sg-story-action" onClick={props.onOpenWorkshop} type="button">Open workshop</button>
       </div>
       {showSources && (
-        <SourcesDrawerShell>
+        <SourcesDrawerShell onDismiss={props.onSourcesChange}>
           <div className="sg-inspector-head"><div><div className="sg-panel-kicker">SOURCES & TECHNICAL FACTS</div><h2>{beat.title}</h2></div><button aria-label="Close sources" className="sg-icon-button" onClick={props.onSourcesChange} type="button"><Icon name="close" /></button></div>
           {beat.factIds.map((factId) => {
             const fact = story.facts.find(({ id }) => id === factId);
