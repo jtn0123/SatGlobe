@@ -115,6 +115,7 @@ describe('dev-server HTML responses', () => {
     const nginxConfig = readFileSync(NGINX_CONFIG_PATH, 'utf8');
 
     expect(dockerfile).toContain('RUN npm ci --ignore-scripts');
+    expect(dockerfile).toContain('/var/cache/nginx /run /usr/share/nginx/html');
     expect(dockerfile).toContain('USER nginx');
     expect(dockerfile).toContain('EXPOSE 8080');
     expect(nginxConfig).toMatch(/^\s*listen 8080;$/mu);
