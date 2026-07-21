@@ -16,8 +16,24 @@ export function isGitUrl(source: string): boolean {
 
 /** Derive a sanitized, kebab-case install name from a git URL's basename. */
 export function deriveName(url: string): string {
-  const raw = basename(url.replace(/\/+$/u, '')).replace(/\.git$/u, '');
-  const name = raw.toLowerCase().replaceAll(/[^a-z0-9]+/gu, '-').replace(/^-+|-+$/gu, '');
+  let end = url.length;
+
+  while (end > 0 && url[end - 1] === '/') {
+    end--;
+  }
+  const pathName = basename(url.slice(0, end));
+  const raw = pathName.endsWith('.git') ? pathName.slice(0, -'.git'.length) : pathName;
+  const normalized = raw.toLowerCase().replaceAll(/[^a-z0-9]+/gu, '-');
+  let start = 0;
+  let normalizedEnd = normalized.length;
+
+  while (normalized[start] === '-') {
+    start++;
+  }
+  while (normalizedEnd > start && normalized[normalizedEnd - 1] === '-') {
+    normalizedEnd--;
+  }
+  const name = normalized.slice(start, normalizedEnd);
 
   if (!name) {
     throw new CliError(`Could not derive a plugin name from "${url}" — pass --name <name>.`);

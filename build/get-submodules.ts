@@ -31,16 +31,20 @@ function listSubmodules(): { name: string; path: string }[] {
   let current: string | null = null;
 
   for (const line of txt.split(/\r?\n/u)) {
-    const h = line.match(/^\s*\[submodule\s+"(.+?)"\s*\]\s*$/u);
+    const trimmed = line.trim();
+    const headerPrefix = '[submodule "';
+    const headerSuffix = '"]';
 
-    if (h) {
-      // eslint-disable-next-line max-statements-per-line
-      current = h[1]; continue;
+    if (trimmed.startsWith(headerPrefix) && trimmed.endsWith(headerSuffix)) {
+      current = trimmed.slice(headerPrefix.length, -headerSuffix.length);
+      continue;
     }
-    const p = line.match(/^\s*path\s*=\s*(.+)\s*$/u);
+    const separatorIndex = trimmed.indexOf('=');
+    const key = separatorIndex >= 0 ? trimmed.slice(0, separatorIndex).trim() : '';
+    const submodulePath = separatorIndex >= 0 ? trimmed.slice(separatorIndex + 1).trim() : '';
 
-    if (p && current) {
-      out.push({ name: current, path: p[1].trim() });
+    if (key === 'path' && submodulePath && current) {
+      out.push({ name: current, path: submodulePath });
     }
   }
 

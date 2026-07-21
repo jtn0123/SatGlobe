@@ -92,6 +92,10 @@ describe('missile-mirv geometry', () => {
       expect(warheadCountForDesc(undefined)).toBe(1);
     });
 
+    it('handles an adversarially long unmatched designator without regex backtracking', () => {
+      expect(warheadCountForDesc(`Launch (${'X'.repeat(100_000)}`)).toBe(1);
+    });
+
     it('never exceeds the per-missile ceiling', () => {
       expect(warheadCountForDesc('X (SS-18) -> Y')).toBeLessThanOrEqual(MAX_WARHEADS_PER_MISSILE);
     });

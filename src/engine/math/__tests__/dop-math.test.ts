@@ -33,6 +33,17 @@ const goodAzElList = [
   { az: 159.8849131491328, el: 55.27753415824919 },
 ] as AzEl<Degrees>[];
 
+describe('getSatelliteShortLabel', () => {
+  it('strips descriptive suffixes before truncating', () => {
+    expect(DopMath.getSatelliteShortLabel('NAVSTAR 81 (USA 319)')).toBe('NAVSTAR 81');
+    expect(DopMath.getSatelliteShortLabel('GALILEO 31 [E31]')).toBe('GALILEO 31');
+  });
+
+  it('handles adversarially long suffix-free names without regex backtracking', () => {
+    expect(DopMath.getSatelliteShortLabel('A'.repeat(100_000))).toBe('AAAAAAAAAAA…');
+  });
+});
+
 describe('getDopsList_method', () => {
   let result: DopList;
 

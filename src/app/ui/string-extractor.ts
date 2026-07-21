@@ -218,13 +218,21 @@ export abstract class StringExtractor {
       }
 
       // Extract leading number if present (e.g., "2 Pan" → number=2, rest="Pan")
-      const numMatch = (/^(?<num>\d+)\s+(?<rest>.+)$/u).exec(segment);
       let prefix = '';
       let token = segment;
+      let digitEnd = 0;
 
-      if (numMatch?.groups) {
-        prefix = `${numMatch.groups.num} `;
-        token = numMatch.groups.rest;
+      while (digitEnd < segment.length && segment[digitEnd] >= '0' && segment[digitEnd] <= '9') {
+        digitEnd++;
+      }
+      let tokenStart = digitEnd;
+
+      while (tokenStart < segment.length && segment[tokenStart].trim() === '') {
+        tokenStart++;
+      }
+      if (digitEnd > 0 && tokenStart > digitEnd && tokenStart < segment.length) {
+        prefix = `${segment.slice(0, digitEnd)} `;
+        token = segment.slice(tokenStart);
       }
 
       const lookup = token.toLowerCase();

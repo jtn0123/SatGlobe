@@ -82,7 +82,7 @@ function isUpwardImport(specifier: string, importerDir: string): boolean {
 function countViolations(file: string): number {
   const source = readFileSync(file, 'utf8');
   const specifiers = [
-    ...source.matchAll(/(?:^|\n)\s*(?:import|export)[^;'"]*?from\s+['"](?<spec>[^'"]+)['"]/gu),
+    ...source.matchAll(/\bfrom\s+['"](?<spec>[^'"]+)['"]/gu),
     ...source.matchAll(/import\(\s*['"](?<spec>[^'"]+)['"]/gu),
   ].map((match) => match.groups!.spec);
 

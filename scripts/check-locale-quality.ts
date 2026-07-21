@@ -110,9 +110,30 @@ function extractPlaceholders(text: string): string[] {
 }
 
 function extractHtmlTags(text: string): string[] {
-  const matches = text.match(/<\/?[a-z][a-z0-9]*[^>]*>/giu);
+  const matches: string[] = [];
+  let cursor = 0;
 
-  return matches ? matches.sort() : [];
+  while (cursor < text.length) {
+    const start = text.indexOf('<', cursor);
+
+    if (start < 0) {
+      break;
+    }
+    const end = text.indexOf('>', start + 1);
+
+    if (end < 0) {
+      break;
+    }
+    const candidate = text.slice(start, end + 1);
+    const tagStart = candidate[1] === '/' ? 2 : 1;
+
+    if (/[a-z]/iu.test(candidate[tagStart] ?? '')) {
+      matches.push(candidate);
+    }
+    cursor = end + 1;
+  }
+
+  return matches.sort();
 }
 
 // ─── Phase 1: Deterministic checks ──────────────────────────────────────────
@@ -318,10 +339,12 @@ function parseLlmResponse(response: string, enMap: Map<string, string>, langMap:
   const issues: Issue[] = [];
 
   for (const line of lines) {
-    const match = (/^ISSUE:\s*(.+?)\s*\|\s*(.+)$/u).exec(line);
+    const payload = line.slice('ISSUE:'.length).trim();
+    const separatorIndex = payload.indexOf('|');
+    const flaggedKey = separatorIndex >= 0 ? payload.slice(0, separatorIndex).trim() : '';
+    const reason = separatorIndex >= 0 ? payload.slice(separatorIndex + 1).trim() : '';
 
-    if (match) {
-      const [, flaggedKey, reason] = match;
+    if (flaggedKey && reason) {
       const enVal = enMap.get(flaggedKey) ?? '';
       const langVal = langMap.get(flaggedKey) ?? '';
 

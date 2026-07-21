@@ -24,9 +24,17 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
 const normalizePath = (raw: string): string => {
   const p = raw.replace(/\\/gu, '/');
-  const m = (/(?:^|.*?\/)(src\/.*)$/u).exec(p);
+  const sourceMarker = '/src/';
+  const sourceIndex = p.indexOf(sourceMarker);
 
-  return m ? m[1] : p.replace(`${ROOT.replace(/\\/gu, '/')}/`, '');
+  if (p.startsWith('src/')) {
+    return p;
+  }
+  if (sourceIndex >= 0) {
+    return p.slice(sourceIndex + 1);
+  }
+
+  return p.replace(`${ROOT.replace(/\\/gu, '/')}/`, '');
 };
 
 // Combined report is a first-party source-code metric: keep only src/ TypeScript,
