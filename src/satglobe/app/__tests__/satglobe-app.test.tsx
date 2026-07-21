@@ -197,6 +197,53 @@ describe('SatGlobeApp', () => {
     expect(screen.getByTestId('story-play').getAttribute('aria-label')).toBe('Pause story');
   });
 
+  it('replays from the opening beat when playback is started at the end', () => {
+    renderApp();
+    const story = storyLibrary[0];
+    const openingBeat = story.beats[0];
+    const finalBeat = story.beats.at(-1)!;
+
+    fireEvent.click(screen.getByTestId('story-mode'));
+    fireEvent.click(screen.getByRole('button', { name: `Go to ${finalBeat.title}` }));
+    expect(screen.getByRole('button', { name: 'Replay story' })).toBeTruthy();
+    fireEvent.keyDown(window, { key: ' ' });
+
+    expect(screen.getByTestId('story-beat-title').textContent).toBe(openingBeat.title);
+    expect(screen.getByTestId('story-play').getAttribute('aria-label')).toBe('Pause story');
+  });
+
+  it('keeps Escape inside the sources dialog instead of leaving Story mode', () => {
+    renderApp();
+    const app = screen.getByTestId('satglobe-app');
+
+    fireEvent.click(screen.getByTestId('story-mode'));
+    fireEvent.click(screen.getByRole('button', { name: 'Sources · Facts' }));
+    const dialog = screen.getByRole('dialog', { name: 'Sources and technical facts' });
+
+    fireEvent.keyDown(dialog, { key: 'Escape' });
+
+    expect(app.classList.contains('sg-mode-story')).toBe(true);
+    expect(screen.queryByRole('dialog', { name: 'Sources and technical facts' })).toBeNull();
+  });
+
+  it('locks shared simulation-time controls while an authored Story beat is active', () => {
+    renderApp();
+    const back = screen.getByRole('button', { name: 'Move back one hour' });
+    const forward = screen.getByRole('button', { name: 'Move forward one hour' });
+    const now = screen.getByRole('button', { name: 'NOW' });
+
+    expect((back as HTMLButtonElement).disabled).toBe(false);
+    expect((forward as HTMLButtonElement).disabled).toBe(false);
+    expect((now as HTMLButtonElement).disabled).toBe(false);
+
+    fireEvent.click(screen.getByTestId('story-mode'));
+
+    expect((back as HTMLButtonElement).disabled).toBe(true);
+    expect((forward as HTMLButtonElement).disabled).toBe(true);
+    expect((now as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.getByText('STORY-AUTHORED TIME · OPEN WORKSHOP TO ADJUST')).toBeTruthy();
+  });
+
   it('does not change simulation time for existing beats without a relative offset', () => {
     const { methods } = renderApp();
 

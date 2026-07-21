@@ -1111,9 +1111,15 @@ button {
   cursor: pointer;
 }
 
-.sg-time-dock > button:hover {
+.sg-time-dock > button:hover:not(:disabled) {
   background: rgba(138, 213, 207, 0.05);
   color: var(--sg-ink, #f5f1e8);
+}
+
+.sg-time-dock > button:disabled {
+  color: var(--sg-ink-dim, rgba(185, 192, 189, 0.46));
+  cursor: not-allowed;
+  opacity: 0.62;
 }
 
 .sg-time-value {
@@ -1275,6 +1281,12 @@ button {
   cursor: pointer;
 }
 
+.sg-story-controls > button:disabled {
+  color: var(--sg-ink-dim, rgba(185, 192, 189, 0.46));
+  cursor: not-allowed;
+  opacity: 0.46;
+}
+
 .sg-story-controls .sg-story-play {
   border-color: rgba(233, 201, 127, 0.5);
   color: var(--sg-accent, #e9c97f);
@@ -1401,9 +1413,21 @@ button {
 }
 
 .sg-fact a {
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 3px;
   color: var(--sg-accent, #e9c97f);
-  font-size: 8px;
+  font-size: var(--sg-body);
+  font-weight: 600;
+  line-height: 1.35;
   text-decoration: none;
+}
+
+.sg-fact a:hover,
+.sg-fact a:focus-visible {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .sg-notice {

@@ -13,7 +13,7 @@ const shortcuts: Array<[string, string]> = [
 
 /** Compact keyboard-shortcut reference, toggled with "?". */
 function KeyboardLegendBase({ onClose }: { onClose: () => void }) {
-  const dialogRef = useDialogFocus<HTMLDivElement>();
+  const dialogRef = useDialogFocus<HTMLDivElement>(onClose);
 
   return (
     <div aria-label="Keyboard shortcuts" aria-modal="true" className="sg-keyboard-legend" data-testid="keyboard-legend" ref={dialogRef} role="dialog">
