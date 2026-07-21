@@ -184,7 +184,8 @@
     "webgl-lint": "^1.11.3",
     "webgl-mock": "^0.1.7",
     "webpackbar": "^7.0.0",
-    "worker-loader": "^3.0.8"
+    "worker-loader": "^3.0.8",
+    "wrangler": "4.113.0"
   },
   "dependencies": {
     "@e965/xlsx": "0.20.3",
