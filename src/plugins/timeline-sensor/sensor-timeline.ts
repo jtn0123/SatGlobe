@@ -273,7 +273,9 @@ export class SensorTimeline extends KeepTrackPlugin {
     const link = document.createElement('a');
 
     // Create a URL for the Blob and set it as the href for the link
-    link.href = URL.createObjectURL(blob);
+    const objectUrl = URL.createObjectURL(blob);
+
+    link.href = objectUrl;
 
     // Set the download attribute with a dynamically generated filename
     const timelineSat = PluginRegistry.getPlugin(SelectSatManager)!.getSelectedSat() as Satellite;
@@ -282,6 +284,7 @@ export class SensorTimeline extends KeepTrackPlugin {
 
     // Simulate a click on the link to trigger the download
     link.click();
+    URL.revokeObjectURL(objectUrl);
   }
 
 

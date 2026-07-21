@@ -293,7 +293,13 @@ function runBuildWatch(args: string[]): void {
     cwd,
   });
 
-  sync.on('close', () => {
+  sync.on('close', (code) => {
+    if (code !== 0) {
+      logWithStyle(`Plugin sync failed with code ${code ?? 'signal termination'}`, ConsoleStyles.ERROR);
+
+      return;
+    }
+
     // Run translations, then start build in watch mode
     const t7e = spawn(process.execPath, [TSX_CLI, './build/generate-translation.ts'], {
       stdio: 'inherit',

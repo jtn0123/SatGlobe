@@ -18,13 +18,28 @@ describe('uiManager', () => {
   });
 
   it('captures a rejected fullscreen request', async () => {
+    const fullscreenElement = document.documentElement;
+    const originalDescriptor = Object.getOwnPropertyDescriptor(fullscreenElement, 'requestFullscreen');
     const rejection = new Error('fullscreen denied');
     const debugSpy = vi.spyOn(errorManagerInstance, 'debug').mockImplementation(() => undefined);
 
-    document.documentElement.requestFullscreen = vi.fn().mockRejectedValue(rejection);
-    UiManager.fullscreenToggle();
+    try {
+      Object.defineProperty(fullscreenElement, 'requestFullscreen', {
+        configurable: true,
+        value: vi.fn().mockRejectedValue(rejection),
+        writable: true,
+      });
+      UiManager.fullscreenToggle();
 
-    await vi.waitFor(() => expect(debugSpy).toHaveBeenCalledWith(rejection.message));
+      await vi.waitFor(() => expect(debugSpy).toHaveBeenCalledWith(rejection.message));
+    } finally {
+      debugSpy.mockRestore();
+      if (originalDescriptor) {
+        Object.defineProperty(fullscreenElement, 'requestFullscreen', originalDescriptor);
+      } else {
+        Reflect.deleteProperty(fullscreenElement, 'requestFullscreen');
+      }
+    }
   });
 
   // Should process getsensorinfo

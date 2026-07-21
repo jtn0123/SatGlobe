@@ -6,7 +6,7 @@ describe('assertInspectionId', () => {
     expect(() => assertInspectionId('plugin-dev-SensorInfo.v2')).not.toThrow();
   });
 
-  it.each(['../escape', 'line\nbreak', '\u001b[31mred', '', 'a'.repeat(65)])(
+  it.each(['../escape', 'line\nbreak', '\u001b[31mred', 'Kelvin', 'ſensor', '', 'a'.repeat(65)])(
     'rejects unsafe identifier %j',
     (value) => {
       expect(() => assertInspectionId(value)).toThrow('spec.id must be');

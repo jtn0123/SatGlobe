@@ -113,6 +113,19 @@ describe('SensorTimeline behavior', () => {
     await vi.waitFor(() => expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining(rejection.message)));
   });
 
+  it('releases the CSV object URL after starting a timeline download', async () => {
+    const createObjectUrl = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:sensor-timeline');
+    const revokeObjectUrl = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+
+    vi.spyOn(p(), 'calculatePasses_').mockResolvedValue([[], [], [], [], []]);
+    vi.spyOn(PluginRegistry.getPlugin(SelectSatManager)!, 'getSelectedSat').mockReturnValue(defaultSat);
+
+    await p().downloadTimeline_();
+
+    expect(createObjectUrl).toHaveBeenCalledOnce();
+    expect(revokeObjectUrl).toHaveBeenCalledWith('blob:sensor-timeline');
+  });
+
   it('the settings inputs update their fields on change', () => {
     const setVal = (id: string, value: string) => {
       const el = getEl(id) as HTMLInputElement;

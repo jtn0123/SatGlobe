@@ -118,6 +118,8 @@ describe('dev-server HTML responses', () => {
     expect(dockerfile).toContain('/var/cache/nginx /run /usr/share/nginx/html');
     expect(dockerfile).toContain('USER nginx');
     expect(dockerfile).toContain('EXPOSE 8080');
+    expect(dockerfile).toContain('HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3');
+    expect(dockerfile).toContain('http://127.0.0.1:8080/');
     expect(nginxConfig).toMatch(/^\s*listen 8080;$/mu);
   });
 

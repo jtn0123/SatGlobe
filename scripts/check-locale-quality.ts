@@ -12,6 +12,7 @@
 import { readFileSync } from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { extractHtmlTags } from './lib/html-tags';
 
 const __filename_ = fileURLToPath(import.meta.url);
 const __dirname_ = path.dirname(__filename_);
@@ -107,33 +108,6 @@ function extractPlaceholders(text: string): string[] {
   const matches = text.match(/\{(\w+)\}/gu);
 
   return matches ? matches.sort() : [];
-}
-
-function extractHtmlTags(text: string): string[] {
-  const matches: string[] = [];
-  let cursor = 0;
-
-  while (cursor < text.length) {
-    const start = text.indexOf('<', cursor);
-
-    if (start < 0) {
-      break;
-    }
-    const end = text.indexOf('>', start + 1);
-
-    if (end < 0) {
-      break;
-    }
-    const candidate = text.slice(start, end + 1);
-    const tagStart = candidate[1] === '/' ? 2 : 1;
-
-    if (/[a-z]/iu.test(candidate[tagStart] ?? '')) {
-      matches.push(candidate);
-    }
-    cursor = end + 1;
-  }
-
-  return matches.sort((left, right) => left.localeCompare(right));
 }
 
 // ─── Phase 1: Deterministic checks ──────────────────────────────────────────

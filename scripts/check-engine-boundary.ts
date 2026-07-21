@@ -21,6 +21,7 @@ import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
+import { extractModuleSpecifiers } from './lib/module-specifiers';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const engineRoot = path.join(repoRoot, 'src', 'engine');
@@ -81,10 +82,7 @@ function isUpwardImport(specifier: string, importerDir: string): boolean {
 /** Counts upward imports (static, re-export, and dynamic) in one file. */
 function countViolations(file: string): number {
   const source = readFileSync(file, 'utf8');
-  const specifiers = [
-    ...source.matchAll(/\bfrom\s+['"](?<spec>[^'"]+)['"]/gu),
-    ...source.matchAll(/import\(\s*['"](?<spec>[^'"]+)['"]/gu),
-  ].map((match) => match.groups!.spec);
+  const specifiers = extractModuleSpecifiers(source, file);
 
   return specifiers.filter((spec) => isUpwardImport(spec, path.dirname(file))).length;
 }
