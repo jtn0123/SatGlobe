@@ -132,32 +132,20 @@ export class DetailedSensor extends GroundStation {
   system?: string;
   freqBand?: string;
 
-  // Primary FOV constraints (legacy properties)
-  /** @deprecated Use getFieldOfView() instead */
+  // Serialized primary FOV scalar contract. getFieldOfView() returns an attached OOTK sensor's single FOV.
   minAz: Degrees;
-  /** @deprecated Use getFieldOfView() instead */
   maxAz: Degrees;
-  /** @deprecated Use getFieldOfView() instead */
   minEl: Degrees;
-  /** @deprecated Use getFieldOfView() instead */
   maxEl: Degrees;
-  /** @deprecated Use getFieldOfView() instead */
   minRng: Kilometers;
-  /** @deprecated Use getFieldOfView() instead */
   maxRng: Kilometers;
 
-  // Secondary FOV constraints
-  /** @deprecated Use getFaceFovs() for multi-face sensors */
+  // Serialized secondary FOV scalar contract for multi-face sensors. getFaceFovs() returns attached per-face FOVs.
   minAz2?: Degrees;
-  /** @deprecated Use getFaceFovs() for multi-face sensors */
   maxAz2?: Degrees;
-  /** @deprecated Use getFaceFovs() for multi-face sensors */
   minEl2?: Degrees;
-  /** @deprecated Use getFaceFovs() for multi-face sensors */
   maxEl2?: Degrees;
-  /** @deprecated Use getFaceFovs() for multi-face sensors */
   minRng2?: Kilometers;
-  /** @deprecated Use getFaceFovs() for multi-face sensors */
   maxRng2?: Kilometers;
 
   // Radar properties

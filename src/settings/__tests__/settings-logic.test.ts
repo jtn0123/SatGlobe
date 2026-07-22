@@ -34,3 +34,19 @@ describe('SettingsManager.timeMachineString', () => {
     expect(new SettingsManager().timeMachineString('2020')).toBe(false);
   });
 });
+
+describe('SettingsManager.installDirectory', () => {
+  it.each([
+    ['', ''],
+    ['/', '/'],
+    ['./', './'],
+    ['/app', '/app/'],
+    ['https://example.test/satglobe', 'https://example.test/satglobe/'],
+  ])('normalizes %j before asset paths are appended', (value, expected) => {
+    const settings = new SettingsManager();
+
+    settings.installDirectory = value;
+
+    expect(settings.installDirectory).toBe(expected);
+  });
+});
