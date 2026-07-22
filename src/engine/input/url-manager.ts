@@ -120,7 +120,7 @@ export abstract class UrlManager {
       const val = param.slice(eqIndex + 1);
 
       if (key && val) {
-        keyValuePairs[key] = decodeURIComponent(val.replaceAll(/\+/gu, ' '));
+        keyValuePairs[key] = decodeURIComponent(val.replaceAll('+', ' '));
       }
     });
 
@@ -472,7 +472,7 @@ export abstract class UrlManager {
     if (url !== window.location.href) {
       setTimeout(() => {
         // Find any # in the URL and replace it with an empty string
-        url = url.replaceAll(/#/gu, '');
+        url = url.replaceAll('#', '');
         window.history.replaceState(null, '', url);
       }, 100);
     }

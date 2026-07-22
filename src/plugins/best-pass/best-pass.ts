@@ -296,7 +296,7 @@ export class BestPassPlugin extends KeepTrackPlugin {
       return [];
     }
 
-    const satArray = sats.replaceAll(/ /gu, ',').split(',');
+    const satArray = sats.replaceAll(' ', ',').split(',');
     const catalogManager = ServiceLocator.getCatalogManager();
     const deps = this.buildBestPassDeps_();
     const options: BestPassOptions = { lengthDays: this.looksLength_, intervalSec: this.looksInterval_ };

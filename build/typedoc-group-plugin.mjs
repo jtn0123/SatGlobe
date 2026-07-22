@@ -18,7 +18,7 @@ export function load(app) {
       return;
     }
 
-    const normalized = source.fullFileName.replaceAll(/\\/gu, '/');
+    const normalized = source.fullFileName.replaceAll('\\', '/');
     const srcMatch = normalized.match(/\/src\/(.+)$/u);
 
     if (!srcMatch) {

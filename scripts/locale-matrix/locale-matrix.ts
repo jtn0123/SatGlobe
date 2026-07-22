@@ -450,7 +450,7 @@ const cellHtml = (r: LangResult): string => {
 };
 
 const escapeHtml = (s: string): string =>
-  s.replaceAll(/&/gu, '&amp;').replaceAll(/</gu, '&lt;').replaceAll(/>/gu, '&gt;').replaceAll(/"/gu, '&quot;');
+  s.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
 
 const gridHtml = (spec: Spec, results: LangResult[], cols: number): string => {
   const failCount = results.filter((r) => !r.pass).length;

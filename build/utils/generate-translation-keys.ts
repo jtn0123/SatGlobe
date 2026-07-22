@@ -25,7 +25,7 @@ function generateKeysFromJSON(jsonObj: Record<string, string>, prefix: string = 
       if (typeof value === 'object' && value !== null) {
         traverse(value, newPrefix);
       } else {
-        keys.push(JSON.stringify(newPrefix).replaceAll(/"/gu, '\''));
+        keys.push(JSON.stringify(newPrefix).replaceAll('"', '\''));
       }
     });
   }

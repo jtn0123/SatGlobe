@@ -42,14 +42,14 @@ export const domIdForControl = (sectionId: string, controlId: string): string =>
 const slugify_ = (s: string): string => s.replaceAll(/[^A-Za-z0-9_-]/gu, '_');
 
 const escapeAttr_ = (s: string): string =>
-  s.replaceAll(/&/gu, '&amp;')
-    .replaceAll(/"/gu, '&quot;')
-    .replaceAll(/'/gu, '&#39;')
-    .replaceAll(/</gu, '&lt;')
-    .replaceAll(/>/gu, '&gt;');
+  s.replaceAll('&', '&amp;')
+    .replaceAll('"', '&quot;')
+    .replaceAll('\'', '&#39;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;');
 
 const escapeText_ = (s: string): string =>
-  s.replaceAll(/&/gu, '&amp;').replaceAll(/</gu, '&lt;').replaceAll(/>/gu, '&gt;');
+  s.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 
 const tooltipAttrs_ = (helpText?: string): string => {
   if (typeof helpText !== 'string' || helpText.length === 0) {

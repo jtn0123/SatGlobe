@@ -439,7 +439,7 @@ export class CustomSensorPlugin extends KeepTrackPlugin {
     const sensorTypeDom = getEl('sensor-type', true) as HTMLInputElement | null;
 
     if (sensorTypeDom) {
-      sensorTypeDom.value = (<HTMLInputElement>getEl('cs-type')).value.replaceAll(/</gu, '&lt;').replaceAll(/>/gu, '&gt;');
+      sensorTypeDom.value = (<HTMLInputElement>getEl('cs-type')).value.replaceAll('<', '&lt;').replaceAll('>', '&gt;');
     }
 
     const sensorInfoTitleDom = getEl('sensor-info-title', true);
