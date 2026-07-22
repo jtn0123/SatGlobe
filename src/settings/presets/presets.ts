@@ -80,7 +80,6 @@ export class SettingsPresets {
                   `;
       const style = document.createElement('style');
 
-      style.type = 'text/css';
       style.appendChild(document.createTextNode(toastCss));
       document.head.appendChild(style);
 
@@ -116,7 +115,7 @@ export class SettingsPresets {
     settings.maxMissiles = 1;
     settings.maxFieldOfViewMarkers = 1;
     // settings.isNotionalDebris = true;
-    settings.isEnableExtendedCatalog = false;
+    settings.isEnableJscCatalog = false;
     settings.searchLimit = 6500;
     settings.isDisableExtraCatalog = true;
     settings.isDisableAsciiCatalog = true;
@@ -145,7 +144,7 @@ export class SettingsPresets {
     settings.maxMissiles = 1;
     settings.maxFieldOfViewMarkers = 1;
     // settings.isNotionalDebris = true;
-    settings.isEnableExtendedCatalog = true;
+    settings.isEnableJscCatalog = true;
     settings.isDisableLaunchSites = true;
     settings.isDisableControlSites = true;
     settings.isDisableSensors = true;
@@ -208,7 +207,6 @@ export class SettingsPresets {
                   `;
       const style = document.createElement('style');
 
-      style.type = 'text/css';
       style.appendChild(document.createTextNode(toastCss));
       document.head.appendChild(style);
 

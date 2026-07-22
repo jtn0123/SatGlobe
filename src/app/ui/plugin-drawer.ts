@@ -211,7 +211,7 @@ export class PluginDrawer {
     const drawer = document.createElement('div');
 
     // Only show the app-launcher button when the Launchpad plugin is loaded.
-    const hasLauncher = !!PluginRegistry.getPluginByName('LaunchpadPlugin');
+    const hasLauncher = !!PluginRegistry.getPluginById('LaunchpadPlugin');
     const launcherHtml = hasLauncher
       ? [
         '    <div class="drawer-app-launcher" id="drawer-app-launcher" role="button" tabindex="0"',

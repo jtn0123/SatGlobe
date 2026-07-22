@@ -32,7 +32,7 @@ export class SensorListPlugin extends KeepTrackPlugin implements ICommandPalette
 
   bottomIconCallback: () => void = () => {
     if (this.isMenuButtonActive) {
-      if (PluginRegistry.getPluginByName('Planetarium')?.isMenuButtonActive) {
+      if (PluginRegistry.getPluginById('Planetarium')?.isMenuButtonActive) {
         getClass('sensor-top-link').forEach((el) => {
           el.style.display = 'none';
         });

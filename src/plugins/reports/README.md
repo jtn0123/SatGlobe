@@ -91,7 +91,7 @@ interface ReportData {
   table?: ReportTable;
   /** Message shown when the table has no rows. */
   emptyMessage?: string;
-  /** @deprecated Legacy raw body fields. */
+  /** Supported legacy raw body fields for externally registered reports. */
   body?: string;
   columns?: number;
   isHeaders?: boolean;

@@ -220,7 +220,7 @@ export class Engine {
       return; // CatalogManager not yet registered
     }
 
-    if (!catalogManager?.satCruncher) {
+    if (!catalogManager?.satCruncherThread?.worker) {
       return;
     }
 
@@ -230,7 +230,7 @@ export class Engine {
     const isMultiView = ViewportManager.getInstance().isMultiViewActive();
     const camPos = mainCamera.getCamPosEarthCentered();
 
-    catalogManager.satCruncher.postMessage({
+    catalogManager.satCruncherThread.worker.postMessage({
       typ: PosCruncherMsgType.CAMERA_DATA,
       vpMatrix: new Float32Array(this.renderer.projectionCameraMatrix),
       camPosEci: new Float32Array([camPos[0], camPos[1], camPos[2]]),

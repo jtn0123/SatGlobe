@@ -7,7 +7,7 @@ import { Satellite, Milliseconds } from '@ootk/src/main';
 import { CatalogLoader } from '@app/app/data/catalog-loader';
 import { OrbitManager } from '@app/app/rendering/orbit-manager';
 import { UiManager } from '@app/app/ui/ui-manager';
-import { SatCruncherMessageData, Singletons } from '@app/engine/core/interfaces';
+import { Singletons } from '@app/engine/core/interfaces';
 import { WebGLRenderer } from '@app/engine/rendering/webgl-renderer';
 import { KeepTrack } from '@app/keeptrack';
 import { defaultSat } from '@test/environment/apiMocks';
@@ -71,10 +71,7 @@ const setupStandardEnvironment = () => {
     catalogManagerInstance.satCruncherThread = {postMessage: vi.fn(),
       worker: {postMessage: vi.fn(),
         terminate: vi.fn(),
-        onmessage: null as ((ev: MessageEvent) => void) | null } } as any;
-
-    // Call the onmessage handler only if it is set to avoid "possibly null" invocation.
-    catalogManagerInstance.satCruncher.onmessage?.({ data: { type: 'satData', data: [] } as unknown as SatCruncherMessageData } as unknown as MessageEvent);
+      onmessage: null as ((ev: MessageEvent) => void) | null } } as any;
   });
 
   // Pretend webGl works

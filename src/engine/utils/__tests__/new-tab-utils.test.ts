@@ -6,10 +6,10 @@ describe('NewTabUtils.varToNewTab', () => {
     vi.restoreAllMocks();
   });
 
-  it('writes a download link and formatted details to the opened tab', () => {
-    const writes: string[] = [];
+  it('builds a download link and formatted details without document.write', () => {
+    const popupDocument = document.implementation.createHTMLDocument();
     const fakeWin = {
-      document: { write: (s: string) => writes.push(s), title: '' },
+      document: popupDocument,
       history: { replaceState: vi.fn() },
     };
 
@@ -17,14 +17,31 @@ describe('NewTabUtils.varToNewTab', () => {
 
     NewTabUtils.varToNewTab({ alpha: 1, beta: 'x' }, 'My Vars');
 
-    const written = writes.join('');
+    const downloadLink = popupDocument.querySelector('a');
+    const details = popupDocument.querySelector('pre');
 
-    expect(written).toContain('Download My Vars');
-    expect(written).toContain('my-vars.txt');
-    expect(written).toContain('alpha: 1');
-    expect(written).toContain('<plaintext>');
-    expect(fakeWin.document.title).toBe('My Vars');
+    expect(downloadLink?.textContent).toBe('Download My Vars');
+    expect(downloadLink?.download).toBe('my-vars.txt');
+    expect(downloadLink?.href).toContain(encodeURIComponent('alpha: 1'));
+    expect(details?.textContent).toBe('alpha: 1\nbeta: "x"');
+    expect(popupDocument.title).toBe('My Vars');
     expect(fakeWin.history.replaceState).toHaveBeenCalledWith(null, 'My Vars', '/my-vars.txt');
+  });
+
+  it('renders names and values as text rather than executable markup', () => {
+    const popupDocument = document.implementation.createHTMLDocument();
+    const fakeWin = {
+      document: popupDocument,
+      history: { replaceState: vi.fn() },
+    };
+
+    vi.spyOn(window, 'open').mockReturnValue(fakeWin as unknown as Window);
+
+    NewTabUtils.varToNewTab({ payload: '<img src=x onerror=alert(1)>' }, '<script>alert(1)</script>');
+
+    expect(popupDocument.querySelector('script')).toBeNull();
+    expect(popupDocument.querySelector('img')).toBeNull();
+    expect(popupDocument.body.textContent).toContain('<img src=x onerror=alert(1)>');
   });
 
   it('does nothing (no throw) when the popup is blocked', () => {

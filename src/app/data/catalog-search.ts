@@ -22,7 +22,6 @@
  */
 
 import { BaseObject, CatalogSource, Degrees, Minutes, Satellite, SpaceObjectType } from '@ootk/src/main';
-import { SatMath } from '../analysis/sat-math';
 
 /**
  * The CatalogSearch class provides static methods for filtering and searching through an array of satellite data.
@@ -104,7 +103,7 @@ export class CatalogSearch {
     const minInclination = sat.inclination - INC_MARGIN;
 
     const now = new Date();
-    const normalizedSatRaan = SatMath.normalizeRaan(sat, now);
+    const normalizedSatRaan = sat.normalizeRaan(now);
     let maxRaan = normalizedSatRaan + RAAN_MARGIN;
     let minRaan = normalizedSatRaan - RAAN_MARGIN;
 
@@ -133,7 +132,7 @@ export class CatalogSearch {
           return false;
         }
 
-        const normalizedSearchRaan = SatMath.normalizeRaan(s, now);
+        const normalizedSearchRaan = s.normalizeRaan(now);
 
         // Handle RAAN wraparound case
         if (normalizedSatRaan > 360 - RAAN_MARGIN || normalizedSatRaan < RAAN_MARGIN) {

@@ -13,7 +13,7 @@ import { html } from '@app/engine/utils/development/formatter';
 import { errorManagerInstance } from '@app/engine/utils/errorManager';
 import { getEl, hideEl, showEl } from '@app/engine/utils/get-el';
 import { t7e } from '@app/locales/keys';
-import { BaseObject, PayloadStatus, Satellite, SpaceObjectType } from '@ootk/src/main';
+import { BaseObject, mag2db, PayloadStatus, Satellite, SpaceObjectType } from '@ootk/src/main';
 import { KeepTrackPlugin } from '../../engine/plugins/base-plugin';
 import { SatInfoBox } from '../sat-info-box/sat-info-box';
 import { SelectSatManager } from '../select-sat-manager/select-sat-manager';
@@ -522,7 +522,9 @@ export class SatInfoBoxObject extends KeepTrackPlugin {
     if (settingsManager.plugins.SatInfoBoxObject?.isEstimateRcs === false) {
       if (typeof sat.rcs === 'number' && !Number.isNaN(sat.rcs)) {
         satRcsEl.innerHTML = `${sat.rcs} m<sup>2</sup>`;
-        satRcsEl.setAttribute('kt-tooltip', `${SatMath.mag2db(sat.rcs).toFixed(2)} dBsm`);
+        const dbsm = sat.rcs > 0 ? mag2db(sat.rcs) : Number.NaN;
+
+        satRcsEl.setAttribute('kt-tooltip', `${dbsm.toFixed(2)} dBsm`);
       } else {
         satRcsEl.innerHTML = t7e('Common.unknown');
         satRcsEl.setAttribute('kt-tooltip', t7e('Common.unknown'));
@@ -545,7 +547,7 @@ export class SatInfoBoxObject extends KeepTrackPlugin {
     }
 
     const formatted = `${result.rcs.toFixed(4)} m<sup>2</sup>`;
-    const dbsm = `${SatMath.mag2db(result.rcs).toFixed(2)} dBsm`;
+    const dbsm = `${(result.rcs > 0 ? mag2db(result.rcs) : Number.NaN).toFixed(2)} dBsm`;
 
     if (result.source === 'catalog') {
       satRcsEl.innerHTML = formatted;

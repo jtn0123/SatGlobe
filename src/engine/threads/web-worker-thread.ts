@@ -19,6 +19,7 @@ export abstract class WebWorkerThreadManager {
   init(workerStub?: Worker, workerScriptUrl: string = this.WEB_WORKER_CODE) {
     if (isThisNode()) { // See if we are running jest right now for testing
       this.initNodeConfig_(workerStub, workerScriptUrl);
+      this.bindWorkerMessageHandler_();
 
       return; // Exit early in Node environment
     }
@@ -29,6 +30,7 @@ export abstract class WebWorkerThreadManager {
 
     try {
       this.worker_ = workerStub ?? new Worker(workerScriptUrl);
+      this.bindWorkerMessageHandler_();
 
       if (workerStub) {
         this.isReady_ = true;
@@ -36,7 +38,6 @@ export abstract class WebWorkerThreadManager {
         return;
       }
 
-      this.worker_.onmessage = this.onMessage.bind(this);
       this.sendSgp4WasmBackendConfig_();
       this.worker_.onerror = (event: ErrorEvent) => {
         // A cross-origin/opaque worker surfaces an onerror with no usable diagnostics: null error,
@@ -64,6 +65,12 @@ export abstract class WebWorkerThreadManager {
       } else {
         throw new Error(error);
       }
+    }
+  }
+
+  private bindWorkerMessageHandler_(): void {
+    if (this.worker_) {
+      this.worker_.onmessage = this.onMessage.bind(this);
     }
   }
 

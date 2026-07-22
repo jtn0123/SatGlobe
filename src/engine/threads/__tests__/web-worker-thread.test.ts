@@ -46,10 +46,14 @@ describe('WebWorkerThreadManager', () => {
     it('uses a provided worker stub', () => {
       const mgr = new TestThread([]);
       const stub = stubWorker();
+      const onMessageSpy = vi.spyOn(mgr as unknown as { onMessage: (event: MessageEvent) => void }, 'onMessage');
 
       mgr.init(stub);
 
       expect(mgr.worker).toBe(stub);
+      expect(stub.onmessage).toBeTypeOf('function');
+      stub.onmessage!({ data: 'ready' } as MessageEvent);
+      expect(onMessageSpy).toHaveBeenCalledOnce();
     });
 
     it('registers itself into the threads registry', () => {
@@ -132,6 +136,7 @@ describe('WebWorkerThreadManager', () => {
 
       expect(mgr.worker).toBe(stub);
       expect(mgr.isReady).toBe(true);
+      expect(stub.onmessage).toBeTypeOf('function');
     });
 
     it('throws when Worker is unsupported', () => {

@@ -49,11 +49,11 @@ export interface ReportData {
   table?: ReportTable;
   /** Message shown in place of rows when the table is empty (e.g. "No passes found"). */
   emptyMessage?: string;
-  /** @deprecated Legacy raw CSV-ish body. Prefer {@link table}. */
+  /** Supported legacy raw CSV-ish body for externally registered reports. Prefer {@link table} for new reports. */
   body?: string;
-  /** @deprecated Legacy fixed-width column count. */
+  /** Supported legacy fixed-width column count for externally registered reports. */
   columns?: number;
-  /** @deprecated Legacy "first row is a header" flag. */
+  /** Supported legacy "first row is a header" flag for externally registered reports. */
   isHeaders?: boolean;
 }
 

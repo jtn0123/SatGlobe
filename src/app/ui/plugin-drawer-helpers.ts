@@ -272,7 +272,7 @@ export function renderUtilityFooter(groups: Record<string, DrawerGroup>): void {
 
 /** Whether the user is signed in (required before the phone link is usable). */
 function isCompanionSignedIn_(): boolean {
-  const userPlugin = PluginRegistry.getPluginByName('UserAccountPlugin') as
+  const userPlugin = PluginRegistry.getPluginById('UserAccountPlugin') as
     (KeepTrackPlugin & { cachedUser?: { id?: string } | null }) | null;
 
   return Boolean(userPlugin?.cachedUser?.id);
@@ -305,7 +305,7 @@ export function renderStatusFooter(): void {
   }
 
   const isOnline = navigator.onLine;
-  const hasCompanionLink = Boolean(PluginRegistry.getPluginByName('CompanionLinkPlugin'));
+  const hasCompanionLink = Boolean(PluginRegistry.getPluginById('CompanionLinkPlugin'));
   const signedIn = isCompanionSignedIn_();
   const phoneLinkIcon = hasCompanionLink
     ? [
