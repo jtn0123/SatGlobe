@@ -222,7 +222,7 @@ export class Hill {
 
     if (t <= 0) {
       t = t + 0.5 * this.period as Seconds;
-    } else if (isNaN(t)) {
+    } else if (Number.isNaN(t)) {
       t = 0.5 * this.period as Seconds;
     }
 

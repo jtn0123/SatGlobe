@@ -125,8 +125,8 @@ export class ScenarioManagementPlugin extends KeepTrackPlugin {
 
     // Must be valid dates or null
     if (
-      (scenario.startTime && isNaN(scenario.startTime.getTime())) ||
-      (scenario.endTime && isNaN(scenario.endTime.getTime()))
+      (scenario.startTime && Number.isNaN(scenario.startTime.getTime())) ||
+      (scenario.endTime && Number.isNaN(scenario.endTime.getTime()))
     ) {
       errorManagerInstance.warn('Scenario start time and end time must be valid dates.');
 

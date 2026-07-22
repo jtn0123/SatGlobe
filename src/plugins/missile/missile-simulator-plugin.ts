@@ -326,7 +326,7 @@ export class MissileSimulatorPlugin extends KeepTrackPlugin {
       const timeManagerInstance = ServiceLocator.getTimeManager();
       const uiManagerInstance = ServiceLocator.getUiManager();
 
-      const type = parseFloat((<HTMLInputElement>getEl('ms-type')).value);
+      const type = Number.parseFloat((<HTMLInputElement>getEl('ms-type')).value);
       const launchTime = timeManagerInstance.selectedDate.getTime();
 
       // Scripted mass-raid preset: load the simulation file and bail out of the custom path.
@@ -353,7 +353,7 @@ export class MissileSimulatorPlugin extends KeepTrackPlugin {
       }
 
       // Custom single-missile launch.
-      const site = getAttackerSite(parseFloat((<HTMLInputElement>getEl('ms-attacker')).value));
+      const site = getAttackerSite(Number.parseFloat((<HTMLInputElement>getEl('ms-attacker')).value));
 
       if (!site) {
         hideLoading();
@@ -439,18 +439,18 @@ export class MissileSimulatorPlugin extends KeepTrackPlugin {
   /** Resolve the impact point from the target select, validating custom coordinates. Returns null on invalid input. */
   private resolveTarget_(): { lat: number; lon: number } | null {
     const uiManagerInstance = ServiceLocator.getUiManager();
-    const targetId = parseFloat((<HTMLInputElement>getEl('ms-target')).value);
+    const targetId = Number.parseFloat((<HTMLInputElement>getEl('ms-target')).value);
 
     if (targetId === CUSTOM_TARGET_ID) {
-      const lat = parseFloat((<HTMLInputElement>getEl('ms-lat')).value);
-      const lon = parseFloat((<HTMLInputElement>getEl('ms-lon')).value);
+      const lat = Number.parseFloat((<HTMLInputElement>getEl('ms-lat')).value);
+      const lon = Number.parseFloat((<HTMLInputElement>getEl('ms-lon')).value);
 
-      if (isNaN(lat)) {
+      if (Number.isNaN(lat)) {
         uiManagerInstance.toast(l('errorMsgs.invalidTargetLatitude'), ToastMsgType.critical);
 
         return null;
       }
-      if (isNaN(lon)) {
+      if (Number.isNaN(lon)) {
         uiManagerInstance.toast(l('errorMsgs.invalidTargetLongitude'), ToastMsgType.critical);
 
         return null;
@@ -469,15 +469,15 @@ export class MissileSimulatorPlugin extends KeepTrackPlugin {
     }
 
     const uiManagerInstance = ServiceLocator.getUiManager();
-    const lat = parseFloat((<HTMLInputElement>getEl('ms-lat-lau')).value);
-    const lon = parseFloat((<HTMLInputElement>getEl('ms-lon-lau')).value);
+    const lat = Number.parseFloat((<HTMLInputElement>getEl('ms-lat-lau')).value);
+    const lon = Number.parseFloat((<HTMLInputElement>getEl('ms-lon-lau')).value);
 
-    if (isNaN(lat)) {
+    if (Number.isNaN(lat)) {
       uiManagerInstance.toast(l('errorMsgs.invalidLaunchLatitude'), ToastMsgType.critical);
 
       return null;
     }
-    if (isNaN(lon)) {
+    if (Number.isNaN(lon)) {
       uiManagerInstance.toast(l('errorMsgs.invalidLaunchLongitude'), ToastMsgType.critical);
 
       return null;
@@ -489,9 +489,9 @@ export class MissileSimulatorPlugin extends KeepTrackPlugin {
   /** Read and validate the MIRV warhead count (1-12 integer). Returns null on invalid input. */
   private resolveWarheads_(): number | null {
     const raw = (<HTMLInputElement>getEl('ms-warheads')).value;
-    const warheads = raw.trim() === '' ? DEFAULT_WARHEADS : parseInt(raw, 10);
+    const warheads = raw.trim() === '' ? DEFAULT_WARHEADS : Number.parseInt(raw, 10);
 
-    if (isNaN(warheads) || warheads < 1 || warheads > 12) {
+    if (Number.isNaN(warheads) || warheads < 1 || warheads > 12) {
       ServiceLocator.getUiManager().toast(l('errorMsgs.invalidWarheads'), ToastMsgType.critical);
 
       return null;
@@ -572,20 +572,20 @@ export class MissileSimulatorPlugin extends KeepTrackPlugin {
   }
 
   private missileChange_ = (): void => {
-    const isPreset = parseFloat((<HTMLInputElement>getEl('ms-type')).value) !== 0;
+    const isPreset = Number.parseFloat((<HTMLInputElement>getEl('ms-type')).value) !== 0;
 
     getEl('ms-custom-opt')!.style.display = isPreset ? 'none' : 'block';
   };
 
   private msTargetChange_ = (): void => {
-    const isCustom = parseInt((<HTMLInputElement>getEl('ms-target')).value, 10) === CUSTOM_TARGET_ID;
+    const isCustom = Number.parseInt((<HTMLInputElement>getEl('ms-target')).value, 10) === CUSTOM_TARGET_ID;
 
     getEl('ms-tgt-holder-lat')!.style.display = isCustom ? '' : 'none';
     getEl('ms-tgt-holder-lon')!.style.display = isCustom ? '' : 'none';
   };
 
   private msAttackerChange_ = (): void => {
-    const site = getAttackerSite(parseInt((<HTMLInputElement>getEl('ms-attacker')).value, 10));
+    const site = getAttackerSite(Number.parseInt((<HTMLInputElement>getEl('ms-attacker')).value, 10));
 
     this.isSub_ = site?.isSub ?? false;
 

@@ -591,7 +591,7 @@ export const propagationLoop = (mockSatCache?: PosCruncherCachedObject[]) => {
 
 export const checkForNaN = (satPos: Float32Array, satVel: Float32Array): void => {
   for (let i = 0; i < len; i++) {
-    if (isNaN(satPos[i * 3]) || isNaN(satPos[i * 3 + 1]) || isNaN(satPos[i * 3 + 2])) {
+    if (Number.isNaN(satPos[i * 3]) || Number.isNaN(satPos[i * 3 + 1]) || Number.isNaN(satPos[i * 3 + 2])) {
       resetPosition(satPos, i);
       resetVelocity(satVel, i);
     }
@@ -797,7 +797,7 @@ const validateImpreciseOrbitAltitude_ = (i: number, rMag: number): void => {
 
 /** Writes a satellite's validated TEME position/velocity into the shared arrays. Returns false on NaN propagation; throws 'Impossible orbit' for unbound/sub-surface/out-of-band orbits. */
 const writeValidatedSatState_ = (i: number, m: number, pv: { position: TemeVec3; velocity: TemeVec3<KilometersPerSecond> }): boolean => {
-  if (isNaN(pv.position.x) || isNaN(pv.position.y) || isNaN(pv.position.z)) {
+  if (Number.isNaN(pv.position.x) || Number.isNaN(pv.position.y) || Number.isNaN(pv.position.z)) {
     return false;
   }
 

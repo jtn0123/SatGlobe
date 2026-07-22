@@ -85,9 +85,9 @@ export function convert6DigitToA5(sccNum: string): string {
   }
 
   // Reject 6-digit values above alpha-5 range (340 000-999 999).
-  const numericValue = parseInt(sccNum, 10);
+  const numericValue = Number.parseInt(sccNum, 10);
 
-  if (isNaN(numericValue)) {
+  if (Number.isNaN(numericValue)) {
     throw new ValidationError('SCC number must be numeric', 'sccNum', sccNum);
   }
   if (numericValue > 339999) {
@@ -107,7 +107,7 @@ export function convert6DigitToA5(sccNum: string): string {
    * H=17, J=18, K=19, L=20, M=21, N=22, P=23, Q=24, R=25, S=26, T=27, U=28,
    * V=29, W=30, X=31, Y=32, Z=33
    */
-  let first = parseInt(`${sccNum[0]}${sccNum[1]}`);
+  let first = Number.parseInt(`${sccNum[0]}${sccNum[1]}`);
   const iPlus = first >= 18 ? 1 : 0;
   const tPlus = first >= 24 ? 1 : 0;
 
@@ -172,7 +172,7 @@ export function convertA5to6Digit(sccNum: string): string {
   // through (e.g. CelesTrak 9-digit supplemental IDs).
   const trimmed = sccNum.trim();
 
-  if (trimmed.length === 6 && parseInt(trimmed, 10) > 339999) {
+  if (trimmed.length === 6 && Number.parseInt(trimmed, 10) > 339999) {
     throw new ValidationError(
       '6-digit SCC number exceeds TLE alpha-5 capacity (max 339999)',
       'sccNum',

@@ -135,7 +135,7 @@ export class GaussIOD {
     const { lmati, l1, l2, l3 } = this.buildLosMatrix_(o1, o2, o3);
     const r2Mag = this.solveForR2Magnitude_(o1, o2, o3, tau12, tau32, lmati, l2);
 
-    if (r2Mag === 0 || !isFinite(r2Mag)) {
+    if (r2Mag === 0 || !Number.isFinite(r2Mag)) {
       return null;
     }
 

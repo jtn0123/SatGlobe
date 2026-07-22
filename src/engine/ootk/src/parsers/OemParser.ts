@@ -196,7 +196,7 @@ export class OemParser {
             // CCSDS 502.0-B-3 Section 7.5.1 — store without prefix
             userDefined[key.substring(13)] = value;
           } else if (key === 'INTERPOLATION_DEGREE') {
-            currentMetadata[key] = parseInt(value, 10);
+            currentMetadata[key] = Number.parseInt(value, 10);
           } else {
             (currentMetadata as Record<string, string | number>)[key] = value;
           }
@@ -236,14 +236,14 @@ export class OemParser {
     try {
       const epoch = EpochUTC.fromDateTimeString(parts[0]);
       const position = new Vector3D(
-        parseFloat(parts[1]) as Kilometers,
-        parseFloat(parts[2]) as Kilometers,
-        parseFloat(parts[3]) as Kilometers,
+        Number.parseFloat(parts[1]) as Kilometers,
+        Number.parseFloat(parts[2]) as Kilometers,
+        Number.parseFloat(parts[3]) as Kilometers,
       );
       const velocity = new Vector3D(
-        parseFloat(parts[4]) as KilometersPerSecond,
-        parseFloat(parts[5]) as KilometersPerSecond,
-        parseFloat(parts[6]) as KilometersPerSecond,
+        Number.parseFloat(parts[4]) as KilometersPerSecond,
+        Number.parseFloat(parts[5]) as KilometersPerSecond,
+        Number.parseFloat(parts[6]) as KilometersPerSecond,
       );
 
       return new J2000(epoch, position, velocity);
@@ -269,7 +269,7 @@ export class OemParser {
 
     try {
       // Try to parse as covariance values (21 values for 6x6 lower triangular)
-      const values = parts.map((p) => parseFloat(p)).filter((n) => !isNaN(n));
+      const values = parts.map((p) => Number.parseFloat(p)).filter((n) => !Number.isNaN(n));
 
       if (values.length > 0) {
         return {

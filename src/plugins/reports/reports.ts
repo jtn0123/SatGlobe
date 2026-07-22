@@ -407,10 +407,10 @@ export class ReportsPlugin extends KeepTrackPlugin {
     const formatEl = getEl('reports-format', true) as HTMLSelectElement | null;
 
     if (windowEl) {
-      this.windowSec_ = parseInt(windowEl.value, 10) || REPORT_DEFAULTS.windowSec;
+      this.windowSec_ = Number.parseInt(windowEl.value, 10) || REPORT_DEFAULTS.windowSec;
     }
     if (stepEl) {
-      this.stepSec_ = parseInt(stepEl.value, 10) || REPORT_DEFAULTS.stepSec;
+      this.stepSec_ = Number.parseInt(stepEl.value, 10) || REPORT_DEFAULTS.stepSec;
     }
     if (formatEl) {
       this.format_ = formatEl.value as ReportFormat;
@@ -537,7 +537,7 @@ export class ReportsPlugin extends KeepTrackPlugin {
     return passes.map((row) => ({
       aos: row.START_DATE as Date,
       los: row.STOP_DATE as Date,
-      maxEl: parseFloat((row.MAXIMUM_ELEVATION as string) ?? '0'),
+      maxEl: Number.parseFloat((row.MAXIMUM_ELEVATION as string) ?? '0'),
       maxElTime: new Date(row.MAXIMUM_ELEVATION_DTG as number),
     }));
   }

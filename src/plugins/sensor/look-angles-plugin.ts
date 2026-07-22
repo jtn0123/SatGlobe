@@ -184,12 +184,12 @@ export class LookAnglesPlugin extends KeepTrackPlugin {
         getEl('look-angles-menu-secondary')?.classList.add('kt-ui-v13');
 
         getEl('look-angles-length')!.addEventListener('change', () => {
-          this.lengthOfLookAngles_ = parseFloat((<HTMLInputElement>getEl('look-angles-length')).value);
+          this.lengthOfLookAngles_ = Number.parseFloat((<HTMLInputElement>getEl('look-angles-length')).value);
           this.refreshSideMenuData_();
         });
 
         getEl('look-angles-interval')!.addEventListener('change', () => {
-          this.angleCalculationInterval_ = parseInt((<HTMLInputElement>getEl('look-angles-interval')).value);
+          this.angleCalculationInterval_ = Number.parseInt((<HTMLInputElement>getEl('look-angles-interval')).value);
           this.refreshSideMenuData_();
         });
 

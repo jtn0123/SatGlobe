@@ -359,10 +359,10 @@ export class CreateSat extends KeepTrackPlugin {
         return;
       }
 
-      const meanmo = parseFloat(meanmoEl.value);
-      const ecen = parseFloat(ecenEl.value) / 1e7;
+      const meanmo = Number.parseFloat(meanmoEl.value);
+      const ecen = Number.parseFloat(ecenEl.value) / 1e7;
 
-      if (isNaN(meanmo) || isNaN(ecen) || meanmo <= 0) {
+      if (Number.isNaN(meanmo) || Number.isNaN(ecen) || meanmo <= 0) {
         return;
       }
 
@@ -416,15 +416,15 @@ export class CreateSat extends KeepTrackPlugin {
     const apogeeEl = getEl(`${CreateSat.elementPrefix}-basic-apogee`) as HTMLInputElement;
     const perigeeEl = getEl(`${CreateSat.elementPrefix}-basic-perigee`) as HTMLInputElement;
 
-    const apogee = parseFloat(apogeeEl.value);
-    const perigee = parseFloat(perigeeEl.value);
-    const inc = parseFloat(incEl.value);
+    const apogee = Number.parseFloat(apogeeEl.value);
+    const perigee = Number.parseFloat(perigeeEl.value);
+    const inc = Number.parseFloat(incEl.value);
 
     const uiManager = ServiceLocator.getUiManager();
     const e = (key: string) => t7e(`plugins.CreateSat.errorMsgs.${key}` as T7eKey);
 
     // Validate Basic tab inputs
-    if (isNaN(apogee) || isNaN(perigee) || isNaN(inc)) {
+    if (Number.isNaN(apogee) || Number.isNaN(perigee) || Number.isNaN(inc)) {
       uiManager.toast(e('invalidNumericValues'), ToastMsgType.error, true);
 
       return;
@@ -480,14 +480,14 @@ export class CreateSat extends KeepTrackPlugin {
       }
 
       try {
-        const meanmo = 1440 / parseFloat(per);
+        const meanmo = 1440 / Number.parseFloat(per);
 
         (getEl(`${CreateSat.elementPrefix}-meanmo`) as HTMLInputElement).value = meanmo.toFixed(5).padStart(8, '0');
         /*
          * Also reformat the input just in case the user entered a value with
          * more than 5 decimal places
          */
-        perInput.value = parseFloat(per).toFixed(4).padStart(8, '0');
+        perInput.value = Number.parseFloat(per).toFixed(4).padStart(8, '0');
       } catch (error) {
         errorManagerInstance.error(error as Error, 'create-sat.ts', 'Error converting period to mean motion');
       }
@@ -503,7 +503,7 @@ export class CreateSat extends KeepTrackPlugin {
       }
 
       try {
-        const per = (1440 / parseFloat(meanmo)).toFixed(4);
+        const per = (1440 / Number.parseFloat(meanmo)).toFixed(4);
 
         (getEl(`${CreateSat.elementPrefix}-per`) as HTMLInputElement).value = per.padStart(8, '0');
 
@@ -511,7 +511,7 @@ export class CreateSat extends KeepTrackPlugin {
          * Also reformat the input just in case the user entered a value with
          * more than 4 decimal places
          */
-        meanmoInput.value = parseFloat(meanmo).toFixed(5).padStart(8, '0');
+        meanmoInput.value = Number.parseFloat(meanmo).toFixed(5).padStart(8, '0');
       } catch (error) {
         errorManagerInstance.warn(`Error converting mean motion to period: ${error}`);
       }
@@ -587,7 +587,7 @@ export class CreateSat extends KeepTrackPlugin {
     const e = (key: string) => t7e(`plugins.CreateSat.errorMsgs.${key}` as T7eKey);
 
     // Validate NORAD ID
-    if (!(/^\d{5}$/u).test(inputParams.scc) || parseInt(inputParams.scc, 10) < 90000 || parseInt(inputParams.scc, 10) > 99999) {
+    if (!(/^\d{5}$/u).test(inputParams.scc) || Number.parseInt(inputParams.scc, 10) < 90000 || Number.parseInt(inputParams.scc, 10) > 99999) {
       return e('invalidNoradId');
     }
     // Validate type
@@ -667,9 +667,9 @@ export class CreateSat extends KeepTrackPlugin {
     let day = dayInput.value.trim();
 
     // Ensure day is in the format NNN.NNNNNNNN (e.g., 001.00000000)
-    const dayNum = parseFloat(day);
+    const dayNum = Number.parseFloat(day);
 
-    if (!isNaN(dayNum)) {
+    if (!Number.isNaN(dayNum)) {
       // Always 3 integer digits, 8 decimals
       day = dayNum.toFixed(8).padStart(12, '0');
     } else {
@@ -681,10 +681,10 @@ export class CreateSat extends KeepTrackPlugin {
 
     const incInput = getEl(`${CreateSat.elementPrefix}-inc`) as HTMLInputElement;
     let inc = incInput.value.trim();
-    const incNum = parseFloat(inc);
+    const incNum = Number.parseFloat(inc);
 
     // Ensure inclination is in the format NNN.NNNN (e.g., 000.0000)
-    if (!isNaN(incNum)) {
+    if (!Number.isNaN(incNum)) {
       inc = incNum.toFixed(4).padStart(8, '0');
     } else {
       inc = inc.padStart(8, '0');
@@ -694,10 +694,10 @@ export class CreateSat extends KeepTrackPlugin {
 
     const rascInput = getEl(`${CreateSat.elementPrefix}-rasc`) as HTMLInputElement;
     let rasc = rascInput.value.trim();
-    const rascNum = parseFloat(rasc);
+    const rascNum = Number.parseFloat(rasc);
 
     // Ensure right ascension is in the format NNN.NNNN (e.g., 000.0000)
-    if (!isNaN(rascNum)) {
+    if (!Number.isNaN(rascNum)) {
       rasc = rascNum.toFixed(4).padStart(8, '0');
     } else {
       rasc = rasc.padStart(8, '0');
@@ -718,10 +718,10 @@ export class CreateSat extends KeepTrackPlugin {
 
     const argPeInput = getEl(`${CreateSat.elementPrefix}-argPe`) as HTMLInputElement;
     let argPe = argPeInput.value.trim();
-    const argPeNum = parseFloat(argPe);
+    const argPeNum = Number.parseFloat(argPe);
 
     // Ensure argument of perigee is in the format NNN.NNNN (e.g., 000.0000)
-    if (!isNaN(argPeNum)) {
+    if (!Number.isNaN(argPeNum)) {
       argPe = argPeNum.toFixed(4).padStart(8, '0');
     } else {
       argPe = argPe.padStart(8, '0');
@@ -731,10 +731,10 @@ export class CreateSat extends KeepTrackPlugin {
 
     const meanaInput = getEl(`${CreateSat.elementPrefix}-meana`) as HTMLInputElement;
     let meana = meanaInput.value.trim();
-    const meanaNum = parseFloat(meana);
+    const meanaNum = Number.parseFloat(meana);
 
     // Ensure mean anomaly is in the format NNN.NNNN (e.g., 000.0000)
-    if (!isNaN(meanaNum)) {
+    if (!Number.isNaN(meanaNum)) {
       meana = meanaNum.toFixed(4).padStart(8, '0');
     } else {
       meana = meana.padStart(8, '0');
@@ -745,9 +745,9 @@ export class CreateSat extends KeepTrackPlugin {
     const meanmoInput = getEl(`${CreateSat.elementPrefix}-meanmo`) as HTMLInputElement;
     // Ensure mean motion is in the format NN.NNNNN (e.g., 16.00000)
     let meanmo = meanmoInput.value.trim();
-    const meanmoNum = parseFloat(meanmo);
+    const meanmoNum = Number.parseFloat(meanmo);
 
-    if (!isNaN(meanmoNum)) {
+    if (!Number.isNaN(meanmoNum)) {
       meanmo = meanmoNum.toFixed(5).padStart(8, '0');
     } else {
       meanmo = meanmo.padStart(8, '0');
@@ -758,9 +758,9 @@ export class CreateSat extends KeepTrackPlugin {
     let period = periodInput.value.trim();
 
     // Ensure period is a valid number and format as NNNN.NNNN (8 digits total, pad left if needed)
-    const periodNum = parseFloat(period);
+    const periodNum = Number.parseFloat(period);
 
-    if (!isNaN(periodNum)) {
+    if (!Number.isNaN(periodNum)) {
       // Always 4 decimals, pad integer part to at least 2 digits (e.g., 90.0000, 9999.9999)
       period = periodNum.toFixed(4);
       // Pad left so total length is 8 (for 2 int digits) or 9 (for 3+ int digits)
@@ -785,9 +785,9 @@ export class CreateSat extends KeepTrackPlugin {
 
     // Ensure type is a valid number
     const typeInput = getEl(`${CreateSat.elementPrefix}-type`) as HTMLInputElement;
-    const type = parseInt(typeInput.value, 10);
+    const type = Number.parseInt(typeInput.value, 10);
 
-    if (isNaN(type) || type < 1 || type > 4) {
+    if (Number.isNaN(type) || type < 1 || type > 4) {
       typeInput.value = '1'; // Default to Payload if invalid
     } else {
       typeInput.value = type.toString();
@@ -848,7 +848,7 @@ export class CreateSat extends KeepTrackPlugin {
       }
 
       const country = inputParams.country;
-      const type = parseInt(inputParams.type);
+      const type = Number.parseInt(inputParams.type);
       // Preserve the imported international designator (set on the hidden field by
       // the TLE/STK flows); fall back to a synthesized one for manual entry.
       const intlInput = getEl(`${CreateSat.elementPrefix}-intl`, true) as HTMLInputElement | null;

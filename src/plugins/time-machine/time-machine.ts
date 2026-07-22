@@ -95,7 +95,7 @@ export class TimeMachine extends KeepTrackPlugin implements ISettingsContributor
         this.historyOfSatellitesRunCount,
       );
 
-      const currentYear = parseInt(new Date().getUTCFullYear().toString().slice(2, 4));
+      const currentYear = Number.parseInt(new Date().getUTCFullYear().toString().slice(2, 4));
 
       if (year === currentYear) {
         break;
@@ -138,7 +138,7 @@ export class TimeMachine extends KeepTrackPlugin implements ISettingsContributor
       }
     }
 
-    if (year === parseInt(new Date().getUTCFullYear().toString().slice(2, 4))) {
+    if (year === Number.parseInt(new Date().getUTCFullYear().toString().slice(2, 4))) {
       if (settingsManager.loopTimeMachine) {
         setTimeout(() => {
           this.historyOfSatellitesPlay();

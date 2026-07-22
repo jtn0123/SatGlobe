@@ -70,8 +70,8 @@ export const parseGetVariables = (params: string[], settingsManager: SettingsMan
         settingsManager.isDrawOrbits = false;
         break;
       case 'searchLimit':
-        if (parseInt(val) > 0) {
-          settingsManager.searchLimit = parseInt(val);
+        if (Number.parseInt(val) > 0) {
+          settingsManager.searchLimit = Number.parseInt(val);
         } else {
           ServiceLocator.getUiManager().toast(`Invalid search limit: ${val}`, ToastMsgType.error);
         }

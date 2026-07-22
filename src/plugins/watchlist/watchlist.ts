@@ -116,7 +116,7 @@ export class WatchlistPlugin extends KeepTrackPlugin implements ISettingsContrib
           ],
           get: () => String(settingsManager.satLabelMode),
           set: (next) => {
-            const parsed = parseInt(next, 10) as SatLabelMode;
+            const parsed = Number.parseInt(next, 10) as SatLabelMode;
 
             settingsManager.satLabelMode = parsed;
             PersistenceManager.getInstance().saveItem(
@@ -515,7 +515,7 @@ export class WatchlistPlugin extends KeepTrackPlugin implements ISettingsContrib
         const satName = (<HTMLElement>evt.target).dataset.satName;
 
         if (satName) {
-          this.selectSat(parseInt(satName, 10));
+          this.selectSat(Number.parseInt(satName, 10));
         } else {
           errorManagerInstance.debug('sat-name is null');
         }
@@ -523,7 +523,7 @@ export class WatchlistPlugin extends KeepTrackPlugin implements ISettingsContrib
         const satId = (<HTMLElement>evt.target).dataset.satId;
 
         if (satId) {
-          this.removeSat(parseInt(satId, 10));
+          this.removeSat(Number.parseInt(satId, 10));
         } else {
           errorManagerInstance.debug('sat-id is null');
         }

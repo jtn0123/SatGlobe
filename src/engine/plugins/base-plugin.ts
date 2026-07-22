@@ -1031,7 +1031,7 @@ export abstract class KeepTrackPlugin {
         const menuElements = KeepTrackPlugin.registeredMenus[menuMode];
 
         if (menuElements.length === 0) {
-          switch (parseInt(menuMode)) {
+          switch (Number.parseInt(menuMode)) {
             case MenuMode.CATALOG:
               hideEl(BottomMenu.catalogMenuId);
               break;

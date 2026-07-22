@@ -1332,7 +1332,7 @@ export class Missile {
     missileObj.lonList = LongList as Degrees[];
     missileObj.active = true;
     missileObj.type = SpaceObjectType.UNKNOWN;
-    missileObj.id = typeof MissileObjectNum === 'string' ? parseInt(MissileObjectNum, 10) : MissileObjectNum;
+    missileObj.id = typeof MissileObjectNum === 'string' ? Number.parseInt(MissileObjectNum, 10) : MissileObjectNum;
     missileObj.name = `RV_${missileObj.id}`;
     // maxAlt is used for zoom controls
     missileObj.maxAlt = MaxAltitude;

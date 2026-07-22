@@ -183,7 +183,7 @@ const drawDot = (ctx: CanvasRenderingContext2D, geom: Geometry, sample: PolarSam
 /** Marks each whole-UTC-minute crossing along the track with a small tick dot. */
 const drawTimeTicks = (ctx: CanvasRenderingContext2D, geom: Geometry, samples: PolarSample[]): void => {
   ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-  let prevMinute = NaN;
+  let prevMinute = Number.NaN;
 
   for (const s of samples) {
     const minute = Math.floor(s.t.getTime() / 60000);

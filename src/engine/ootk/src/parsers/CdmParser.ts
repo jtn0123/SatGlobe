@@ -300,7 +300,7 @@ export class CdmParser {
 
     return {
       TCA: tca,
-      MISS_DISTANCE: parseFloat(missDistance) as Kilometers,
+      MISS_DISTANCE: Number.parseFloat(missDistance) as Kilometers,
       RELATIVE_SPEED: CdmParser.parseOptionalFloat_(kv, 'RELATIVE_SPEED') as KilometersPerSecond | undefined,
       RELATIVE_POSITION_R: CdmParser.parseOptionalFloat_(kv, 'RELATIVE_POSITION_R') as Kilometers | undefined,
       RELATIVE_POSITION_T: CdmParser.parseOptionalFloat_(kv, 'RELATIVE_POSITION_T') as Kilometers | undefined,
@@ -372,12 +372,12 @@ export class CdmParser {
 
     return {
       OBJECT: objectId,
-      X: parseFloat(x) as Kilometers,
-      Y: parseFloat(y) as Kilometers,
-      Z: parseFloat(z) as Kilometers,
-      X_DOT: parseFloat(xDot) as KilometersPerSecond,
-      Y_DOT: parseFloat(yDot) as KilometersPerSecond,
-      Z_DOT: parseFloat(zDot) as KilometersPerSecond,
+      X: Number.parseFloat(x) as Kilometers,
+      Y: Number.parseFloat(y) as Kilometers,
+      Z: Number.parseFloat(z) as Kilometers,
+      X_DOT: Number.parseFloat(xDot) as KilometersPerSecond,
+      Y_DOT: Number.parseFloat(yDot) as KilometersPerSecond,
+      Z_DOT: Number.parseFloat(zDot) as KilometersPerSecond,
       MASS: CdmParser.parseOptionalFloat_(kv, `${prefix}MASS`),
       CD_AREA_OVER_MASS: CdmParser.parseOptionalFloat_(kv, `${prefix}CD_AREA_OVER_MASS`),
       CR_AREA_OVER_MASS: CdmParser.parseOptionalFloat_(kv, `${prefix}CR_AREA_OVER_MASS`),
@@ -442,9 +442,9 @@ export class CdmParser {
       return undefined;
     }
 
-    const parsed = parseFloat(value);
+    const parsed = Number.parseFloat(value);
 
-    return isNaN(parsed) ? undefined : parsed;
+    return Number.isNaN(parsed) ? undefined : parsed;
   }
 
   /**

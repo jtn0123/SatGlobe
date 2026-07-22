@@ -87,7 +87,7 @@ export const SPEED_CONFIGS: SpeedConfig[] = [
  * input falls back to the configured default so NaN never reaches the camera math.
  */
 export function parseSpeed(raw: string | null | undefined, config: Pick<SpeedConfig, 'def' | 'min' | 'max'>): number {
-  const value = parseFloat(raw ?? '');
+  const value = Number.parseFloat(raw ?? '');
 
   if (!Number.isFinite(value)) {
     return config.def;

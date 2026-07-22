@@ -73,9 +73,9 @@ export const assessRelationship = (input: RicAssessmentInput): RicAssessment => 
   const { inc1, raan1, period1, inc2, raan2, period2, maxRangeKm } = input;
 
   const finite = [inc1, raan1, period1, inc2, raan2, period2].every((v) => Number.isFinite(v));
-  const planeAngle = finite ? planeAngleDeg(inc1, raan1, inc2, raan2) : NaN;
+  const planeAngle = finite ? planeAngleDeg(inc1, raan1, inc2, raan2) : Number.NaN;
   const meanPeriod = (period1 + period2) / 2;
-  const periodDiffPct = finite && meanPeriod > 0 ? Math.abs(period1 - period2) / meanPeriod * 100 : NaN;
+  const periodDiffPct = finite && meanPeriod > 0 ? Math.abs(period1 - period2) / meanPeriod * 100 : Number.NaN;
 
   const base = { planeAngleDeg: planeAngle, periodDiffPct, maxRangeKm };
 

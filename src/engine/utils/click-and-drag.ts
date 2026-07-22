@@ -10,7 +10,7 @@ export const clickAndDragWidth = (el: HTMLElement | null, options: ClickDragOpti
   const minWidth = options.minWidth ?? 280;
   const maxWidth = options.maxWidth ?? 450;
 
-  let width = el.style.width ? parseInt(el.style.width) : el.clientWidth;
+  let width = el.style.width ? Number.parseInt(el.style.width) : el.clientWidth;
 
   width = width < minWidth ? minWidth : width;
   width = width > maxWidth ? maxWidth : width;

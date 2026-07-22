@@ -383,15 +383,15 @@ export class CustomSensorPlugin extends KeepTrackPlugin {
     return {
       uiName: value('cs-uiName'),
       type: value('cs-type'),
-      lat: parseFloat(value('cs-lat')),
-      lon: parseFloat(value('cs-lon')),
-      alt: parseFloat(value('cs-hei')),
-      minAz: parseFloat(value('cs-minaz')),
-      maxAz: parseFloat(value('cs-maxaz')),
-      minEl: parseFloat(value('cs-minel')),
-      maxEl: parseFloat(value('cs-maxel')),
-      minRng: parseFloat(value('cs-minrange')),
-      maxRng: parseFloat(value('cs-maxrange')),
+      lat: Number.parseFloat(value('cs-lat')),
+      lon: Number.parseFloat(value('cs-lon')),
+      alt: Number.parseFloat(value('cs-hei')),
+      minAz: Number.parseFloat(value('cs-minaz')),
+      maxAz: Number.parseFloat(value('cs-maxaz')),
+      minEl: Number.parseFloat(value('cs-minel')),
+      maxEl: Number.parseFloat(value('cs-maxel')),
+      minRng: Number.parseFloat(value('cs-minrange')),
+      maxRng: Number.parseFloat(value('cs-maxrange')),
     };
   }
 

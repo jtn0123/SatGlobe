@@ -409,7 +409,7 @@ export class SatelliteFov extends KeepTrackPlugin {
    * Protected so subclasses with different form layouts can override the source field.
    */
   protected readS2sFov_(): Degrees {
-    return parseFloat((getEl('sat-fov-s2s-fov-angle') as HTMLInputElement)?.value || '3') as Degrees;
+    return Number.parseFloat((getEl('sat-fov-s2s-fov-angle') as HTMLInputElement)?.value || '3') as Degrees;
   }
 
   private handleUseSecondarySat_() {
@@ -469,9 +469,9 @@ export class SatelliteFov extends KeepTrackPlugin {
       return;
     }
 
-    const fovAngle = parseFloat((getEl('sat-fov-s2s-fov-angle') as HTMLInputElement).value);
+    const fovAngle = Number.parseFloat((getEl('sat-fov-s2s-fov-angle') as HTMLInputElement).value);
 
-    if (isNaN(fovAngle) || fovAngle <= 0 || fovAngle > 180) {
+    if (Number.isNaN(fovAngle) || fovAngle <= 0 || fovAngle > 180) {
       toast(l('errorMsgs.fovRange'), ToastMsgType.critical);
 
       return;
@@ -490,21 +490,21 @@ export class SatelliteFov extends KeepTrackPlugin {
 
   protected readS2sColor_(): [number, number, number, number] {
     return [
-      parseFloat((getEl('sat-fov-s2s-red') as HTMLInputElement)?.value || '1.0'),
-      parseFloat((getEl('sat-fov-s2s-green') as HTMLInputElement)?.value || '0.5'),
-      parseFloat((getEl('sat-fov-s2s-blue') as HTMLInputElement)?.value || '0.0'),
-      parseFloat((getEl('sat-fov-s2s-opacity') as HTMLInputElement)?.value || '0.3'),
+      Number.parseFloat((getEl('sat-fov-s2s-red') as HTMLInputElement)?.value || '1.0'),
+      Number.parseFloat((getEl('sat-fov-s2s-green') as HTMLInputElement)?.value || '0.5'),
+      Number.parseFloat((getEl('sat-fov-s2s-blue') as HTMLInputElement)?.value || '0.0'),
+      Number.parseFloat((getEl('sat-fov-s2s-opacity') as HTMLInputElement)?.value || '0.3'),
     ];
   }
 
   private handleFormChange_() {
     const coneSettings = {
-      fieldOfView: parseFloat((getEl('sat-fov-fov-angle') as HTMLInputElement).value) as Degrees,
+      fieldOfView: Number.parseFloat((getEl('sat-fov-fov-angle') as HTMLInputElement).value) as Degrees,
       color: [
-        parseFloat((getEl('sat-fov-red') as HTMLInputElement).value),
-        parseFloat((getEl('sat-fov-green') as HTMLInputElement).value),
-        parseFloat((getEl('sat-fov-blue') as HTMLInputElement).value),
-        parseFloat((getEl('sat-fov-opacity') as HTMLInputElement).value),
+        Number.parseFloat((getEl('sat-fov-red') as HTMLInputElement).value),
+        Number.parseFloat((getEl('sat-fov-green') as HTMLInputElement).value),
+        Number.parseFloat((getEl('sat-fov-blue') as HTMLInputElement).value),
+        Number.parseFloat((getEl('sat-fov-opacity') as HTMLInputElement).value),
       ] as [number, number, number, number],
     };
 
@@ -521,42 +521,42 @@ export class SatelliteFov extends KeepTrackPlugin {
   }
 
   private handleDefaultFormChange_() {
-    const fovAngle = parseFloat((getEl('sat-fov-default-fov-angle') as HTMLInputElement).value);
-    const red = parseFloat((getEl('sat-fov-default-red') as HTMLInputElement).value);
-    const green = parseFloat((getEl('sat-fov-default-green') as HTMLInputElement).value);
-    const blue = parseFloat((getEl('sat-fov-default-blue') as HTMLInputElement).value);
-    const opacity = parseFloat((getEl('sat-fov-default-opacity') as HTMLInputElement).value);
+    const fovAngle = Number.parseFloat((getEl('sat-fov-default-fov-angle') as HTMLInputElement).value);
+    const red = Number.parseFloat((getEl('sat-fov-default-red') as HTMLInputElement).value);
+    const green = Number.parseFloat((getEl('sat-fov-default-green') as HTMLInputElement).value);
+    const blue = Number.parseFloat((getEl('sat-fov-default-blue') as HTMLInputElement).value);
+    const opacity = Number.parseFloat((getEl('sat-fov-default-opacity') as HTMLInputElement).value);
     const toast = ServiceLocator.getUiManager().toast.bind(ServiceLocator.getUiManager());
 
-    if (isNaN(fovAngle) || fovAngle <= 0 || fovAngle > 180) {
+    if (Number.isNaN(fovAngle) || fovAngle <= 0 || fovAngle > 180) {
       toast(l('errorMsgs.fovRange'), ToastMsgType.critical);
       (getEl('sat-fov-default-fov-angle') as HTMLInputElement).value = '3';
 
       return;
     }
 
-    if (isNaN(red) || red < 0 || red > 1) {
+    if (Number.isNaN(red) || red < 0 || red > 1) {
       toast(l('errorMsgs.redRange'), ToastMsgType.critical);
       (getEl('sat-fov-default-red') as HTMLInputElement).value = '0.5';
 
       return;
     }
 
-    if (isNaN(green) || green < 0 || green > 1) {
+    if (Number.isNaN(green) || green < 0 || green > 1) {
       toast(l('errorMsgs.greenRange'), ToastMsgType.critical);
       (getEl('sat-fov-default-green') as HTMLInputElement).value = '0.5';
 
       return;
     }
 
-    if (isNaN(blue) || blue < 0 || blue > 1) {
+    if (Number.isNaN(blue) || blue < 0 || blue > 1) {
       toast(l('errorMsgs.blueRange'), ToastMsgType.critical);
       (getEl('sat-fov-default-blue') as HTMLInputElement).value = '0.5';
 
       return;
     }
 
-    if (isNaN(opacity) || opacity < 0 || opacity > 1) {
+    if (Number.isNaN(opacity) || opacity < 0 || opacity > 1) {
       toast(l('errorMsgs.opacityRange'), ToastMsgType.critical);
       (getEl('sat-fov-default-opacity') as HTMLInputElement).value = '0.15';
 
@@ -675,8 +675,8 @@ export class SatelliteFov extends KeepTrackPlugin {
     document.querySelectorAll(removeSelector).forEach((icon) => {
       icon.addEventListener('click', (e) => {
         const el = e.target as HTMLElement;
-        const id = parseInt(el.dataset.id ?? '-1', 10);
-        const targetId = parseInt(el.dataset.targetId ?? '-1', 10);
+        const id = Number.parseInt(el.dataset.id ?? '-1', 10);
+        const targetId = Number.parseInt(el.dataset.targetId ?? '-1', 10);
 
         removeFn(id, targetId);
         ServiceLocator.getSoundManager()?.play(SoundNames.TOGGLE_OFF);
@@ -685,14 +685,14 @@ export class SatelliteFov extends KeepTrackPlugin {
 
     document.querySelectorAll(coneSelector).forEach((cone) => {
       cone.addEventListener('click', (e) => {
-        let id = parseInt((e.target as HTMLElement).dataset.id ?? '', 10);
+        let id = Number.parseInt((e.target as HTMLElement).dataset.id ?? '', 10);
 
-        if (isNaN(id)) {
-          id = parseInt((e.target as HTMLElement).parentElement?.dataset.id ?? '', 10);
+        if (Number.isNaN(id)) {
+          id = Number.parseInt((e.target as HTMLElement).parentElement?.dataset.id ?? '', 10);
         }
 
         // id 0 is a valid object id, so check the parse explicitly instead of truthiness
-        if (isNaN(id) || id < 0) {
+        if (Number.isNaN(id) || id < 0) {
           return;
         }
 

@@ -238,9 +238,9 @@ export class Calendar {
     const slider = document.getElementById(sliderId);
 
     if (slider) {
-      const min = parseInt(slider.dataset.min || '0');
-      const max = parseInt(slider.dataset.max || '59');
-      const step = parseInt(slider.dataset.step || '1');
+      const min = Number.parseInt(slider.dataset.min || '0');
+      const max = Number.parseInt(slider.dataset.max || '59');
+      const step = Number.parseInt(slider.dataset.step || '1');
       const handle: HTMLElement | null = slider.querySelector('.ui-slider-handle');
 
       const updateSliderPosition = (clientX: number) => {
@@ -484,13 +484,13 @@ export class Calendar {
       const jdayElement: HTMLElement | null | undefined = target.parentElement?.querySelector('.ui-datepicker-jday');
 
       // If we pick the calendar day, find the parent, then get the second span (class === ui-datepicker-jday)
-      dayOfYear = parseInt(jdayElement?.innerText ?? '-1');
+      dayOfYear = Number.parseInt(jdayElement?.innerText ?? '-1');
     } else if (target.tagName === 'A') {
       const jdayElement: HTMLElement | null = target.querySelector('.ui-datepicker-jday');
 
-      dayOfYear = parseInt(jdayElement?.innerText ?? '-1');
+      dayOfYear = Number.parseInt(jdayElement?.innerText ?? '-1');
     } else if (target.classList.contains('ui-datepicker-jday')) {
-      dayOfYear = parseInt(target.innerText);
+      dayOfYear = Number.parseInt(target.innerText);
     }
 
     if (dayOfYear === -1) {
@@ -636,11 +636,11 @@ export class Calendar {
     const timeParts = timeInput.value.split(':');
 
     if (timeParts.length === 3) {
-      const hours = parseInt(timeParts[0], 10);
-      const minutes = parseInt(timeParts[1], 10);
-      const seconds = parseInt(timeParts[2], 10);
+      const hours = Number.parseInt(timeParts[0], 10);
+      const minutes = Number.parseInt(timeParts[1], 10);
+      const seconds = Number.parseInt(timeParts[2], 10);
 
-      if (!isNaN(hours) && !isNaN(minutes) && !isNaN(seconds)) {
+      if (!Number.isNaN(hours) && !Number.isNaN(minutes) && !Number.isNaN(seconds)) {
         this.simulationDate.setUTCHours(Math.max(0, Math.min(23, hours)));
         this.simulationDate.setUTCMinutes(Math.max(0, Math.min(59, minutes)));
         this.simulationDate.setUTCSeconds(Math.max(0, Math.min(59, seconds)));

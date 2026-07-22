@@ -208,14 +208,14 @@ export class Tle {
    * @returns The parsed EpochUTC object.
    */
   private static parseEpoch_(epochStr: string): EpochUTC {
-    let year = parseInt(epochStr.substring(0, 2));
+    let year = Number.parseInt(epochStr.substring(0, 2));
 
     if (year >= 57) {
       year += 1900;
     } else {
       year += 2000;
     }
-    const days = parseFloat(epochStr.substring(2, 14)) - 1;
+    const days = Number.parseFloat(epochStr.substring(2, 14)) - 1;
 
     return EpochUTC.fromDateTimeString(`${year}-01-01T00:00:00.000Z`).roll(days * secondsPerDay as Seconds);
   }
@@ -229,8 +229,8 @@ export class Tle {
     const currentYearFull = nowInput.getUTCFullYear();
     const currentYearShort = currentYearFull % 100;
 
-    const epochYearShort = parseInt(tle1.substring(18, 20), 10);
-    const epochDayOfYear = parseFloat(tle1.substring(20, 32));
+    const epochYearShort = Number.parseInt(tle1.substring(18, 20), 10);
+    const epochDayOfYear = Number.parseFloat(tle1.substring(20, 32));
 
     let epochYearFull: number;
 
@@ -337,7 +337,7 @@ export class Tle {
    * @returns The Semi-Major Axis (SMA) in kilometers.
    */
   private static tleSma_(line2: string): number {
-    const n = parseFloat(line2.substring(52, 63));
+    const n = Number.parseFloat(line2.substring(52, 63));
 
     return earthGravityParam ** (1 / 3) / ((TAU * n) / secondsPerDay) ** (2 / 3);
   }
@@ -348,7 +348,7 @@ export class Tle {
    * @returns The eccentricity value.
    */
   private static tleEcc_(line2: string): number {
-    return parseFloat(`0.${line2.substring(26, 33)}`);
+    return Number.parseFloat(`0.${line2.substring(26, 33)}`);
   }
 
   /**
@@ -357,7 +357,7 @@ export class Tle {
    * @returns The inclination angle in radians.
    */
   private static tleInc_(line2: string): number {
-    return parseFloat(line2.substring(8, 16)) * DEG2RAD;
+    return Number.parseFloat(line2.substring(8, 16)) * DEG2RAD;
   }
 
   /**
@@ -394,7 +394,7 @@ export class Tle {
    * @returns The argument of perigee in degrees (0 to 360).
    */
   static argOfPerigee(tleLine2: TleLine2): Degrees {
-    const argPe = parseFloat(tleLine2.substring(Tle.argPerigee_.start, Tle.argPerigee_.stop));
+    const argPe = Number.parseFloat(tleLine2.substring(Tle.argPerigee_.start, Tle.argPerigee_.stop));
 
     if (!(argPe >= 0 && argPe <= 360)) {
       throw new ParseError(`Invalid argument of perigee: ${argPe}`, 'TLE');
@@ -419,7 +419,7 @@ export class Tle {
     const bstarSymbol = tleLine1.substring(Tle.bstar_.start, BSTAR_PART_2);
     const mantissaFraction = tleLine1.substring(BSTAR_PART_2, BSTAR_PART_3);
     const exponentSymbol = tleLine1.substring(BSTAR_PART_3, BSTAR_PART_4);
-    let exponent = parseInt(tleLine1.substring(BSTAR_PART_4, Tle.bstar_.stop));
+    let exponent = Number.parseInt(tleLine1.substring(BSTAR_PART_4, Tle.bstar_.stop));
 
     if (exponentSymbol === '-') {
       exponent *= -1;
@@ -447,7 +447,7 @@ export class Tle {
       throw new ParseError(`Invalid BSTAR symbol: ${bstarSymbol}`, 'TLE');
     }
 
-    const bstar1 = sign * parseFloat(`${integerPart}.${mantissaFraction}`) * 10 ** exponent;
+    const bstar1 = sign * Number.parseFloat(`${integerPart}.${mantissaFraction}`) * 10 ** exponent;
 
     return toPrecision(bstar1, 14);
   }
@@ -459,7 +459,7 @@ export class Tle {
    * @returns The checksum value (0 to 9)
    */
   static checksum(tleLine: TleLine1 | TleLine2): number {
-    return parseInt(tleLine.substring(Tle.checksum_.start, Tle.checksum_.stop));
+    return Number.parseInt(tleLine.substring(Tle.checksum_.start, Tle.checksum_.stop));
   }
 
   /**
@@ -488,7 +488,7 @@ export class Tle {
    * @returns The eccentricity of the satellite (0 to 1)
    */
   static eccentricity(tleLine2: TleLine2): number {
-    const ecc = parseFloat(`0.${tleLine2.substring(Tle.eccentricity_.start, Tle.eccentricity_.stop)}`);
+    const ecc = Number.parseFloat(`0.${tleLine2.substring(Tle.eccentricity_.start, Tle.eccentricity_.stop)}`);
 
     if (!(ecc >= 0 && ecc <= 1)) {
       throw new ParseError(`Invalid eccentricity: ${ecc}`, 'TLE');
@@ -505,7 +505,7 @@ export class Tle {
    * @returns The element number (1 to 999)
    */
   static elsetNum(tleLine1: TleLine1): number {
-    return parseInt(tleLine1.substring(Tle.elsetNum_.start, Tle.elsetNum_.stop));
+    return Number.parseInt(tleLine1.substring(Tle.elsetNum_.start, Tle.elsetNum_.stop));
   }
 
   /**
@@ -522,7 +522,7 @@ export class Tle {
    * @returns The ephemeris type (0 or 1).
    */
   static ephemerisType(tleLine1: TleLine1): 0 | 1 {
-    const ephemerisType = parseInt(tleLine1.substring(Tle.ephemerisType_.start, Tle.ephemerisType_.stop));
+    const ephemerisType = Number.parseInt(tleLine1.substring(Tle.ephemerisType_.start, Tle.ephemerisType_.stop));
 
     if (ephemerisType === 4) {
       throw new ParseError('SGP4-XP ephemeris type is not supported', 'TLE');
@@ -542,7 +542,7 @@ export class Tle {
    * @returns The day of the year the Tle was generated. (1 to 365.99999999)
    */
   static epochDay(tleLine1: string): number {
-    const epochDay = parseFloat(tleLine1.substring(Tle.epochDay_.start, Tle.epochDay_.stop));
+    const epochDay = Number.parseFloat(tleLine1.substring(Tle.epochDay_.start, Tle.epochDay_.stop));
 
     if (epochDay < 1 || epochDay > 366.99999999) {
       throw new ParseError(`Invalid epoch day: ${epochDay}`, 'TLE');
@@ -558,7 +558,7 @@ export class Tle {
    * @returns The year the Tle was generated. (0 to 99)
    */
   static epochYear(tleLine1: TleLine1) {
-    const epochYear = parseInt(tleLine1.substring(Tle.epochYear_.start, Tle.epochYear_.stop));
+    const epochYear = Number.parseInt(tleLine1.substring(Tle.epochYear_.start, Tle.epochYear_.stop));
 
     if (epochYear < 0 || epochYear > 99) {
       throw new ParseError(`Invalid epoch year: ${epochYear}`, 'TLE');
@@ -574,7 +574,7 @@ export class Tle {
    * @returns The year the Tle was generated. (1957 to 2056)
    */
   static epochYearFull(tleLine1: TleLine1) {
-    const epochYear = parseInt(tleLine1.substring(Tle.epochYear_.start, Tle.epochYear_.stop));
+    const epochYear = Number.parseInt(tleLine1.substring(Tle.epochYear_.start, Tle.epochYear_.stop));
 
     if (epochYear < 0 || epochYear > 99) {
       throw new ParseError(`Invalid epoch year: ${epochYear}`, 'TLE');
@@ -595,7 +595,7 @@ export class Tle {
    * @returns The inclination of the satellite. (0 to 180)
    */
   static inclination(tleLine2: TleLine2): Degrees {
-    const inc = parseFloat(tleLine2.substring(Tle.inclination_.start, Tle.inclination_.stop));
+    const inc = Number.parseFloat(tleLine2.substring(Tle.inclination_.start, Tle.inclination_.stop));
 
     if (inc < 0 || inc > 180) {
       throw new ParseError(`Invalid inclination: ${inc}`, 'TLE');
@@ -614,7 +614,7 @@ export class Tle {
     const year2 = this.intlDesYear(tleLine1);
 
     // Some TLEs don't have a year, so we can't generate an IntlDes
-    if (isNaN(year2)) {
+    if (Number.isNaN(year2)) {
       return '';
     }
 
@@ -632,7 +632,7 @@ export class Tle {
    * @returns The launch number of the International Designator. (1 to 999)
    */
   static intlDesLaunchNum(tleLine1: string): number {
-    return parseInt(tleLine1.substring(Tle.intlDesLaunchNum_.start, Tle.intlDesLaunchNum_.stop));
+    return Number.parseInt(tleLine1.substring(Tle.intlDesLaunchNum_.start, Tle.intlDesLaunchNum_.stop));
   }
 
   /**
@@ -652,7 +652,7 @@ export class Tle {
    * @returns The year of the International Designator. (0 to 99)
    */
   static intlDesYear(tleLine1: TleLine1): number {
-    return parseInt(tleLine1.substring(Tle.intlDesYear_.start, Tle.intlDesYear_.stop));
+    return Number.parseInt(tleLine1.substring(Tle.intlDesYear_.start, Tle.intlDesYear_.stop));
   }
 
   /**
@@ -662,7 +662,7 @@ export class Tle {
    * @returns The line number of the Tle. (1 or 2)
    */
   static lineNumber(tleLine: TleLine1 | TleLine2): 1 | 2 {
-    const lineNum = parseInt(tleLine.substring(Tle.lineNumber_.start, Tle.lineNumber_.stop));
+    const lineNum = Number.parseInt(tleLine.substring(Tle.lineNumber_.start, Tle.lineNumber_.stop));
 
     if (lineNum !== 1 && lineNum !== 2) {
       throw new ParseError(`Invalid TLE line number: ${lineNum}`, 'TLE');
@@ -679,7 +679,7 @@ export class Tle {
    * @returns The mean anomaly of the satellite. (0 to 360)
    */
   static meanAnomaly(tleLine2: TleLine2): Degrees {
-    const meanA = parseFloat(tleLine2.substring(Tle.meanAnom_.start, Tle.meanAnom_.stop));
+    const meanA = Number.parseFloat(tleLine2.substring(Tle.meanAnom_.start, Tle.meanAnom_.stop));
 
     if (!(meanA >= 0 && meanA <= 360)) {
       throw new ParseError(`Invalid mean anomaly: ${meanA}`, 'TLE');
@@ -698,9 +698,9 @@ export class Tle {
    */
   static meanMoDev1(tleLine1: TleLine1): number {
     const raw = tleLine1.substring(Tle.meanMoDev1_.start, Tle.meanMoDev1_.stop).trim();
-    const meanMoDev1 = parseFloat(raw.startsWith('+') ? raw.substring(1) : raw);
+    const meanMoDev1 = Number.parseFloat(raw.startsWith('+') ? raw.substring(1) : raw);
 
-    if (isNaN(meanMoDev1)) {
+    if (Number.isNaN(meanMoDev1)) {
       throw new ParseError('Invalid first derivative of mean motion', 'TLE');
     }
 
@@ -718,9 +718,9 @@ export class Tle {
    * @returns The second derivative of the mean motion.
    */
   static meanMoDev2(tleLine1: string): number {
-    const meanMoDev2 = parseFloat(tleLine1.substring(Tle.meanMoDev2_.start, Tle.meanMoDev2_.stop));
+    const meanMoDev2 = Number.parseFloat(tleLine1.substring(Tle.meanMoDev2_.start, Tle.meanMoDev2_.stop));
 
-    if (isNaN(meanMoDev2)) {
+    if (Number.isNaN(meanMoDev2)) {
       throw new ParseError('Invalid second derivative of mean motion', 'TLE');
     }
 
@@ -736,7 +736,7 @@ export class Tle {
    * @returns The mean motion of the satellite. (0 to 18)
    */
   static meanMotion(tleLine2: TleLine2): number {
-    const meanMo = parseFloat(tleLine2.substring(Tle.meanMo_.start, Tle.meanMo_.stop));
+    const meanMo = Number.parseFloat(tleLine2.substring(Tle.meanMo_.start, Tle.meanMo_.stop));
 
     if (!(meanMo > 0 && meanMo <= 18)) {
       throw new ParseError(`Invalid mean motion: ${meanMo}`, 'TLE');
@@ -765,7 +765,7 @@ export class Tle {
    * @returns The right ascension of the satellite. (0 to 360)
    */
   static rightAscension(tleLine2: TleLine2): Degrees {
-    const rightAscension = parseFloat(tleLine2.substring(Tle.rightAscension_.start, Tle.rightAscension_.stop));
+    const rightAscension = Number.parseFloat(tleLine2.substring(Tle.rightAscension_.start, Tle.rightAscension_.stop));
 
     if (!(rightAscension >= 0 && rightAscension <= 360)) {
       throw new ParseError(`Invalid right ascension: ${rightAscension}`, 'TLE');
@@ -794,7 +794,7 @@ export class Tle {
    * @returns The revolutions around the Earth per day (mean motion). (0 to 99999)
    */
   static revNum(tleLine2: TleLine2): number {
-    return parseInt(tleLine2.substring(Tle.revNum_.start, Tle.revNum_.stop));
+    return Number.parseInt(tleLine2.substring(Tle.revNum_.start, Tle.revNum_.stop));
   }
 
   /**
@@ -814,12 +814,12 @@ export class Tle {
     // the strict alpha-5 validator throw. Genuinely malformed (non-blank)
     // fields still throw so real corruption is caught.
     if (satNumStr.trim().length === 0) {
-      return NaN;
+      return Number.NaN;
     }
 
     const sixDigitSatNum = Tle.convertA5to6Digit(satNumStr);
 
-    return parseInt(sixDigitSatNum);
+    return Number.parseInt(sixDigitSatNum);
   }
 
   /**
@@ -1023,7 +1023,7 @@ export class Tle {
     }
 
     if (trimmed.length === 6) {
-      return parseInt(trimmed, 10) <= 339999 ? 'numeric6' : 'extended';
+      return Number.parseInt(trimmed, 10) <= 339999 ? 'numeric6' : 'extended';
     }
 
     return 'extended';

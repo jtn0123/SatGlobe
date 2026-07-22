@@ -44,7 +44,7 @@ function toNumber_(val: number | string): number | null {
     return val;
   }
   if ((/^-?\d+(?:\.\d+)?$/u).test(val.trim())) {
-    return parseFloat(val);
+    return Number.parseFloat(val);
   }
 
   return null;

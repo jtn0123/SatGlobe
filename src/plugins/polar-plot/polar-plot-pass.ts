@@ -138,7 +138,7 @@ export const buildPolarPass = (row: lookanglesRow, samples: PolarSample[]): Pola
     samples,
     aos,
     los,
-    maxEl: parseFloat(row.MAXIMUM_ELEVATION ?? '0') as Degrees,
+    maxEl: Number.parseFloat(row.MAXIMUM_ELEVATION ?? '0') as Degrees,
     culmination,
     durationMs: los.getTime() - aos.getTime(),
   };

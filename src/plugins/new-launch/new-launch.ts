@@ -71,7 +71,7 @@ export class NewLaunch extends KeepTrackPlugin {
     const sat = ServiceLocator.getCatalogManager().getObject(this.selectSatManager_.selectedSat, GetSatType.EXTRA_ONLY) as Satellite;
 
     // Validate satellite before changing DOM
-    if (!(sat instanceof Satellite) || !sat.sccNum || !sat.inclination || isNaN(sat.inclination)) {
+    if (!(sat instanceof Satellite) || !sat.sccNum || !sat.inclination || Number.isNaN(sat.inclination)) {
       return;
     }
 

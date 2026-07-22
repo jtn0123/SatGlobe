@@ -212,9 +212,9 @@ export abstract class UrlManager {
           break;
         case 'ecf':
           {
-            const ecfValue = parseInt(kv[key], 10);
+            const ecfValue = Number.parseInt(kv[key], 10);
 
-            if (!isNaN(ecfValue) && ecfValue >= 0 && ecfValue <= 10) {
+            if (!Number.isNaN(ecfValue) && ecfValue >= 0 && ecfValue <= 10) {
               settingsManager.isOrbitCruncherInEcf = !!ecfValue;
               settingsManager.numberOfEcfOrbitsToDraw = ecfValue;
 
@@ -520,7 +520,7 @@ export abstract class UrlManager {
     if (val.includes('-')) {
       const date = new Date(val);
 
-      if (isNaN(date.getTime())) {
+      if (Number.isNaN(date.getTime())) {
         errorManagerInstance.warn(`Date value of "${val}" is not a proper ISO 8601 date string!`);
 
         return;
@@ -533,21 +533,21 @@ export abstract class UrlManager {
 
         return;
       }
-      if (isNaN(parseInt(val))) {
+      if (Number.isNaN(Number.parseInt(val))) {
         errorManagerInstance.warn(`Date value of "${val}" is not a proper unix timestamp!`);
 
         return;
       }
 
-      settingsManager.simulationTime = new Date(parseFloat(val));
+      settingsManager.simulationTime = new Date(Number.parseFloat(val));
     }
   }
 
   private static handleRateParam_(val: string) {
     const timeManagerInstance = ServiceLocator.getTimeManager();
-    let rate = parseFloat(val);
+    let rate = Number.parseFloat(val);
 
-    if (isNaN(rate)) {
+    if (Number.isNaN(rate)) {
       errorManagerInstance.warn(`Propagation rate of "${rate}" is not a valid float!`);
 
       return;
@@ -563,10 +563,10 @@ export abstract class UrlManager {
   }
 
   private static handleZoomParam_(val: string, camDistBuffer: string) {
-    const zoom = parseFloat(val);
-    const camDistBufferValue = parseFloat(camDistBuffer);
+    const zoom = Number.parseFloat(val);
+    const camDistBufferValue = Number.parseFloat(camDistBuffer);
 
-    if (isNaN(zoom)) {
+    if (Number.isNaN(zoom)) {
       ServiceLocator.getUiManager().toast(`Zoom value of "${val}" is not a valid float!`, ToastMsgType.caution, true);
 
       return;
@@ -587,10 +587,10 @@ export abstract class UrlManager {
   }
 
   private static handlePitchYawParam_(kv: Record<string, string>) {
-    const pitchNum = parseFloat(kv.pitch);
-    const yawNum = parseFloat(kv.yaw);
+    const pitchNum = Number.parseFloat(kv.pitch);
+    const yawNum = Number.parseFloat(kv.yaw);
 
-    if (isNaN(pitchNum) || isNaN(yawNum)) {
+    if (Number.isNaN(pitchNum) || Number.isNaN(yawNum)) {
       ServiceLocator.getUiManager().toast('Pitch or Yaw value is not a valid float!', ToastMsgType.caution, true);
 
       return;
@@ -618,18 +618,18 @@ export abstract class UrlManager {
   }
 
   private static handleLatLonParam_(lat: string, lon: string, zoom: string, date: string | null) {
-    const latNum = parseFloat(lat) as Degrees;
-    const lonNum = parseFloat(lon) as Degrees;
-    const zoomNum = parseFloat(zoom);
+    const latNum = Number.parseFloat(lat) as Degrees;
+    const lonNum = Number.parseFloat(lon) as Degrees;
+    const zoomNum = Number.parseFloat(zoom);
 
 
-    if (isNaN(zoomNum)) {
+    if (Number.isNaN(zoomNum)) {
       ServiceLocator.getUiManager().toast(`Zoom value of "${zoom}" is not a valid float!`, ToastMsgType.caution, true);
 
       return;
     }
 
-    if (isNaN(latNum) || isNaN(lonNum)) {
+    if (Number.isNaN(latNum) || Number.isNaN(lonNum)) {
       ServiceLocator.getUiManager().toast('Latitude or Longitude value is not a valid float!', ToastMsgType.caution, true);
 
       return;
@@ -643,7 +643,7 @@ export abstract class UrlManager {
 
     ServiceLocator.getMainCamera().autoRotate(false);
 
-    if (date !== null && !isNaN(parseInt(date))) {
+    if (date !== null && !Number.isNaN(Number.parseInt(date))) {
       setTimeout(() => {
         ServiceLocator.getMainCamera().lookAtLatLon(latNum, lonNum, zoomNum);
       }, 10500);

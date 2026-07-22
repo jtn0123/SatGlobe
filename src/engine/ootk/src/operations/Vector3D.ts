@@ -208,7 +208,7 @@ export class Vector3D<T extends number = number> {
   angle<U extends number>(v: Vector3D<U>): Radians {
     const theta = Math.atan2(this.cross(v).magnitude(), this.dot(v)) as Radians;
 
-    return isNaN(theta) ? 0 as Radians : theta;
+    return Number.isNaN(theta) ? 0 as Radians : theta;
   }
 
   // Calculate the angle _(°)_ between this and another [Vector3D].

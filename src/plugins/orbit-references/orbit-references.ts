@@ -89,7 +89,7 @@ export class OrbitReferences extends KeepTrackPlugin {
     // 5 digits so the TLE stays well-formed; the canonical id stays on sat.sccNum.
     const scc = Tle.classifySatNum(sat.sccNum) === 'extended' ? sat.sccNum.slice(-5) : sat.sccNum;
 
-    const period = 1440.0 / parseFloat(meanmo);
+    const period = 1440.0 / Number.parseFloat(meanmo);
 
     let j = 0;
 

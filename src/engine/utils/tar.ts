@@ -51,9 +51,9 @@ function readOctalSize_(block: Uint8Array, offset: number, length: number): numb
     return 0;
   }
 
-  const parsed = parseInt(raw, 8);
+  const parsed = Number.parseInt(raw, 8);
 
-  return isNaN(parsed) ? 0 : parsed;
+  return Number.isNaN(parsed) ? 0 : parsed;
 }
 
 /**

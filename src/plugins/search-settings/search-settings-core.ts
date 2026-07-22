@@ -53,9 +53,9 @@ const clamp = (value: number, min: number, max: number): number => Math.min(Math
  * to the allowed range.
  */
 export const parseMaxResults = (raw: string): ParsedNumber => {
-  const parsed = parseInt(raw, 10);
+  const parsed = Number.parseInt(raw, 10);
 
-  if (isNaN(parsed) || parsed < SEARCH_LIMIT_MIN) {
+  if (Number.isNaN(parsed) || parsed < SEARCH_LIMIT_MIN) {
     return { value: SEARCH_LIMIT_DEFAULT, valid: false };
   }
 
@@ -67,9 +67,9 @@ export const parseMaxResults = (raw: string): ParsedNumber => {
  * {@link parseMaxResults}.
  */
 export const parseMinSearchChars = (raw: string): ParsedNumber => {
-  const parsed = parseInt(raw, 10);
+  const parsed = Number.parseInt(raw, 10);
 
-  if (isNaN(parsed) || parsed < MIN_SEARCH_CHARS_MIN) {
+  if (Number.isNaN(parsed) || parsed < MIN_SEARCH_CHARS_MIN) {
     return { value: MIN_SEARCH_CHARS_DEFAULT, valid: false };
   }
 

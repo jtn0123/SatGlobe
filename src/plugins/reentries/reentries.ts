@@ -244,7 +244,7 @@ export class Reentries extends KeepTrackPlugin {
           const hiddenRow = el.dataset?.row ?? null;
 
           if (hiddenRow !== null) {
-            this.tipEventClicked_(parseInt(hiddenRow));
+            this.tipEventClicked_(Number.parseInt(hiddenRow));
           }
         });
 
@@ -390,12 +390,12 @@ export class Reentries extends KeepTrackPlugin {
     const now = new Date();
     const decayEpoch = new Date(
       Date.UTC(
-        parseInt(this.tipList_[row].DECAY_EPOCH.substring(0, 4)),
-        parseInt(this.tipList_[row].DECAY_EPOCH.substring(5, 7)) - 1,
-        parseInt(this.tipList_[row].DECAY_EPOCH.substring(8, 10)),
-        parseInt(this.tipList_[row].DECAY_EPOCH.substring(11, 13)),
-        parseInt(this.tipList_[row].DECAY_EPOCH.substring(14, 16)),
-        parseInt(this.tipList_[row].DECAY_EPOCH.substring(17, 19)),
+        Number.parseInt(this.tipList_[row].DECAY_EPOCH.substring(0, 4)),
+        Number.parseInt(this.tipList_[row].DECAY_EPOCH.substring(5, 7)) - 1,
+        Number.parseInt(this.tipList_[row].DECAY_EPOCH.substring(8, 10)),
+        Number.parseInt(this.tipList_[row].DECAY_EPOCH.substring(11, 13)),
+        Number.parseInt(this.tipList_[row].DECAY_EPOCH.substring(14, 16)),
+        Number.parseInt(this.tipList_[row].DECAY_EPOCH.substring(17, 19)),
       ),
     );
 
@@ -520,9 +520,9 @@ export class Reentries extends KeepTrackPlugin {
 
       age = sat ? `${sat.ageOfElset(new Date(), 'hours').toFixed(2)}` : unknown;
 
-      const span = sat?.span ? parseFloat(sat.span.replace(/[^0-9.]/gu, '')) : -1;
-      const length = sat?.length ? parseFloat(sat.length.replace(/[^0-9.]/gu, '')) : -1;
-      const diameter = sat?.diameter ? parseFloat(sat.diameter.replace(/[^0-9.]/gu, '')) : -1;
+      const span = sat?.span ? Number.parseFloat(sat.span.replace(/[^0-9.]/gu, '')) : -1;
+      const length = sat?.length ? Number.parseFloat(sat.length.replace(/[^0-9.]/gu, '')) : -1;
+      const diameter = sat?.diameter ? Number.parseFloat(sat.diameter.replace(/[^0-9.]/gu, '')) : -1;
 
       volume = span !== -1 && length !== -1 && diameter !== -1 ? `${((Math.PI / 6) * span * length * diameter).toFixed(2)}` : unknown;
     }
@@ -680,12 +680,12 @@ export class Reentries extends KeepTrackPlugin {
 
   /** Parses a TIP latitude string into signed degrees (north positive). */
   private static parseLat_(lat: string): number {
-    return parseFloat(lat);
+    return Number.parseFloat(lat);
   }
 
   /** Parses a TIP longitude string into signed degrees normalized to [-180, 180]. */
   private static parseLon_(lon: string): number {
-    let lonDeg = parseFloat(lon);
+    let lonDeg = Number.parseFloat(lon);
 
     if (lonDeg > 180) {
       lonDeg -= 360;

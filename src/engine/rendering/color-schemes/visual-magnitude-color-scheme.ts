@@ -93,7 +93,7 @@ export class VisualMagnitudeColorScheme extends ColorScheme {
     for (const sat of sats) {
       const v = VisualMagnitudeColorScheme.resolveMag_(sat);
 
-      if (v !== null && isFinite(v)) {
+      if (v !== null && Number.isFinite(v)) {
         mags.push(v);
       }
     }
@@ -195,7 +195,7 @@ export class VisualMagnitudeColorScheme extends ColorScheme {
    * suffix, and caching estimates would silently erase that signal.
    */
   private static resolveMag_(sat: Satellite): number | null {
-    if (typeof sat.vmag === 'number' && !isNaN(sat.vmag)) {
+    if (typeof sat.vmag === 'number' && !Number.isNaN(sat.vmag)) {
       return sat.vmag;
     }
 

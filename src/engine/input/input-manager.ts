@@ -144,7 +144,7 @@ export class InputManager {
     if (typeof x === 'undefined' || typeof y === 'undefined') {
       throw new Error('x and y must be defined');
     }
-    if (isNaN(x) || isNaN(y)) {
+    if (Number.isNaN(x) || Number.isNaN(y)) {
       throw new Error('x and y must be numbers');
     }
 
@@ -496,7 +496,7 @@ export class InputManager {
 
     let isEarth = false;
 
-    if (typeof this.mouse.latLon === 'undefined' || isNaN(this.mouse.latLon.lat) || isNaN(this.mouse.latLon.lon)) {
+    if (typeof this.mouse.latLon === 'undefined' || Number.isNaN(this.mouse.latLon.lat) || Number.isNaN(this.mouse.latLon.lon)) {
       // Not Earth
       this.rmbMenuItems
         .filter((item) => item.isRmbOffEarth || (item.isRmbOnSat && clickedSatId !== -1))

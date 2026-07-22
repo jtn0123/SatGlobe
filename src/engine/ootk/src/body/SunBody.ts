@@ -382,10 +382,10 @@ export class SunBody extends CelestialBody {
     alt: Meters = 0 as Meters,
     isUtc = false,
   ): SunTime {
-    if (isNaN(lat)) {
+    if (Number.isNaN(lat)) {
       throw new Error('latitude missing');
     }
-    if (isNaN(lon)) {
+    if (Number.isNaN(lon)) {
       throw new Error('longitude missing');
     }
 

@@ -382,7 +382,7 @@ export class Vector<T extends number = number> {
     // better than acos for small angles
     const theta = Math.atan2(this.cross(v).magnitude(), this.dot(v));
 
-    if (isNaN(theta)) {
+    if (Number.isNaN(theta)) {
       return 0.0 as Radians;
     }
 

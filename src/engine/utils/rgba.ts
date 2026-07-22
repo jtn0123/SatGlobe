@@ -19,7 +19,7 @@ export const hex2rgba = (hex: string): rgbaType => {
   if (c.length === 3) {
     c = [c[0], c[0], c[1], c[1], c[2], c[2]];
   }
-  const parsedC = parseInt(c.join(''), 16);
+  const parsedC = Number.parseInt(c.join(''), 16);
   const r = ((parsedC >> 16) & 255) / 255;
   const g = ((parsedC >> 8) & 255) / 255;
   const b = (parsedC & 255) / 255;
@@ -42,11 +42,11 @@ export const parseRgba = (str: string): [number, number, number, number] => {
   }
   let [r, g, b, a]: rgbaType = matches as rgbaType;
 
-  r = parseFloat(<string>r) / 255;
-  g = parseFloat(<string>g) / 255;
-  b = parseFloat(<string>b) / 255;
-  a = parseFloat(<string>a);
-  if (r < 0 || r > 1 || g < 0 || g > 1 || b < 0 || b > 1 || a < 0 || a > 1 || isNaN(r) || isNaN(g) || isNaN(b) || isNaN(a)) {
+  r = Number.parseFloat(<string>r) / 255;
+  g = Number.parseFloat(<string>g) / 255;
+  b = Number.parseFloat(<string>b) / 255;
+  a = Number.parseFloat(<string>a);
+  if (r < 0 || r > 1 || g < 0 || g > 1 || b < 0 || b > 1 || a < 0 || a > 1 || Number.isNaN(r) || Number.isNaN(g) || Number.isNaN(b) || Number.isNaN(a)) {
     throw new Error('Invalid rgba input');
   }
 

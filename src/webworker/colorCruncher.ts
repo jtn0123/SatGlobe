@@ -233,7 +233,7 @@ function starColor(colorData: Float32Array, pickableData: Int8Array, i: number):
 
   const vmag = catalogData.vmag[i];
 
-  if (isNaN(vmag)) {
+  if (Number.isNaN(vmag)) {
     writeDeselected(colorData, pickableData, i);
 
     return true;
@@ -657,7 +657,7 @@ function objectTypeScheme(cd: Float32Array, pd: Int8Array, i: number): void {
   const noInView = !inViewData || inViewData[i] === 0;
   const vmag = catalogData.vmag[i];
   const isObserver = settings.isSensorManagerLoaded && settings.sensorType === SOT_OBSERVER;
-  const noVmag = isNaN(vmag);
+  const noVmag = Number.isNaN(vmag);
 
   if (objectTypeLayerHidden_(type, noInView, isObserver, noVmag)) {
     writeDeselected(cd, pd, i);
@@ -815,7 +815,7 @@ function celestrakScheme(cd: Float32Array, pd: Int8Array, i: number): void {
   const inView = inViewData ? inViewData[i] === 1 : false;
   const vmag = catalogData.vmag[i];
   const isObserver = settings.isSensorManagerLoaded && settings.sensorType === SOT_OBSERVER;
-  const noVmag = isNaN(vmag);
+  const noVmag = Number.isNaN(vmag);
   const status = catalogData.status[i];
   const isActive = status !== PS_NONOPERATIONAL && status !== PS_UNKNOWN;
   const shouldHide = !inView || settings.cameraType === CAM_PLANETARIUM || (isObserver && noVmag);
@@ -1091,7 +1091,7 @@ function sunlightScheme(cd: Float32Array, pd: Int8Array, i: number): void {
   // Not in FOV
   if (!inView) {
     const vmag = catalogData.vmag[i];
-    const hasVmag = !isNaN(vmag);
+    const hasVmag = !Number.isNaN(vmag);
 
     if (sunStatus === SUN_STATUS_SUN && objectTypeFlags.satHi) {
       if (hasVmag) {
@@ -1163,7 +1163,7 @@ function rcsScheme(cd: Float32Array, pd: Int8Array, i: number): void {
 
   const rcs = catalogData.rcs[i];
 
-  if (isNaN(rcs)) {
+  if (Number.isNaN(rcs)) {
     if (objectTypeFlags.rcsUnknown === false) {
       writeDeselected(cd, pd, i);
     } else {
@@ -1785,7 +1785,7 @@ function smallSatScheme(cd: Float32Array, pd: Int8Array, i: number): void {
 
   const rcs = catalogData.rcs[i];
 
-  if (type === SOT_PAYLOAD && !isNaN(rcs) && rcs < 0.5) {
+  if (type === SOT_PAYLOAD && !Number.isNaN(rcs) && rcs < 0.5) {
     if (objectTypeFlags.satSmall !== false) {
       writeColorArr(cd, pd, i, colorTheme.satSmall ?? [0, 0, 1, 1], PICKABLE_YES);
     } else {

@@ -100,7 +100,7 @@ export abstract class FormatTle {
       argPe = argPe.toString();
     }
 
-    const argPeNum = parseFloat(argPe).toFixed(4);
+    const argPeNum = Number.parseFloat(argPe).toFixed(4);
     const argPe0 = argPeNum.padStart(8, ' ');
 
     if (argPe0.length !== 8) {
@@ -153,7 +153,7 @@ export abstract class FormatTle {
       inc = inc.toString();
     }
 
-    const incNum = parseFloat(inc).toFixed(4);
+    const incNum = Number.parseFloat(inc).toFixed(4);
     const inc0 = incNum.padStart(8, ' ');
 
     if (inc0.length !== 8) {
@@ -174,7 +174,7 @@ export abstract class FormatTle {
       meana = meana.toString();
     }
 
-    const meanaNum = parseFloat(meana).toFixed(4);
+    const meanaNum = Number.parseFloat(meana).toFixed(4);
     const meana0 = meanaNum.padStart(8, ' ');
 
     if (meana0.length !== 8) {
@@ -202,7 +202,7 @@ export abstract class FormatTle {
       meanmo = meanmo.toString();
     }
 
-    const meanmoNum = parseFloat(meanmo).toFixed(8);
+    const meanmoNum = Number.parseFloat(meanmo).toFixed(8);
     const meanmo0 = meanmoNum.padStart(11, '0');
 
     if (meanmo0.length !== 11) {
@@ -223,7 +223,7 @@ export abstract class FormatTle {
       rasc = rasc.toString();
     }
 
-    const rascNum = parseFloat(rasc).toFixed(4);
+    const rascNum = Number.parseFloat(rasc).toFixed(4);
     const rasc0 = rascNum.padStart(8, ' ');
 
     if (rasc0.length !== 8) {
@@ -308,7 +308,7 @@ export abstract class FormatTle {
       const c = line[i];
 
       if (c >= '0' && c <= '9') {
-        sum += parseInt(c);
+        sum += Number.parseInt(c);
       } else if (c === '-') {
         sum += 1;
       }

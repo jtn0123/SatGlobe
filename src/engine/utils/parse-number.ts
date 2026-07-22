@@ -12,5 +12,5 @@ export function parseLocalizedNumber(value: string): number {
   const normalized = value.replace(',', '.');
 
 
-  return parseFloat(normalized);
+  return Number.parseFloat(normalized);
 }

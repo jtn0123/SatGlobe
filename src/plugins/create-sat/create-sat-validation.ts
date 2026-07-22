@@ -37,14 +37,14 @@ export function evaluateField(key: string, rawValue: string): boolean | null {
   // Eccentricity is entered as the 7-digit TLE integer (e * 1e7); the implied
   // eccentricity must be in [0, 1).
   if (key === 'ecen') {
-    const intVal = parseInt(value, 10);
+    const intVal = Number.parseInt(value, 10);
 
-    return !isNaN(intVal) && intVal >= 0 && intVal < 1e7;
+    return !Number.isNaN(intVal) && intVal >= 0 && intVal < 1e7;
   }
 
-  const num = parseFloat(value);
+  const num = Number.parseFloat(value);
 
-  if (isNaN(num)) {
+  if (Number.isNaN(num)) {
     return false;
   }
 

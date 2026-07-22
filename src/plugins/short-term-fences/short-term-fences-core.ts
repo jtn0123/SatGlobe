@@ -107,12 +107,12 @@ export const computeExtentKm = (
  * {@link buildStfSensorParams}.
  */
 export const validateStfForm = (raw: StfFormRaw): StfValidationResult => {
-  const az = parseFloat(raw.az);
-  const azExt = parseFloat(raw.azExt);
-  const el = parseFloat(raw.el);
-  const elExt = parseFloat(raw.elExt);
-  const rng = parseFloat(raw.rng);
-  const rngExt = parseFloat(raw.rngExt);
+  const az = Number.parseFloat(raw.az);
+  const azExt = Number.parseFloat(raw.azExt);
+  const el = Number.parseFloat(raw.el);
+  const elExt = Number.parseFloat(raw.elExt);
+  const rng = Number.parseFloat(raw.rng);
+  const rngExt = Number.parseFloat(raw.rngExt);
 
   if ([az, azExt, el, elExt, rng, rngExt].some((v) => !Number.isFinite(v))) {
     return { ok: false, errorKey: 'errorMsgs.invalidInput' };

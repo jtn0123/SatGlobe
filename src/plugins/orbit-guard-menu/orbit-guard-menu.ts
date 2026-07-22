@@ -105,7 +105,7 @@ export class OrbitGuardMenuPlugin extends KeepTrackPlugin {
         const hiddenRow = el.dataset?.row ?? null;
 
         if (hiddenRow !== null) {
-          this.eventClicked_(parseInt(hiddenRow));
+          this.eventClicked_(Number.parseInt(hiddenRow));
         }
       });
     });

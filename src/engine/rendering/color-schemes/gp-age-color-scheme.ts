@@ -54,7 +54,7 @@ export class GpAgeColorScheme extends ColorScheme {
 
     return {
       jday: getDayOfYear(now) + ((now.getUTCHours() * 3600 + now.getUTCMinutes() * 60 + now.getUTCSeconds()) / 86400),
-      year: parseInt(now.getUTCFullYear().toString().substr(2, 2), 10),
+      year: Number.parseInt(now.getUTCFullYear().toString().substr(2, 2), 10),
     };
   }
 
@@ -76,7 +76,7 @@ export class GpAgeColorScheme extends ColorScheme {
 
       params = {
         jday: getDayOfYear(now) + ((now.getUTCHours() * 3600 + now.getUTCMinutes() * 60 + now.getUTCSeconds()) / 86400),
-        year: parseInt(now.getUTCFullYear().toString().substr(2, 2), 10),
+        year: Number.parseInt(now.getUTCFullYear().toString().substr(2, 2), 10),
       };
     }
 
@@ -122,8 +122,8 @@ export class GpAgeColorScheme extends ColorScheme {
       };
     }
 
-    const epochYearShort = parseInt(sat.tle1.substring(18, 20), 10);
-    const epochDay = parseFloat(sat.tle1.substring(20, 32));
+    const epochYearShort = Number.parseInt(sat.tle1.substring(18, 20), 10);
+    const epochDay = Number.parseFloat(sat.tle1.substring(20, 32));
 
     const epochYearFull = epochYearShort <= currentYearShort ? 2000 + epochYearShort : 1900 + epochYearShort;
     const currentYearFull = 2000 + currentYearShort;

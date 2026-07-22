@@ -214,7 +214,7 @@ export class Collisions extends KeepTrackPlugin {
 
       if (hiddenRow !== undefined) {
         showLoading(() => {
-          this.eventClicked_(parseInt(hiddenRow));
+          this.eventClicked_(Number.parseInt(hiddenRow));
         });
       }
     });
@@ -307,7 +307,7 @@ export class Collisions extends KeepTrackPlugin {
     ServiceLocator.getUiManager().doSearch(`${sat1},${sat2}`);
     const catalogManagerInstance = ServiceLocator.getCatalogManager();
 
-    this.selectSatIdOnCruncher_ = catalogManagerInstance.sccNum2Id(parseInt(sat1));
+    this.selectSatIdOnCruncher_ = catalogManagerInstance.sccNum2Id(Number.parseInt(sat1));
   }
 
   protected createTable_(): void {

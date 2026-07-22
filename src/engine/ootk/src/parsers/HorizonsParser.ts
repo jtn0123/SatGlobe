@@ -325,24 +325,24 @@ export class HorizonsParser {
       if (parts.length >= 7) {
         // Assume: JD X Y Z VX VY VZ format
         try {
-          const jd = parseFloat(parts[0]);
+          const jd = Number.parseFloat(parts[0]);
 
-          if (isNaN(jd)) {
+          if (Number.isNaN(jd)) {
             return null;
           }
 
           const epoch = EpochUTC.fromDateTime(julianDateToDate(jd));
-          const x = parseFloat(parts[1]) as Kilometers;
-          const y = parseFloat(parts[2]) as Kilometers;
-          const z = parseFloat(parts[3]) as Kilometers;
+          const x = Number.parseFloat(parts[1]) as Kilometers;
+          const y = Number.parseFloat(parts[2]) as Kilometers;
+          const z = Number.parseFloat(parts[3]) as Kilometers;
 
           let velocity: Vector3D<KilometersPerSecond> | undefined;
 
-          if (parts.length >= 7 && !isNaN(parseFloat(parts[4]))) {
+          if (parts.length >= 7 && !Number.isNaN(Number.parseFloat(parts[4]))) {
             velocity = new Vector3D(
-              parseFloat(parts[4]) as KilometersPerSecond,
-              parseFloat(parts[5]) as KilometersPerSecond,
-              parseFloat(parts[6]) as KilometersPerSecond,
+              Number.parseFloat(parts[4]) as KilometersPerSecond,
+              Number.parseFloat(parts[5]) as KilometersPerSecond,
+              Number.parseFloat(parts[6]) as KilometersPerSecond,
             );
           }
 
@@ -363,12 +363,12 @@ export class HorizonsParser {
     }
 
     // Parse the date
-    const year = parseInt(dateMatch[2], 10);
+    const year = Number.parseInt(dateMatch[2], 10);
     const monthStr = dateMatch[3];
-    const day = parseInt(dateMatch[4], 10);
-    const hour = parseInt(dateMatch[5], 10);
-    const minute = parseInt(dateMatch[6], 10);
-    const second = parseFloat(dateMatch[7]);
+    const day = Number.parseInt(dateMatch[4], 10);
+    const hour = Number.parseInt(dateMatch[5], 10);
+    const minute = Number.parseInt(dateMatch[6], 10);
+    const second = Number.parseFloat(dateMatch[7]);
 
     const monthMap: Record<string, number> = {
       Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5,
@@ -398,9 +398,9 @@ export class HorizonsParser {
       return null;
     }
 
-    const x = parseFloat(posMatch[1]) as Kilometers;
-    const y = parseFloat(posMatch[2]) as Kilometers;
-    const z = parseFloat(posMatch[3]) as Kilometers;
+    const x = Number.parseFloat(posMatch[1]) as Kilometers;
+    const y = Number.parseFloat(posMatch[2]) as Kilometers;
+    const z = Number.parseFloat(posMatch[3]) as Kilometers;
     const position = new Vector3D(x, y, z);
 
     nextIndex++;
@@ -419,9 +419,9 @@ export class HorizonsParser {
 
       if (velMatch) {
         velocity = new Vector3D(
-          parseFloat(velMatch[1]) as KilometersPerSecond,
-          parseFloat(velMatch[2]) as KilometersPerSecond,
-          parseFloat(velMatch[3]) as KilometersPerSecond,
+          Number.parseFloat(velMatch[1]) as KilometersPerSecond,
+          Number.parseFloat(velMatch[2]) as KilometersPerSecond,
+          Number.parseFloat(velMatch[3]) as KilometersPerSecond,
         );
         nextIndex++;
       }
@@ -467,17 +467,17 @@ export class HorizonsParser {
 
     try {
       // Try to parse as JD RA Dec Delta LT format
-      const jd = parseFloat(parts[0]);
+      const jd = Number.parseFloat(parts[0]);
 
-      if (isNaN(jd)) {
+      if (Number.isNaN(jd)) {
         return null;
       }
 
       const epoch = EpochUTC.fromDateTime(julianDateToDate(jd));
-      const ra = parseFloat(parts[1]); // Assuming already in degrees
-      const dec = parseFloat(parts[2]);
-      const distance = parseFloat(parts[3]);
-      const lightTime = parseFloat(parts[4]) * 60; // Convert minutes to seconds if needed
+      const ra = Number.parseFloat(parts[1]); // Assuming already in degrees
+      const dec = Number.parseFloat(parts[2]);
+      const distance = Number.parseFloat(parts[3]);
+      const lightTime = Number.parseFloat(parts[4]) * 60; // Convert minutes to seconds if needed
 
       return { epoch, ra, dec, distance, lightTime };
     } catch {

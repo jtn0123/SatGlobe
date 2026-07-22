@@ -325,7 +325,7 @@ export class SatInfoBoxOrbitGuard extends KeepTrackPlugin {
 
       // Compact number formatter for non-fullscreen mode
       const shortNum = (v: number): string => {
-        if (!isFinite(v)) {
+        if (!Number.isFinite(v)) {
           return '';
         }
         const av = Math.abs(v);
@@ -423,7 +423,7 @@ export class SatInfoBoxOrbitGuard extends KeepTrackPlugin {
               const v = pt.data[1];
               let valueStr: string;
 
-              if (typeof v === 'number' && isFinite(v)) {
+              if (typeof v === 'number' && Number.isFinite(v)) {
                 valueStr = v.toPrecision(6); // full precision on hover
               } else {
                 valueStr = 'N/A';

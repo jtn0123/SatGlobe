@@ -50,7 +50,7 @@ export class Godrays {
     // Calculate sun position immediately before drawing godrays
     const screenPosition = this.getScreenCoords_(pMatrix, camMatrix);
 
-    if (isNaN(screenPosition[0]) || isNaN(screenPosition[1])) {
+    if (Number.isNaN(screenPosition[0]) || Number.isNaN(screenPosition[1])) {
       return;
     }
 

@@ -862,14 +862,14 @@ export class WebGLRenderer {
     }
 
     for (let i = 0; i < 16; i++) {
-      if (isNaN(projectionMatrix[i])) {
+      if (Number.isNaN(projectionMatrix[i])) {
         const fov = mainCamera.fov;
         const aspect = this.gl ? this.gl.drawingBufferWidth / this.gl.drawingBufferHeight : 'no-gl';
         const cameraType = mainCamera.cameraType;
 
         errorManagerInstance.log(
           `projectionMatrix[${i}] is NaN - fov=${fov}, aspect=${aspect}, cameraType=${cameraType}, ` +
-          `matrix=[${Array.from(projectionMatrix).map((v) => (isNaN(v) ? 'NaN' : v.toFixed(4))).join(', ')}]`,
+          `matrix=[${Array.from(projectionMatrix).map((v) => (Number.isNaN(v) ? 'NaN' : v.toFixed(4))).join(', ')}]`,
         );
         this.updatePMatrix();
 

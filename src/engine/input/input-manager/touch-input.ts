@@ -215,7 +215,7 @@ export class TouchInput {
         touches[0].pageY - touches[1].pageY,
       );
 
-      if (!isNaN(dist) && dist > this.tapMovementThreshold) {
+      if (!Number.isNaN(dist) && dist > this.tapMovementThreshold) {
         this.pinchMove({ pinchDistance: dist });
       }
     } else if (!this.isPinching) {

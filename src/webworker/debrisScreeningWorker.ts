@@ -86,9 +86,9 @@ function assessCandidate_(
 
   // RIC box filter
   if (
-    isNaN(event.radialDistance) ||
-    isNaN(event.intrackDistance) ||
-    isNaN(event.crosstrackDistance) ||
+    Number.isNaN(event.radialDistance) ||
+    Number.isNaN(event.intrackDistance) ||
+    Number.isNaN(event.crosstrackDistance) ||
     Math.abs(event.radialDistance) > uVal ||
     Math.abs(event.intrackDistance) > vVal ||
     Math.abs(event.crosstrackDistance) > wVal
