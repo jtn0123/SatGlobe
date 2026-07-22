@@ -695,7 +695,7 @@ async function freezeAuditSimulation(page: Page, simulationTime: string): Promis
   const expectedTimeMs = Date.parse(simulationTime);
 
   if (!Number.isFinite(expectedTimeMs)) {
-    throw new Error(`Catalog newestElementEpoch is not a valid audit anchor: ${simulationTime || '(empty)'}`);
+    throw new TypeError(`Catalog newestElementEpoch is not a valid audit anchor: ${simulationTime || '(empty)'}`);
   }
   await page.evaluate(({ auditSimulationTime }) => {
     const adapter = (window as StoryWalkerWindow).satGlobe;

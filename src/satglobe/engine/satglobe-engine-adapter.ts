@@ -200,7 +200,7 @@ export class SatGlobeEngineAdapter {
     const date = new Date(iso);
 
     if (Number.isNaN(date.getTime())) {
-      throw new Error('Simulation time must be a valid ISO date.');
+      throw new TypeError('Simulation time must be a valid ISO date.');
     }
     const timeManager = ServiceLocator.getTimeManager();
 

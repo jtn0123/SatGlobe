@@ -540,7 +540,7 @@ export class Camera {
 
   changeZoom(zoom: ZoomValue | number): void {
     if (typeof zoom !== 'number') {
-      throw new Error('Invalid Zoom Value');
+      throw new TypeError('Invalid Zoom Value');
     }
     if (zoom > 1 || zoom < 0) {
       throw new Error('Invalid Zoom Value');

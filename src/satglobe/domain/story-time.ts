@@ -6,7 +6,7 @@ export function storySimulationTime(anchorIso: string, offsetHours: number): str
   const targetMs = anchorMs + offsetHours * MILLISECONDS_PER_HOUR;
 
   if (!Number.isFinite(anchorMs) || !Number.isFinite(targetMs)) {
-    throw new Error('Story simulation time must resolve to a valid date.');
+    throw new TypeError('Story simulation time must resolve to a valid date.');
   }
 
   return new Date(targetMs).toISOString();

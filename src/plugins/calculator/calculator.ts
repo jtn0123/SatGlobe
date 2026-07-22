@@ -505,7 +505,7 @@ export class Calculator extends KeepTrackPlugin {
     const val = Number(el.value);
 
     if (Number.isNaN(val)) {
-      throw new Error(l('errorMsgs.invalidInput').replace('{field}', fieldName).replace('{value}', el.value));
+      throw new TypeError(l('errorMsgs.invalidInput').replace('{field}', fieldName).replace('{value}', el.value));
     }
 
     return val;

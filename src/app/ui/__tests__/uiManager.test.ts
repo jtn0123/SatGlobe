@@ -108,6 +108,19 @@ describe('uiManager', () => {
     expect(() => UiGeolocation.updateSettingsManager({ coords: { latitude: 0, longitude: 0 } } as GeolocationPosition)).not.toThrow();
   });
 
+  it.each(['lat', 'lon', 'alt'] as const)('identifies an invalid geolocation %s as a caller type error', (field) => {
+    const geolocation = settingsManager.geolocation as unknown as Record<typeof field, unknown>;
+    const original = geolocation[field];
+    const internals = UiGeolocation as unknown as { updateCustomSensorUi_: () => void };
+
+    geolocation[field] = 'invalid';
+    try {
+      expect(() => internals.updateCustomSensorUi_()).toThrow(TypeError);
+    } finally {
+      geolocation[field] = original;
+    }
+  });
+
   // Should process updateSensorPosition
   it('process_updateSensorPosition', () => {
     (KeepTrack.getInstance().containerRoot as HTMLDivElement).innerHTML = `
