@@ -8,12 +8,81 @@ import { defaultSensor } from '@test/environment/apiMocks';
 import { disableConsoleErrors, enableConsoleErrors, setupMinimumHtml, setupStandardEnvironment } from '@test/environment/standard-env';
 import { ServiceLocator } from '@app/engine/core/service-locator';
 import { KeepTrack } from '@app/keeptrack';
+import { errorManagerInstance } from '@app/engine/utils/errorManager';
+
+/** Temporarily replace one browser API property and return its exact restoration callback. */
+function overrideProperty(target: object, property: PropertyKey, value: unknown): () => void {
+  const originalDescriptor = Object.getOwnPropertyDescriptor(target, property);
+
+  Object.defineProperty(target, property, {
+    configurable: true,
+    value,
+    writable: true,
+  });
+
+  return () => {
+    if (originalDescriptor) {
+      Object.defineProperty(target, property, originalDescriptor);
+    } else {
+      Reflect.deleteProperty(target, property);
+    }
+  };
+}
 
 describe('uiManager', () => {
-  // Should process fullscreenToggle
-  it('process_fullscreen_toggle', () => {
-    document.documentElement.requestFullscreen = vi.fn().mockImplementation(() => Promise.resolve());
-    expect(() => UiManager.fullscreenToggle()).not.toThrow();
+  it('requests fullscreen when the browser supports it', () => {
+    const fullscreenElement = document.documentElement;
+    const requestFullscreen = vi.fn().mockResolvedValue(undefined);
+    const restoreRequestFullscreen = overrideProperty(fullscreenElement, 'requestFullscreen', requestFullscreen);
+
+    try {
+      expect(() => UiManager.fullscreenToggle()).not.toThrow();
+      expect(requestFullscreen).toHaveBeenCalledOnce();
+    } finally {
+      restoreRequestFullscreen();
+    }
+  });
+
+  it('does not throw when the browser lacks fullscreen entry support', () => {
+    const restoreRequestFullscreen = overrideProperty(document.documentElement, 'requestFullscreen', undefined);
+
+    try {
+      expect(() => UiManager.fullscreenToggle()).not.toThrow();
+    } finally {
+      restoreRequestFullscreen();
+    }
+  });
+
+  it('does not throw when the browser lacks fullscreen exit support', () => {
+    const restoreFullscreenElement = overrideProperty(document, 'fullscreenElement', document.documentElement);
+    const restoreExitFullscreen = overrideProperty(document, 'exitFullscreen', undefined);
+
+    try {
+      expect(() => UiManager.fullscreenToggle()).not.toThrow();
+    } finally {
+      restoreExitFullscreen();
+      restoreFullscreenElement();
+    }
+  });
+
+  it('captures a rejected fullscreen request', async () => {
+    const fullscreenElement = document.documentElement;
+    const rejection = new Error('fullscreen denied');
+    const debugSpy = vi.spyOn(errorManagerInstance, 'debug').mockImplementation(() => undefined);
+    const restoreRequestFullscreen = overrideProperty(
+      fullscreenElement,
+      'requestFullscreen',
+      vi.fn().mockRejectedValue(rejection),
+    );
+
+    try {
+      UiManager.fullscreenToggle();
+
+      await vi.waitFor(() => expect(debugSpy).toHaveBeenCalledWith(rejection.message));
+    } finally {
+      debugSpy.mockRestore();
+      restoreRequestFullscreen();
+    }
   });
 
   // Should process getsensorinfo

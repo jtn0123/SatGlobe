@@ -28,13 +28,13 @@
 }
 
 #catalog-browser-menu .cb-chip-gp {
-  background: rgba(38, 166, 154, 0.2);
-  color: #26a69a;
+  background: #176c65;
+  color: #fff;
   border: 1px solid rgba(38, 166, 154, 0.4);
 }
 
 #catalog-browser-menu .cb-chip-supgp {
-  background: rgba(255, 183, 77, 0.2);
-  color: #ffb74d;
+  background: #704b00;
+  color: #fff;
   border: 1px solid rgba(255, 183, 77, 0.4);
 }

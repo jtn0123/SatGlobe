@@ -118,6 +118,8 @@ describe('StoryDeck', () => {
     const close = screen.getByRole('button', { name: 'Close sources' });
     const sourceLink = within(dialog).getAllByRole('link')[0];
 
+    expect(dialog.tagName).toBe('DIALOG');
+    expect(dialog.hasAttribute('open')).toBe(true);
     expect(document.activeElement).toBe(close);
     fireEvent.keyDown(close, { key: 'Tab' });
     expect(document.activeElement).toBe(sourceLink);

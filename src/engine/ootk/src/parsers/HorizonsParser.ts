@@ -148,8 +148,10 @@ export class HorizonsParser {
     let centerBody = '';
     let referenceFrame = '';
 
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i].trim();
+    let lineIndex = 0;
+
+    while (lineIndex < lines.length) {
+      const line = lines[lineIndex].trim();
 
       // Parse metadata
       if (line.startsWith('Target body name:')) {
@@ -173,22 +175,27 @@ export class HorizonsParser {
       // Check for data section start/end
       if (line === '$$SOE') {
         inData = true;
+        lineIndex++;
         continue;
       }
       if (line === '$$EOE') {
         inData = false;
+        lineIndex++;
         continue;
       }
 
       // Parse data lines
       if (inData && line.length > 0) {
-        const parsed = this.parseVectorLine_(line, lines, i);
+        const parsed = this.parseVectorLine_(line, lines, lineIndex);
 
         if (parsed) {
           ephemeris.push(parsed.data);
-          i = parsed.nextIndex - 1; // -1 because loop will increment
+          lineIndex = parsed.nextIndex;
+          continue;
         }
       }
+
+      lineIndex++;
     }
 
     // Validate we found some data
@@ -197,10 +204,8 @@ export class HorizonsParser {
     }
 
     // Determine if heliocentric
-    const isHeliocentric =
-      centerBody.toLowerCase().includes('sun') ||
-      centerBody.toLowerCase().includes('solar') ||
-      centerBody === 'Sun';
+    const normalizedCenterBody = centerBody.toLowerCase();
+    const isHeliocentric = normalizedCenterBody.includes('sun') || normalizedCenterBody.includes('solar');
 
     return {
       targetName,

@@ -1,7 +1,8 @@
-import { execSync } from 'child_process';
+import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'fs';
 import path from 'path';
 import { defineConfig } from 'vitest/config';
+import { fixedGitExecutable } from './build/lib/fixed-executables';
 
 const packageJson = JSON.parse(readFileSync('./package.json', 'utf-8'));
 
@@ -11,7 +12,7 @@ export default defineConfig({
   define: {
     __VERSION__: JSON.stringify(packageJson.version),
     __VERSION_DATE__: JSON.stringify(new Date().toISOString()),
-    __COMMIT_HASH__: JSON.stringify(execSync('git rev-parse --short HEAD').toString().trim()),
+    __COMMIT_HASH__: JSON.stringify(execFileSync(fixedGitExecutable(), ['rev-parse', '--short', 'HEAD']).toString().trim()),
     __IS_PRO__: JSON.stringify(false),
     __EDITION__: JSON.stringify('oss'),
     __PROPAGATOR_BACKEND__: JSON.stringify('sgp4'),

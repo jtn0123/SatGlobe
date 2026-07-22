@@ -575,10 +575,10 @@
 
   const updateInfoPanel = (model) => {
     const dims = model.bboxMax.map((v, i) => v - model.bboxMin[i]);
-    const table = document.querySelector('#info table');
+    const tableBody = document.querySelector('#info table tbody');
 
     document.querySelector('#info .model-name').textContent = model.name;
-    table.innerHTML = `
+    tableBody.innerHTML = `
       <tr><td>file units</td><td>${dims.map((d) => fmt(d)).join(' x ')}</td></tr>
       <tr><td>real meters</td><td>${dims.map((d) => fmt(d * 10, 1)).join(' x ')}</td></tr>
       <tr><td>world km</td><td>${dims.map((d) => fmt(d * FILE_UNIT_TO_KM, 3)).join(' x ')}</td></tr>

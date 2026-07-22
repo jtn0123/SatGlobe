@@ -210,9 +210,11 @@ export abstract class DopMath {
       return `PRN ${prnMatch.groups?.prn}`;
     }
 
-    const shortened = name
-      .replace(/\s*[([].*$/u, '')
-      .trim();
+    const parenthesisIndex = name.indexOf('(');
+    const bracketIndex = name.indexOf('[');
+    const suffixIndices = [parenthesisIndex, bracketIndex].filter((index) => index >= 0);
+    const suffixIndex = suffixIndices.length > 0 ? Math.min(...suffixIndices) : name.length;
+    const shortened = name.slice(0, suffixIndex).trim();
 
     return shortened.length > 12 ? `${shortened.slice(0, 11)}…` : shortened;
   }

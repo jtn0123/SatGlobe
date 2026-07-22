@@ -302,26 +302,15 @@ function incrementalUpdate(simTimeMs: number): void {
 
   for (let i = 0; i < numObjects; i++) {
     // Recompute if the cached exit time has passed
-    if (exitTimesMs[i] > 0 && simTimeMs >= exitTimesMs[i]) {
+    const exitExpired = exitTimesMs[i] > 0 && simTimeMs >= exitTimesMs[i];
+    const missingExit = exitTimesMs[i] === 0 && minutesToEntry[i] !== Infinity;
+
+    if (exitExpired || missingExit) {
       const [entry, exit] = sweepSatellite(i, simTimeMs);
 
       minutesToEntry[i] = entry;
       exitTimesMs[i] = exit;
       hasChanges = true;
-    } else if (exitTimesMs[i] === 0 && minutesToEntry[i] !== Infinity) {
-      // Edge case: had an entry but no exit tracked — recompute
-      const [entry, exit] = sweepSatellite(i, simTimeMs);
-
-      minutesToEntry[i] = entry;
-      exitTimesMs[i] = exit;
-      hasChanges = true;
-    } else if (minutesToEntry[i] !== Infinity) {
-      // Recalculate minutesToEntry based on advancing time
-      // The entry time was at simTimeMs + minutesToEntry * 60000 originally
-      // But we need to keep it relative to current sim time
-      // If we stored the absolute entry time, we'd subtract. Instead, we stored
-      // the relative offset at sweep time. For accuracy, recompute stale entries.
-      // Non-stale entries: just update the relative offset from cached absolute entry.
     }
   }
 

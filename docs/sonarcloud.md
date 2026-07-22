@@ -19,6 +19,12 @@ The project-admin settings under **Administration > General Settings > Analysis 
 
 No other rule-wide exclusions are permitted. A new exception must name the exact rule and narrowest path, explain why the rule is inapplicable, identify the compensating test or gate, and be reviewed in source control before the matching SonarCloud setting changes.
 
+The following line-level disposition is kept next to the affected command with `NOSONAR`; it is not a rule-wide or path-wide exclusion:
+
+| Rule | Path | Rationale and compensating control |
+|---|---|---|
+| `docker:S7026` | `configs/satglobe/healthcheck.sh` | S7026 recommends Docker `ADD` for build-time downloads, but this `wget` call is a runtime HTTP health probe and `ADD` cannot replace it. The Docker regression test locks the endpoint and command, while the image smoke test requires the container to reach Docker's `healthy` state. |
+
 ## Quality gate
 
 After the valid legacy findings are cleared, the built-in Sonar quality gate is assigned to the project so new bugs, vulnerabilities, unreviewed security findings, and maintainability regressions are visible on every pull request. Automatic analysis reads `.sonarcloud.properties`; the local `.sonar-project.properties` file is for the optional Docker-hosted SonarQube workflow.

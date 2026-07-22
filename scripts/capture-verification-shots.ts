@@ -15,11 +15,12 @@
  * change instead of hand-capturing. The manifest is merged by file path, so
  * re-running a recipe refreshes its entries in place.
  */
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { type Browser, chromium, type Page } from 'playwright';
+import { fixedGitExecutable } from '../build/lib/fixed-executables';
 
 const BASE_URL = process.env.BASE_URL ?? 'http://localhost:5544';
 const ROOT_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -29,7 +30,7 @@ const VIEWPORT = { width: 1920, height: 1080 };
 
 const GIT_SHA = (() => {
   try {
-    return execSync('git rev-parse --short HEAD', { cwd: ROOT_DIR }).toString().trim();
+    return execFileSync(fixedGitExecutable(), ['rev-parse', '--short', 'HEAD'], { cwd: ROOT_DIR }).toString().trim();
   } catch {
     return 'unknown';
   }

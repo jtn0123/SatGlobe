@@ -250,7 +250,15 @@ export class SensorTimeline extends KeepTrackPlugin {
     zIndex: 10,
   };
 
-  downloadIconCb = async () => {
+  downloadIconCb = () => {
+    this.downloadTimeline_().catch((error: unknown) => {
+      const message = error instanceof Error ? error.message : 'Unknown download error.';
+
+      errorManagerInstance.log(`Failed to download sensor timeline: ${message}`);
+    });
+  };
+
+  private async downloadTimeline_(): Promise<void> {
     // Get transits data
     const passes = await this.calculatePasses_();
     const sensorData = passes[0];
@@ -265,7 +273,9 @@ export class SensorTimeline extends KeepTrackPlugin {
     const link = document.createElement('a');
 
     // Create a URL for the Blob and set it as the href for the link
-    link.href = URL.createObjectURL(blob);
+    const objectUrl = URL.createObjectURL(blob);
+
+    link.href = objectUrl;
 
     // Set the download attribute with a dynamically generated filename
     const timelineSat = PluginRegistry.getPlugin(SelectSatManager)!.getSelectedSat() as Satellite;
@@ -274,7 +284,8 @@ export class SensorTimeline extends KeepTrackPlugin {
 
     // Simulate a click on the link to trigger the download
     link.click();
-  };
+    URL.revokeObjectURL(objectUrl);
+  }
 
 
   // Function to convert SensorPasses array to CSV

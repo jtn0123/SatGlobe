@@ -12,6 +12,7 @@
 import { readFileSync } from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { extractHtmlTags } from './lib/html-tags';
 
 const __filename_ = fileURLToPath(import.meta.url);
 const __dirname_ = path.dirname(__filename_);
@@ -105,12 +106,6 @@ function loadLocale(lang: string): Map<string, string> {
 
 function extractPlaceholders(text: string): string[] {
   const matches = text.match(/\{(\w+)\}/gu);
-
-  return matches ? matches.sort() : [];
-}
-
-function extractHtmlTags(text: string): string[] {
-  const matches = text.match(/<\/?[a-z][a-z0-9]*[^>]*>/giu);
 
   return matches ? matches.sort() : [];
 }
@@ -318,10 +313,12 @@ function parseLlmResponse(response: string, enMap: Map<string, string>, langMap:
   const issues: Issue[] = [];
 
   for (const line of lines) {
-    const match = (/^ISSUE:\s*(.+?)\s*\|\s*(.+)$/u).exec(line);
+    const payload = line.slice('ISSUE:'.length).trim();
+    const separatorIndex = payload.indexOf('|');
+    const flaggedKey = separatorIndex >= 0 ? payload.slice(0, separatorIndex).trim() : '';
+    const reason = separatorIndex >= 0 ? payload.slice(separatorIndex + 1).trim() : '';
 
-    if (match) {
-      const [, flaggedKey, reason] = match;
+    if (flaggedKey && reason) {
       const enVal = enMap.get(flaggedKey) ?? '';
       const langVal = langMap.get(flaggedKey) ?? '';
 

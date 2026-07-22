@@ -37,7 +37,19 @@ export function titleCase(kebab: string): string {
 }
 
 export function kebabCase(input: string): string {
-  return input.replace(/^keeptrack-plugin-/u, '').toLowerCase().replaceAll(/[^a-z0-9]+/gu, '-').replace(/^-+|-+$/gu, '');
+  const withoutPrefix = input.startsWith('keeptrack-plugin-') ? input.slice('keeptrack-plugin-'.length) : input;
+  const normalized = withoutPrefix.toLowerCase().replaceAll(/[^a-z0-9]+/gu, '-');
+  let start = 0;
+  let end = normalized.length;
+
+  while (normalized[start] === '-') {
+    start++;
+  }
+  while (end > start && normalized[end - 1] === '-') {
+    end--;
+  }
+
+  return normalized.slice(start, end);
 }
 
 function substitute(content: string, vars: TemplateVars): string {

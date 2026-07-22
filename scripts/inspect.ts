@@ -36,12 +36,14 @@
  *   keep         true => also copy to docs-local/visual-inspect/<id>/ + manifest entry
  *   title/description/feature/tags   manifest metadata (only used when keep=true)
  */
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { type Browser, type ConsoleMessage, chromium, type Page } from 'playwright';
 import { DEFAULT_ALLOWLIST } from '../test/e2e/console-listener';
+import { fixedGitExecutable } from '../build/lib/fixed-executables';
+import { assertInspectionId } from './lib/inspection-id';
 
 const BASE_URL = process.env.BASE_URL ?? 'http://localhost:5544';
 const ROOT_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -107,7 +109,7 @@ interface ManifestEntry {
 
 const GIT_SHA = (() => {
   try {
-    return execSync('git rev-parse --short HEAD', { cwd: ROOT_DIR }).toString().trim();
+    return execFileSync(fixedGitExecutable(), ['rev-parse', '--short', 'HEAD'], { cwd: ROOT_DIR }).toString().trim();
   } catch {
     return 'unknown';
   }
@@ -144,9 +146,7 @@ const readSpec = (): InspectSpec => {
 
   const spec = JSON.parse(raw) as InspectSpec;
 
-  if (!spec.id) {
-    throw new Error('spec.id is required (used as the output folder name)');
-  }
+  assertInspectionId(spec.id);
 
   return spec;
 };

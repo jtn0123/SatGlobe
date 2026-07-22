@@ -3,20 +3,22 @@
  *
  * Usage: npx tsx build/lib/sourcemap-uploader.ts
  *
- * Requires wrangler CLI to be installed and authenticated.
+ * Uses the locked local Wrangler CLI and requires an authenticated Cloudflare session.
  * Source maps are keyed as: sourcemaps/{version}/{filename}
  */
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import { readdirSync, readFileSync, rmSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ConsoleStyles, handleBuildError, logWithStyle } from './build-error';
+import { fixedPackageExecutable } from './fixed-executables';
 
 const BUCKET_NAME = 'keeptrack-sourcemaps';
 const DIST_JS_DIR = 'dist/js';
 
 const dirName = dirname(fileURLToPath(import.meta.url));
 const rootDir = resolve(dirName, '../..');
+const wranglerCli = fixedPackageExecutable('wrangler');
 
 function getVersion(): string {
   const packageJson = JSON.parse(readFileSync(join(rootDir, 'package.json'), 'utf-8'));
@@ -34,7 +36,7 @@ function findMapFiles(): string[] {
 
 function uploadToR2(filePath: string, key: string): void {
   logWithStyle(`Uploading: ${key}`, ConsoleStyles.INFO);
-  execSync(`npx wrangler r2 object put "${BUCKET_NAME}/${key}" --file="${filePath}"`, {
+  execFileSync(process.execPath, [wranglerCli, 'r2', 'object', 'put', `${BUCKET_NAME}/${key}`, `--file=${filePath}`], {
     cwd: rootDir,
     stdio: 'pipe',
   });

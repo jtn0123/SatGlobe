@@ -169,6 +169,16 @@ describe('Missile.create full ballistic simulation', () => {
     expect(() => Missile.create(args)).not.toThrow();
   }, 30000);
 
+  it('returns a retry instead of crashing when a flight produces no altitude samples', () => {
+    vi.spyOn(Missile as any, 'calcBisection').mockReturnValue(1);
+    vi.spyOn(Missile as any, 'runFlightPhases_').mockImplementation(() => undefined);
+
+    const result = Missile.create(baseCreateArgs()) as { isRetry: boolean; NewBurnRate: number };
+
+    expect(result.isRetry).toBe(true);
+    expect(result.NewBurnRate).toBeCloseTo(baseCreateArgs().NewBurnRate * 3);
+  });
+
   it.each([
     ['south-west bound', { CurrentLatitude: 40, CurrentLongitude: 40, TargetLatitude: 20, TargetLongitude: 20 }],
     ['north-west bound', { CurrentLatitude: 10, CurrentLongitude: 40, TargetLatitude: 25, TargetLongitude: 20 }],

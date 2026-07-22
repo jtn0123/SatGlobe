@@ -1,5 +1,6 @@
 /* eslint-disable no-console */
 import { spawn, spawnSync } from 'node:child_process';
+import { fixedPackageExecutable } from '../../../build/lib/fixed-executables';
 import { buildDevOverride, DEV_SERVER_URL, openPluginMenu, waitForReady, waitForServer } from '../lib/boot';
 import { CliError, log } from '../lib/log';
 import { REPO_ROOT } from '../lib/paths';
@@ -12,6 +13,8 @@ interface DevFlags {
   noOpen: boolean;
   pro: boolean;
 }
+
+const TSX_CLI = fixedPackageExecutable('tsx');
 
 export async function devCommand(positionals: string[], flags: Record<string, string | boolean>): Promise<number> {
   const name = positionals[0];
@@ -50,8 +53,8 @@ function screenshot(configKey: string, flags: DevFlags): number {
     settleMs: 1_500,
   };
 
-  const res = spawnSync('npx', ['tsx', 'scripts/inspect.ts', JSON.stringify(spec)], {
-    cwd: REPO_ROOT, shell: process.platform === 'win32', stdio: 'inherit',
+  const res = spawnSync(process.execPath, [TSX_CLI, 'scripts/inspect.ts', JSON.stringify(spec)], {
+    cwd: REPO_ROOT, stdio: 'inherit',
   });
 
   return res.status ?? 1;
@@ -131,8 +134,8 @@ async function ensureServer(pro: boolean): Promise<ReturnType<typeof spawn> | nu
   }
 
   log.info(`No dev server at ${DEV_SERVER_URL} — starting ${pro ? 'start:pro' : 'start'} … (first build can take a minute)`);
-  const child = spawn('npx', ['tsx', './build/dev-server.ts', pro ? '--profile=pro' : '--profile=oss'], {
-    cwd: REPO_ROOT, shell: process.platform === 'win32', stdio: ['inherit', 'pipe', 'pipe'],
+  const child = spawn(process.execPath, [TSX_CLI, './build/dev-server.ts', pro ? '--profile=pro' : '--profile=oss'], {
+    cwd: REPO_ROOT, stdio: ['inherit', 'pipe', 'pipe'],
   });
 
   // The dev server serves dist/ the instant its HTTP listener is up — BEFORE the

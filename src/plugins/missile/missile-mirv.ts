@@ -168,7 +168,11 @@ export const warheadCountForDesc = (desc: string | undefined): number => {
     return 1;
   }
 
-  const designator = (/\((?<designator>[^)]+)\)/u).exec(desc)?.groups?.designator?.trim();
+  const openingParenthesis = desc.indexOf('(');
+  const closingParenthesis = openingParenthesis >= 0 ? desc.indexOf(')', openingParenthesis + 1) : -1;
+  const designator = openingParenthesis >= 0 && closingParenthesis > openingParenthesis + 1
+    ? desc.slice(openingParenthesis + 1, closingParenthesis).trim()
+    : '';
   const count = designator ? MISSILE_WARHEAD_COUNTS[designator] ?? 1 : 1;
 
   return Math.max(1, Math.min(count, MAX_WARHEADS_PER_MISSILE));

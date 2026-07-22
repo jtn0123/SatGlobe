@@ -337,11 +337,6 @@ vi.mock('draggabilly', () => {
   return { default: MockDraggabilly, __esModule: true };
 });
 
-/** Setup catalog, webgl, and other standard environment */
-import('./environment/standard-env').then((module) => {
-  module.setupStandardEnvironment();
-});
-
 global.mocks = {};
 
 /*
@@ -560,3 +555,12 @@ window.requestAnimationFrame = requestAnimationFrameMock.requestAnimationFrame.b
 window.cancelAnimationFrame = requestAnimationFrameMock.cancelAnimationFrame.bind(requestAnimationFrameMock);
 
 window.scrollTo = vi.fn();
+
+/**
+ * Set up the shared catalog, WebGL, and service environment only after all of
+ * this file's browser and WebGL mocks exist. Awaiting the import prevents test
+ * teardown from racing an unobserved initialization promise in parallel CI.
+ */
+const { setupStandardEnvironment } = await import('./environment/standard-env');
+
+setupStandardEnvironment();

@@ -46,7 +46,7 @@ class OrgDataService {
   init(): void {
     // Offline profiles rely on the bundled owner-code maps. Do not issue a
     // speculative remote request merely to improve display names.
-    if (window.settingsManager?.offlineMode || this.loadPromise_) {
+    if (window.settingsManager?.offlineMode === true || this.loadPromise_ !== null) {
       return;
     }
     this.loadPromise_ = this.fetchOrgData_();

@@ -110,6 +110,7 @@ describe('StringExtractor_more', () => {
   it('extractShape expands abbreviations, prefixes, and composites', () => {
     expect(StringExtractor.extractShape('cyl')).toBe('Cylinder');
     expect(StringExtractor.extractShape('2 pan')).toBe('2 Panel');
+    expect(StringExtractor.extractShape('12\tpan')).toBe('12 Panel');
     expect(StringExtractor.extractShape('Cyl + 2 Pan')).toBe('Cylinder + 2 Panel');
     expect(StringExtractor.extractShape('blarg')).toBe('blarg');
   });

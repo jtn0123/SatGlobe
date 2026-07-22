@@ -169,7 +169,10 @@ describe('SatGlobeApp', () => {
     expect(document.activeElement).toBe(screen.getByTestId('catalog-search'));
 
     fireEvent.keyDown(window, { key: '?' });
-    expect(screen.getByTestId('keyboard-legend')).toBeTruthy();
+    const keyboardLegend = screen.getByTestId('keyboard-legend');
+
+    expect(keyboardLegend.tagName).toBe('DIALOG');
+    expect(keyboardLegend.hasAttribute('open')).toBe(true);
 
     fireEvent.keyDown(window, { key: 'f' });
     expect(app.classList.contains('sg-mode-presentation')).toBe(true);

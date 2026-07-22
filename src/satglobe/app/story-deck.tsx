@@ -5,7 +5,7 @@ import { Icon } from './icon';
 
 
 /** Renders one sourced story fact and its publisher links. */
-function StoryFactCard({ fact, story }: { fact: StoryFact; story: StoryManifestV1 }) {
+function StoryFactCard({ fact, story }: Readonly<{ fact: StoryFact; story: StoryManifestV1 }>) {
   return (
     <div className="sg-fact">
       <p>{fact.text}</p>
@@ -21,7 +21,7 @@ function StoryFactCard({ fact, story }: { fact: StoryFact; story: StoryManifestV
   );
 }
 
-interface StoryDeckProps {
+type StoryDeckProps = Readonly<{
   beatIndex: number;
   playing: boolean;
   progress: number;
@@ -35,17 +35,17 @@ interface StoryDeckProps {
   onPlayingChange: () => void;
   onSourcesChange: () => void;
   onStoryChange: (storyId: string) => void;
-}
+}>;
 
 /** Renders guided playback without replacing the underlying orbital scene. */
 /** Wraps the sources drawer with modal-dialog focus behavior. */
-function SourcesDrawerShell({ children, onDismiss }: { children: React.ReactNode; onDismiss: () => void }) {
-  const dialogRef = useDialogFocus<HTMLElement>(onDismiss);
+function SourcesDrawerShell({ children, onDismiss }: Readonly<{ children: React.ReactNode; onDismiss: () => void }>) {
+  const dialogRef = useDialogFocus<HTMLDialogElement>(onDismiss);
 
   return (
-    <aside aria-label="Sources and technical facts" aria-modal="true" className="sg-source-drawer" ref={dialogRef} role="dialog">
+    <dialog aria-label="Sources and technical facts" aria-modal="true" className="sg-source-drawer" data-testid="source-drawer" open ref={dialogRef}>
       {children}
-    </aside>
+    </dialog>
   );
 }
 

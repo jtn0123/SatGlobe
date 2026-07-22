@@ -7,11 +7,11 @@
  *
  * Usage: npm run mesh-viewer [-- --port=5533 --no-open]
  */
-import { exec } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as http from 'node:http';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { openFile } from '../../build/utils/open-file';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(scriptDir, '..', '..');
@@ -161,8 +161,6 @@ server.listen(port, '127.0.0.1', () => {
   console.log(`Serving ${listMeshes().length} meshes from ${meshesDir}`);
 
   if (!noOpen) {
-    const opener = process.platform === 'win32' ? `start "" "${address}"` : process.platform === 'darwin' ? `open "${address}"` : `xdg-open "${address}"`;
-
-    exec(opener, () => { /* best effort; the URL is printed above */ });
+    openFile(address);
   }
 });

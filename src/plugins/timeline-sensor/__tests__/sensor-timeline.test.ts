@@ -1,5 +1,6 @@
 import { PluginRegistry } from '@app/engine/core/plugin-registry';
 import { ServiceLocator } from '@app/engine/core/service-locator';
+import { errorManagerInstance } from '@app/engine/utils/errorManager';
 import { getEl } from '@app/engine/utils/get-el';
 import { SensorTimeline } from '@app/plugins/timeline-sensor/sensor-timeline';
 import { SelectSatManager } from '@app/plugins/select-sat-manager/select-sat-manager';
@@ -100,6 +101,29 @@ describe('SensorTimeline behavior', () => {
 
     expect(passes).toHaveLength(5);
     expect(Array.isArray(passes[0])).toBe(true);
+  });
+
+  it('reports a rejected timeline download without leaking an unhandled Promise', async () => {
+    const rejection = new Error('weather API unavailable');
+    const errorSpy = vi.spyOn(errorManagerInstance, 'log').mockImplementation(() => undefined);
+
+    vi.spyOn(p(), 'calculatePasses_').mockRejectedValue(rejection);
+
+    expect(plugin.downloadIconCb()).toBeUndefined();
+    await vi.waitFor(() => expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining(rejection.message)));
+  });
+
+  it('releases the CSV object URL after starting a timeline download', async () => {
+    const createObjectUrl = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:sensor-timeline');
+    const revokeObjectUrl = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+
+    vi.spyOn(p(), 'calculatePasses_').mockResolvedValue([[], [], [], [], []]);
+    vi.spyOn(PluginRegistry.getPlugin(SelectSatManager)!, 'getSelectedSat').mockReturnValue(defaultSat);
+
+    await p().downloadTimeline_();
+
+    expect(createObjectUrl).toHaveBeenCalledOnce();
+    expect(revokeObjectUrl).toHaveBeenCalledWith('blob:sensor-timeline');
   });
 
   it('the settings inputs update their fields on change', () => {

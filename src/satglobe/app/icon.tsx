@@ -18,7 +18,7 @@ const iconPaths: Record<IconName, string> = {
 };
 
 /** Renders a compact inline icon from the SatGlobe visual language. */
-export function Icon({ name, size = 18 }: { name: IconName; size?: number }) {
+export function Icon({ name, size = 18 }: Readonly<{ name: IconName; size?: number }>) {
   const strokeOnly = ['chevron', 'layers', 'close', 'focus'].includes(name);
 
   return (

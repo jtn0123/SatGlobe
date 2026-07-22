@@ -5,9 +5,12 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { ConsoleStyles, logWithStyle } from './lib/build-error';
+import { fixedGitExecutable } from './lib/fixed-executables';
+
+const GIT_EXECUTABLE = fixedGitExecutable();
 
 function sh(cmd: string, args: string[], opts: { allowFail?: boolean } = {}) {
-  const res = spawnSync(cmd, args, { stdio: 'inherit', shell: process.platform === 'win32' });
+  const res = spawnSync(cmd, args, { stdio: 'inherit' });
 
   if (res.status !== 0 && !opts.allowFail) {
     throw new Error(`Command failed: ${cmd} ${args.join(' ')}`);
@@ -28,16 +31,20 @@ function listSubmodules(): { name: string; path: string }[] {
   let current: string | null = null;
 
   for (const line of txt.split(/\r?\n/u)) {
-    const h = line.match(/^\s*\[submodule\s+"(.+?)"\s*\]\s*$/u);
+    const trimmed = line.trim();
+    const headerPrefix = '[submodule "';
+    const headerSuffix = '"]';
 
-    if (h) {
-      // eslint-disable-next-line max-statements-per-line
-      current = h[1]; continue;
+    if (trimmed.startsWith(headerPrefix) && trimmed.endsWith(headerSuffix)) {
+      current = trimmed.slice(headerPrefix.length, -headerSuffix.length);
+      continue;
     }
-    const p = line.match(/^\s*path\s*=\s*(.+)\s*$/u);
+    const separatorIndex = trimmed.indexOf('=');
+    const key = separatorIndex >= 0 ? trimmed.slice(0, separatorIndex).trim() : '';
+    const submodulePath = separatorIndex >= 0 ? trimmed.slice(separatorIndex + 1).trim() : '';
 
-    if (p && current) {
-      out.push({ name: current, path: p[1].trim() });
+    if (key === 'path' && submodulePath && current) {
+      out.push({ name: current, path: submodulePath });
     }
   }
 
@@ -67,14 +74,14 @@ function ensureSubmodules() {
   // Init only the required ones (by path), recurse for their nested children
   for (const s of required) {
     logWithStyle(`[submodules] Updating required: ${s.name} (${s.path})`, ConsoleStyles.INFO);
-    sh('git', ['submodule', 'update', '--init', '--recursive', '--depth', '1', '--jobs', '4', '--', s.path]);
+    sh(GIT_EXECUTABLE, ['submodule', 'update', '--init', '--recursive', '--depth', '1', '--jobs', '4', '--', s.path]);
     logWithStyle(`[submodules] Updated required submodule: ${s.name}`, ConsoleStyles.SUCCESS);
   }
 
   // Try the optional ones, but do not fail the build if they error out
   for (const s of optional) {
     logWithStyle(`[submodules] Attempting optional: ${s.name} (${s.path})`, ConsoleStyles.INFO);
-    const ok = sh('git', ['submodule', 'update', '--init', '--recursive', '--depth', '1', '--jobs', '4', '--', s.path], { allowFail: true });
+    const ok = sh(GIT_EXECUTABLE, ['submodule', 'update', '--init', '--recursive', '--depth', '1', '--jobs', '4', '--', s.path], { allowFail: true });
 
     if (!ok) {
       logWithStyle(`[submodules] Skipped optional submodule ${s.name}; continuing without it.`, ConsoleStyles.WARNING);
@@ -84,7 +91,7 @@ function ensureSubmodules() {
   }
 
   // Optional: print a summary
-  sh('git', ['submodule', 'status', '--recursive'], { allowFail: true });
+  sh(GIT_EXECUTABLE, ['submodule', 'status', '--recursive'], { allowFail: true });
 }
 
 ensureSubmodules();

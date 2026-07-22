@@ -41,6 +41,15 @@ npm run start:satglobe:static
 
 The application reads bundled catalogs, imagery, fonts, and story data. It has no account, backend, analytics dependency, or runtime third-party API requirement.
 
+For an unprivileged production container, build the pinned SatGlobe image and map the normal host HTTP port to its internal port 8080:
+
+```bash
+npm run docker:satglobe
+docker run --rm -p 80:8080 satglobe:local
+```
+
+The nginx process runs as its non-root `nginx` user; change only the host side of the mapping when port 80 is unavailable (for example, `-p 8080:8080`).
+
 ## Keyboard shortcuts
 
 | Key | Action |

@@ -100,13 +100,14 @@
 
 /* Tight cells so all 11 columns fit, even when the menu shrinks to clear the
  * sat-info-box (Materialize's default cell padding is far too generous here). */
-#proximity-ops-table th,
-#proximity-ops-table td {
+#proximity-ops-table th {
   padding: 5px 8px;
 }
 
 #proximity-ops-table td {
+  padding: 5px 8px;
   font-size: 0.8rem;
+  white-space: nowrap;
 }
 
 /* v13 uppercase-muted header (replaces the old per-cell underline). The verbose
@@ -120,12 +121,7 @@
   vertical-align: bottom;
 }
 
-/* Data cells stay on one line; cap the two name columns so a long name can't
- * blow the table past the panel. */
-#proximity-ops-table td {
-  white-space: nowrap;
-}
-
+/* Cap the two name columns so a long name can't blow the table past the panel. */
 #proximity-ops-table td:nth-child(2),
 #proximity-ops-table td:nth-child(4) {
   max-width: 130px;

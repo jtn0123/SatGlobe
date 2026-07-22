@@ -1293,7 +1293,7 @@ export class Missile {
 
     Missile.runFlightPhases_(flightState, flightFixed);
 
-    const MaxAltitude = AltitudeList.reduce((a, b) => Math.max(a, b));
+    const MaxAltitude = AltitudeList.reduce((max, altitude) => Math.max(max, altitude), 0);
 
     if (MaxAltitude < minAltitudeTrue) {
       // Try again with 25% increase to burn rate

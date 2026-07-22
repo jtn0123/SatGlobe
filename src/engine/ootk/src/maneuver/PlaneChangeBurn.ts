@@ -104,14 +104,9 @@ export class PlaneChangeBurn {
     let timeToBurn: number;
     let nodeType: 'ascending' | 'descending';
 
-    if (preferredNode === 'ascending') {
-      timeToBurn = ascending;
-      nodeType = 'ascending';
-    } else if (preferredNode === 'descending') {
-      timeToBurn = descending;
-      nodeType = 'descending';
-      // 'nearest' — pick whichever node comes first
-    } else if (ascending <= descending) {
+    const useAscending = preferredNode === 'ascending' || (preferredNode === 'nearest' && ascending <= descending);
+
+    if (useAscending) {
       timeToBurn = ascending;
       nodeType = 'ascending';
     } else {

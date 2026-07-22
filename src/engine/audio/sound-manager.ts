@@ -240,7 +240,7 @@ export class SoundManager {
    * Wait for all audio to be ready for playback
    */
   async waitForAudioReady(): Promise<void> {
-    if (this.audioLoadingPromise) {
+    if (this.audioLoadingPromise !== null) {
       await this.audioLoadingPromise;
     }
   }

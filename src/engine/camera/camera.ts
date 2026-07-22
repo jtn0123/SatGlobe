@@ -626,7 +626,8 @@ export class Camera {
       case CameraType.FPS: // FPS style movement
         this.drawFirstPersonView_();
         break;
-      case CameraType.PLANETARIUM: {
+      case CameraType.PLANETARIUM:
+      case CameraType.ASTRONOMY: {
         if (!sensorPos) {
           throw new Error('Sensor Position is undefined');
         }
@@ -635,13 +636,6 @@ export class Camera {
       }
       case CameraType.SATELLITE_FIRST_PERSON: {
         this.drawSatelliteFirstPerson_(target);
-        break;
-      }
-      case CameraType.ASTRONOMY: {
-        if (!sensorPos) {
-          throw new Error('Sensor Position is undefined');
-        }
-        this.drawAstronomy_(sensorPos);
         break;
       }
       default:

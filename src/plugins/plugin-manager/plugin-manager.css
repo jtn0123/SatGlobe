@@ -85,13 +85,13 @@
 }
 
 #plugin-manager-menu .pm-badge-ok {
-  background: rgba(46, 160, 67, 0.2);
-  color: #6fdd8b;
+  background: #196127;
+  color: #fff;
 }
 
 #plugin-manager-menu .pm-badge-warn {
-  background: rgba(210, 153, 34, 0.2);
-  color: #e3b341;
+  background: #6d4b00;
+  color: #fff;
 }
 
 #plugin-manager-menu .pm-repo-link {

@@ -96,7 +96,7 @@
   }
 
   &.risk-high {
-    background-color: #f57c00;
+    background-color: #9a4a00;
     color: white;
   }
 
@@ -106,7 +106,7 @@
   }
 
   &.risk-low {
-    background-color: #388e3c;
+    background-color: #236b2a;
     color: white;
   }
 
