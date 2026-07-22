@@ -910,8 +910,10 @@ export class SettingsManager {
         this.installDirectory = '/';
         break;
     }
-    // Put Your Custom Install Directory Here
-    this.installDirectory ??= '/';
+    if (typeof this.installDirectory === 'undefined') {
+      // Put Your Custom Install Directory Here
+      this.installDirectory = '/';
+    }
   }
 
   /**
