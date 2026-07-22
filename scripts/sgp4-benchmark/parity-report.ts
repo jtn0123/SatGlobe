@@ -5,7 +5,7 @@
 
 import type { DeltaStats, ParityReport, ProbeRow } from './validate-parity';
 
-const esc = (s: string): string => s.replace(/&/gu, '&amp;').replace(/</gu, '&lt;').replace(/>/gu, '&gt;');
+const esc = (s: string): string => s.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 
 const fmtKm = (v: number): string => {
   if (v === 0) {

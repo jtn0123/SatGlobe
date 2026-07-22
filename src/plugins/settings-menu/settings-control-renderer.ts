@@ -39,17 +39,17 @@ import {
 export const domIdForControl = (sectionId: string, controlId: string): string =>
   `setting-${slugify_(sectionId)}-${slugify_(controlId)}`;
 
-const slugify_ = (s: string): string => s.replace(/[^A-Za-z0-9_-]/gu, '_');
+const slugify_ = (s: string): string => s.replaceAll(/[^A-Za-z0-9_-]/gu, '_');
 
 const escapeAttr_ = (s: string): string =>
-  s.replace(/&/gu, '&amp;')
-    .replace(/"/gu, '&quot;')
-    .replace(/'/gu, '&#39;')
-    .replace(/</gu, '&lt;')
-    .replace(/>/gu, '&gt;');
+  s.replaceAll('&', '&amp;')
+    .replaceAll('"', '&quot;')
+    .replaceAll('\'', '&#39;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;');
 
 const escapeText_ = (s: string): string =>
-  s.replace(/&/gu, '&amp;').replace(/</gu, '&lt;').replace(/>/gu, '&gt;');
+  s.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 
 const tooltipAttrs_ = (helpText?: string): string => {
   if (typeof helpText !== 'string' || helpText.length === 0) {

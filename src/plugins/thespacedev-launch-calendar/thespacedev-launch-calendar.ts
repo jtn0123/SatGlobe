@@ -427,7 +427,7 @@ export class TheSpaceDevLaunchCalendarPlugin extends KeepTrackPlugin {
       const tdC = tr.insertCell();
 
       tdC.className = 'launch-calendar-country-cell';
-      tdC.textContent = launchEvent.country.replace(/,/gu, ', ');
+      tdC.textContent = launchEvent.country.replaceAll(',', ', ');
     }
   }
 }
