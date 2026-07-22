@@ -138,6 +138,7 @@ describe('WebWorkerThreadManager', () => {
       vi.stubGlobal('Worker', undefined);
       const mgr = new TestThread([]);
 
+      expect(() => mgr.init()).toThrow(TypeError);
       expect(() => mgr.init()).toThrow(/does not support web workers/u);
     });
 

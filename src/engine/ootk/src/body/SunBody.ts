@@ -383,10 +383,10 @@ export class SunBody extends CelestialBody {
     isUtc = false,
   ): SunTime {
     if (Number.isNaN(lat)) {
-      throw new Error('latitude missing');
+      throw new TypeError('latitude missing');
     }
     if (Number.isNaN(lon)) {
-      throw new Error('longitude missing');
+      throw new TypeError('longitude missing');
     }
 
     const date = dateVal instanceof Date ? dateVal : new Date(dateVal);

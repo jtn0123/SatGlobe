@@ -19,7 +19,9 @@ describe('story simulation time', () => {
   });
 
   it('rejects invalid or overflowing dates', () => {
+    expect(() => storySimulationTime('not-a-date', 1)).toThrow(TypeError);
     expect(() => storySimulationTime('not-a-date', 1)).toThrow('valid date');
+    expect(() => storySimulationTime(anchor, Number.MAX_VALUE)).toThrow(TypeError);
     expect(() => storySimulationTime(anchor, Number.MAX_VALUE)).toThrow('valid date');
   });
 });

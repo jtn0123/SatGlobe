@@ -119,7 +119,7 @@ export abstract class WebWorkerThreadManager {
 
   protected checkWebWorkerSupport_() {
     if (typeof Worker === 'undefined') {
-      throw new Error('Your browser does not support web workers.');
+      throw new TypeError('Your browser does not support web workers.');
     }
   }
 

@@ -652,7 +652,7 @@ export class ColorSchemeManager {
         this.currentColorScheme = this.colorSchemeInstances[scheme.id];
         this.currentColorSchemeUpdate = this.colorSchemeInstances[scheme.id].update;
       } else {
-        throw new Error('Color scheme is not a valid color scheme');
+        throw new TypeError('Color scheme is not a valid color scheme');
       }
 
       // Toggle worker mode based on whether this scheme is worker-supported

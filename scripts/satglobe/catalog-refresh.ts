@@ -224,7 +224,7 @@ function requiredFiniteNumber(omm: OmmRow, field: string): number {
   const value = Number(omm[field]);
 
   if (!Number.isFinite(value)) {
-    throw new Error(`Missing or invalid OMM ${field}`);
+    throw new TypeError(`Missing or invalid OMM ${field}`);
   }
 
   return value;
@@ -235,7 +235,7 @@ function epochParts(epoch: string): { year: number; dayOfYear: number } {
   const epochMs = instant.getTime();
 
   if (!Number.isFinite(epochMs)) {
-    throw new Error('Invalid OMM epoch');
+    throw new TypeError('Invalid OMM epoch');
   }
   const year = instant.getUTCFullYear();
   const dayOfYear = (epochMs - Date.UTC(year, 0, 0)) / 86_400_000;
@@ -251,7 +251,7 @@ export function validateBaseCatalog(rows: CatalogRow[]): Map<string, CatalogRow>
 
   rows.forEach((row, index) => {
     if (typeof row.tle1 !== 'string' || typeof row.tle2 !== 'string') {
-      throw new Error(`Bundled catalog row ${index} has malformed element lines.`);
+      throw new TypeError(`Bundled catalog row ${index} has malformed element lines.`);
     }
     const id = catalogIdFromTle(row);
 
@@ -329,7 +329,7 @@ function mergeSource(
       const incomingEpoch = new Date(omm.EPOCH).getTime();
 
       if (!Number.isFinite(incomingEpoch)) {
-        throw new Error('Invalid OMM epoch');
+        throw new TypeError('Invalid OMM epoch');
       }
       if (existing && incomingEpoch < epochFromCatalog(existing)) {
         rejections.push({ source: sourceId, catalogId: id, name: omm.OBJECT_NAME, reason: 'Epoch regression' });

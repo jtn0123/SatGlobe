@@ -84,6 +84,10 @@ describe('MouseInput handlers', () => {
     }
   });
 
+  it('identifies non-numeric screen coordinates as a caller type error', () => {
+    expect(() => InputManager.getEarthScreenPoint(Number.NaN, 0, camera)).toThrow(TypeError);
+  });
+
   afterEach(() => vi.restoreAllMocks());
 
   describe('canvasWheel_', () => {

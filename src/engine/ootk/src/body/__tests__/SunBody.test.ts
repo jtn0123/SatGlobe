@@ -187,6 +187,13 @@ describe('SunBody', () => {
         expect(times.sunriseStart.getTime()).toBeLessThan(times.sunsetEnd.getTime());
       }
     });
+
+    it.each([
+      ['latitude', Number.NaN as Degrees, -74.0 as Degrees],
+      ['longitude', 40.7 as Degrees, Number.NaN as Degrees],
+    ])('identifies a missing %s as a caller type error', (_label, latitude, longitude) => {
+      expect(() => Sun.getTimes(testDate, latitude, longitude, 0 as Meters)).toThrow(TypeError);
+    });
   });
 
   describe('serialization', () => {

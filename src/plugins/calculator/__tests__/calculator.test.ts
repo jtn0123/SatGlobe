@@ -22,6 +22,7 @@ describe('Calculator_class', () => {
 
 interface CalcInternals {
   outputFormat_: string;
+  readNumericInput_(fieldId: string, fieldName: string): number;
   getInputFieldDefs_(frame: string): { id: string; default: string }[];
   getOutputFieldDefs_(frame: string): { id: string }[];
   getVelocityFieldDefs_(): { id: string; default: string }[];
@@ -77,6 +78,12 @@ describe('Calculator pure helpers', () => {
     expect(calc.formatValue_(30.5, true)).toBe('30° 30\' 0.00"');
     // DMS only applies to angles; non-angles fall back to fixed-4.
     expect(calc.formatValue_(30.5, false)).toBe('30.5000');
+  });
+
+  it('identifies a non-numeric field value as a caller type error', () => {
+    KeepTrack.getInstance().containerRoot.innerHTML = '<input id="calc-test-value" value="not-a-number" />';
+
+    expect(() => calc.readNumericInput_('calc-test-value', 'test value')).toThrow(TypeError);
   });
 });
 

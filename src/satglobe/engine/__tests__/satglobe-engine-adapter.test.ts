@@ -738,6 +738,16 @@ describe('SatGlobeEngineAdapter', () => {
     expect(services.camera.state.camYawTarget).toBe(pose.yaw);
   });
 
+  it('identifies an invalid simulation timestamp as a caller type error', () => {
+    const activeAdapter = bootAdapter([fakeSat()]);
+
+    adapter = activeAdapter;
+
+    expect(() => activeAdapter.setSimulationTime('not-a-date')).toThrow(TypeError);
+    expect(services.time.changeStaticOffset).not.toHaveBeenCalled();
+    expect(services.time.setSelectedDate).not.toHaveBeenCalled();
+  });
+
   it('surfaces catalog hydration failures as state and a logged warning', () => {
     services.catalog = {
       objectCache: [fakeSat()],

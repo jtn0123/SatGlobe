@@ -57,7 +57,7 @@ describe('sat-changes', () => {
 
   it('satChng throws for a non-number row', () => {
     // @ts-expect-error intentionally passing a bad type
-    expect(() => satChng('x')).toThrow();
+    expect(() => satChng('x')).toThrow(TypeError);
   });
 
   it('satChng throws for a non-existent row', () => {

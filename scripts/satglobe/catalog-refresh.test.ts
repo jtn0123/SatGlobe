@@ -14,6 +14,7 @@ import {
   releaseInstallLock,
   stageAndInstallArtifacts,
   summarizeRejections,
+  validateBaseCatalog,
   type OmmRow,
 } from './catalog-refresh';
 
@@ -167,6 +168,12 @@ describe('SatGlobe catalog refresh', () => {
       socratesUpdatedAt: '2026-07-18T01:13:28.000Z',
       socratesRetrievedAt: '2026-07-18T11:25:30.000Z',
     });
+  });
+
+  it('identifies malformed catalog and OMM fields as caller type errors', () => {
+    expect(() => validateBaseCatalog(Array.from({ length: 30_000 }, () => ({}) as never))).toThrow(TypeError);
+    expect(() => ommToCatalogRow({ ...omm, EPOCH: 'not-a-date' })).toThrow(TypeError);
+    expect(() => ommToCatalogRow({ ...omm, INCLINATION: 'not-a-number' })).toThrow(TypeError);
   });
 
   it('validates a complete dry run without writing catalog, feed, report, or cache artifacts', async () => {

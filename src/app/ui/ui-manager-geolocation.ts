@@ -79,13 +79,13 @@ export class UiGeolocation {
       throw new Error('geolocation is not defined');
     }
     if (typeof settingsManager.geolocation.lat !== 'number') {
-      throw new Error('geolocation.lat is not valid');
+      throw new TypeError('geolocation.lat is not valid');
     }
     if (typeof settingsManager.geolocation.lon !== 'number') {
-      throw new Error('geolocation.lon is not valid');
+      throw new TypeError('geolocation.lon is not valid');
     }
     if (typeof settingsManager.geolocation.alt !== 'number') {
-      throw new Error('geolocation.alt is not valid');
+      throw new TypeError('geolocation.alt is not valid');
     }
 
     try {

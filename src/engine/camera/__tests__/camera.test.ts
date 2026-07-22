@@ -74,6 +74,14 @@ describe('Camera.setFieldOfView', () => {
   });
 });
 
+describe('Camera.changeZoom', () => {
+  it('identifies a non-numeric zoom as a caller type error', () => {
+    const cameraInstance = new Camera();
+
+    expect(() => cameraInstance.changeZoom('near' as never)).toThrow(TypeError);
+  });
+});
+
 describe('Camera Key Input', () => {
   let cameraInstance: Camera;
 

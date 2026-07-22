@@ -145,7 +145,7 @@ export class InputManager {
       throw new Error('x and y must be defined');
     }
     if (Number.isNaN(x) || Number.isNaN(y)) {
-      throw new Error('x and y must be numbers');
+      throw new TypeError('x and y must be numbers');
     }
 
     // Where is the camera
