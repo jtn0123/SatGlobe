@@ -59,7 +59,7 @@ export const observationDerivative = (xh: number, xl: number, step: number, isAn
 
 export const observationNoiseFromSigmas = (sigmas: number[]): Matrix => {
   const n = sigmas.length;
-  const result = Array.from({ length: n }, () => Array(n).fill(0.0));
+  const result = Array.from({ length: n }, () => new Array(n).fill(0.0));
 
   for (let i = 0; i < n; i++) {
     const s = sigmas[i];

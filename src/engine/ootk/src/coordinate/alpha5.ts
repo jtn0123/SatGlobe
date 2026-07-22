@@ -80,7 +80,7 @@ export function convert6DigitToA5(sccNum: string): string {
   }
 
   // Already an alpha-5 number (leading letter).
-  if (RegExp(/[A-Z]/iu, 'u').test(sccNum[0])) {
+  if (new RegExp(/[A-Z]/iu, 'u').test(sccNum[0])) {
     return sccNum;
   }
 
