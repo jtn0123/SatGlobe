@@ -22,6 +22,7 @@ import { SelectSatManager } from '../select-sat-manager/select-sat-manager';
 import './look-angles.css';
 
 type LookAngleData = TearrData & { canStationObserve: boolean };
+const MAX_LOOK_ANGLE_ROWS = 1500;
 
 /** Shorthand for this plugin's locale keys. */
 const l = (key: string): string => t7e(`plugins.LookAnglesPlugin.${key}` as Parameters<typeof t7e>[0]);
@@ -286,6 +287,7 @@ export class LookAnglesPlugin extends KeepTrackPlugin {
         : SensorMath.getTearData(now, sat.satrec, sensors, this.isRiseSetOnly_, isMaxElFound);
       const canStationObserve = sensors[0].type === SpaceObjectType.OPTICAL ? SensorMath.checkIfVisibleForOptical(sat, sensors[0], now) : true;
       const looksPass = { ...tearrData, canStationObserve };
+      let isRowLimitReached = false;
 
       if (looksPass.time !== '') {
         // Update the table with looks for this 5 second chunk and then increase table counter by 1
@@ -300,10 +302,18 @@ export class LookAnglesPlugin extends KeepTrackPlugin {
             looksArray.push(looksPass);
             break;
           case TearrType.RISE_AND_MAX_EL:
+            if (looksArray.length + 2 > MAX_LOOK_ANGLE_ROWS) {
+              isRowLimitReached = true;
+              break;
+            }
             isMaxElFound = true;
             looksArray.push({ ...looksPass, type: TearrType.RISE }, { ...looksPass, type: TearrType.MAX_EL });
             break;
           case TearrType.MAX_EL_AND_SET:
+            if (looksArray.length + 2 > MAX_LOOK_ANGLE_ROWS) {
+              isRowLimitReached = true;
+              break;
+            }
             isMaxElFound = false;
             looksArray.push({ ...looksPass, type: TearrType.MAX_EL }, { ...looksPass, type: TearrType.SET });
             break;
@@ -312,7 +322,7 @@ export class LookAnglesPlugin extends KeepTrackPlugin {
             break;
         }
       }
-      if (looksArray.length >= 1500) {
+      if (isRowLimitReached || looksArray.length >= MAX_LOOK_ANGLE_ROWS) {
         // Maximum of 1500 lines in the look angles table
         break; // No more updates to the table (Prevent GEO object slowdown)
       }
