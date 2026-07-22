@@ -564,9 +564,7 @@ export class WatchlistPlugin extends KeepTrackPlugin implements ISettingsContrib
    * @param isSkipSearch - A boolean indicating whether to skip the search operation.
    */
   updateWatchlist({ updateWatchlistList, isSkipSearch = false }: UpdateWatchlistParams = {}) {
-    if (updateWatchlistList !== undefined) {
-      this.watchlistList = updateWatchlistList;
-    }
+    this.watchlistList = updateWatchlistList ?? this.watchlistList;
 
     if (!this.watchlistList) {
       return;

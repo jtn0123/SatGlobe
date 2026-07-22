@@ -233,6 +233,14 @@ describe('WatchlistPlugin list operations', () => {
     expect(getEl('watchlist-list')!.innerHTML).toContain('watchlist-remove');
   });
 
+  it('updateWatchlist ignores a null list from an untyped caller', () => {
+    plugin.watchlistList = [{ id: 0, inView: false }];
+
+    plugin.updateWatchlist({ updateWatchlistList: null } as never);
+
+    expect(plugin.watchlistList).toEqual([{ id: 0, inView: false }]);
+  });
+
   it('clear empties the watchlist', () => {
     plugin.addSat(0);
     plugin.clear();
