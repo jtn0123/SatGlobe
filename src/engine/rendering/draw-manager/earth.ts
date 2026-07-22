@@ -108,10 +108,10 @@ export class Earth {
    * is missing (feature disabled or load failed). Day uses gray so failure is visible;
    * other channels use transparent so the shader produces a shader-correct "no effect".
    */
-  private placeholders_: Record<'day' | 'dayBlack' | 'night' | 'bump' | 'spec' | 'political' | 'clouds' | 'coverage', WebGLTexture | null> =
+  private readonly placeholders_: Record<'day' | 'dayBlack' | 'night' | 'bump' | 'spec' | 'political' | 'clouds' | 'coverage', WebGLTexture | null> =
     { day: null, dayBlack: null, night: null, bump: null, spec: null, political: null, clouds: null, coverage: null };
   /** Keys of day textures whose load promise rejected — distinguishes failure from isBlackEarth. */
-  private failedDayKeys_ = new Set<string>();
+  private readonly failedDayKeys_ = new Set<string>();
   private vaoOcclusion_: WebGLVertexArrayObject;
   /**
    * Output multiplier for the next atmosphere draw (shader uIntensity). Only

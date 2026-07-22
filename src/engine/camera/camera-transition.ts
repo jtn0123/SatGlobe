@@ -28,42 +28,42 @@ export class CameraTransition {
   private duration_ = 500;
 
   // Composed "from" state: viewMatrix * translate(worldShift)
-  private fromComposed_ = mat4.create();
+  private readonly fromComposed_ = mat4.create();
 
   // Temp buffer for composing current frame's transform
-  private toComposed_ = mat4.create();
+  private readonly toComposed_ = mat4.create();
 
   // Decomposition buffers
-  private fromRotation_ = quat.create();
-  private fromTranslation_ = vec3.create();
-  private toRotation_ = quat.create();
-  private toTranslation_ = vec3.create();
+  private readonly fromRotation_ = quat.create();
+  private readonly fromTranslation_ = vec3.create();
+  private readonly toRotation_ = quat.create();
+  private readonly toTranslation_ = vec3.create();
 
   // Camera world positions (for spherical arc interpolation)
-  private fromCamPos_ = vec3.create();
-  private toCamPos_ = vec3.create();
-  private blendedCamPos_ = vec3.create();
+  private readonly fromCamPos_ = vec3.create();
+  private readonly toCamPos_ = vec3.create();
+  private readonly blendedCamPos_ = vec3.create();
 
   // Direction buffers for spherical arc
-  private fromDir_ = vec3.create();
-  private toDir_ = vec3.create();
+  private readonly fromDir_ = vec3.create();
+  private readonly toDir_ = vec3.create();
   private blendedDir_ = vec3.create();
 
   // Blending output buffers
-  private blendedRotation_ = quat.create();
-  private blendedTranslation_ = vec3.create();
+  private readonly blendedRotation_ = quat.create();
+  private readonly blendedTranslation_ = vec3.create();
   private blendedComposed_ = mat4.create();
-  private effectiveViewMatrix_ = mat4.create();
+  private readonly effectiveViewMatrix_ = mat4.create();
 
   // Temp 3x3 rotation matrices for quat.fromMat3
-  private rotMat3From_ = new Float32Array(9);
-  private rotMat3To_ = new Float32Array(9);
+  private readonly rotMat3From_ = new Float32Array(9);
+  private readonly rotMat3To_ = new Float32Array(9);
 
   // Temp vec3 for worldShift translation
-  private wsVec3_ = vec3.create();
+  private readonly wsVec3_ = vec3.create();
 
   // Temp quat for conjugate operations
-  private tempQuat_ = quat.create();
+  private readonly tempQuat_ = quat.create();
 
   get isActive(): boolean {
     return this.isActive_;

@@ -59,7 +59,7 @@ const tierLabel = (tier: string): string => tOverlay(TIER_LABEL_KEYS[tier] ?? ''
 export class WatchlistOverlay extends KeepTrackPlugin {
   readonly id = 'WatchlistOverlay';
   dependencies_ = [WatchlistPlugin.name];
-  private watchlistPlugin_: WatchlistPlugin;
+  private readonly watchlistPlugin_: WatchlistPlugin;
 
   constructor() {
     super();

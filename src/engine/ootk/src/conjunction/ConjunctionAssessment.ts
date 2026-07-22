@@ -119,8 +119,8 @@ export class ConjunctionAssessment {
   private secondaryCovSample?: CovarianceSample;
 
   constructor(
-    private primary: ConjunctionSpaceObjectInput,
-    private secondary: ConjunctionSpaceObjectInput,
+    private readonly primary: ConjunctionSpaceObjectInput,
+    private readonly secondary: ConjunctionSpaceObjectInput,
   ) {
     // Initialize propagators (will be replaced in assess() if needed)
     this.primaryProp = this.createPropagator(primary, false);

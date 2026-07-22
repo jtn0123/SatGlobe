@@ -18,11 +18,11 @@ interface SyncProviderEntry_ {
 export class PersistenceManager {
   private static instance_: PersistenceManager;
 
-  private cache_: Map<StorageKey, string> = new Map();
+  private readonly cache_: Map<StorageKey, string> = new Map();
   private primary_: StorageProvider;
-  private factory_: StorageProviderFactory;
-  private syncProviders_: Map<string, SyncProviderEntry_> = new Map();
-  private pendingWrites_: Map<StorageKey, string | null> = new Map();
+  private readonly factory_: StorageProviderFactory;
+  private readonly syncProviders_: Map<string, SyncProviderEntry_> = new Map();
+  private readonly pendingWrites_: Map<StorageKey, string | null> = new Map();
   private flushTimeout_: ReturnType<typeof setTimeout> | null = null;
   private isInitialized_: boolean = false;
 

@@ -184,7 +184,7 @@ export class VideoDirectorPlugin extends KeepTrackPlugin {
   }
 
   /** Read the form into settings whenever any control changes (immediate-apply). */
-  private onFormChange_ = (e: Event): void => {
+  private readonly onFormChange_ = (e: Event): void => {
     if (e === undefined || e === null) {
       throw new Error('e is undefined');
     }

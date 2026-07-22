@@ -45,10 +45,10 @@ import { Sun, SunBody } from './SunBody';
  */
 export class SolarSystem {
   /** Registry of all bodies by ID (lowercase) */
-  private static bodies_: Map<string, CelestialBody> = new Map();
+  private static readonly bodies_: Map<string, CelestialBody> = new Map();
 
   /** Registry of all bodies by name (lowercase) */
-  private static bodiesByName_: Map<string, CelestialBody> = new Map();
+  private static readonly bodiesByName_: Map<string, CelestialBody> = new Map();
 
   /** Whether the registry has been initialized */
   private static initialized_ = false;

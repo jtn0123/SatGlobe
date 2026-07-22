@@ -4,8 +4,8 @@ import { Line, LineColors, LineDescription } from './line';
 import { ServiceLocator } from '@app/engine/core/service-locator';
 
 export class SatRicLine extends Line {
-  sat: Satellite;
-  private coordinate_: 'R' | 'I' | 'C';
+  readonly sat: Satellite;
+  private readonly coordinate_: 'R' | 'I' | 'C';
 
   private readonly lineLength = 2;
 

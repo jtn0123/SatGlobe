@@ -50,7 +50,7 @@ export interface BuildConfig {
  * Loads and manages the build configuration
  */
 export class ConfigManager {
-  private config: BuildConfig;
+  private readonly config: BuildConfig;
   private profileName_: string | null = null;
   private cliMode_: BuildConfig['mode'] | null = null;
   private cliWatch_ = false;

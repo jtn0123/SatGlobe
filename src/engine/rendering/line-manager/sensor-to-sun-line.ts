@@ -4,7 +4,7 @@ import { Line, LineColors, LineDescription } from './line';
 import { ServiceLocator } from '@app/engine/core/service-locator';
 
 export class SensorToSunLine extends Line {
-  private sensor_: DetailedSensor;
+  private readonly sensor_: DetailedSensor;
 
   constructor(sensor: DetailedSensor) {
     super();

@@ -190,7 +190,7 @@ export class Ellipsoid {
     gl.bindVertexArray(null);
   }
 
-  private shaders_ = {
+  private readonly shaders_ = {
     frag: glsl`#version 300 es
       precision highp float;
       out vec4 fragColor;

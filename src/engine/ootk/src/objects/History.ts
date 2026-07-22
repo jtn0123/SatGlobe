@@ -41,7 +41,7 @@ export interface HistoryEntry<T> {
  */
 export class History<T> {
   private entries_: HistoryEntry<T>[] = [];
-  private config_: HistoryConfig;
+  private readonly config_: HistoryConfig;
   private lastSampleTime_ = 0;
 
   constructor(config?: HistoryConfig) {

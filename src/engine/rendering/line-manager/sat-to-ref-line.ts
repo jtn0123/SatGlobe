@@ -6,8 +6,8 @@ import { Line, LineDescription } from './line';
 import { ServiceLocator } from '@app/engine/core/service-locator';
 
 export class SatToRefLine extends Line {
-  private sat: Satellite | OemSatellite;
-  private ref2_: vec3;
+  private readonly sat: Satellite | OemSatellite;
+  private readonly ref2_: vec3;
 
   constructor(sat: Satellite | OemSatellite, ref2: vec3, color: vec4) {
     super();

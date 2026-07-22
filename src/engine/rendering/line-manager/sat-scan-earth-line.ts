@@ -5,7 +5,7 @@ import { Line, LineColors, LineDescription } from './line';
 import { ServiceLocator } from '@app/engine/core/service-locator';
 
 export class SatScanEarthLine extends Line {
-  private sat: Satellite;
+  private readonly sat: Satellite;
   private lat_: Degrees = -90 as Degrees;
   private lon_: Degrees = 0 as Degrees;
 

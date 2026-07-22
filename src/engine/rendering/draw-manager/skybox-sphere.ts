@@ -30,7 +30,7 @@ export class SkyBoxSphere {
   private isTexturesReady_: boolean;
   private isReadyGraySkybox_ = false;
   private mvMatrix_ = mat4.create();
-  private nMatrix_ = mat3.create();
+  private readonly nMatrix_ = mat3.create();
   private settings_: SettingsManager;
   private textureGraySkybox_: WebGLTexture;
   mesh: Mesh;
@@ -212,7 +212,7 @@ export class SkyBoxSphere {
    *
    * Keep this at the bottom of the file for glsl color coding
    */
-  private shaders_ = {
+  private readonly shaders_ = {
     frag: glsl`
         uniform sampler2D u_texMilkyWay;
 

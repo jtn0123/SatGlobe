@@ -131,8 +131,8 @@ export class SensorFovMesh extends CustomMesh {
     gl.disable(gl.BLEND);
   }
 
-  private verticesTmp_: number[] = [];
-  private indicesTmp_: number[] = [];
+  private readonly verticesTmp_: number[] = [];
+  private readonly indicesTmp_: number[] = [];
   private vertexCount_ = 0;
 
   private createHorzGeometry(

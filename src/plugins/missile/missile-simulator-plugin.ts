@@ -311,11 +311,11 @@ export class MissileSimulatorPlugin extends KeepTrackPlugin {
     EventBus.getInstance().on(EventBusEvent.updateLoop, this.updateLoop_.bind(this));
   }
 
-  private searchForRvs_ = (): void => {
+  private readonly searchForRvs_ = (): void => {
     ServiceLocator.getUiManager().doSearch('RV_');
   };
 
-  private clearMissiles_ = (): void => {
+  private readonly clearMissiles_ = (): void => {
     missileManager.clearMissiles();
     this.updateStatus_();
   };
@@ -571,20 +571,20 @@ export class MissileSimulatorPlugin extends KeepTrackPlugin {
     }
   }
 
-  private missileChange_ = (): void => {
+  private readonly missileChange_ = (): void => {
     const isPreset = Number.parseFloat((<HTMLInputElement>getEl('ms-type')).value) !== 0;
 
     getEl('ms-custom-opt')!.style.display = isPreset ? 'none' : 'block';
   };
 
-  private msTargetChange_ = (): void => {
+  private readonly msTargetChange_ = (): void => {
     const isCustom = Number.parseInt((<HTMLInputElement>getEl('ms-target')).value, 10) === CUSTOM_TARGET_ID;
 
     getEl('ms-tgt-holder-lat')!.style.display = isCustom ? '' : 'none';
     getEl('ms-tgt-holder-lon')!.style.display = isCustom ? '' : 'none';
   };
 
-  private msAttackerChange_ = (): void => {
+  private readonly msAttackerChange_ = (): void => {
     const site = getAttackerSite(Number.parseInt((<HTMLInputElement>getEl('ms-attacker')).value, 10));
 
     this.isSub_ = site?.isSub ?? false;

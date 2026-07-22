@@ -68,7 +68,7 @@ export class DeepSpaceSatellite extends ChebyshevBody {
   protected readonly NUM_WIDTH_SEGS = 4;
 
   protected interpolator_: ChebyshevInterpolator;
-  private config_: DeepSpaceSatelliteConfig;
+  private readonly config_: DeepSpaceSatelliteConfig;
 
   type: SpaceObjectType = SpaceObjectType.PAYLOAD;
 
