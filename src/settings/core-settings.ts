@@ -84,9 +84,9 @@ export class CoreSettings {
 
   // Installation and Environment
   /**
-   * The relative path to the installation directory. This is necessary if the application is
-   * a folder inside the main folder of the webserver.
-   * @deprecated This should be removed in favor of dynamic path resolution in the future.
+   * Asset base path for deployments hosted below the webserver root.
+   * This remains part of the self-hosting and offline-loading contract until every asset loader
+   * uses a centralized runtime base URL.
    */
   installDirectory = '';
   /** Flag to determine if external data is available */

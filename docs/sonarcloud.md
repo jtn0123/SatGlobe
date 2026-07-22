@@ -19,6 +19,18 @@ The project-admin settings under **Administration > General Settings > Analysis 
 
 No other rule-wide exclusions are permitted. A new exception must name the exact rule and narrowest path, explain why the rule is inapplicable, identify the compensating test or gate, and be reviewed in source control before the matching SonarCloud setting changes.
 
+### Compatibility contracts
+
+`typescript:S1874` is resolved in source rather than excluded. A symbol is marked deprecated only when callers have a behaviorally equivalent, supported replacement. Three widely used contracts had aspirational deprecation labels even though their suggested replacements could not serve every current caller:
+
+| Contract | Why it remains current | Retirement criterion |
+|---|---|---|
+| `DetailedSensor` scalar FOV fields | These fields are the constructor, serialized custom-sensor, worker, and mutable UI data shape. `getFieldOfView()` and `getFaceFovs()` only aggregate an attached OOTK sensor and may return `undefined`. | Migrate persisted custom sensors, worker messages, editors, and all scalar mutations to a versioned structured-FOV schema with legacy-data loading tests. |
+| `CoreSettings.installDirectory` | Self-hosted and offline deployments use it as the asset base when SatGlobe is served below the webserver root. Browser-relative resolution is not equivalent for every loader. | Route every catalog, texture, mesh, audio, worker, and fallback URL through one tested runtime base-URL resolver. |
+| Bundled `sensorGroups` | Synchronous consumers use the bundled list, and `fetchSensorGroups()` itself returns it when the API is empty or unavailable. | Convert all consumers to an async provider while retaining an offline/API-failure fallback with equivalent startup behavior. |
+
+Removing those inaccurate annotations is a contract correction, not a Sonar exception. Their characterization tests remain the change-safety control until the retirement criteria are implemented.
+
 The following line-level disposition is kept next to the affected command with `NOSONAR`; it is not a rule-wide or path-wide exclusion:
 
 | Rule | Path | Rationale and compensating control |

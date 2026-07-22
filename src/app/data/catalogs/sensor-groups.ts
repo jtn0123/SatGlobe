@@ -24,7 +24,7 @@ export const fetchSensorGroups = async (): Promise<SensorGroup[]> => {
 };
 
 /**
- * @deprecated Migrate to fetchSensorGroups
+ * Bundled groups used by synchronous consumers and as the offline/API-empty fallback.
  */
 export const sensorGroups: SensorGroup[] = [
   {
