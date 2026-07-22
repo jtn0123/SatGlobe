@@ -84,11 +84,11 @@ describe('MouseInput handlers', () => {
     }
   });
 
+  afterEach(() => vi.restoreAllMocks());
+
   it('identifies non-numeric screen coordinates as a caller type error', () => {
     expect(() => InputManager.getEarthScreenPoint(Number.NaN, 0, camera)).toThrow(TypeError);
   });
-
-  afterEach(() => vi.restoreAllMocks());
 
   describe('canvasWheel_', () => {
     it('forwards a pixel-mode wheel delta to the camera zoom', () => {
