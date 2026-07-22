@@ -10,9 +10,12 @@ export function extractModuleSpecifiers(source: string, fileName = 'source.ts'):
     if ((ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) &&
       node.moduleSpecifier && ts.isStringLiteralLike(node.moduleSpecifier)) {
       specifiers.push(node.moduleSpecifier.text);
-    } else if (ts.isCallExpression(node) && node.expression.kind === ts.SyntaxKind.ImportKeyword &&
-      node.arguments.length === 1 && ts.isStringLiteralLike(node.arguments[0])) {
-      specifiers.push(node.arguments[0].text);
+    } else if (ts.isCallExpression(node) && node.expression.kind === ts.SyntaxKind.ImportKeyword) {
+      const [specifier] = node.arguments;
+
+      if (specifier && ts.isStringLiteralLike(specifier)) {
+        specifiers.push(specifier.text);
+      }
     }
 
     ts.forEachChild(node, visit);

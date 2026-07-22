@@ -10,6 +10,7 @@ describe('extractModuleSpecifiers', () => {
       import value from '@app/app/static';
       export { other } from '@app/plugins/re-export';
       const lazy = import('@app/settings/dynamic');
+      const data = import('@app/data/catalog.json', { with: { type: 'json' } });
     `;
 
     expect(extractModuleSpecifiers(source)).toEqual([
@@ -17,6 +18,7 @@ describe('extractModuleSpecifiers', () => {
       '@app/app/static',
       '@app/plugins/re-export',
       '@app/settings/dynamic',
+      '@app/data/catalog.json',
     ]);
   });
 });

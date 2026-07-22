@@ -79,11 +79,15 @@ export class UiManager {
 
   static fullscreenToggle() {
     if (!document.fullscreenElement) {
-      document.documentElement?.requestFullscreen().catch((error: unknown) => {
-        // Might fail on some browsers
-        errorManagerInstance.debug(error instanceof Error ? error.message : 'Fullscreen request failed.');
-      });
-    } else {
+      const fullscreenElement = document.documentElement;
+
+      if (typeof fullscreenElement?.requestFullscreen === 'function') {
+        fullscreenElement.requestFullscreen().catch((error: unknown) => {
+          // Might fail on some browsers
+          errorManagerInstance.debug(error instanceof Error ? error.message : 'Fullscreen request failed.');
+        });
+      }
+    } else if (typeof document.exitFullscreen === 'function') {
       document.exitFullscreen().catch((error: unknown) => {
         errorManagerInstance.debug(error instanceof Error ? error.message : 'Exiting fullscreen failed.');
       });
