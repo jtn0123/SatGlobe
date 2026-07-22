@@ -207,9 +207,6 @@ export const setupStandardEnvironment = (dependencies?: Constructor<KeepTrackPlu
     const instance = new Dependency();
 
     instance.init();
-    if (instance.singletonValue) {
-      Container.getInstance().registerSingleton(instance.singletonValue, instance);
-    }
   });
 };
 

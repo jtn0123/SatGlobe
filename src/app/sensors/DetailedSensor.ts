@@ -432,8 +432,7 @@ export class DetailedSensor extends GroundStation {
   }
 
   /**
-   * Legacy FOV checking using min/max azimuth/elevation/range bounds.
-   * @deprecated Use isRaeInFov() which delegates to ootk sensor.
+   * Scalar-bound fallback used when no attached OOTK sensor is available.
    */
   private checkFovBoundsLegacy_(az: Degrees, el: Degrees, rng: Kilometers): boolean {
     // Primary FOV check

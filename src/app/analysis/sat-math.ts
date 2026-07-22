@@ -507,8 +507,7 @@ export abstract class SatMath {
 
   /**
    * Calculates the angle between 2 satellites and the Sun.
-   * @deprecated Use sat1.sunAngleTo(sat2, sunPosition, date) instead. Note: this method uses pre-propagated
-   * positions, while the ootk method propagates to the specified date.
+   * Uses the caller's pre-propagated positions; unlike `sunAngleTo`, it must not propagate to a new date.
    */
   static getAngleBetweenSatellitesAndSun(sat1: Satellite, sat2: Satellite, sunVec: TemeVec3): number {
     const { position: pos1 } = sat1;
@@ -539,9 +538,7 @@ export abstract class SatMath {
    * @param simulationTime The current simulation time.
    * @returns A string indicating the direction of the satellite's movement ('N' for north, 'S' for south, or 'Error' if there was an error in the calculation).
    */
-  /**
-   * @deprecated Use sat.getDirection() instead.
-   */
+  /** Safely resolves direction for UI workflows that represent propagation failures as `Error`. */
   static getDirection(sat: Satellite, simulationTime: Date): string {
     try {
       return sat.getDirection(simulationTime);
@@ -750,8 +747,8 @@ export abstract class SatMath {
    * The function returns an array of three numbers representing the x, y, and z components of the sun's direction vector.
    * @param jd Julian Day
    * @returns ECI position of the Sun
-   * @deprecated For new code, use Sun.position(epoch) from ootk which returns a Vector3D.
-   * This function is retained for caching compatibility with KeepTrack's scene.
+   * This scene adapter intentionally reuses KeepTrack's cached Sun position.
+   * Callers that do not need that cache should use `Sun.position(epoch)` from ootk.
    */
   static getSunDirection(jd: number): EciArr3 {
     if (!jd) {

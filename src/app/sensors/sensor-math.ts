@@ -52,9 +52,7 @@ export type TearrData = {
 };
 
 export class SensorMath {
-  /**
-   * @deprecated - Use ootk instead
-   */
+  /** Builds the app's formatted, FOV-filtered rise/set look-angle row. */
   static getTearData(now: Date, satrec: SatelliteRecord, sensors: DetailedSensor[], isRiseSetLookangles = false, isMaxElFound = false): TearrData {
     // TODO: Instead of doing the first sensor this should return an array of TEARRs for all sensors.
     const sensor = sensors[0];
@@ -150,9 +148,7 @@ export class SensorMath {
     };
   }
 
-  /**
-   * @deprecated - Use ootk instead
-   */
+  /** Builds the app's current TEARR snapshot, including sensor-manager validation and UI state. */
   static getTearr(sat: Satellite, sensors: DetailedSensor[], propTime?: Date): TearrData {
     const timeManagerInstance = ServiceLocator.getTimeManager();
 

@@ -27,22 +27,30 @@
  */
 export class NewTabUtils {
   static varToNewTab(variable: object, name = 'Variable Details') {
-    const win = window.open('text/plain', 'variable-details');
+    const win = window.open('', 'variable-details');
 
     if (win) {
       const formattedSettings = Object.entries(variable)
         .map(([key, value]) => `${key}: ${JSON.stringify(value, null, 2)}`)
         .join('\n');
+      const slug = name.toLowerCase().trim().replace(/\s+/gu, '-');
 
-      // Create a download button at the top so you can download the settings as a .txt file
-      const downloadLink = `<a href="data:text/plain;charset=utf-8,${encodeURIComponent(formattedSettings)}" ` +
-        `download="${name.toLowerCase().replace(/\s+/gu, '-')}.txt">Download ${name}</a><br><br>`;
+      const downloadLink = win.document.createElement('a');
+      const details = win.document.createElement('pre');
 
-      win.document.write(downloadLink);
+      downloadLink.href = `data:text/plain;charset=utf-8,${encodeURIComponent(formattedSettings)}`;
+      downloadLink.download = `${slug}.txt`;
+      downloadLink.textContent = `Download ${name}`;
+      details.textContent = formattedSettings;
 
-      win.document.write(`<plaintext>${formattedSettings}`);
+      win.document.body.replaceChildren(
+        downloadLink,
+        win.document.createElement('br'),
+        win.document.createElement('br'),
+        details,
+      );
       win.document.title = name;
-      win.history.replaceState(null, name, `/${name.toLowerCase().replace(/\s+/gu, '-')}.txt`);
+      win.history.replaceState(null, name, `/${encodeURIComponent(slug)}.txt`);
     }
   }
 }

@@ -306,8 +306,6 @@ export class CatalogManager {
   }
 
   /**
-   * @deprecated - Stars are not currently working
-   *
    * Converts a star name to its corresponding ID within a given range.
    * @param starName - The name of the star.
    * @param starIndex1 - The starting index of the range.
