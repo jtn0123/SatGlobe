@@ -42,25 +42,25 @@ export class RingGeometry extends BufferGeometry {
     super({
       type: 'RingGeometry',
       attributes: {
-        position: new BufferAttribute({
-          location: 0,
-          vertices: 3,
-          stride: Float32Array.BYTES_PER_ELEMENT * 8,
-          offset: 0,
-        }),
-        normal: new BufferAttribute({
-          location: 1,
-          vertices: 3,
-          stride: Float32Array.BYTES_PER_ELEMENT * 8,
-          offset: Float32Array.BYTES_PER_ELEMENT * 3,
-        }),
-        uv: new BufferAttribute({
-          location: 2,
-          vertices: 2,
-          stride: Float32Array.BYTES_PER_ELEMENT * 8,
-          offset: Float32Array.BYTES_PER_ELEMENT * 6,
-        }),
-        ...attributes,
+          position: new BufferAttribute({
+            location: 0,
+            vertices: 3,
+            stride: Float32Array.BYTES_PER_ELEMENT * 8,
+            offset: 0,
+          }),
+          normal: new BufferAttribute({
+            location: 1,
+            vertices: 3,
+            stride: Float32Array.BYTES_PER_ELEMENT * 8,
+            offset: Float32Array.BYTES_PER_ELEMENT * 3,
+          }),
+          uv: new BufferAttribute({
+            location: 2,
+            vertices: 2,
+            stride: Float32Array.BYTES_PER_ELEMENT * 8,
+            offset: Float32Array.BYTES_PER_ELEMENT * 6,
+          }),
+          ...attributes,
       },
     });
     this.gl = gl;

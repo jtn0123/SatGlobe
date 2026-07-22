@@ -327,7 +327,7 @@ export class SensorTimeline extends KeepTrackPlugin {
         });
 
         getEl('sensor-timeline-setting-interval')!.addEventListener('change', () => {
-          this.angleCalculationInterval_ = Number.parseFloat((<HTMLInputElement>getEl('sensor-timeline-setting-bad-length')).value) as Seconds;
+          this.angleCalculationInterval_ = Number.parseFloat((<HTMLInputElement>getEl('sensor-timeline-setting-interval')).value) as Seconds;
           this.ctxStatic_.reset();
           this.updateTimeline();
         });
