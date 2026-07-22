@@ -52,7 +52,7 @@ describe('fovPredictionWorker', () => {
 
     expect(complete).toBeDefined();
     expect(complete!.minutesToEntry).toBeInstanceOf(Float32Array);
-    expect(complete!.minutesToEntry!.length).toBe(1);
+    expect(complete!.minutesToEntry!).toHaveLength(1);
   });
 
   it('emits progressive INCREMENTAL_UPDATE snapshots during a multi-batch sweep', async () => {
@@ -80,7 +80,7 @@ describe('fovPredictionWorker', () => {
     expect(partials.length).toBeGreaterThan(0);
     expect(partials[0].minutesToEntry).toBeInstanceOf(Float32Array);
     expect(complete).toBeDefined();
-    expect(complete!.minutesToEntry!.length).toBe(3400);
+    expect(complete!.minutesToEntry!).toHaveLength(3400);
   });
 
   it('handles UPDATE_TIME and CANCEL without throwing', async () => {

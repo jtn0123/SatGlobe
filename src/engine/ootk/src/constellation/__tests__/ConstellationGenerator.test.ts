@@ -16,19 +16,19 @@ describe('ConstellationGenerator', () => {
           testEpoch,
         );
 
-        expect(sats.length).toBe(24);
+        expect(sats).toHaveLength(24);
       });
 
       it('should generate correct number of satellites for 6/2/0 constellation', () => {
         const sats = ConstellationGenerator.walker(550 as Kilometers, 53 as Degrees, 6, 2, 0, testEpoch);
 
-        expect(sats.length).toBe(6);
+        expect(sats).toHaveLength(6);
       });
 
       it('should generate single satellite for 1/1/0 constellation', () => {
         const sats = ConstellationGenerator.walker(550 as Kilometers, 53 as Degrees, 1, 1, 0, testEpoch);
 
-        expect(sats.length).toBe(1);
+        expect(sats).toHaveLength(1);
       });
 
       it('should generate satellites with correct naming convention', () => {
@@ -189,28 +189,28 @@ describe('ConstellationGenerator', () => {
       it('should handle polar orbit (90 degrees)', () => {
         const sats = ConstellationGenerator.walker(550 as Kilometers, 90 as Degrees, 4, 2, 0, testEpoch);
 
-        expect(sats.length).toBe(4);
+        expect(sats).toHaveLength(4);
         expect(Math.abs(sats[0].inclination - 90)).toBeLessThan(0.1);
       });
 
       it('should handle retrograde orbit (>90 degrees)', () => {
         const sats = ConstellationGenerator.walker(550 as Kilometers, 120 as Degrees, 4, 2, 0, testEpoch);
 
-        expect(sats.length).toBe(4);
+        expect(sats).toHaveLength(4);
         expect(Math.abs(sats[0].inclination - 120)).toBeLessThan(0.1);
       });
 
       it('should handle equatorial orbit (0 degrees)', () => {
         const sats = ConstellationGenerator.walker(550 as Kilometers, 0 as Degrees, 4, 2, 0, testEpoch);
 
-        expect(sats.length).toBe(4);
+        expect(sats).toHaveLength(4);
         expect(sats[0].inclination).toBeLessThan(0.1);
       });
 
       it('should handle high altitude GEO-like orbit', () => {
         const sats = ConstellationGenerator.walker(35786 as Kilometers, 0 as Degrees, 3, 3, 0, testEpoch);
 
-        expect(sats.length).toBe(3);
+        expect(sats).toHaveLength(3);
         // GEO SMA is about 42164 km
         expect(sats[0].semiMajorAxis).toBeGreaterThan(40000);
       });
@@ -222,26 +222,26 @@ describe('ConstellationGenerator', () => {
       it('should parse basic T/P/F pattern with separate parameters', () => {
         const sats = ConstellationGenerator.fromPattern('24/3/1', testEpoch, 550 as Kilometers, 53 as Degrees);
 
-        expect(sats.length).toBe(24);
+        expect(sats).toHaveLength(24);
       });
 
       it('should parse extended altitude:inclination:T/P/F pattern', () => {
         const sats = ConstellationGenerator.fromPattern('550:53:24/3/1', testEpoch);
 
-        expect(sats.length).toBe(24);
+        expect(sats).toHaveLength(24);
       });
 
       it('should handle whitespace in pattern', () => {
         const sats = ConstellationGenerator.fromPattern('  550:53:6/2/0  ', testEpoch);
 
-        expect(sats.length).toBe(6);
+        expect(sats).toHaveLength(6);
       });
 
       it('should prefer explicit parameters over pattern values', () => {
         // Pattern says 550:53, but we provide 600:60
         const sats = ConstellationGenerator.fromPattern('550:53:6/2/0', testEpoch, 600 as Kilometers, 60 as Degrees);
 
-        expect(sats.length).toBe(6);
+        expect(sats).toHaveLength(6);
         // Should use the explicit parameters
         expect(sats[0].semiMajorAxis).toBeGreaterThan(6371 + 590); // ~600 km altitude
         expect(Math.abs(sats[0].inclination - 60)).toBeLessThan(1);
@@ -304,7 +304,7 @@ describe('ConstellationGenerator', () => {
       it('should accept minimum valid altitude (160 km)', () => {
         const sats = ConstellationGenerator.walker(160 as Kilometers, 53 as Degrees, 1, 1, 0, testEpoch);
 
-        expect(sats.length).toBe(1);
+        expect(sats).toHaveLength(1);
       });
     });
 
@@ -325,8 +325,8 @@ describe('ConstellationGenerator', () => {
         const sats0 = ConstellationGenerator.walker(550 as Kilometers, 0 as Degrees, 1, 1, 0, testEpoch);
         const sats180 = ConstellationGenerator.walker(550 as Kilometers, 180 as Degrees, 1, 1, 0, testEpoch);
 
-        expect(sats0.length).toBe(1);
-        expect(sats180.length).toBe(1);
+        expect(sats0).toHaveLength(1);
+        expect(sats180).toHaveLength(1);
       });
     });
 
@@ -380,7 +380,7 @@ describe('ConstellationGenerator', () => {
       it('should accept when totalSats is divisible by planes', () => {
         const sats = ConstellationGenerator.walker(550 as Kilometers, 53 as Degrees, 12, 4, 0, testEpoch);
 
-        expect(sats.length).toBe(12);
+        expect(sats).toHaveLength(12);
       });
     });
 
@@ -406,7 +406,7 @@ describe('ConstellationGenerator', () => {
       it('should accept maximum valid phasing (planes - 1)', () => {
         const sats = ConstellationGenerator.walker(550 as Kilometers, 53 as Degrees, 6, 3, 2, testEpoch);
 
-        expect(sats.length).toBe(6);
+        expect(sats).toHaveLength(6);
       });
     });
   });
@@ -415,7 +415,7 @@ describe('ConstellationGenerator', () => {
     it('should generate GPS-like constellation (24/6/1)', () => {
       const sats = ConstellationGenerator.walker(20200 as Kilometers, 55 as Degrees, 24, 6, 1, testEpoch);
 
-      expect(sats.length).toBe(24);
+      expect(sats).toHaveLength(24);
       expect(Math.abs(sats[0].inclination - 55)).toBeLessThan(0.5);
       // MEO altitude should give SMA around 26,500 km
       expect(sats[0].semiMajorAxis).toBeGreaterThan(26000);
@@ -424,14 +424,14 @@ describe('ConstellationGenerator', () => {
     it('should generate Iridium-like constellation (66/6/2)', () => {
       const sats = ConstellationGenerator.walker(780 as Kilometers, 86.4 as Degrees, 66, 6, 2, testEpoch);
 
-      expect(sats.length).toBe(66);
+      expect(sats).toHaveLength(66);
       expect(Math.abs(sats[0].inclination - 86.4)).toBeLessThan(0.5);
     });
 
     it('should generate Galileo-like constellation (24/3/1)', () => {
       const sats = ConstellationGenerator.walker(23222 as Kilometers, 56 as Degrees, 24, 3, 1, testEpoch);
 
-      expect(sats.length).toBe(24);
+      expect(sats).toHaveLength(24);
       expect(Math.abs(sats[0].inclination - 56)).toBeLessThan(0.5);
     });
 
@@ -440,7 +440,7 @@ describe('ConstellationGenerator', () => {
       // Using smaller numbers for test: 22/11/1
       const sats = ConstellationGenerator.fromPattern('550:53:22/11/1', testEpoch);
 
-      expect(sats.length).toBe(22);
+      expect(sats).toHaveLength(22);
     });
   });
 });

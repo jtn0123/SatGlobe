@@ -56,11 +56,9 @@ test.describe('Orbit-line ECF stability', () => {
       },
       { timeout: 20_000 },
     );
-    await page.waitForTimeout(4_000);
-
-    // Find a near-equatorial geostationary satellite by position magnitude (robust
-    // to catalog contents; avoids depending on orbital-element getters).
-    const geoId = await page.evaluate(() => {
+    // Wait until the position worker exposes a near-equatorial geostationary
+    // satellite, instead of assuming an arbitrary startup delay is sufficient.
+    const findGeoId = () => page.evaluate(() => {
       const api = (window as unknown as EvalWindow).keepTrack.api;
       const cat = api.getCatalogManager();
       const pd = api.getDotsManager().positionData;
@@ -83,6 +81,9 @@ test.describe('Orbit-line ECF stability', () => {
       return -1;
     });
 
+    await expect.poll(findGeoId, { timeout: 20_000 }).toBeGreaterThanOrEqual(0);
+    const geoId = await findGeoId();
+
     expect(geoId, 'a geostationary satellite should exist in the catalog').toBeGreaterThanOrEqual(0);
 
     await page.evaluate((id) => {
@@ -91,7 +92,16 @@ test.describe('Orbit-line ECF stability', () => {
       api.getPluginByName('SelectSatManager').selectSat(id);
       api.getTimeManager().changePropRate(1);
     }, geoId);
-    await page.waitForTimeout(2_500);
+    await page.waitForFunction((id) => {
+      const api = (window as unknown as EvalWindow).keepTrack.api;
+      const orbitManager = api.getOrbitManager();
+      const buffer = orbitManager.getBufferData(id);
+      const anchor = orbitManager.orbitAnchors_.get(id);
+      const dot = api.getDotsManager().getRenderedPositionArray(id);
+
+      return !!buffer && buffer.length >= 8 && !!anchor && dot.length >= 3 &&
+        [...anchor.slice(0, 3), ...dot.slice(0, 3)].every(Number.isFinite);
+    }, geoId, { timeout: 20_000 });
 
     // Sample a handful of frames, reading buffer + anchor + gmst + dot atomically
     // per frame so they are mutually consistent.

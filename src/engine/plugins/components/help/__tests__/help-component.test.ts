@@ -9,13 +9,6 @@ import { IHelpConfig } from '@app/engine/plugins/core/plugin-capabilities';
 import { adviceManagerInstance } from '@app/engine/utils/adviceManager';
 import { Mock, vi } from 'vitest';
 
-// Mock adviceManager
-vi.mock('@app/engine/utils/adviceManager', () => ({
-  adviceManagerInstance: {
-    showAdvice: vi.fn(),
-  },
-}));
-
 describe('HelpComponent', () => {
   let eventBus: EventBus;
 
@@ -26,8 +19,10 @@ describe('HelpComponent', () => {
 
     // Clear all mocks including call counts
     vi.clearAllMocks();
-    (adviceManagerInstance.showAdvice as Mock).mockClear();
+    vi.spyOn(adviceManagerInstance, 'showAdvice').mockImplementation(() => undefined);
   });
+
+  afterEach(() => vi.restoreAllMocks());
 
   const createConfig = (overrides: Partial<IHelpConfig> = {}): IHelpConfig => ({
     title: 'Test Help Title',
@@ -80,7 +75,7 @@ describe('HelpComponent', () => {
   });
 
   describe('help handling', () => {
-    it.skip('should show help when plugin is active', () => {
+    it('should show help when plugin is active', () => {
       const showAdviceMock = adviceManagerInstance.showAdvice as Mock;
       const callCountBefore = showAdviceMock.mock.calls.length;
 
@@ -117,7 +112,7 @@ describe('HelpComponent', () => {
         (call) => (call as [string, string])[0] === 'Unique Inactive Title',
       );
 
-      expect(callsWithOurArgs.length).toBe(0);
+      expect(callsWithOurArgs).toHaveLength(0);
     });
 
     it('should return true from event handler when help is shown', () => {
@@ -141,7 +136,7 @@ describe('HelpComponent', () => {
   });
 
   describe('showHelp', () => {
-    it.skip('should show help using advice manager', () => {
+    it('should show help using advice manager', () => {
       const isActive = vi.fn().mockReturnValue(true);
       const component = new HelpComponent('test-plugin', createConfig({
         title: 'Direct Show Title',
@@ -156,7 +151,7 @@ describe('HelpComponent', () => {
       );
     });
 
-    it.skip('should be callable without initialization', () => {
+    it('should be callable without initialization', () => {
       const isActive = vi.fn().mockReturnValue(true);
       const component = new HelpComponent('test-plugin', createConfig(), isActive);
 
@@ -200,7 +195,7 @@ describe('HelpComponent', () => {
       expect(isActive).toHaveBeenCalledTimes(3);
     });
 
-    it.skip('should respond to changing active state', () => {
+    it('should respond to changing active state', () => {
       const showAdviceMock = adviceManagerInstance.showAdvice as Mock;
       const uniqueTitle = 'Changing State Test Title';
 
@@ -221,7 +216,7 @@ describe('HelpComponent', () => {
         (call) => (call as [string, string])[0] === uniqueTitle,
       );
 
-      expect(callsWithOurTitle.length).toBe(0);
+      expect(callsWithOurTitle).toHaveLength(0);
 
       // Change state to active
       isActiveState = true;
@@ -232,7 +227,7 @@ describe('HelpComponent', () => {
       callsWithOurTitle = showAdviceMock.mock.calls.filter(
         (call) => (call as [string, string])[0] === uniqueTitle,
       );
-      expect(callsWithOurTitle.length).toBe(1);
+      expect(callsWithOurTitle).toHaveLength(1);
 
       // Change state back to inactive
       isActiveState = false;
@@ -243,7 +238,7 @@ describe('HelpComponent', () => {
       callsWithOurTitle = showAdviceMock.mock.calls.filter(
         (call) => (call as [string, string])[0] === uniqueTitle,
       );
-      expect(callsWithOurTitle.length).toBe(1); // Still only 1 call with our title
+      expect(callsWithOurTitle).toHaveLength(1); // Still only 1 call with our title
     });
   });
 });

@@ -139,11 +139,11 @@ describe('ReportsPlugin_class', () => {
         generate: () => ({ filename: 'test', header: '', body: '' }),
       });
 
-      expect(ReportsPlugin.getRegisteredReports().length).toBe(countBefore + 1);
+      expect(ReportsPlugin.getRegisteredReports()).toHaveLength(countBefore + 1);
 
       ReportsPlugin.unregisterReport('test-report');
 
-      expect(ReportsPlugin.getRegisteredReports().length).toBe(countBefore);
+      expect(ReportsPlugin.getRegisteredReports()).toHaveLength(countBefore);
     });
 
     it('should mark sensor-requiring reports correctly', () => {
@@ -239,7 +239,7 @@ describe('ReportsPlugin report generation', () => {
 
     expect(data.header).toContain('Visibility Windows');
     expect(data.table!.headers).toContain('Pass #');
-    expect(data.table!.rows.length).toBe(1);
+    expect(data.table!.rows).toHaveLength(1);
   });
 
   it('visibility-windows generator throws without a sensor', () => {

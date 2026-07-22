@@ -218,17 +218,17 @@ describe('buildColorDataArrays', () => {
     const data = buildColorDataArrays(catalog);
     const n = catalog.length;
 
-    expect(data.type.length).toBe(n);
-    expect(data.objFlags.length).toBe(n);
-    expect(data.country.length).toBe(n);
-    expect(data.source.length).toBe(n);
-    expect(data.apogee.length).toBe(n);
-    expect(data.perigee.length).toBe(n);
-    expect(data.inclination.length).toBe(n);
-    expect(data.eccentricity.length).toBe(n);
-    expect(data.rcs.length).toBe(n);
-    expect(data.specialColor.length).toBe(n * 4);
-    expect(data.mission.length).toBe(n);
+    expect(data.type).toHaveLength(n);
+    expect(data.objFlags).toHaveLength(n);
+    expect(data.country).toHaveLength(n);
+    expect(data.source).toHaveLength(n);
+    expect(data.apogee).toHaveLength(n);
+    expect(data.perigee).toHaveLength(n);
+    expect(data.inclination).toHaveLength(n);
+    expect(data.eccentricity).toHaveLength(n);
+    expect(data.rcs).toHaveLength(n);
+    expect(data.specialColor).toHaveLength(n * 4);
+    expect(data.mission).toHaveLength(n);
   });
 
   it('should export TRACKED_COUNTRIES set', () => {
@@ -791,8 +791,8 @@ describe('Color Worker Parity', () => {
       const output = getLastColorOutput();
 
       expect(output).not.toBeNull();
-      expect(output!.colorData.length).toBe(testCatalog.length * 4);
-      expect(output!.pickableData.length).toBe(testCatalog.length);
+      expect(output!.colorData).toHaveLength(testCatalog.length * 4);
+      expect(output!.pickableData).toHaveLength(testCatalog.length);
     });
   });
 });

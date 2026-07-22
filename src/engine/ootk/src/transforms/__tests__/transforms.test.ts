@@ -75,7 +75,7 @@ it('should calculate the correct inertial azimuth for given latitude and inclina
   expect(result).toBeCloseTo(azimuthExpectedValue, 5); // Replace azimuthExpectedValue with the expected result
 });
 
-it('should handle edge case where latitude is 0', () => {
+it('should calculate inertial azimuth when latitude is 0', () => {
   const lat = 0 as Degrees; // Equator
   const inc = 45 as Degrees; // Example inclination
 
@@ -106,7 +106,7 @@ it('should calculate the correct inclination for given latitude and azimuth', ()
   expect(result).toBeCloseTo(expectedInclination, 5);
 });
 
-it('should handle edge case where latitude is 0', () => {
+it('should calculate inclination when latitude is 0', () => {
   const lat = 0 as Degrees; // Equator
   const az = 45 as Degrees; // Example azimuth
 
@@ -124,5 +124,4 @@ it('should throw RangeError when azimuth is out of bounds', () => {
 
   expect(func).toThrow(ValidationError);
 });
-
 

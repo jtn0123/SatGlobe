@@ -451,7 +451,7 @@ describe('DynamicGroundObject', () => {
       obj.getLLA(new Date('2025-12-24T01:00:00Z'));
 
       expect(obj.positionHistory).not.toBeNull();
-      expect(obj.positionHistory!.length).toBe(3);
+      expect(obj.positionHistory!).toHaveLength(3);
     });
 
     it('should enable history after construction', () => {
@@ -466,7 +466,7 @@ describe('DynamicGroundObject', () => {
       expect(obj.positionHistory).not.toBeNull();
 
       obj.getLLA(new Date('2025-12-24T01:00:00Z'));
-      expect(obj.positionHistory!.length).toBe(1);
+      expect(obj.positionHistory!).toHaveLength(1);
     });
 
     it('should disable history', () => {
@@ -494,7 +494,7 @@ describe('DynamicGroundObject', () => {
 
       const trail = obj.getTrail(10);
 
-      expect(trail.length).toBe(3);
+      expect(trail).toHaveLength(3);
     });
 
     it('should sample waypoints when count exceeds maxPoints', () => {
@@ -518,7 +518,7 @@ describe('DynamicGroundObject', () => {
 
       const trail = obj.getTrail(5);
 
-      expect(trail.length).toBe(5);
+      expect(trail).toHaveLength(5);
     });
 
     it('should return history entries when history is enabled', () => {
@@ -537,7 +537,7 @@ describe('DynamicGroundObject', () => {
 
       const trail = obj.getTrail(2);
 
-      expect(trail.length).toBe(2);
+      expect(trail).toHaveLength(2);
       // Should return the last 2 entries
       expect(trail[0].time.getTime()).toBe(new Date('2025-12-24T01:00:00Z').getTime());
       expect(trail[1].time.getTime()).toBe(new Date('2025-12-24T01:30:00Z').getTime());
@@ -799,13 +799,13 @@ describe('DynamicGroundObject', () => {
       });
 
       obj.getLLA(new Date('2025-12-24T01:00:00Z'));
-      expect(obj.positionHistory!.length).toBe(1);
+      expect(obj.positionHistory!).toHaveLength(1);
 
       const cloned = obj.clone();
 
       expect(cloned.isHistoryEnabled).toBe(true);
       expect(cloned.positionHistory!.config.maxLength).toBe(100);
-      expect(cloned.positionHistory!.length).toBe(0);
+      expect(cloned.positionHistory!).toHaveLength(0);
     });
 
     it('should clone history entries when cloneHistory is true', () => {
@@ -821,7 +821,7 @@ describe('DynamicGroundObject', () => {
 
       const cloned = obj.clone({ cloneHistory: true });
 
-      expect(cloned.positionHistory!.length).toBe(2);
+      expect(cloned.positionHistory!).toHaveLength(2);
     });
 
     it('should have independent history after cloning with cloneHistory', () => {
@@ -840,8 +840,8 @@ describe('DynamicGroundObject', () => {
       obj.getLLA(new Date('2025-12-24T01:30:00Z'));
 
       // Cloned should still have 1 entry
-      expect(obj.positionHistory!.length).toBe(2);
-      expect(cloned.positionHistory!.length).toBe(1);
+      expect(obj.positionHistory!).toHaveLength(2);
+      expect(cloned.positionHistory!).toHaveLength(1);
     });
 
     it('should not have history enabled if original had no history', () => {

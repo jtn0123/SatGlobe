@@ -35,7 +35,7 @@ describe('FieldInterpolator', () => {
     expect(interpolator.Float64List).toBeUndefined();
     interpolator.Float64List = new Float64Array([1, 2, 3]);
     expect(interpolator.Float64List).toBeInstanceOf(Float64Array);
-    expect(interpolator.Float64List.length).toBe(3);
+    expect(interpolator.Float64List).toHaveLength(3);
   });
 
   it('should implement interpolate method', () => {

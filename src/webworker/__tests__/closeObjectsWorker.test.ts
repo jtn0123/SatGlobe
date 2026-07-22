@@ -86,7 +86,7 @@ describe('closeObjectsWorker', () => {
 
     expect(verified).toBeDefined();
     expect(verified!.runId).toBe(1);
-    expect(verified!.results!.length).toBe(1);
+    expect(verified!.results!).toHaveLength(1);
     expect(verified!.results![0]).toMatchObject({ sat1Scc: '25544', sat2Scc: '25545' });
     expect(complete).toMatchObject({ typ: OUT.COMPLETE, runId: 1 });
   });
@@ -117,7 +117,7 @@ describe('closeObjectsWorker', () => {
 
     const verified = posted.find((p) => p.typ === OUT.VERIFIED);
 
-    expect(verified!.results!.length).toBe(0);
+    expect(verified!.results!).toHaveLength(0);
   });
 
   it('drops a pair whose miss distance exceeds the search radius', async () => {
@@ -128,7 +128,7 @@ describe('closeObjectsWorker', () => {
 
     const verified = posted.find((p) => p.typ === OUT.VERIFIED);
 
-    expect(verified!.results!.length).toBe(0);
+    expect(verified!.results!).toHaveLength(0);
   });
 
   it('skips a pair that shares an sccNum (same object, two data sources)', async () => {
@@ -141,7 +141,7 @@ describe('closeObjectsWorker', () => {
 
     const verified = posted.find((p) => p.typ === OUT.VERIFIED);
 
-    expect(verified!.results!.length).toBe(0);
+    expect(verified!.results!).toHaveLength(0);
   });
 
   it('emits an empty VERIFIED + COMPLETE when a satellite has a malformed TLE', async () => {
@@ -152,7 +152,7 @@ describe('closeObjectsWorker', () => {
       sats: [coSat('25544', 'A', TLE1_A, TLE2_A), coSat('00000', 'BAD', 'garbage', 'garbage')],
     }));
 
-    expect(posted.find((p) => p.typ === OUT.VERIFIED)!.results!.length).toBe(0);
+    expect(posted.find((p) => p.typ === OUT.VERIFIED)!.results!).toHaveLength(0);
     expect(posted.find((p) => p.typ === OUT.COMPLETE)).toBeDefined();
   });
 

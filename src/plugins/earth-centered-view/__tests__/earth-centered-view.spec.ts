@@ -5,6 +5,7 @@ test.describe('EarthCenteredView Plugin', () => {
   test('utility icon reflects camera state and activates on click', async ({ page }) => {
     await waitForAppReady(page, {
       plugins: { EarthCenteredView: { enabled: true } },
+      settings: { isMobileModeEnabled: true },
     });
 
     // Utility icon should be visible in the drawer utility footer
@@ -17,8 +18,15 @@ test.describe('EarthCenteredView Plugin', () => {
     // update loop, so it should already be selected
     await expect(utilityIcon).toHaveClass(/bmenu-item-selected/u, { timeout: 5_000 });
 
-    // Click the icon - should remain in earth-centered mode (re-activates)
-    await utilityIcon.click({ force: true });
+    // Mobile utility controls use a two-tap disclosure: expand the footer,
+    // then activate the revealed icon.
+    const utilityFooter = page.locator('#drawer-utility-footer');
+
+    await utilityFooter.click();
+    await expect(utilityFooter).toHaveClass(/expanded/u);
+
+    // Click the icon - should remain in earth-centered mode (re-activates).
+    await utilityIcon.click();
 
     // Icon should still be selected after clicking
     await expect(utilityIcon).toHaveClass(/bmenu-item-selected/u, { timeout: 5_000 });

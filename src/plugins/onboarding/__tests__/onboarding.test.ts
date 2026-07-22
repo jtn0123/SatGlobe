@@ -92,7 +92,7 @@ describe('OnboardingPlugin behavior', () => {
     const root = document.getElementById('kt-tour-root');
 
     expect(root).not.toBeNull();
-    expect(root?.querySelectorAll('.kt-tour-chip').length).toBe(4);
+    expect(root?.querySelectorAll('.kt-tour-chip')).toHaveLength(4);
     expect(root?.querySelector('[data-tour-button="start"]')).not.toBeNull();
     expect(root?.querySelector('[data-tour-button="explore"]')).not.toBeNull();
   });

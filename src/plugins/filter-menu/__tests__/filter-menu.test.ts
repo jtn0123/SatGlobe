@@ -570,7 +570,7 @@ describe('FilterMenuPlugin_class', () => {
       const filters = getFilters();
       const storageMapKeys = Object.keys(FILTER_STORAGE_MAP);
 
-      expect(filters.length).toBe(storageMapKeys.length);
+      expect(filters).toHaveLength(storageMapKeys.length);
     });
   });
 
@@ -708,7 +708,7 @@ describe('FilterMenuPlugin_class', () => {
       const filters = getFilters();
       const disabledFilters = filters.filter((f) => f.disabled === true);
 
-      expect(disabledFilters.length).toBe(0);
+      expect(disabledFilters).toHaveLength(0);
     });
 
     it('should have filters without explicit checked property default to undefined', () => {
@@ -741,7 +741,7 @@ describe('FilterMenuPlugin_class', () => {
       const filters1 = getFilters();
       const filters2 = getFilters();
 
-      expect(filters1.length).toBe(filters2.length);
+      expect(filters1).toHaveLength(filters2.length);
       expect(filters1.map((f) => f.id)).toEqual(filters2.map((f) => f.id));
     });
   });
@@ -789,7 +789,7 @@ describe('FilterMenuPlugin_class', () => {
       const commands = plugin.getCommandPaletteCommands();
 
       expect(commands).toBeDefined();
-      expect(commands.length).toBe(25);
+      expect(commands).toHaveLength(25);
     });
 
     it('should have unique command IDs', () => {

@@ -43,7 +43,7 @@ describe('GunterLaunchCalendar', () => {
     it('should return commands', () => {
       const commands = plugin.getCommandPaletteCommands();
 
-      expect(commands.length).toBe(1);
+      expect(commands).toHaveLength(1);
       expect(commands[0].id).toBe('GunterLaunchCalendar.open');
       expect(commands[0].callback).toBeInstanceOf(Function);
     });

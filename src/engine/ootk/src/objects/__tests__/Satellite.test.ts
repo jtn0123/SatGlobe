@@ -45,7 +45,7 @@ describe('Satellite', () => {
 
       const history = sat.history!;
 
-      expect(history.length).toBe(2);
+      expect(history).toHaveLength(2);
       expect(history.getAll()[0].time).toEqual(date1);
       expect(history.getAll()[1].time).toEqual(date2);
 
@@ -72,7 +72,7 @@ describe('Satellite', () => {
       sat.eci(date2); // Should be skipped due to sampling interval
       sat.eci(date3);
 
-      expect(sat.history!.length).toBe(2); // Only date1 and date3
+      expect(sat.history!).toHaveLength(2); // Only date1 and date3
     });
 
     it('should respect maxLength', () => {
@@ -91,7 +91,7 @@ describe('Satellite', () => {
       }
 
       // Should only keep the last 3
-      expect(sat.history!.length).toBe(3);
+      expect(sat.history!).toHaveLength(3);
     });
 
     it('should enable/disable history post-construction', () => {
@@ -101,7 +101,7 @@ describe('Satellite', () => {
       expect(sat.isHistoryEnabled).toBe(true);
 
       sat.eci(new Date('2022-07-22T11:16:14Z'));
-      expect(sat.history!.length).toBe(1);
+      expect(sat.history!).toHaveLength(1);
 
       sat.disableHistory();
       expect(sat.history).toBeNull();
@@ -132,7 +132,7 @@ describe('Satellite', () => {
       // Even if it returns null or fails, history should not throw
       // and should not record invalid entries
       if (result === null) {
-        expect(sat.history!.length).toBe(0);
+        expect(sat.history!).toHaveLength(0);
       }
     });
 
@@ -154,7 +154,7 @@ describe('Satellite', () => {
       const history = sat.history!;
       const entries = history.getAll();
 
-      expect(entries.length).toBe(3);
+      expect(entries).toHaveLength(3);
 
       // Verify each entry has correct structure
       entries.forEach((entry, i) => {
@@ -189,7 +189,7 @@ describe('Satellite', () => {
 
       const range = sat.history!.getRange(rangeStart, rangeEnd);
 
-      expect(range.length).toBe(3);
+      expect(range).toHaveLength(3);
     });
 
     it('should support getLast on history', () => {
@@ -209,7 +209,7 @@ describe('Satellite', () => {
 
       const last2 = sat.history!.getLast(2);
 
-      expect(last2.length).toBe(2);
+      expect(last2).toHaveLength(2);
       expect(last2[0].time).toEqual(dates[1]);
       expect(last2[1].time).toEqual(dates[2]);
     });
@@ -274,7 +274,7 @@ describe('Satellite', () => {
         const cloned = sat.clone();
 
         // Cloned satellite should have same number of sensors
-        expect(cloned.sensors.length).toBe(1);
+        expect(cloned.sensors).toHaveLength(1);
 
         // But they should be different instances
         expect(cloned.sensors[0]).not.toBe(sensor);
@@ -356,7 +356,7 @@ describe('Satellite', () => {
         const cloned = sat.clone();
 
         // Cloned satellite should have same number of comm devices
-        expect(cloned.commDevices.length).toBe(1);
+        expect(cloned.commDevices).toHaveLength(1);
 
         // But they should be different instances
         expect(cloned.commDevices[0]).not.toBe(transmitter);
@@ -406,7 +406,7 @@ describe('Satellite', () => {
         expect(cloned.isHistoryEnabled).toBe(true);
         expect(cloned.history?.config.maxLength).toBe(100);
         expect(cloned.history?.config.samplingInterval).toBe(1000);
-        expect(cloned.history?.length).toBe(0); // Empty by default
+        expect(cloned.history).toHaveLength(0); // Empty by default
       });
 
       it('should clone history entries when cloneHistory option is true', () => {
@@ -421,8 +421,8 @@ describe('Satellite', () => {
 
         const cloned = sat.clone({ cloneHistory: true });
 
-        expect(cloned.history?.length).toBe(sat.history?.length);
-        expect(cloned.history?.length).toBe(2);
+        expect(cloned.history).toHaveLength(sat.history?.length ?? 0);
+        expect(cloned.history).toHaveLength(2);
       });
 
       it('should have independent history after cloning with cloneHistory', () => {
@@ -441,8 +441,8 @@ describe('Satellite', () => {
         cloned.eci(new Date('2022-07-22T11:18:14Z'));
 
         // Original should not be affected
-        expect(sat.history?.length).toBe(1);
-        expect(cloned.history?.length).toBe(3);
+        expect(sat.history).toHaveLength(1);
+        expect(cloned.history).toHaveLength(3);
       });
 
       it('should work without history enabled', () => {

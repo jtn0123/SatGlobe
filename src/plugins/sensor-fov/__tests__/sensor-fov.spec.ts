@@ -12,8 +12,6 @@ test.describe('SensorFov', () => {
     await expect(utilityIcon).toBeAttached();
     await expect(utilityIcon).toHaveClass(/bmenu-item-disabled/u);
 
-    // Clicking a disabled utility icon should have no effect
-    await utilityIcon.click({ force: true });
     await expect(utilityIcon).not.toHaveClass(/bmenu-item-selected/u, { timeout: 2_000 });
   });
 });

@@ -80,7 +80,7 @@ describe('OrbitManager', () => {
       initialized();
 
       expect(o().isInitialized_).toBe(true);
-      expect(o().glBuffers_.length).toBe(6);
+      expect(o().glBuffers_).toHaveLength(6);
       expect(om.orbitThreadMgr.sendInit).toHaveBeenCalled();
     });
 
@@ -90,7 +90,7 @@ describe('OrbitManager', () => {
 
       om.init(lineMgr as never, gl);
 
-      expect((om.orbitThreadMgr.sendInit as ReturnType<typeof vi.fn>).mock.calls.length).toBe(before);
+      expect((om.orbitThreadMgr.sendInit as ReturnType<typeof vi.fn>).mock.calls).toHaveLength(before);
     });
 
     it('skips initialization when orbits are disabled', () => {
@@ -326,7 +326,7 @@ describe('OrbitManager', () => {
 
       om.resetForCatalogSwap();
 
-      expect(o().glBuffers_.length).toBe(3);
+      expect(o().glBuffers_).toHaveLength(3);
       expect(o().currentSelectId_).toBe(-1);
       expect(om.orbitThreadMgr.sendInit).toHaveBeenCalled();
     });

@@ -79,7 +79,7 @@ describe('SatInfoBoxOrbitGuard behavior', () => {
 
       expect(out).toHaveLength(3);
       expect(out[0].name).toContain('25544');
-      expect(out[0].value.length).toBe(2);
+      expect(out[0].value).toHaveLength(2);
       expect(out[2].value.maneuver_class).toBe('Stationkeeping');
     });
 

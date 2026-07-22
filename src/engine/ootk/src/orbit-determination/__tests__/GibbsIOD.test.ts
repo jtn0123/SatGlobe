@@ -273,29 +273,17 @@ describe('GibbsIOD', () => {
     const startEpoch = EpochUTC.fromDateTimeString('2024-01-01T12:00:00.000Z');
     const propagator = new KeplerPropagator(createLeoOrbit(startEpoch));
 
-    it('should handle closely-spaced positions (small angular separation)', () => {
-      // Very short intervals for LEO
-      const { r1, r2, r3, t2, t3, truthState } = generatePositions(propagator, startEpoch, 20, 20);
-
-      const iod = new GibbsIOD();
-      const result = iod.solve(r1, r2, r3, t2, t3);
-
-      validateStateAccuracy(result, truthState, 0.5, 0.005);
-    });
-
-    it('should handle widely-spaced positions (larger angular separation)', () => {
-      // Longer intervals for larger angular separation
-      const { r1, r2, r3, t2, t3, truthState } = generatePositions(propagator, startEpoch, 180, 180);
-
-      const iod = new GibbsIOD();
-      const result = iod.solve(r1, r2, r3, t2, t3);
-
-      validateStateAccuracy(result, truthState, 0.5, 0.005);
-    });
-
-    it('should handle asymmetric time intervals', () => {
-      // Different intervals between positions
-      const { r1, r2, r3, t2, t3, truthState } = generatePositions(propagator, startEpoch, 45, 90);
+    it.each([
+      ['closely spaced', 20, 20],
+      ['widely spaced', 180, 180],
+      ['asymmetric', 45, 90],
+    ])('should handle %s positions', (_label, firstInterval, secondInterval) => {
+      const { r1, r2, r3, t2, t3, truthState } = generatePositions(
+        propagator,
+        startEpoch,
+        firstInterval,
+        secondInterval,
+      );
 
       const iod = new GibbsIOD();
       const result = iod.solve(r1, r2, r3, t2, t3);

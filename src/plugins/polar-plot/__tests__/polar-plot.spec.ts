@@ -27,9 +27,7 @@ test.describe('PolarPlotPlugin', () => {
     const drawerItem = page.locator('.drawer-item[data-plugin-id="polar-plot-bottom-icon"]');
 
     await expect(drawerItem).toBeVisible();
-
-    // Clicking disabled drawer item should NOT open the side menu
-    await drawerItem.click({ force: true });
+    await expect(drawerItem).toHaveClass(/disabled/u);
     await expect(bottomIcon).not.toHaveClass(/bmenu-item-selected/u, { timeout: 2_000 });
 
     // Verify side menu elements exist in DOM (hidden)

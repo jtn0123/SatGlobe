@@ -161,41 +161,15 @@ describe('SearchManager', () => {
       settingsManager.searchableFields = { name: true, altName: true, bus: true, noradId: true, intlDes: true, launchVehicle: true };
     });
 
-    it('finds a 5-digit sat by its sccNum', () => {
-      sats = [new Satellite({ ...defaultSat, id: 0, sccNum: '25544' })];
+    it.each([
+      ['5-digit canonical form', '25544', '25544'],
+      ['alpha-5 numeric form', 'T0001', '270001'],
+      ['9-digit canonical form', '799500766', '799500766'],
+      ['9-digit partial form', '799500766', '500766'],
+    ])('finds a satellite by its %s', (_label, sccNum, query) => {
+      sats = [new Satellite({ ...defaultSat, id: 0, sccNum })];
       wireUpServiceLocator(buildCatalog(sats));
-
-      searchManager.doSearch('25544');
-      expect(settingsManager.lastSearchResults).toEqual([0]);
-    });
-
-    it('finds an alpha-5 sat via its 6-digit numeric form (sccNum6)', () => {
-      // For an alpha-5 sat constructed via fromOmm-style with sccNum='T0001',
-      // sccNum5='T0001' and sccNum6='270001'. The numeric-only search box
-      // accepts digit-only input only, so the user types "270001" to find it.
-      sats = [new Satellite({ ...defaultSat, id: 0, sccNum: 'T0001' })];
-      wireUpServiceLocator(buildCatalog(sats));
-
-      searchManager.doSearch('270001');
-      expect(settingsManager.lastSearchResults).toEqual([0]);
-    });
-
-    it('finds a 9-digit extended sat via its full canonical sccNum', () => {
-      // sccNum6 is null for extended; the matchKey fallback chain (sccNum6
-      // ?? sccNum) lands on sccNum so the lookup still succeeds.
-      sats = [new Satellite({ ...defaultSat, id: 0, sccNum: '799500766' })];
-      wireUpServiceLocator(buildCatalog(sats));
-
-      searchManager.doSearch('799500766');
-      expect(settingsManager.lastSearchResults).toEqual([0]);
-    });
-
-    it('finds an extended sat by a partial substring of its sccNum', () => {
-      sats = [new Satellite({ ...defaultSat, id: 0, sccNum: '799500766' })];
-      wireUpServiceLocator(buildCatalog(sats));
-
-      // Substring of the canonical sccNum should hit via indexOf.
-      searchManager.doSearch('500766');
+      searchManager.doSearch(query);
       expect(settingsManager.lastSearchResults).toEqual([0]);
     });
 
@@ -451,7 +425,7 @@ describe('SearchManager interactions', () => {
 
     const rows = document.getElementById('search-results')!.querySelectorAll('.search-result');
 
-    expect(rows.length).toBe(results.length);
+    expect(rows).toHaveLength(results.length);
     // totalFound (50) > results.length renders the "showing N of M" banner.
     expect(document.getElementById('search-results')!.querySelector('.search-result-limit')).not.toBeNull();
   });

@@ -55,34 +55,12 @@ describe('ThirdBodyGravity', () => {
         expect(result.z).toBe(0);
       });
 
-      it('should return non-zero acceleration when moon is enabled', () => {
-        const gravity = new ThirdBodyGravity(true, false);
-        const state = {
-          epoch: new EpochUTC(new Date('2024-01-01T00:00:00.000Z').getTime() / 1000 as Seconds),
-          position: new Vector3D(7000, 0, 0),
-          velocity: new Vector3D(0, 7.5, 0),
-        } as J2000;
-
-        const result = gravity.acceleration(state);
-
-        expect(result.magnitude()).toBeGreaterThan(0);
-      });
-
-      it('should return non-zero acceleration when sun is enabled', () => {
-        const gravity = new ThirdBodyGravity(false, true);
-        const state = {
-          epoch: new EpochUTC(new Date('2024-01-01T00:00:00.000Z').getTime() / 1000 as Seconds),
-          position: new Vector3D(7000, 0, 0),
-          velocity: new Vector3D(0, 7.5, 0),
-        } as J2000;
-
-        const result = gravity.acceleration(state);
-
-        expect(result.magnitude()).toBeGreaterThan(0);
-      });
-
-      it('should return combined acceleration when both moon and sun are enabled', () => {
-        const gravity = new ThirdBodyGravity(true, true);
+      it.each([
+        ['moon', true, false],
+        ['sun', false, true],
+        ['moon and sun', true, true],
+      ])('should return non-zero acceleration when %s is enabled', (_label, moon, sun) => {
+        const gravity = new ThirdBodyGravity(moon, sun);
         const state = {
           epoch: new EpochUTC(new Date('2024-01-01T00:00:00.000Z').getTime() / 1000 as Seconds),
           position: new Vector3D(7000, 0, 0),

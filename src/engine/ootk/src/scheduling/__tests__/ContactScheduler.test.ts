@@ -199,7 +199,7 @@ describe('ContactScheduler', () => {
 
       const gaps = ContactScheduler.findCoverageGaps([], satellite1, start, end);
 
-      expect(gaps.length).toBe(1);
+      expect(gaps).toHaveLength(1);
       expect(gaps[0].start).toEqual(start);
       expect(gaps[0].end).toEqual(end);
       expect(gaps[0].duration).toBe(12 * 60 * 60 * 1000);
@@ -241,7 +241,7 @@ describe('ContactScheduler', () => {
       );
 
       // Should find gap between 10:15 and 12:00
-      expect(gaps.length).toBe(1);
+      expect(gaps).toHaveLength(1);
       expect(gaps[0].start).toEqual(new Date('2024-01-01T10:15:00Z'));
       expect(gaps[0].end).toEqual(new Date('2024-01-01T12:00:00Z'));
       expect(gaps[0].duration).toBe(105 * 60 * 1000); // 1h 45m
@@ -269,7 +269,7 @@ describe('ContactScheduler', () => {
       );
 
       // Gap before contact (9:00 - 10:00) and after (10:15 - 11:00)
-      expect(gaps.length).toBe(2);
+      expect(gaps).toHaveLength(2);
     });
   });
 

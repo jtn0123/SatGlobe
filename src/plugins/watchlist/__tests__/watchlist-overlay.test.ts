@@ -136,7 +136,7 @@ describe('WatchlistOverlay behavior', () => {
       p().updateNextPassOverlay_(true);
 
       // Only 5 of the 7 departed entries render at once (the rest rotate in).
-      expect(getEl('info-overlay-content')!.querySelectorAll('.wl-entry').length).toBe(5);
+      expect(getEl('info-overlay-content')!.querySelectorAll('.wl-entry')).toHaveLength(5);
     });
   });
 

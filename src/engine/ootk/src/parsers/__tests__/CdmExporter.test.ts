@@ -78,74 +78,31 @@ describe('CdmExporter', () => {
       expect(cdm.length).toBeGreaterThan(0);
     });
 
-    it('should include CDM version header', () => {
-      const event = createTestEvent();
-      const cdm = CdmExporter.export(event);
+    it.each([
+      { label: 'CDM version header', options: {}, expected: ['CCSDS_CDM_VERS = 1.0'] },
+      { label: 'creation date', options: {}, expected: ['CREATION_DATE ='] },
+      { label: 'custom originator', options: { originator: 'TEST_ORG' }, expected: ['ORIGINATOR = TEST_ORG'] },
+      { label: 'default originator', options: {}, expected: ['ORIGINATOR = OOTK'] },
+      { label: 'message ID', options: { messageId: 'CDM-2025-001' }, expected: ['MESSAGE_ID = CDM-2025-001'] },
+    ])('should include the $label', ({ options, expected }) => {
+      const cdm = CdmExporter.export(createTestEvent(), options);
 
-      expect(cdm).toContain('CCSDS_CDM_VERS = 1.0');
+      for (const text of expected) {
+        expect(cdm).toContain(text);
+      }
     });
 
-    it('should include creation date', () => {
-      const event = createTestEvent();
-      const cdm = CdmExporter.export(event);
+    it.each([
+      { label: 'TCA', expected: ['TCA =', '2025-01-20'] },
+      { label: 'miss distance', expected: ['MISS_DISTANCE =', '[km]'] },
+      { label: 'relative position', expected: ['RELATIVE_POSITION_R =', 'RELATIVE_POSITION_T =', 'RELATIVE_POSITION_N ='] },
+      { label: 'relative velocity', expected: ['RELATIVE_SPEED =', 'RELATIVE_VELOCITY_R =', 'RELATIVE_VELOCITY_T =', 'RELATIVE_VELOCITY_N ='] },
+    ])('should include $label fields', ({ expected }) => {
+      const cdm = CdmExporter.export(createTestEvent());
 
-      expect(cdm).toContain('CREATION_DATE =');
-    });
-
-    it('should include originator', () => {
-      const event = createTestEvent();
-      const cdm = CdmExporter.export(event, { originator: 'TEST_ORG' });
-
-      expect(cdm).toContain('ORIGINATOR = TEST_ORG');
-    });
-
-    it('should use default originator if not specified', () => {
-      const event = createTestEvent();
-      const cdm = CdmExporter.export(event);
-
-      expect(cdm).toContain('ORIGINATOR = OOTK');
-    });
-
-    it('should include message ID if specified', () => {
-      const event = createTestEvent();
-      const cdm = CdmExporter.export(event, { messageId: 'CDM-2025-001' });
-
-      expect(cdm).toContain('MESSAGE_ID = CDM-2025-001');
-    });
-
-    it('should include TCA', () => {
-      const event = createTestEvent();
-      const cdm = CdmExporter.export(event);
-
-      expect(cdm).toContain('TCA =');
-      expect(cdm).toContain('2025-01-20');
-    });
-
-    it('should include miss distance', () => {
-      const event = createTestEvent();
-      const cdm = CdmExporter.export(event);
-
-      expect(cdm).toContain('MISS_DISTANCE =');
-      expect(cdm).toContain('[km]');
-    });
-
-    it('should include relative position components', () => {
-      const event = createTestEvent();
-      const cdm = CdmExporter.export(event);
-
-      expect(cdm).toContain('RELATIVE_POSITION_R =');
-      expect(cdm).toContain('RELATIVE_POSITION_T =');
-      expect(cdm).toContain('RELATIVE_POSITION_N =');
-    });
-
-    it('should include relative velocity components', () => {
-      const event = createTestEvent();
-      const cdm = CdmExporter.export(event);
-
-      expect(cdm).toContain('RELATIVE_SPEED =');
-      expect(cdm).toContain('RELATIVE_VELOCITY_R =');
-      expect(cdm).toContain('RELATIVE_VELOCITY_T =');
-      expect(cdm).toContain('RELATIVE_VELOCITY_N =');
+      for (const text of expected) {
+        expect(cdm).toContain(text);
+      }
     });
 
     it('should include collision probability if available', () => {

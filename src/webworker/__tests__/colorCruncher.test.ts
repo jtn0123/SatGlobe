@@ -163,8 +163,8 @@ describe('colorCruncher', () => {
     expect(result).toBeDefined();
     expect(result!.seqNum).toBe(7);
     expect(result!.colorData).toBeInstanceOf(Float32Array);
-    expect(result!.colorData!.length).toBe(12 * 4);
-    expect(result!.pickableData!.length).toBe(12);
+    expect(result!.colorData!).toHaveLength(12 * 4);
+    expect(result!.pickableData!).toHaveLength(12);
   });
 
   it('renders every registered color scheme without throwing', async () => {

@@ -49,7 +49,7 @@ describe('ColorPick', () => {
     const picker = document.getElementById('colorPick');
 
     expect(picker).not.toBeNull();
-    expect(picker!.querySelectorAll('.colorPickButton').length).toBe(2);
+    expect(picker!.querySelectorAll('.colorPickButton')).toHaveLength(2);
     expect(picker!.querySelector('.customColorHash')).not.toBeNull();
   });
 

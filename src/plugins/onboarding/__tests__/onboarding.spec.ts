@@ -58,9 +58,17 @@ test.describe('Onboarding Power Tour Hub', () => {
         break;
       }
       if ((await nextBtn.count()) > 0) {
+        const previousTitle = await popover.locator('.kt-tour-popover-title').textContent();
+
         await nextBtn.click();
+        await expect.poll(async () => {
+          if ((await popover.locator('.kt-hub-rows').count()) > 0) {
+            return 'hub';
+          }
+
+          return (await popover.locator('.kt-tour-popover-title').textContent()) ?? previousTitle;
+        }).not.toBe(previousTitle);
       }
-      await page.waitForTimeout(400);
     }
     /* eslint-enable no-await-in-loop */
 

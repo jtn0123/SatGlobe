@@ -19,7 +19,7 @@ describe('Missile.calcCoordinates_ edge cases', () => {
     const [latList, lonList] = M.calcCoordinates_(40, -170, 45, 170);
 
     expect(latList.length).toBeGreaterThan(0);
-    expect(lonList.length).toBe(latList.length);
+    expect(lonList).toHaveLength(latList.length);
     // Every emitted longitude must stay inside the normalized [-180, 180] band.
     expect(lonList.every((lon: number) => lon >= -180 && lon <= 180)).toBe(true);
   });

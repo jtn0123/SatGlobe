@@ -7,7 +7,7 @@ describe('PolynomialRegression', () => {
     const result = PolynomialRegression.solve(times, positions, 2);
 
     expect(result.coefficients).toBeDefined();
-    expect(result.coefficients.length).toBe(3); // a, b, c for ax² + bx + c
+    expect(result.coefficients).toHaveLength(3); // a, b, c for ax² + bx + c
     expect(result.rss).toBeDefined();
     expect(result.bic).toBeDefined();
   });

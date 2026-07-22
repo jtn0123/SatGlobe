@@ -21,7 +21,7 @@ const ISS_LINE2 = '2 25544  51.6400 208.9163 0006730 358.5720 122.3372 15.501045
 const TSINCE_MIN = 60;
 
 test.describe('Sgp4Wasm in-app', () => {
-  test.skip(!ARTIFACTS_DEPLOYED, 'Sgp4Prop artifacts not present in dist/wasm/sgp4prop (license-restricted, local-only)');
+  test.skip(!ARTIFACTS_DEPLOYED, 'Sgp4Prop artifacts not present in dist/wasm/sgp4prop (license-restricted, local-only)'); // NOSONAR -- parity runs when authorized owners deploy the licensed artifacts locally.
 
   test('loads the wasm propagator and matches the pure-TS Sgp4 class', async ({ page }) => {
     await waitForAppReady(page);

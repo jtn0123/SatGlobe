@@ -8,7 +8,7 @@ const CJK_LANGUAGES = new Set(['ja', 'ko', 'zh']);
 
 /** Extract `{placeholder}` tokens from a string. */
 function extractPlaceholders(text: string): string[] {
-  const matches = text.match(/\{(\w+)\}/gu);
+  const matches = text.match(/\{(?:\w+)\}/gu);
 
   return matches ? matches.sort() : [];
 }
@@ -38,6 +38,7 @@ function flattenKeys(obj: Record<string, unknown>, prefix = ''): [string, string
   return result;
 }
 
+/** Load one locale file as flattened key/value pairs. */
 function loadLocale(lang: string): Map<string, string> {
   const filePath = path.join(LOCALES_DIR, `${lang}.json`);
   const json = JSON.parse(readFileSync(filePath, 'utf8'));
@@ -50,7 +51,7 @@ describe('Locale structural consistency', () => {
   const otherMaps = new Map(NON_ENGLISH.map((lang) => [lang, loadLocale(lang)]));
 
   describe('placeholder parity', () => {
-    const keysWithPlaceholders = [...enMap.entries()].filter(([, val]) => /\{\w+\}/u.test(val));
+    const keysWithPlaceholders = [...enMap.entries()].filter(([, val]) => (/\{\w+\}/u).test(val));
 
     it('should have English keys with placeholders to validate', () => {
       expect(keysWithPlaceholders.length).toBeGreaterThan(0);
@@ -77,7 +78,6 @@ describe('Locale structural consistency', () => {
         }
 
         if (mismatches.length > 0) {
-          // eslint-disable-next-line no-console
           console.error(`[${lang}] Placeholder mismatches:\n${mismatches.join('\n')}`);
         }
 
@@ -89,7 +89,7 @@ describe('Locale structural consistency', () => {
   describe('HTML tag parity (advisory)', () => {
     // HTML restructuring across translations is often intentional (e.g. <br> → <ul>/<li>,
     // single vs double quotes). This test warns but does not fail — use it as a review aid.
-    const keysWithHtml = [...enMap.entries()].filter(([, val]) => /<[a-z]/iu.test(val));
+    const keysWithHtml = [...enMap.entries()].filter(([, val]) => (/<[a-z]/iu).test(val));
 
     it('should have English keys with HTML tags to validate', () => {
       expect(keysWithHtml.length).toBeGreaterThan(0);
@@ -99,6 +99,7 @@ describe('Locale structural consistency', () => {
       it(`${lang}: HTML tags reviewed`, () => {
         const langMap = otherMaps.get(lang)!;
         const mismatches: string[] = [];
+        let checkedTranslations = 0;
 
         for (const [key, enVal] of keysWithHtml) {
           const langVal = langMap.get(key);
@@ -106,6 +107,7 @@ describe('Locale structural consistency', () => {
           if (langVal === undefined) {
             continue;
           }
+          checkedTranslations++;
 
           const enTags = extractHtmlTags(enVal);
           const langTags = extractHtmlTags(langVal);
@@ -116,11 +118,12 @@ describe('Locale structural consistency', () => {
         }
 
         if (mismatches.length > 0) {
-          // eslint-disable-next-line no-console
           console.warn(`[${lang}] HTML tag differences (review, not blocking):\n${mismatches.join('\n')}`);
         }
 
-        // Advisory only — logged for review but does not block CI
+        // Advisory differences do not block CI, but the test must prove that
+        // it actually inspected translated HTML rather than passing vacuously.
+        expect(checkedTranslations).toBeGreaterThan(0);
       });
     }
   });
@@ -148,7 +151,6 @@ describe('Locale structural consistency', () => {
         }
 
         if (empties.length > 0) {
-          // eslint-disable-next-line no-console
           console.error(`[${lang}] Empty translations:\n${empties.join('\n')}`);
         }
 
@@ -172,6 +174,7 @@ describe('Locale structural consistency', () => {
         const isCjk = CJK_LANGUAGES.has(lang);
         const minRatio = isCjk ? MIN_RATIO_CJK : MIN_RATIO_LATIN;
         const suspicious: string[] = [];
+        let checkedTranslations = 0;
 
         for (const [key, enVal] of enMap) {
           if (enVal.length < MIN_EN_LENGTH) {
@@ -187,6 +190,7 @@ describe('Locale structural consistency', () => {
           if (langVal === undefined) {
             continue;
           }
+          checkedTranslations++;
 
           const ratio = langVal.length / enVal.length;
 
@@ -196,11 +200,12 @@ describe('Locale structural consistency', () => {
         }
 
         if (suspicious.length > 0) {
-          // eslint-disable-next-line no-console
           console.warn(`[${lang}] Suspiciously short translations (review, not blocking):\n${suspicious.join('\n')}`);
         }
 
-        // Advisory only — logged for review but does not block CI
+        // Advisory differences do not block CI, but the test must prove that
+        // it actually inspected translated prose rather than passing vacuously.
+        expect(checkedTranslations).toBeGreaterThan(0);
       });
     }
   });

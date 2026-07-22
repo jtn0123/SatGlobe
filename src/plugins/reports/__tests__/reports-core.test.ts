@@ -105,7 +105,7 @@ describe('reports-core', () => {
 
       expect(data.table!.headers).toEqual(['Time (UTC)', 'Pass', 'Azimuth(°)', 'Elevation(°)', 'Range(km)']);
       // 180s window at 60s step inclusive -> 4 samples, all pass index 1.
-      expect(data.table!.rows.length).toBe(4);
+      expect(data.table!.rows).toHaveLength(4);
       expect(data.table!.rows.every((r) => r[1] === '1')).toBe(true);
       expect(data.table!.rows[0][2]).toBe('123.456');
     });

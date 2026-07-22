@@ -45,11 +45,11 @@ describe('buildRicChartOption', () => {
   it('shows an empty-state message and no graphic when data exists', () => {
     const empty = buildRicChartOption([], LABELS);
 
-    expect((empty.graphic as unknown[]).length).toBe(1);
+    expect(empty.graphic as unknown[]).toHaveLength(1);
 
     const filled = buildRicChartOption(POINTS, LABELS);
 
-    expect((filled.graphic as unknown[]).length).toBe(0);
+    expect(filled.graphic as unknown[]).toHaveLength(0);
   });
 
   it('formats the axis tooltip with km and min units', () => {

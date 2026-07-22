@@ -233,7 +233,7 @@ describe('SatellitePhotos behavior', () => {
     expect(getEl('sat-photo-refresh')!.style.display).toBe('flex');
     getEl('sat-photo-refresh')!.click();
 
-    expect((colorbox.openColorbox as ReturnType<typeof vi.fn>).mock.calls.length).toBe(openCalls + 1);
+    expect((colorbox.openColorbox as ReturnType<typeof vi.fn>).mock.calls).toHaveLength(openCalls + 1);
     const lastUrl = (colorbox.openColorbox as ReturnType<typeof vi.fn>).mock.calls.at(-1)![0];
 
     expect(lastUrl).toContain('_=');
@@ -268,7 +268,7 @@ describe('SatellitePhotos behavior', () => {
     plugin.onSideMenuOpen();
     plugin.onSideMenuOpen();
 
-    expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls.length).toBe(1);
+    expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls).toHaveLength(1);
   });
 
   it('shows an unavailable note on a non-ok HTTP response', async () => {

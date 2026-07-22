@@ -229,27 +229,3 @@ exports[`getRicOfCurrentOrbit_method > test_answers_remain_the_same 1`] = `
   },
 ]
 `;
-
-exports[`getSunDirection_method > test_jd_end_of_year 1`] = `
-[
-  -3760409.036826631,
-  -137212823.5992045,
-  -59481283.378439635,
-]
-`;
-
-exports[`getSunDirection_method > test_jd_start_of_year 1`] = `
-[
-  28629425.15938371,
-  -134719134.74737248,
-  -58400628.90499934,
-]
-`;
-
-exports[`getSunDirection_method > test_valid_jd 1`] = `
-[
-  26942821.97188163,
-  -135008996.02114344,
-  -58533563.41528564,
-]
-`;

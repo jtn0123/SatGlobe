@@ -57,7 +57,7 @@ describe('SatelliteTimeline drawing and canvas interactions', () => {
 
       const keys = Object.keys(p().drawEvents_);
 
-      expect(keys.length).toBe(1);
+      expect(keys).toHaveLength(1);
       expect(keys[0]).toContain('0-');
     });
 
@@ -81,7 +81,7 @@ describe('SatelliteTimeline drawing and canvas interactions', () => {
       ];
 
       expect(() => p().drawTimeline_(passes)).not.toThrow();
-      expect(Object.keys(p().drawEvents_).length).toBe(3);
+      expect(Object.keys(p().drawEvents_)).toHaveLength(3);
     });
   });
 

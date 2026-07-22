@@ -75,7 +75,7 @@ describe('bestPassWorker', () => {
     const progress = posted.filter((p) => p.typ === OUT.PROGRESS);
     const complete = posted.find((p) => p.typ === OUT.COMPLETE);
 
-    expect(chunks.length).toBe(2);
+    expect(chunks).toHaveLength(2);
     expect(progress.at(-1)).toMatchObject({ processed: 2, total: 2 });
     expect(complete).toMatchObject({ typ: OUT.COMPLETE, runId: 1 });
     expect(typeof complete!.truncated).toBe('boolean');

@@ -101,8 +101,23 @@ describe('ClassicalElements', () => {
   });
 
   // toPositionVelocity
-  it('should return the PositionVelocity object', () => {
-    expect(elements.toPositionVelocity()).toMatchSnapshot();
-    expect(elements2.toPositionVelocity()).toMatchSnapshot();
+  it.each([
+    ['first', () => elements, {
+      position: [1538.2233358428962, 5102.261204021967, 4432.634965003576],
+      velocity: [-7.3415189093793, 0.6516718453998642, 1.7933882499862026],
+    }],
+    ['second', () => elements2, {
+      position: [3699.9682301219336, -4340.514588573352, 3939.5098844969084],
+      velocity: [-6.276352257339577, -3.9904909019658032, 1.4943961405848338],
+    }],
+  ] as const)('should return the PositionVelocity object for the %s element set', (_label, getEquinoctial, expected) => {
+    const actual = getEquinoctial().toPositionVelocity();
+
+    expect([actual.position.x, actual.position.y, actual.position.z]).toEqual(
+      expected.position.map((value) => expect.closeTo(value, 12)),
+    );
+    expect([actual.velocity.x, actual.velocity.y, actual.velocity.z]).toEqual(
+      expected.velocity.map((value) => expect.closeTo(value, 12)),
+    );
   });
 });

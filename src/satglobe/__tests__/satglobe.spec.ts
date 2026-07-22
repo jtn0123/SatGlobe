@@ -220,14 +220,19 @@ test.describe('SatGlobe workshop', () => {
 
     const search = page.getByTestId('catalog-search');
     const readZoom = () => page.evaluate(() => window.satGlobe?.getState().camera.zoom ?? Number.NaN);
+    const readAnimationFrameZoomDelta = () => page.evaluate(() => new Promise<number>((resolve) => {
+      const first = window.satGlobe?.getState().camera.zoom ?? Number.NaN;
 
-    await expect.poll(async () => {
-      const first = await readZoom();
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          const second = window.satGlobe?.getState().camera.zoom ?? Number.NaN;
 
-      await page.waitForTimeout(100);
+          resolve(Math.abs(second - first));
+        });
+      });
+    }));
 
-      return Math.abs((await readZoom()) - first);
-    }).toBeLessThan(0.00005);
+    await expect.poll(readAnimationFrameZoomDelta).toBeLessThan(0.00005);
     const cameraBeforeSelection = await page.evaluate(() => window.satGlobe?.getState().camera);
 
     await search.fill('STARLINK-1008');

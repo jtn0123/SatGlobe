@@ -45,13 +45,13 @@ describe('lookupKnownRcs', () => {
   });
 
   it('returns null for an unrelated name', () => {
-    expect(lookupKnownRcs(makeSat({ name: 'RANDOM-FAKESAT-7' }))).toBe(null);
+    expect(lookupKnownRcs(makeSat({ name: 'RANDOM-FAKESAT-7' }))).toBeNull();
   });
 
   it('refuses to apply payload presets to debris/rocket bodies', () => {
     const sat = makeSat({ name: 'STARLINK-1234', type: SpaceObjectType.DEBRIS });
 
-    expect(lookupKnownRcs(sat)).toBe(null);
+    expect(lookupKnownRcs(sat)).toBeNull();
   });
 });
 
@@ -111,13 +111,13 @@ describe('mineRcsFromCatalog', () => {
   it('returns null when neither bus nor name-prefix match', () => {
     const sat = makeSat({ name: 'UNRELATED-OBJ' });
 
-    expect(mineRcsFromCatalog(sat, stats)).toBe(null);
+    expect(mineRcsFromCatalog(sat, stats)).toBeNull();
   });
 
   it('does NOT fall back to type — averaging across an entire type is meaningless', () => {
     const sat = makeSat({ name: 'UNRELATED', type: SpaceObjectType.PAYLOAD });
 
-    expect(mineRcsFromCatalog(sat, stats)).toBe(null);
+    expect(mineRcsFromCatalog(sat, stats)).toBeNull();
   });
 });
 
@@ -126,7 +126,7 @@ describe('estimateRcsFromGeometry', () => {
     const sat = makeSat({ length: '3.0 m', diameter: '1.5 m', span: '8 m', shape: 'box' });
     const rcs = estimateRcsFromGeometry(sat);
 
-    expect(rcs).not.toBe(null);
+    expect(rcs).not.toBeNull();
     expect(isFinite(rcs!)).toBe(true);
     expect(rcs!).toBeGreaterThan(0);
   });
@@ -139,9 +139,9 @@ describe('estimateRcsFromGeometry', () => {
   });
 
   it('returns null when any dimension is missing or zero', () => {
-    expect(estimateRcsFromGeometry(makeSat({ length: '3 m', diameter: '1.5 m', span: '' }))).toBe(null);
-    expect(estimateRcsFromGeometry(makeSat({ length: '0 m', diameter: '1.5 m', span: '8 m' }))).toBe(null);
-    expect(estimateRcsFromGeometry(makeSat({}))).toBe(null);
+    expect(estimateRcsFromGeometry(makeSat({ length: '3 m', diameter: '1.5 m', span: '' }))).toBeNull();
+    expect(estimateRcsFromGeometry(makeSat({ length: '0 m', diameter: '1.5 m', span: '8 m' }))).toBeNull();
+    expect(estimateRcsFromGeometry(makeSat({}))).toBeNull();
   });
 });
 
@@ -199,7 +199,7 @@ describe('estimateRcsWithSource cascade', () => {
   });
 
   it('returns null when every layer fails (no rcs, no vmag, no preset, no dimensions)', () => {
-    expect(estimateRcsWithSource(makeSat({ name: 'UNCATALOGED-X' }), EMPTY_CATALOG_RCS_STATS)).toBe(null);
+    expect(estimateRcsWithSource(makeSat({ name: 'UNCATALOGED-X' }), EMPTY_CATALOG_RCS_STATS)).toBeNull();
   });
 
   it('skips the catalog-mining layer when stats are not provided', () => {
@@ -208,8 +208,8 @@ describe('estimateRcsWithSource cascade', () => {
     // without forcing them to construct a catalog snapshot.
     const sat = makeSat({ name: 'OBSCURE-NEW', bus: 'OBSCURE BUS' });
 
-    expect(estimateRcsWithSource(sat)).toBe(null);
-    expect(estimateRcsWithSource(sat, null)).toBe(null);
+    expect(estimateRcsWithSource(sat)).toBeNull();
+    expect(estimateRcsWithSource(sat, null)).toBeNull();
   });
 });
 
@@ -218,7 +218,7 @@ describe('estimateRcsFromVmag', () => {
     const sat = makeSat({ vmag: 5.5 });
     const rcs = estimateRcsFromVmag(sat);
 
-    expect(rcs).not.toBe(null);
+    expect(rcs).not.toBeNull();
     expect(isFinite(rcs!)).toBe(true);
     expect(rcs!).toBeGreaterThan(0);
   });
@@ -233,14 +233,14 @@ describe('estimateRcsFromVmag', () => {
   });
 
   it('returns null when no vmag signal exists anywhere', () => {
-    expect(estimateRcsFromVmag(makeSat({ name: 'UNCATALOGED-X' }))).toBe(null);
+    expect(estimateRcsFromVmag(makeSat({ name: 'UNCATALOGED-X' }))).toBeNull();
   });
 
   it('uses the std-mag estimator under the hood, so vmag presets trigger it', () => {
     // A Starlink name → std-mag preset (~5.5) → vmag-derived RCS > 0
     const rcs = estimateRcsFromVmag(makeSat({ name: 'STARLINK-1234' }));
 
-    expect(rcs).not.toBe(null);
+    expect(rcs).not.toBeNull();
     expect(rcs!).toBeGreaterThan(0);
   });
 });

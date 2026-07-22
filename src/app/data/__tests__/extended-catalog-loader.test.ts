@@ -451,8 +451,8 @@ describe('Extended catalog loader (mixed-width NORAD IDs)', () => {
     });
 
     // sccIndex size should NOT have grown — same satellite, just updated.
-    expect(Object.keys(catalogManager.sccIndex).length).toBe(sccBefore);
-    expect(catalogManager.objectCache.length).toBe(cacheLenBefore);
+    expect(Object.keys(catalogManager.sccIndex)).toHaveLength(sccBefore);
+    expect(catalogManager.objectCache).toHaveLength(cacheLenBefore);
     // The slot now reflects the fresh epoch.
     const updatedId = catalogManager.sccIndex['270001'];
     const updated = catalogManager.objectCache[updatedId] as Satellite;

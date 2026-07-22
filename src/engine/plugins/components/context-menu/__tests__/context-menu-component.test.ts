@@ -136,7 +136,7 @@ describe('ContextMenuComponent', () => {
 
       component.init();
 
-      expect(mockInputManager.rmbMenuItems.length).toBe(1);
+      expect(mockInputManager.rmbMenuItems).toHaveLength(1);
       expect(mockInputManager.rmbMenuItems[0].elementIdL1).toBe('test-rmb-l1');
       expect(mockInputManager.rmbMenuItems[0].isRmbOnSat).toBe(true);
     });

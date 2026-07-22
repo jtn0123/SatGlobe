@@ -85,7 +85,7 @@ describe('createSampleCovarianceFromTle', () => {
 
     expect(covariance).toBeInstanceOf(StateCovariance);
     expect(covariance.matrix).toBeDefined();
-    expect(covariance.matrix.elements.length).toBe(6);
-    expect(covariance.matrix.elements[0].length).toBe(6);
+    expect(covariance.matrix.elements).toHaveLength(6);
+    expect(covariance.matrix.elements[0]).toHaveLength(6);
   });
 });

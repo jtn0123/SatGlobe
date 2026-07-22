@@ -184,11 +184,11 @@ describe('SelectSatManager_class', () => {
   });
 
   it('should handle switching to a non-existent secondary satellite', () => {
-    expect(selectSatManager.secondarySatObj).toBe(null);
+    expect(selectSatManager.secondarySatObj).toBeNull();
     selectSatManager.setSecondarySat(0);
-    expect(selectSatManager.secondarySatObj).not.toBe(null);
+    expect(selectSatManager.secondarySatObj).not.toBeNull();
     selectSatManager.setSecondarySat(999);
-    expect(selectSatManager.secondarySatObj).toBe(null);
+    expect(selectSatManager.secondarySatObj).toBeNull();
   });
 
   it('should clear selected orbit when deselecting a satellite', () => {

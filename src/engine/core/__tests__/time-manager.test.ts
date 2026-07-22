@@ -21,7 +21,11 @@ describe('TimeManager_changeStaticOffset_guards', () => {
     emitSpy.mockClear();
   });
 
-  it.each([NaN, Infinity, -Infinity])('rejects non-finite value %p without mutating state', (badValue) => {
+  it.each([
+    ['NaN', NaN],
+    ['positive infinity', Infinity],
+    ['negative infinity', -Infinity],
+  ])('rejects %s without mutating state', (_label, badValue) => {
     const epochBefore = tm.dynamicOffsetEpoch;
     const offsetBefore = tm.staticOffset;
 

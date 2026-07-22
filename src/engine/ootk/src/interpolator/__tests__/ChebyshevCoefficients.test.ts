@@ -23,7 +23,7 @@ describe('ChebyshevCoefficients', () => {
       expect(coeffs.cxd_).toBeDefined();
       expect(coeffs.cyd_).toBeDefined();
       expect(coeffs.czd_).toBeDefined();
-      expect(coeffs.cxd_.length).toBe(cx.length);
+      expect(coeffs.cxd_).toHaveLength(cx.length);
     });
   });
 

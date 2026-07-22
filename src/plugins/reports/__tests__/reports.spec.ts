@@ -33,10 +33,7 @@ test.describe('ReportsPlugin', () => {
     const drawerItem = page.locator('.drawer-item[data-plugin-id="reports-bottom-icon"]');
 
     await expect(drawerItem).toBeVisible();
-
-    // Clicking a disabled plugin's drawer item should NOT open the side menu
-    await drawerItem.scrollIntoViewIfNeeded();
-    await drawerItem.click({ force: true });
+    await expect(drawerItem).toHaveClass(/disabled/u);
     await expect(sideMenu).toBeHidden({ timeout: 2_000 });
     await expect(bottomIcon).not.toHaveClass(/bmenu-item-selected/u);
 

@@ -1,6 +1,5 @@
 import { EventBus } from '@app/engine/events/event-bus';
 import { EventBusEvent } from '@app/engine/events/event-bus-events';
-import { KeepTrack } from '@app/keeptrack';
 import { OrbitReferences } from '@app/plugins/orbit-references/orbit-references';
 import { SatInfoBox } from '@app/plugins/sat-info-box/sat-info-box';
 import { SelectSatManager } from '@app/plugins/select-sat-manager/select-sat-manager';
@@ -22,16 +21,6 @@ describe('OrbitReferences', () => {
   });
 
   standardPluginSuite(OrbitReferences, 'OrbitReferences');
-});
-
-// Create a short test for the OrbitReferences plugin
-describe('OrbitReferences', () => {
-  beforeEach(() => {
-    KeepTrack.getInstance().containerRoot.innerHTML = '';
-    setupStandardEnvironment([SelectSatManager, SatInfoBox]);
-  });
-  standardPluginSuite(OrbitReferences, 'OrbitReferences');
-
 });
 
 describe('OrbitReferences behavior', () => {

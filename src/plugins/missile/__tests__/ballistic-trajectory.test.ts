@@ -35,8 +35,8 @@ describe('generateBallisticTrajectory', () => {
       const n = traj.altList.length;
 
       it('emits equal-length lat/lon/alt lists (no truncated coordinate tail)', () => {
-        expect(traj.lonList.length).toBe(n);
-        expect(traj.latList.length).toBe(n);
+        expect(traj.lonList).toHaveLength(n);
+        expect(traj.latList).toHaveLength(n);
         expect(n).toBeGreaterThan(60); // at least a minute of flight
       });
 

@@ -185,7 +185,7 @@ describe('ProximityOps_class', () => {
       const csv = plugin['convertRPOsToCSV_']([]);
       const lines = csv.split('\n');
 
-      expect(lines.length).toBe(1);
+      expect(lines).toHaveLength(1);
       expect(lines[0]).toContain('t_id');
     });
   });

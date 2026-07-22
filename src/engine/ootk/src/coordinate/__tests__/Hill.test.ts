@@ -94,8 +94,8 @@ describe('Hill', () => {
     it('should create a 6x6 state transition matrix', () => {
       const matrix = Hill.transitionMatrix(60.0, 0.001);
 
-      expect(matrix.elements.length).toBe(6);
-      expect(matrix.elements[0].length).toBe(6);
+      expect(matrix.elements).toHaveLength(6);
+      expect(matrix.elements[0]).toHaveLength(6);
     });
   });
 

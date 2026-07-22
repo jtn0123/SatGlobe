@@ -44,76 +44,25 @@ describe('Epoch', () => {
     expect(epoch1.equals(epoch2)).toEqual(false);
   });
 
-  // toDateTime
-  it('should convert to a DateTime object', () => {
-    const posix = 1614556800 as Seconds;
-    const epoch = new Epoch(posix);
-
-    expect(epoch.toDateTime()).toMatchSnapshot();
+  it.each([
+    ['Date object', (epoch: Epoch) => epoch.toDateTime(), new Date('2021-03-01T00:00:00.000Z')],
+    ['epoch year and day', (epoch: Epoch) => epoch.toEpochYearAndDay(), { epochYr: '21', epochDay: '060.00000000' }],
+    ['Julian date', (epoch: Epoch) => epoch.toJulianDate(), 2459274.5],
+    ['Julian centuries', (epoch: Epoch) => epoch.toJulianCenturies(), 0.21162217659137578],
+  ])('should convert to a %s', (_label, convert, expected) => {
+    expect(convert(new Epoch(1614556800 as Seconds))).toEqual(expected);
   });
 
-  // toEpochYearAndDay
-  it('should convert to an epoch year and day', () => {
-    const posix = 1614556800 as Seconds;
-    const epoch = new Epoch(posix);
+  it.each([
+    ['greater than', (left: Epoch, right: Epoch) => left.operatorGreaterThan(right), false],
+    ['greater than or equal', (left: Epoch, right: Epoch) => left.operatorGreaterThanOrEqual(right), false],
+    ['less than', (left: Epoch, right: Epoch) => left.operatorLessThan(right), true],
+    ['less than or equal', (left: Epoch, right: Epoch) => left.operatorLessThanOrEqual(right), true],
+  ])('should compare whether one epoch is %s another', (_label, compare, expected) => {
+    const earlier = new Epoch(1614556800 as Seconds);
+    const later = new Epoch((1614556800 + 60) as Seconds);
 
-    expect(epoch.toEpochYearAndDay()).toMatchSnapshot();
-  });
-
-  // toJulianDate
-  it('should convert to a Julian date', () => {
-    const posix = 1614556800 as Seconds;
-    const epoch = new Epoch(posix);
-
-    expect(epoch.toJulianDate()).toMatchSnapshot();
-  });
-
-  // toJulianCenturies
-  it('should convert to Julian centuries', () => {
-    const posix = 1614556800 as Seconds;
-    const epoch = new Epoch(posix);
-
-    expect(epoch.toJulianCenturies()).toMatchSnapshot();
-  });
-
-  // operatorGreaterThan
-  it('should check if one epoch is greater than another', () => {
-    const posix1 = 1614556800 as Seconds;
-    const posix2 = (1614556800 + 60) as Seconds;
-    const epoch1 = new Epoch(posix1);
-    const epoch2 = new Epoch(posix2);
-
-    expect(epoch1.operatorGreaterThan(epoch2)).toEqual(false);
-  });
-
-  // operatorGreaterThanOrEqual
-  it('should check if one epoch is greater than or equal to another', () => {
-    const posix1 = 1614556800 as Seconds;
-    const posix2 = (1614556800 + 60) as Seconds;
-    const epoch1 = new Epoch(posix1);
-    const epoch2 = new Epoch(posix2);
-
-    expect(epoch1.operatorGreaterThanOrEqual(epoch2)).toEqual(false);
-  });
-
-  // operatorLessThan
-  it('should check if one epoch is less than another', () => {
-    const posix1 = 1614556800 as Seconds;
-    const posix2 = (1614556800 + 60) as Seconds;
-    const epoch1 = new Epoch(posix1);
-    const epoch2 = new Epoch(posix2);
-
-    expect(epoch1.operatorLessThan(epoch2)).toEqual(true);
-  });
-
-  // operatorLessThanOrEqual
-  it('should check if one epoch is less than or equal to another', () => {
-    const posix1 = 1614556800 as Seconds;
-    const posix2 = (1614556800 + 60) as Seconds;
-    const epoch1 = new Epoch(posix1);
-    const epoch2 = new Epoch(posix2);
-
-    expect(epoch1.operatorLessThanOrEqual(epoch2)).toEqual(true);
+    expect(compare(earlier, later)).toBe(expected);
   });
 
   // Test negative posix timestamp (pre-1970 dates are valid for TLE epochs back to 1957)
@@ -153,20 +102,13 @@ describe('Epoch', () => {
     expect(epoch1.operatorLessThanOrEqual(epoch2)).toEqual(true);
   });
 
-  // Test leap year edge cases
-  it('should handle leap year in toEpochYearAndDay', () => {
-    const posix = 1582934400 as Seconds; // 2020-02-29 (leap year)
-    const epoch = new Epoch(posix);
-
-    expect(epoch.toEpochYearAndDay()).toMatchSnapshot();
-  });
-
-  // Test century year that is not a leap year
-  it('should handle non-leap century year', () => {
-    const posix = 951782400 as Seconds; // 2000-02-29 (leap year - divisible by 400)
-    const epoch = new Epoch(posix);
-
-    expect(epoch.toEpochYearAndDay()).toMatchSnapshot();
+  it.each([
+    ['2020 leap day', 1582934400, '20', '060.00000000'],
+    ['2000 leap day', 951782400, '00', '060.00000000'],
+    ['2022 non-leap date', 1641081600, '22', '002.00000000'],
+    ['2100 non-leap century', 4102444800, '00', '001.00000000'],
+  ] as const)('formats the %s as a TLE epoch', (_label, posix, epochYr, epochDay) => {
+    expect(new Epoch(posix as Seconds).toEpochYearAndDay()).toEqual({ epochYr, epochDay });
   });
 
   // Test zero posix timestamp
@@ -193,29 +135,13 @@ describe('Epoch', () => {
     expect(epoch2.toEpochYearAndDay().epochDay).toContain('152.');
   });
 
-  // Test isLeapYear for non-divisible by 4
-  it('should identify non-leap year (not divisible by 4)', () => {
-    const posix = 1641081600 as Seconds; // 2022-01-02
-    const epoch = new Epoch(posix);
-
-    expect(epoch.toEpochYearAndDay()).toMatchSnapshot();
-  });
-
-  // Test isLeapYear for century year not divisible by 400
-  it('should handle century year not divisible by 400', () => {
-    const posix = 4102444800 as Seconds; // 2100-01-01 (not a leap year)
-    const epoch = new Epoch(posix);
-
-    expect(epoch.toEpochYearAndDay()).toMatchSnapshot();
-  });
-
   // Test toEpochYearAndDay with time of day calculations
   it('should include time of day in epoch day calculation', () => {
     const posix = 1614556800 as Seconds; // Contains hours and minutes
     const epoch = new Epoch(posix);
     const result = epoch.toEpochYearAndDay();
 
-    expect(result.epochDay.length).toEqual(12);
+    expect(result.epochDay).toHaveLength(12);
     expect(result.epochDay).toContain('.');
   });
 
