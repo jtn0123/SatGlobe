@@ -277,25 +277,28 @@ function validateAccuracy(
 function generateTypeScript(segments: ChebyshevSegment[], exportName: string): string {
   const lines: string[] = [];
 
-  lines.push(`import { ChebyshevCoefficients } from '@ootk/src/interpolator/ChebyshevCoefficients';`);
-  lines.push(`import { Seconds } from '@ootk/src/main';`);
-  lines.push(``);
-  lines.push(`export const ${exportName}: ChebyshevCoefficients[] = [`);
+  lines.push(
+    `import { ChebyshevCoefficients } from '@ootk/src/interpolator/ChebyshevCoefficients';`,
+    `import { Seconds } from '@ootk/src/main';`,
+    ``,
+    `export const ${exportName}: ChebyshevCoefficients[] = [`,
+  );
 
   for (const seg of segments) {
     const fmtArr = (arr: number[]): string => `new Float64Array([${arr.map((v) => v.toPrecision(17)).join(', ')}])`;
 
-    lines.push(`  new ChebyshevCoefficients(`);
-    lines.push(`    ${seg.a} as Seconds,`);
-    lines.push(`    ${seg.b} as Seconds,`);
-    lines.push(`    ${fmtArr(seg.cx)},`);
-    lines.push(`    ${fmtArr(seg.cy)},`);
-    lines.push(`    ${fmtArr(seg.cz)},`);
-    lines.push(`  ),`);
+    lines.push(
+      `  new ChebyshevCoefficients(`,
+      `    ${seg.a} as Seconds,`,
+      `    ${seg.b} as Seconds,`,
+      `    ${fmtArr(seg.cx)},`,
+      `    ${fmtArr(seg.cy)},`,
+      `    ${fmtArr(seg.cz)},`,
+      `  ),`,
+    );
   }
 
-  lines.push(`];`);
-  lines.push(``);
+  lines.push(`];`, ``);
 
   return lines.join('\n');
 }

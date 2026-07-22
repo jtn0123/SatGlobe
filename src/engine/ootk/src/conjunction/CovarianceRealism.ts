@@ -453,18 +453,22 @@ export class CovarianceRealism {
       const u = Math.cbrt(-bb2 + sqrtD);
       const v = Math.cbrt(-bb2 - sqrtD);
 
-      eigenvalues.push(u + v - p3);
-      // Complex roots - return 0 as fallback
-      eigenvalues.push(0);
-      eigenvalues.push(0);
+      eigenvalues.push(
+        u + v - p3,
+        // Complex roots - return 0 as fallback
+        0,
+        0,
+      );
     } else {
       // Three real roots (normal case for covariance matrices)
       const phi = Math.acos(-bb2 / Math.sqrt(-aa3 * aa3 * aa3));
       const t = 2 * Math.sqrt(-aa3);
 
-      eigenvalues.push(t * Math.cos(phi / 3) - p3);
-      eigenvalues.push(t * Math.cos((phi + 2 * Math.PI) / 3) - p3);
-      eigenvalues.push(t * Math.cos((phi + 4 * Math.PI) / 3) - p3);
+      eigenvalues.push(
+        t * Math.cos(phi / 3) - p3,
+        t * Math.cos((phi + 2 * Math.PI) / 3) - p3,
+        t * Math.cos((phi + 4 * Math.PI) / 3) - p3,
+      );
     }
 
     return eigenvalues;

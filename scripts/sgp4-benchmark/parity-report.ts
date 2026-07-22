@@ -188,12 +188,14 @@ const describeProbe = (r: ParityReport): string => {
 
   const parts: string[] = [];
 
-  parts.push(xpDoesType0
-    ? 'The XP build propagates classic type-0 TLEs and matches the classic build on them.'
-    : 'The XP build did NOT cleanly propagate every classic type-0 TLE.');
-  parts.push(xpDoesType4
-    ? 'It also accepts type-4-flagged input'
-    : 'It rejected the synthesized type-4 input');
+  parts.push(
+    xpDoesType0
+      ? 'The XP build propagates classic type-0 TLEs and matches the classic build on them.'
+      : 'The XP build did NOT cleanly propagate every classic type-0 TLE.',
+    xpDoesType4
+      ? 'It also accepts type-4-flagged input'
+      : 'It rejected the synthesized type-4 input',
+  );
 
   let tail = '.';
 
@@ -202,10 +204,12 @@ const describeProbe = (r: ParityReport): string => {
   } else if (xpDoesType4) {
     tail = ', producing the same state as type-0 (the flipped flag alone did not change the physics).';
   }
-  parts.push(tail);
-  parts.push(classicRejectsType4
-    ? ' The classic build rejects type-4 input.'
-    : ' The classic build also accepted the type-4 input.');
+  parts.push(
+    tail,
+    classicRejectsType4
+      ? ' The classic build rejects type-4 input.'
+      : ' The classic build also accepted the type-4 input.',
+  );
 
   return parts.join('');
 };

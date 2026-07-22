@@ -870,9 +870,7 @@ export class DotsManager {
       byteB = ((i + 1) & 0xff0000) >> 16;
 
       // Normalize colors to 1 and flatten them
-      this.pickingColorData.push(byteR / 255.0);
-      this.pickingColorData.push(byteG / 255.0);
-      this.pickingColorData.push(byteB / 255.0);
+      this.pickingColorData.push(byteR / 255.0, byteG / 255.0, byteB / 255.0);
     }
 
     const renderer = ServiceLocator.getRenderer();

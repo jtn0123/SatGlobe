@@ -301,13 +301,11 @@ export class LookAnglesPlugin extends KeepTrackPlugin {
             break;
           case TearrType.RISE_AND_MAX_EL:
             isMaxElFound = true;
-            looksArray.push({ ...looksPass, type: TearrType.RISE });
-            looksArray.push({ ...looksPass, type: TearrType.MAX_EL });
+            looksArray.push({ ...looksPass, type: TearrType.RISE }, { ...looksPass, type: TearrType.MAX_EL });
             break;
           case TearrType.MAX_EL_AND_SET:
             isMaxElFound = false;
-            looksArray.push({ ...looksPass, type: TearrType.MAX_EL });
-            looksArray.push({ ...looksPass, type: TearrType.SET });
+            looksArray.push({ ...looksPass, type: TearrType.MAX_EL }, { ...looksPass, type: TearrType.SET });
             break;
           default:
             looksArray.push(looksPass);

@@ -120,8 +120,7 @@ export class WebpackManager {
     const mainConfig = this.createMainConfig_(baseConfig, dirName, 'dist');
     const webWorkerConfig = this.createWorkerConfig_(baseConfig, dirName, 'dist', '');
 
-    webpackConfig.push(mainConfig);
-    webpackConfig.push(webWorkerConfig);
+    webpackConfig.push(mainConfig, webWorkerConfig);
 
     if (this.config.isPro) {
       const authConfig = this.createAuthConfig_(baseConfig, dirName, 'dist', 'auth/');

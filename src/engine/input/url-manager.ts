@@ -357,20 +357,23 @@ export abstract class UrlManager {
     }
 
     if (this.selectedSat_?.sccNum && !(mainCamera.state.ftsPitch > -0.1 && mainCamera.state.ftsPitch < 0.1 && mainCamera.state.ftsYaw > -0.1 && mainCamera.state.ftsYaw < 0.1)) {
-      paramSlices.push(`pitch=${(mainCamera.state.ftsPitch * RAD2DEG).toFixed(3)}`);
-      paramSlices.push(`yaw=${(mainCamera.state.ftsYaw * RAD2DEG).toFixed(3)}`);
+      paramSlices.push(
+        `pitch=${(mainCamera.state.ftsPitch * RAD2DEG).toFixed(3)}`,
+        `yaw=${(mainCamera.state.ftsYaw * RAD2DEG).toFixed(3)}`,
+      );
     } else if (mainCamera.state.camPitch > -0.01 && mainCamera.state.camPitch < 0.01 && mainCamera.state.camYaw > -0.01 && mainCamera.state.camYaw < 0.01) {
       // If pitch and yaw are close to zero, we don't need to include them in the URL
     } else {
-      paramSlices.push(`pitch=${(mainCamera.state.camPitch * RAD2DEG).toFixed(3)}`);
-      paramSlices.push(`yaw=${(mainCamera.state.camYaw * RAD2DEG).toFixed(3)}`);
+      paramSlices.push(
+        `pitch=${(mainCamera.state.camPitch * RAD2DEG).toFixed(3)}`,
+        `yaw=${(mainCamera.state.camYaw * RAD2DEG).toFixed(3)}`,
+      );
     }
 
     paramSlices.push(`zoom=${mainCamera.zoomLevel().toFixed(2)}`);
 
     if (settingsManager.dataSources.externalTLEsOnly) {
-      paramSlices.push(`tle=${encodeURIComponent(settingsManager.dataSources.externalTLEs)}`);
-      paramSlices.push('external-only=true');
+      paramSlices.push(`tle=${encodeURIComponent(settingsManager.dataSources.externalTLEs)}`, 'external-only=true');
     } else if (!settingsManager.dataSources.tle.includes('keeptrack.space') && isMaxData) {
       paramSlices.push(`tle=${encodeURIComponent(settingsManager.dataSources.tle)}`);
     }
