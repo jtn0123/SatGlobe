@@ -80,7 +80,6 @@ export class SettingsPresets {
                   `;
       const style = document.createElement('style');
 
-      style.type = 'text/css';
       style.appendChild(document.createTextNode(toastCss));
       document.head.appendChild(style);
 
@@ -208,7 +207,6 @@ export class SettingsPresets {
                   `;
       const style = document.createElement('style');
 
-      style.type = 'text/css';
       style.appendChild(document.createTextNode(toastCss));
       document.head.appendChild(style);
 

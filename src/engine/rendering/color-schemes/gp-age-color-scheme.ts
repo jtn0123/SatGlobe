@@ -54,7 +54,7 @@ export class GpAgeColorScheme extends ColorScheme {
 
     return {
       jday: getDayOfYear(now) + ((now.getUTCHours() * 3600 + now.getUTCMinutes() * 60 + now.getUTCSeconds()) / 86400),
-      year: Number.parseInt(now.getUTCFullYear().toString().substr(2, 2), 10),
+      year: Number.parseInt(now.getUTCFullYear().toString().slice(2, 4), 10),
     };
   }
 
@@ -76,7 +76,7 @@ export class GpAgeColorScheme extends ColorScheme {
 
       params = {
         jday: getDayOfYear(now) + ((now.getUTCHours() * 3600 + now.getUTCMinutes() * 60 + now.getUTCSeconds()) / 86400),
-        year: Number.parseInt(now.getUTCFullYear().toString().substr(2, 2), 10),
+        year: Number.parseInt(now.getUTCFullYear().toString().slice(2, 4), 10),
       };
     }
 

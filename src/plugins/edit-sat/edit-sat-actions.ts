@@ -11,7 +11,6 @@ import { GetSatType } from '@app/engine/core/interfaces';
 import { ServiceLocator } from '@app/engine/core/service-locator';
 import { TimeManager } from '@app/engine/core/time-manager';
 import { errorManagerInstance } from '@app/engine/utils/errorManager';
-import { StringPad } from '@app/engine/utils/stringPad';
 import {
   Earth,
   FormatTle,
@@ -109,7 +108,7 @@ export function applyTleToSat(satId: number, tle1: TleLine1, tle2: TleLine2, cou
  * id stays on the Satellite object.
  */
 export function buildEditedTle(sat: Satellite, v: EditFormValues): { tle1: TleLine1; tle2: TleLine2 } {
-  const intl = sat.tle1.substr(9, 8);
+  const intl = sat.tle1.slice(9, 17);
   const tleScc = Tle.classifySatNum(v.scc) === 'extended' ? v.scc.slice(-5) : v.scc;
 
   return FormatTle.createTle({
@@ -152,7 +151,7 @@ export function reEpochToNow(sat: Satellite): ReEpochResult {
   const simulationTimeObj = timeManagerInstance.simulationTimeObj;
   const currentEpoch = TimeManager.currentEpoch(simulationTimeObj);
 
-  sat.tle1 = (sat.tle1.substr(0, 18) + currentEpoch[0] + currentEpoch[1] + sat.tle1.substr(32)) as TleLine1;
+  sat.tle1 = (sat.tle1.slice(0, 18) + currentEpoch[0] + currentEpoch[1] + sat.tle1.slice(32)) as TleLine1;
 
   const finder = sat.apogee - sat.perigee < 300
     ? new OrbitFinder(sat, launchLat, launchLon, upOrDown as 'N' | 'S', simulationTimeObj)
@@ -192,7 +191,7 @@ export function parseLoadedTle(text: string): { sccNum: string; tle1: TleLine1; 
 
   const sccNum = typeof object.sccNum === 'string' || typeof object.sccNum === 'number'
     ? String(object.sccNum)
-    : StringPad.pad0(object.tle1.substr(2, 5).trim(), 5);
+    : object.tle1.slice(2, 7).trim().padStart(5, '0');
 
   return { sccNum, tle1: object.tle1 as TleLine1, tle2: object.tle2 as TleLine2 };
 }

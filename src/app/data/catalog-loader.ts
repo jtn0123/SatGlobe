@@ -4,7 +4,6 @@ import { rgbaArray, SolarBody } from '@app/engine/core/interfaces';
 import { ServiceLocator } from '@app/engine/core/service-locator';
 import { CelestialBody } from '@app/engine/rendering/draw-manager/celestial-bodies/celestial-body';
 import { errorManagerInstance } from '@app/engine/utils/errorManager';
-import { StringPad } from '@app/engine/utils/stringPad';
 import { CruncherSat } from '@app/webworker/positionCruncher';
 import {
   BaseObject,
@@ -975,7 +974,7 @@ export class CatalogLoader {
    * TODO: This should be done by the catalog-manager itself
    */
   private static addSccNum_(resp: KeepTrackTLEFile[], i: number) {
-    resp[i].sccNum = StringPad.pad0(resp[i].tle1.substring(2, 7).trim(), 5);
+    resp[i].sccNum = resp[i].tle1.substring(2, 7).trim().padStart(5, '0');
     // Also update TLE1
     resp[i].tle1 = <TleLine1>(resp[i].tle1.substring(0, 2) + resp[i].sccNum + resp[i].tle1.substring(7));
     // Also update TLE2
@@ -1024,7 +1023,7 @@ export class CatalogLoader {
 
       for (let i = 0; i < content.length; i += 2) {
         asciiCatalog.push({
-          SCC: StringPad.pad0(content[i].substring(2, 7).trim(), 5),
+          SCC: content[i].substring(2, 7).trim().padStart(5, '0'),
           TLE1: <TleLine1>content[i],
           TLE2: <TleLine2>content[i + 1],
         });
@@ -1204,7 +1203,7 @@ export class CatalogLoader {
 
     notionalSatNum++;
 
-    meanAnom = Number.parseFloat(debris.tle2.substr(43, 51)) + meanAnom;
+    meanAnom = Number.parseFloat(debris.tle2.slice(43, 94)) + meanAnom;
     if (meanAnom > 360) {
       meanAnom -= 360;
     }
@@ -1213,11 +1212,11 @@ export class CatalogLoader {
     }
 
     debris.tle2 =
-      debris.tle2.substr(0, 17) + // Columns 1-18
-      StringPad.pad0((Math.random() * 360).toFixed(4), 8) + // New RAAN
-      debris.tle2.substr(25, 18) + // Columns 25-44
-      StringPad.pad0(meanAnom.toFixed(4), 8) + // New Mean Anomaly
-      debris.tle2.substr(51) as TleLine2; // Columns 51-69
+      debris.tle2.slice(0, 17) + // Columns 1-18
+      (Math.random() * 360).toFixed(4).padStart(8, '0') + // New RAAN
+      debris.tle2.slice(25, 43) + // Columns 25-44
+      meanAnom.toFixed(4).padStart(8, '0') + // New Mean Anomaly
+      debris.tle2.slice(51) as TleLine2; // Columns 51-69
 
     const debrisObj = new Satellite(debris);
 
@@ -1227,7 +1226,7 @@ export class CatalogLoader {
   private static parseAscii3LE_(content: string[], externalCatalog: AsciiTleSat[]) {
     for (let i = 0; i < content.length; i += 3) {
       externalCatalog.push({
-        SCC: StringPad.pad0(content[i + 1].substring(2, 7).trim(), 5),
+        SCC: content[i + 1].substring(2, 7).trim().padStart(5, '0'),
         ON: content[i].trim(),
         TLE1: <TleLine1>content[i + 1],
         TLE2: <TleLine2>content[i + 2],
@@ -1238,7 +1237,7 @@ export class CatalogLoader {
   private static parseAsciiTLE_(content: string[], externalCatalog: AsciiTleSat[]) {
     for (let i = 0; i < content.length; i += 2) {
       externalCatalog.push({
-        SCC: StringPad.pad0(content[i].substring(2, 7).trim(), 5),
+        SCC: content[i].substring(2, 7).trim().padStart(5, '0'),
         TLE1: <TleLine1>content[i],
         TLE2: <TleLine2>content[i + 1],
       });
