@@ -189,11 +189,9 @@ export class SensorFovMesh extends CustomMesh {
         const d = b + 1;
 
         if (reverse) {
-          this.indicesTmp_.push(a, c, b);
-          this.indicesTmp_.push(b, c, d);
+          this.indicesTmp_.push(a, c, b, b, c, d);
         } else {
-          this.indicesTmp_.push(a, b, c);
-          this.indicesTmp_.push(b, d, c);
+          this.indicesTmp_.push(a, b, c, b, d, c);
         }
       }
     }
@@ -225,8 +223,7 @@ export class SensorFovMesh extends CustomMesh {
           const a = startIndex + i * (elSegments + 1) + j;
           const b = a + elSegments + 1;
 
-          this.indicesTmp_.push(a, b, a + 1);
-          this.indicesTmp_.push(b, b + 1, a + 1);
+          this.indicesTmp_.push(a, b, a + 1, b, b + 1, a + 1);
         }
       }
     }
@@ -263,11 +260,9 @@ export class SensorFovMesh extends CustomMesh {
         const d = b + 1;
 
         if (reverse) {
-          this.indicesTmp_.push(a, c, b);
-          this.indicesTmp_.push(b, c, d);
+          this.indicesTmp_.push(a, c, b, b, c, d);
         } else {
-          this.indicesTmp_.push(a, b, c);
-          this.indicesTmp_.push(b, d, c);
+          this.indicesTmp_.push(a, b, c, b, d, c);
         }
       }
     }
@@ -299,8 +294,7 @@ export class SensorFovMesh extends CustomMesh {
           const a = startIndex + i * (1 + 1) + j;
           const b = a + 1 + 1;
 
-          this.indicesTmp_.push(a, b, a + 1);
-          this.indicesTmp_.push(b, b + 1, a + 1);
+          this.indicesTmp_.push(a, b, a + 1, b, b + 1, a + 1);
         }
       }
     }

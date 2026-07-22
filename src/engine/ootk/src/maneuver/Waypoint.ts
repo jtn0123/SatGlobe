@@ -210,9 +210,7 @@ export class Waypoint {
     }
     const output: Thrust[] = [];
 
-    output.push(...preMnv);
-    output.push(...waypointManeuvers);
-    output.push(...postMnv);
+    output.push(...preMnv, ...waypointManeuvers, ...postMnv);
 
     return output;
   }

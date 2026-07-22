@@ -157,8 +157,7 @@ export class CatalogExporter {
           errorManagerInstance.log(sat.sccNum);
         }
 
-        catalogTLE2.push(sat.tle1);
-        catalogTLE2.push(sat.tle2);
+        catalogTLE2.push(sat.tle1, sat.tle2);
       }
       const catalogTLE2Str = catalogTLE2.join('\n');
       const blob = new Blob([catalogTLE2Str], {
@@ -198,8 +197,7 @@ export class CatalogExporter {
           continue;
         }
 
-        tleLines.push(sat.tle1);
-        tleLines.push(sat.tle2);
+        tleLines.push(sat.tle1, sat.tle2);
       }
 
       const blob = new Blob([tleLines.join('\n')], {

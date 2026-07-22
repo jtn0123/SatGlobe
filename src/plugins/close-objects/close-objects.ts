@@ -418,8 +418,7 @@ export class CloseObjectsPlugin extends KeepTrackPlugin {
       }
 
       if (pos2.x < posXmax && pos2.x > posXmin && pos2.y < posYmax && pos2.y > posYmin && pos2.z < posZmax && pos2.z > posZmin) {
-        csoStrArr.push(posCso.sat1.sccNum);
-        csoStrArr.push(posCso.sat2.sccNum);
+        csoStrArr.push(posCso.sat1.sccNum, posCso.sat2.sccNum);
       }
     }
 

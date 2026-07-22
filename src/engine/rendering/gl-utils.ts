@@ -528,8 +528,7 @@ export abstract class GlUtils {
           const idx3 = ((e + 1) * (azimuthSteps + 1) + a + 1) * 2 + rangeIdx;
 
           // Create two triangles for each rectangle
-          indices.push(idx0, idx1, idx2);
-          indices.push(idx1, idx3, idx2);
+          indices.push(idx0, idx1, idx2, idx1, idx3, idx2);
 
           // Calculate normals for the two triangles and add them to normals array
           for (const [i0, i1, i2] of [
@@ -566,8 +565,14 @@ export abstract class GlUtils {
 
     // Combine positions and normals
     for (let i = 0; i < positions.length; i += 3) {
-      combinedArray.push(positions[i][0], positions[i][1], positions[i][2]);
-      combinedArray.push(normals[i][0], normals[i][1], normals[i][2]);
+      combinedArray.push(
+        positions[i][0],
+        positions[i][1],
+        positions[i][2],
+        normals[i][0],
+        normals[i][1],
+        normals[i][2],
+      );
     }
 
     return {
@@ -604,17 +609,11 @@ export abstract class GlUtils {
          * console.log('u: ' + u + ' v: ' + v);
          * normals: should just be a vector from center to point (aka the point itself!
          */
-        combinedArray.push(x * radius);
-        combinedArray.push(y * radius);
-        combinedArray.push(z * radius);
-        combinedArray.push(x);
-        combinedArray.push(y);
-        combinedArray.push(z);
+        combinedArray.push(x * radius, y * radius, z * radius, x, y, z);
 
         // Some objects don't need texture mapping
         if (!isSkipTexture) {
-          combinedArray.push(u);
-          combinedArray.push(v);
+          combinedArray.push(u, v);
         }
       }
     }
@@ -634,13 +633,7 @@ export abstract class GlUtils {
          * console.log('bl: ' + blVert + ' br: ' + brVert +  ' tl: ' + tlVert + ' tr: ' + trVert);
          */
 
-        vertIndex.push(blVert);
-        vertIndex.push(brVert);
-        vertIndex.push(tlVert);
-
-        vertIndex.push(tlVert);
-        vertIndex.push(trVert);
-        vertIndex.push(brVert);
+        vertIndex.push(blVert, brVert, tlVert, tlVert, trVert, brVert);
       }
     }
 
@@ -738,8 +731,7 @@ export abstract class GlUtils {
     const combinedArray = [] as number[];
 
     for (let i = 0; i < vertices.length; i += 3) {
-      combinedArray.push(vertices[i], vertices[i + 1], vertices[i + 2]);
-      combinedArray.push(normals[i], normals[i + 1], normals[i + 2]);
+      combinedArray.push(vertices[i], vertices[i + 1], vertices[i + 2], normals[i], normals[i + 1], normals[i + 2]);
     }
 
     return {
@@ -784,16 +776,14 @@ export abstract class GlUtils {
         const first = latNumber * (longitudeBands + 1) + longNumber;
         const second = first + longitudeBands + 1;
 
-        indices.push(first, second, first + 1);
-        indices.push(second, second + 1, first + 1);
+        indices.push(first, second, first + 1, second, second + 1, first + 1);
       }
     }
 
     const combinedArray = [] as number[];
 
     for (let i = 0; i < vertices.length; i += 3) {
-      combinedArray.push(vertices[i], vertices[i + 1], vertices[i + 2]);
-      combinedArray.push(normals[i], normals[i + 1], normals[i + 2]);
+      combinedArray.push(vertices[i], vertices[i + 1], vertices[i + 2], normals[i], normals[i + 1], normals[i + 2]);
     }
 
     return {
@@ -813,8 +803,7 @@ export abstract class GlUtils {
     const combinedArray = [] as number[];
 
     for (let i = 0; i < vertices.length; i += 3) {
-      combinedArray.push(vertices[i], vertices[i + 1], vertices[i + 2]);
-      combinedArray.push(normals[i], normals[i + 1], normals[i + 2]);
+      combinedArray.push(vertices[i], vertices[i + 1], vertices[i + 2], normals[i], normals[i + 1], normals[i + 2]);
     }
 
     return {

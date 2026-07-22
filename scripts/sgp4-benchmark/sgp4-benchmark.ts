@@ -339,24 +339,25 @@ const main = async (): Promise<void> => {
     }
   };
 
-  rows.push({
-    scenario: 'Full catalog frame', engine: 'sgp4', mode: 'loop', unit: 'ms/frame',
-    stats: frameBench('sgp4 loop', () => {
-      for (let i = 0; i < satrecs.length; i++) {
-        Sgp4.propagate(satrecs[i], mse[i]);
-      }
-    }),
-  });
-
-  // TS cruncher sim must run before any wasm backend is installed
-  rows.push({
-    scenario: 'Cruncher frame sim', engine: 'sgp4', mode: 'old validation', unit: 'ms/frame',
-    stats: frameBench('sgp4 crunch-sim old', crunchSim(satrecs, true)),
-  });
-  rows.push({
-    scenario: 'Cruncher frame sim', engine: 'sgp4', mode: 'new validation', unit: 'ms/frame',
-    stats: frameBench('sgp4 crunch-sim new', crunchSim(satrecs, false)),
-  });
+  rows.push(
+    {
+      scenario: 'Full catalog frame', engine: 'sgp4', mode: 'loop', unit: 'ms/frame',
+      stats: frameBench('sgp4 loop', () => {
+        for (let i = 0; i < satrecs.length; i++) {
+          Sgp4.propagate(satrecs[i], mse[i]);
+        }
+      }),
+    },
+    // TS cruncher sim must run before any wasm backend is installed
+    {
+      scenario: 'Cruncher frame sim', engine: 'sgp4', mode: 'old validation', unit: 'ms/frame',
+      stats: frameBench('sgp4 crunch-sim old', crunchSim(satrecs, true)),
+    },
+    {
+      scenario: 'Cruncher frame sim', engine: 'sgp4', mode: 'new validation', unit: 'ms/frame',
+      stats: frameBench('sgp4 crunch-sim new', crunchSim(satrecs, false)),
+    },
+  );
 
   for (const e of engines) {
     // Seam: exactly the app path — Sgp4.propagate with the backend installed.
@@ -364,49 +365,51 @@ const main = async (): Promise<void> => {
     const seamSatrecs = commonIdx.map((i) => Sgp4.createSatrec(entries[i].tle1, entries[i].tle2, Sgp4GravConstants.wgs72, Sgp4OpsMode.AFSPC));
 
     Sgp4.useWasmBackend(e.seam);
-    rows.push({
-      scenario: 'Full catalog frame', engine: e.name, mode: 'seam (app path)', unit: 'ms/frame',
-      stats: frameBench(`${e.name} seam`, () => {
-        for (let i = 0; i < seamSatrecs.length; i++) {
-          Sgp4.propagate(seamSatrecs[i], mse[i]);
-        }
-      }),
-    });
-
-    /*
-     * Cruncher sim through the seam while the backend is still installed —
-     * the seam satrecs keep their attached satKeys, exactly like the app's
-     * long-running worker.
-     */
-    rows.push({
-      scenario: 'Cruncher frame sim', engine: e.name, mode: 'old validation', unit: 'ms/frame',
-      stats: frameBench(`${e.name} crunch-sim old`, crunchSim(seamSatrecs, true)),
-    });
-    rows.push({
-      scenario: 'Cruncher frame sim', engine: e.name, mode: 'new validation', unit: 'ms/frame',
-      stats: frameBench(`${e.name} crunch-sim new`, crunchSim(seamSatrecs, false)),
-    });
+    rows.push(
+      {
+        scenario: 'Full catalog frame', engine: e.name, mode: 'seam (app path)', unit: 'ms/frame',
+        stats: frameBench(`${e.name} seam`, () => {
+          for (let i = 0; i < seamSatrecs.length; i++) {
+            Sgp4.propagate(seamSatrecs[i], mse[i]);
+          }
+        }),
+      },
+      /*
+       * Cruncher sim through the seam while the backend is still installed —
+       * the seam satrecs keep their attached satKeys, exactly like the app's
+       * long-running worker.
+       */
+      {
+        scenario: 'Cruncher frame sim', engine: e.name, mode: 'old validation', unit: 'ms/frame',
+        stats: frameBench(`${e.name} crunch-sim old`, crunchSim(seamSatrecs, true)),
+      },
+      {
+        scenario: 'Cruncher frame sim', engine: e.name, mode: 'new validation', unit: 'ms/frame',
+        stats: frameBench(`${e.name} crunch-sim new`, crunchSim(seamSatrecs, false)),
+      },
+    );
     Sgp4.clearWasmBackend();
 
     // Fast-call loop: per-satellite calls without the seam bookkeeping
     const keys = commonIdx.map((i) => e.satKeys[i]);
 
-    rows.push({
-      scenario: 'Full catalog frame', engine: e.name, mode: 'fast-call loop', unit: 'ms/frame',
-      stats: frameBench(`${e.name} fast-call`, () => {
-        for (let i = 0; i < keys.length; i++) {
-          e.batch.propagateOnePosVelFast(keys[i], mse[i]);
-        }
-      }),
-    });
-
-    // Batch (api): one wrapper call per frame, including key marshalling
-    rows.push({
-      scenario: 'Full catalog frame', engine: e.name, mode: 'batch (api)', unit: 'ms/frame',
-      stats: frameBench(`${e.name} batch api`, () => {
-        e.batch.propagateDs50UtcPosVel(keys, ds50Target, 1, 0);
-      }),
-    });
+    rows.push(
+      {
+        scenario: 'Full catalog frame', engine: e.name, mode: 'fast-call loop', unit: 'ms/frame',
+        stats: frameBench(`${e.name} fast-call`, () => {
+          for (let i = 0; i < keys.length; i++) {
+            e.batch.propagateOnePosVelFast(keys[i], mse[i]);
+          }
+        }),
+      },
+      // Batch (api): one wrapper call per frame, including key marshalling
+      {
+        scenario: 'Full catalog frame', engine: e.name, mode: 'batch (api)', unit: 'ms/frame',
+        stats: frameBench(`${e.name} batch api`, () => {
+          e.batch.propagateDs50UtcPosVel(keys, ds50Target, 1, 0);
+        }),
+      },
+    );
 
     /*
      * Batch (prebuilt): key/result buffers allocated once and reused across

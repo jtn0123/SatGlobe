@@ -147,8 +147,7 @@ function buildWarheadCopy(tpl: ObjObject, local: number[][], scale: number, tx: 
   for (const vn of tpl.vn) {
     out.push(`vn ${vn}`);
   }
-  out.push(...tpl.misc);
-  out.push(...tpl.lines.filter((l) => l.startsWith('usemtl')));
+  out.push(...tpl.misc, ...tpl.lines.filter((l) => l.startsWith('usemtl')));
 
   // Faces reference the template's contiguous v/vt/vn blocks; shift each stream to this copy's offset.
   const dv = offsets.gv - tpl.vStart;

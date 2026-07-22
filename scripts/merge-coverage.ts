@@ -143,8 +143,7 @@ const out: string[] = [];
 const tot = { lf: 0, lh: 0, fnf: 0, fnh: 0, brf: 0, brh: 0 };
 
 for (const [file, cov] of [...merged.entries()].sort((a, b) => a[0].localeCompare(b[0]))) {
-  out.push('TN:');
-  out.push(`SF:${file}`);
+  out.push('TN:', `SF:${file}`);
   for (const [name, ln] of cov.fnName) {
     out.push(`FN:${ln},${name}`);
   }
@@ -156,8 +155,7 @@ for (const [file, cov] of [...merged.entries()].sort((a, b) => a[0].localeCompar
       fnh++;
     }
   }
-  out.push(`FNF:${cov.fnHits.size}`);
-  out.push(`FNH:${fnh}`);
+  out.push(`FNF:${cov.fnHits.size}`, `FNH:${fnh}`);
 
   let brh = 0;
 
@@ -167,8 +165,7 @@ for (const [file, cov] of [...merged.entries()].sort((a, b) => a[0].localeCompar
       brh++;
     }
   }
-  out.push(`BRF:${cov.branches.size}`);
-  out.push(`BRH:${brh}`);
+  out.push(`BRF:${cov.branches.size}`, `BRH:${brh}`);
 
   let lh = 0;
 
@@ -178,9 +175,7 @@ for (const [file, cov] of [...merged.entries()].sort((a, b) => a[0].localeCompar
       lh++;
     }
   }
-  out.push(`LF:${cov.lines.size}`);
-  out.push(`LH:${lh}`);
-  out.push('end_of_record');
+  out.push(`LF:${cov.lines.size}`, `LH:${lh}`, 'end_of_record');
 
   tot.lf += cov.lines.size;
   tot.lh += lh;

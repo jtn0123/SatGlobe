@@ -237,8 +237,11 @@ export class MultiSensorLookAnglesPlugin extends KeepTrackPlugin {
             const sensorButton = document.createElement('button');
 
             sensorButton.type = 'button';
-            sensorButton.classList.add('msla-sensor-toggle', 'waves-effect');
-            sensorButton.classList.add(this.disabledSensors_.includes(sensor) ? 'is-off' : 'is-on');
+            sensorButton.classList.add(
+              'msla-sensor-toggle',
+              'waves-effect',
+              this.disabledSensors_.includes(sensor) ? 'is-off' : 'is-on',
+            );
 
             allSensors.push(sensor);
 

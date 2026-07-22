@@ -4,7 +4,7 @@ import { getEl } from '@app/engine/utils/get-el';
 import { saveXlsx } from '@app/engine/utils/saveVariable';
 import { SelectSatManager } from '@app/plugins/select-sat-manager/select-sat-manager';
 import { LookAnglesPlugin } from '@app/plugins/sensor/look-angles-plugin';
-import { TearrType, type TearrData } from '@app/app/sensors/sensor-math';
+import { SensorMath, TearrType, type TearrData } from '@app/app/sensors/sensor-math';
 import { Degrees, Kilometers } from '@ootk/src/main';
 import { defaultSat, defaultSensor } from '@test/environment/apiMocks';
 import { setupStandardEnvironment } from '@test/environment/standard-env';
@@ -64,6 +64,27 @@ describe('LookAnglesPlugin look-angle computation', () => {
     ServiceLocator.getSensorManager().currentSensors = [];
 
     expect(p().getlookangles_(defaultSat)).toStrictEqual([]);
+  });
+
+  it('does not split a two-row event across the 1,500-row limit', () => {
+    p().isRiseSetOnly_ = true;
+    p().lengthOfLookAngles_ = 1;
+    vi.spyOn(p(), 'populateSideMenuTable_').mockImplementation(() => undefined);
+    let sample = 0;
+
+    vi.spyOn(SensorMath, 'getTearData').mockImplementation(() => ({
+      time: new Date(Date.UTC(2022, 0, 1, 0, 0, sample)).toISOString(),
+      az: 100 as Degrees,
+      el: 10 as Degrees,
+      rng: 500 as Kilometers,
+      objName: 'TEST',
+      type: sample++ === 1499 ? TearrType.RISE_AND_MAX_EL : TearrType.RISE,
+    }));
+
+    const result = p().getlookangles_(defaultSat);
+
+    expect(result).toHaveLength(1499);
+    expect(SensorMath.getTearData).toHaveBeenCalledTimes(1500);
   });
 
   it('populateSideMenuTable_ renders a header plus rows for entries', () => {
