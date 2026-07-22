@@ -102,20 +102,13 @@ describe('Epoch', () => {
     expect(epoch1.operatorLessThanOrEqual(epoch2)).toEqual(true);
   });
 
-  // Test leap year edge cases
-  it('should handle leap year in toEpochYearAndDay', () => {
-    const posix = 1582934400 as Seconds; // 2020-02-29 (leap year)
-    const epoch = new Epoch(posix);
-
-    expect(epoch.toEpochYearAndDay()).toMatchSnapshot();
-  });
-
-  // Test century year that is not a leap year
-  it('should handle non-leap century year', () => {
-    const posix = 951782400 as Seconds; // 2000-02-29 (leap year - divisible by 400)
-    const epoch = new Epoch(posix);
-
-    expect(epoch.toEpochYearAndDay()).toMatchSnapshot();
+  it.each([
+    ['2020 leap day', 1582934400, '20', '060.00000000'],
+    ['2000 leap day', 951782400, '00', '060.00000000'],
+    ['2022 non-leap date', 1641081600, '22', '002.00000000'],
+    ['2100 non-leap century', 4102444800, '00', '001.00000000'],
+  ] as const)('formats the %s as a TLE epoch', (_label, posix, epochYr, epochDay) => {
+    expect(new Epoch(posix as Seconds).toEpochYearAndDay()).toEqual({ epochYr, epochDay });
   });
 
   // Test zero posix timestamp
@@ -140,22 +133,6 @@ describe('Epoch', () => {
     const epoch2 = new Epoch(posix2);
 
     expect(epoch2.toEpochYearAndDay().epochDay).toContain('152.');
-  });
-
-  // Test isLeapYear for non-divisible by 4
-  it('should identify non-leap year (not divisible by 4)', () => {
-    const posix = 1641081600 as Seconds; // 2022-01-02
-    const epoch = new Epoch(posix);
-
-    expect(epoch.toEpochYearAndDay()).toMatchSnapshot();
-  });
-
-  // Test isLeapYear for century year not divisible by 400
-  it('should handle century year not divisible by 400', () => {
-    const posix = 4102444800 as Seconds; // 2100-01-01 (not a leap year)
-    const epoch = new Epoch(posix);
-
-    expect(epoch.toEpochYearAndDay()).toMatchSnapshot();
   });
 
   // Test toEpochYearAndDay with time of day calculations
