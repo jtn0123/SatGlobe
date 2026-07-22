@@ -140,7 +140,7 @@ export class CelestrakColorScheme extends ColorScheme {
       color = this.colorTheme.celestrakDefaultUnknown;
     }
 
-    if (typeof color === 'undefined') {
+    if (color === undefined) {
       return this.undefinedColorFallback_(sat.id, 'debug');
     }
 

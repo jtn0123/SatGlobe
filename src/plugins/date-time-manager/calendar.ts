@@ -313,8 +313,7 @@ export class Calendar {
           const isToday =
             this.calendarDate.getUTCFullYear() === today.getUTCFullYear() && this.calendarDate.getUTCMonth() === today.getUTCMonth() && dayCount === today.getUTCDate();
           const isSelected =
-            this.simulationDate &&
-            this.simulationDate.getUTCFullYear() === this.calendarDate.getUTCFullYear() &&
+            this.simulationDate?.getUTCFullYear() === this.calendarDate.getUTCFullYear() &&
             this.simulationDate.getUTCMonth() === this.calendarDate.getUTCMonth() &&
             this.simulationDate.getUTCDate() === dayCount;
           const classes = [j === 0 || j === 6 ? 'ui-datepicker-week-end' : '', isToday ? 'ui-datepicker-today' : '', isSelected ? 'ui-datepicker-current-day' : '']

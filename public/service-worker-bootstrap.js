@@ -9,7 +9,7 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') {
     });
 
     navigator.serviceWorker.getRegistration().then(function (reg) {
-      if (reg && reg.waiting) {
+      if (reg?.waiting) {
         reg.waiting.postMessage({ type: 'SKIP_WAITING' });
       }
     });

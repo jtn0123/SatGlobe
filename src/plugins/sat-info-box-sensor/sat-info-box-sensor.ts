@@ -137,7 +137,7 @@ export class SatInfoBoxSensor extends KeepTrackPlugin {
   }
 
   private updateSensorInfo_(obj: BaseObject) {
-    if (obj === null || typeof obj === 'undefined') {
+    if (obj === null || obj === undefined) {
       return;
     }
 

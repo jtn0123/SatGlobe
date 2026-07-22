@@ -191,9 +191,7 @@ export class EventBus {
 
   /** If the callback does not exist, create it */
   private verifyEvent_(event: EventBusEvent) {
-    if (typeof this.events[event] === 'undefined') {
-      this.events[event] = [];
-    }
+    this.events[event] ??= [];
   }
 
   /**

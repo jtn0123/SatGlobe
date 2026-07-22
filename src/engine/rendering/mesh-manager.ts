@@ -338,9 +338,9 @@ export class MeshManager {
 
   private updateModel_(selectedDate: Date, obj: BaseObject) {
     try {
-      this.currentMeshObject.id = typeof obj?.id !== 'undefined' ? obj.id : -1;
+      this.currentMeshObject.id = obj?.id ?? -1;
 
-      if (typeof this.currentMeshObject.id === 'undefined' || this.currentMeshObject.id === -1) {
+      if (this.currentMeshObject.id === undefined || this.currentMeshObject.id === -1) {
         return;
       }
       if (settingsManager.modelsOnSatelliteViewOverride) {
@@ -357,7 +357,7 @@ export class MeshManager {
       this.currentMeshObject.isRotationStable = false;
 
       if (settingsManager.meshOverride) {
-        if (typeof this.modelResolver_.modelMap[settingsManager.meshOverride] === 'undefined') {
+        if (this.modelResolver_.modelMap[settingsManager.meshOverride] === undefined) {
           errorManagerInstance.debug(`Mesh override not found: ${settingsManager.meshOverride}`);
           settingsManager.meshOverride = null;
         } else {

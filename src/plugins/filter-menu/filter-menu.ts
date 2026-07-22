@@ -495,7 +495,7 @@ export class FilterMenuPlugin extends KeepTrackPlugin {
   }
 
   private onFormChange_(e: Event): void {
-    if (typeof e === 'undefined' || e === null) {
+    if (e === undefined || e === null) {
       throw new Error('e is undefined');
     }
 

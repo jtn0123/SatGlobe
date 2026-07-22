@@ -185,7 +185,7 @@ export class CatalogManager {
    * @returns The corresponding ID if found, otherwise null.
    */
   intlDes2id(intlDes: string): number | null {
-    return typeof this.cosparIndex[`${intlDes}`] !== 'undefined' ? this.cosparIndex[`${intlDes}`] : null;
+    return this.cosparIndex[`${intlDes}`] !== undefined ? this.cosparIndex[`${intlDes}`] : null;
   }
 
   /**
@@ -212,7 +212,7 @@ export class CatalogManager {
     }
 
     // Fast path: direct sccIndex hit.
-    if (typeof this.sccIndex[key] !== 'undefined') {
+    if (this.sccIndex[key] !== undefined) {
       return this.sccIndex[key];
     }
 
@@ -226,7 +226,7 @@ export class CatalogManager {
       try {
         const altKey = kind === 'alpha5' ? Tle.convertA5to6Digit(key) : Tle.convert6DigitToA5(key);
 
-        if (typeof this.sccIndex[altKey] !== 'undefined') {
+        if (this.sccIndex[altKey] !== undefined) {
           return this.sccIndex[altKey];
         }
       } catch {
@@ -331,7 +331,7 @@ export class CatalogManager {
     // Convert string IDs to numbers for array access
     const index = typeof i === 'string' ? Number.parseInt(i, 10) : i;
 
-    if (index === null || typeof index === 'undefined' || (index ?? -1) <= -1) {
+    if (index === null || index === undefined || (index ?? -1) <= -1) {
       // errorManagerInstance.debug('getSat: i is null'); - This happens a lot but is useful for debugging
 
       return null;
@@ -520,7 +520,7 @@ export class CatalogManager {
         });
     }
 
-    if (typeof settingsManager.maxFieldOfViewMarkers !== 'undefined') {
+    if (settingsManager.maxFieldOfViewMarkers !== undefined) {
       for (let i = 0; i < settingsManager.maxFieldOfViewMarkers; i++) {
         const fieldOfViewMarker = {
           static: true,

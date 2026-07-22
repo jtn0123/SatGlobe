@@ -359,7 +359,7 @@ export class SatConstellations extends KeepTrackPlugin {
   private constellationMenuClick_(groupName: string, skipCloseMenus = false): void {
     const groupManagerInstance = ServiceLocator.getGroupsManager();
 
-    if (typeof groupManagerInstance === 'undefined') {
+    if (groupManagerInstance === undefined) {
       return;
     }
 
@@ -442,13 +442,13 @@ export class SatConstellations extends KeepTrackPlugin {
   }
 
   private groupSelected_(groupName: string, skipCloseMenus = false): void {
-    if (typeof groupName === 'undefined') {
+    if (groupName === undefined) {
       return;
     }
     const catalogManagerInstance = ServiceLocator.getCatalogManager();
     const groupManagerInstance = ServiceLocator.getGroupsManager();
 
-    if (typeof groupManagerInstance.groupList[groupName] === 'undefined') {
+    if (groupManagerInstance.groupList[groupName] === undefined) {
       throw new Error(`Unknown group name: ${groupName}`);
     }
 

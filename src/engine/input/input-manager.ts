@@ -141,7 +141,7 @@ export class InputManager {
   }
 
   public static getEarthScreenPoint(x: number, y: number, camera = ServiceLocator.getMainCamera()): Kilometers[] {
-    if (typeof x === 'undefined' || typeof y === 'undefined') {
+    if (x === undefined || y === undefined) {
       throw new Error('x and y must be defined');
     }
     if (Number.isNaN(x) || Number.isNaN(y)) {
@@ -496,7 +496,7 @@ export class InputManager {
 
     let isEarth = false;
 
-    if (typeof this.mouse.latLon === 'undefined' || Number.isNaN(this.mouse.latLon.lat) || Number.isNaN(this.mouse.latLon.lon)) {
+    if (this.mouse.latLon === undefined || Number.isNaN(this.mouse.latLon.lat) || Number.isNaN(this.mouse.latLon.lon)) {
       // Not Earth
       this.rmbMenuItems
         .filter((item) => item.isRmbOffEarth || (item.isRmbOnSat && clickedSatId !== -1))

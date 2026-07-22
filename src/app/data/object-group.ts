@@ -57,13 +57,13 @@ export class ObjectGroup<T extends GroupType> {
       case GroupType.YEAR:
         this.ids = CatalogSearch.year(ServiceLocator.getCatalogManager().getSats(), data as GroupData[GroupType.YEAR])
           // .slice(0, settingsManager.maxOrbitsDisplayed)
-          .filter((sat: Satellite) => typeof sat.id !== 'undefined' && !sat.isStatic())
+          .filter((sat: Satellite) => sat.id !== undefined && !sat.isStatic())
           .map((sat: Satellite) => sat.id);
         break;
       case GroupType.YEAR_OR_LESS:
         this.ids = CatalogSearch.yearOrLess(ServiceLocator.getCatalogManager().getSats(), data as GroupData[GroupType.YEAR_OR_LESS])
           // .slice(0, settingsManager.maxOrbitsDisplayed)
-          .filter((sat: Satellite) => typeof sat.id !== 'undefined' && !sat.isStatic())
+          .filter((sat: Satellite) => sat.id !== undefined && !sat.isStatic())
           .map((sat: Satellite) => sat.id);
         break;
       case GroupType.INTLDES:

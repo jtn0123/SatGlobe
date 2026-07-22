@@ -650,7 +650,7 @@ export class StereoMap extends KeepTrackPlugin {
   protected drawEarthLayer_(): void {
     const ctx = this.canvas_.getContext('2d');
     const expectedFilename = this.getMapTextureUrl_().split('/').pop()!;
-    const needsReload = !this.earthImg_.src || !this.earthImg_.src.endsWith(expectedFilename);
+    const needsReload = !this.earthImg_.src?.endsWith(expectedFilename);
 
     if (needsReload) {
       this.earthImg_.src = this.getMapTextureUrl_();

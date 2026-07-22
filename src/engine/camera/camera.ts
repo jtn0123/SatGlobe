@@ -293,7 +293,7 @@ export class Camera {
       settingsManager.autoRotateSpeed = 0.0075;
     }
 
-    if (typeof val === 'undefined') {
+    if (val === undefined) {
       this.state.isAutoRotate = !this.state.isAutoRotate;
 
       // If all auto rotate settings are off, set auto rotate left to true
@@ -895,7 +895,7 @@ export class Camera {
    * Splitting it into subfunctions would not be optimal
    */
   snapToSat(sat: Satellite | MissileObject, simulationTime: Date, isApplyGlobalEffects = true) {
-    if (typeof sat === 'undefined' || sat === null) {
+    if (sat === undefined || sat === null) {
       return;
     }
     if (!sat.isMissile() && !sat.isSatellite()) {
@@ -924,13 +924,13 @@ export class Camera {
       this.state.camSnapToSat.radius = Math.sqrt(this.state.camSnapToSat.pos.x ** 2 + this.state.camSnapToSat.pos.y ** 2);
       this.state.camSnapToSat.yaw = <Radians>(Math.atan2(this.state.camSnapToSat.pos.y, this.state.camSnapToSat.pos.x) + TAU / 4);
       this.state.camSnapToSat.pitch = <Radians>Math.atan2(this.state.camSnapToSat.pos.z, this.state.camSnapToSat.radius);
-      if (this.state.camSnapToSat.pitch === null || typeof this.state.camSnapToSat.pitch === 'undefined') {
+      if (this.state.camSnapToSat.pitch === null || this.state.camSnapToSat.pitch === undefined) {
         errorManagerInstance.info('Pitch Calculation Error');
         this.state.camSnapToSat.pitch = <Radians>0;
         this.state.camZoomSnappedOnSat = false;
         this.state.camAngleSnappedOnSat = false;
       }
-      if (this.state.camSnapToSat.yaw === null || typeof this.state.camSnapToSat.yaw === 'undefined') {
+      if (this.state.camSnapToSat.yaw === null || this.state.camSnapToSat.yaw === undefined) {
         errorManagerInstance.info('Yaw Calculation Error');
         this.state.camSnapToSat.yaw = <Radians>0;
         this.state.camZoomSnappedOnSat = false;

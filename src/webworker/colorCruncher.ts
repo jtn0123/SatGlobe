@@ -737,7 +737,7 @@ function objectTypeGroupScheme(cd: Float32Array, pd: Int8Array, i: number): void
       break;
   }
 
-  if (inViewData && inViewData[i] === 1) {
+  if (inViewData?.[i] === 1) {
     c = colorTheme.inFOV ?? [0, 0, 1, 1];
   }
 
@@ -928,7 +928,7 @@ function countryGroupScheme(cd: Float32Array, pd: Int8Array, i: number): void {
     return;
   }
 
-  if (groupIdSet && groupIdSet.has(i)) {
+  if (groupIdSet?.has(i)) {
     // Apply country coloring
     countryScheme(cd, pd, i);
   } else {

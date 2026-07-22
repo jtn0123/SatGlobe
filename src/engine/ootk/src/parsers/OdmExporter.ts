@@ -98,7 +98,7 @@ export class OdmExporter {
     } else {
       const pv = satellite.eci(date);
 
-      if (!pv || !pv.position || !pv.velocity) {
+      if (!pv?.position || !pv.velocity) {
         throw new Error('SGP4 propagation failed for OPM export');
       }
       lines.push(`EPOCH = ${stateEpoch}`);

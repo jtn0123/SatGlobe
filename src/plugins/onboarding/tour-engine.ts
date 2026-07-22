@@ -617,8 +617,7 @@ export class TourEngine {
 
     if (
       !isForce &&
-      this.lastRect_ &&
-      rect.top === this.lastRect_.top &&
+      rect.top === this.lastRect_?.top &&
       rect.left === this.lastRect_.left &&
       rect.width === this.lastRect_.width &&
       rect.height === this.lastRect_.height

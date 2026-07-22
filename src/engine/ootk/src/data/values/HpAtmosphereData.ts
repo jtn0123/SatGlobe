@@ -35,7 +35,7 @@ export class HpAtmosphereData {
 
   constructor(table: HpAtmosphereEntry[]) {
     this.table_ = table;
-    if (table.length === 0 || typeof table[0]?.[0] === 'undefined') {
+    if (table.length === 0 || table[0]?.[0] === undefined) {
       throw new Error('Table must have at least one valid entry.');
     }
 

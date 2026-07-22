@@ -160,7 +160,7 @@ export class SatCruncherThreadManager extends WebWorkerThreadManager {
     ServiceLocator.getDotsManager().updateCruncherBuffers(mData);
     const catalogManager = ServiceLocator.getCatalogManager();
 
-    if (typeof mData?.sensorMarkerArray !== 'undefined' && mData?.sensorMarkerArray?.length !== 0) {
+    if (mData?.sensorMarkerArray !== undefined && mData?.sensorMarkerArray?.length !== 0) {
       catalogManager.sensorMarkerArray = mData.sensorMarkerArray;
     }
 

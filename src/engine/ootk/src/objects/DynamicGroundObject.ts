@@ -733,7 +733,7 @@ export class DynamicGroundObject extends GroundObject {
       // Fall back to linear interpolation
       const bracket = this.findBracketingWaypoints_(time);
 
-      if (!bracket || !bracket.after) {
+      if (!bracket?.after) {
         return { lat: this.waypoints_[0].lat, lon: this.waypoints_[0].lon, alt: this.waypoints_[0].alt };
       }
 

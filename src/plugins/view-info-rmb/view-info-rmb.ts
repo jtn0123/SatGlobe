@@ -58,7 +58,7 @@ export class ViewInfoRmbPlugin extends KeepTrackPlugin {
           let latLon = ServiceLocator.getInputManager().mouse.latLon;
           const dragPosition = ServiceLocator.getInputManager().mouse.dragPosition;
 
-          if (typeof latLon === 'undefined' || Number.isNaN(latLon.lat) || Number.isNaN(latLon.lon)) {
+          if (latLon === undefined || Number.isNaN(latLon.lat) || Number.isNaN(latLon.lon)) {
             errorManagerInstance.debug('latLon undefined!');
             const gmst = ServiceLocator.getTimeManager().gmst;
 
@@ -77,7 +77,7 @@ export class ViewInfoRmbPlugin extends KeepTrackPlugin {
         {
           const launchSite = ServiceLocator.getCatalogManager().getObject(clickedSat) as LaunchSite;
 
-          if (typeof launchSite === 'undefined' || launchSite === null) {
+          if (launchSite === undefined || launchSite === null) {
             errorManagerInstance.warn(this.t_('errorMsgs.launchSiteNotFound'));
 
             return;
@@ -109,7 +109,7 @@ export class ViewInfoRmbPlugin extends KeepTrackPlugin {
     super.addJs();
 
     EventBus.getInstance().on(EventBusEvent.rightBtnMenuOpen, (_isEarth, clickedSatId) => {
-      if (typeof clickedSatId === 'undefined') {
+      if (clickedSatId === undefined) {
         return;
       }
       const sat = ServiceLocator.getCatalogManager().getObject(clickedSatId);

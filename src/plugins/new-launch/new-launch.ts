@@ -450,7 +450,7 @@ export class NewLaunch extends KeepTrackPlugin {
         uiManagerInstance.toast(t7e('plugins.NewLaunch.msgs.timeRelativeToLaunch' as T7eKey), ToastMsgType.standby);
         ServiceLocator.getSoundManager()?.play(SoundNames.LIFT_OFF);
       },
-      validationFunc: (data: PositionCruncherOutgoingMsg) => typeof data.satPos !== 'undefined',
+      validationFunc: (data: PositionCruncherOutgoingMsg) => data.satPos !== undefined,
       error: () => {
         if (!this.isDoingCalculations_) {
           // If we are not doing calculations, then it must have finished already.

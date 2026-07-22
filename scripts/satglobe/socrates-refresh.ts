@@ -617,7 +617,7 @@ async function readCache(directory: string): Promise<{ raw: string; metadata: Ca
     ]);
     const metadata = cacheMetadata(JSON.parse(metadataSource.text));
 
-    if (!metadata || rawSource.byteLength !== metadata.size || sha256(rawSource.text) !== metadata.checksum) {
+    if (metadata?.size !== rawSource.byteLength || sha256(rawSource.text) !== metadata.checksum) {
       return null;
     }
 

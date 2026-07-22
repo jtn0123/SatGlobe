@@ -216,7 +216,7 @@ export abstract class GlUtils {
       }
       /* eslint-enable no-await-in-loop */
 
-      if (!resp || !resp.ok) {
+      if (!resp?.ok) {
         throw lastErr ?? new Error(`Failed to fetch image: ${url}`);
       }
 

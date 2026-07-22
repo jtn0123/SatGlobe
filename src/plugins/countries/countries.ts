@@ -269,10 +269,10 @@ export class CountriesMenu extends KeepTrackPlugin implements ICommandPaletteCap
 
     const searchDOM = <HTMLInputElement>getEl('search');
 
-    if (typeof groupName === 'undefined') {
+    if (groupName === undefined) {
       return;
     }
-    if (typeof groupManagerInstance.groupList[groupName] === 'undefined') {
+    if (groupManagerInstance.groupList[groupName] === undefined) {
       return;
     }
     groupManagerInstance.selectGroup(groupManagerInstance.groupList[groupName]);

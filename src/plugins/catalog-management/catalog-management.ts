@@ -488,7 +488,7 @@ export class CatalogManagementPlugin extends KeepTrackPlugin {
     const newEntries = asciiCatalog.filter((entry) => {
       const key = CatalogLoader.canonicalSccKey(entry.SCC);
 
-      return key !== null && typeof sccIndex[key] === 'undefined';
+      return key !== null && sccIndex[key] === undefined;
     });
 
     if (newEntries.length === 0) {
@@ -662,7 +662,7 @@ export class CatalogManagementPlugin extends KeepTrackPlugin {
   protected getSelectedSatellite_(noSelectionMsg = l('toasts.noSatelliteSelected')): Satellite | null {
     const sat = PluginRegistry.getPlugin(SelectSatManager)?.getSelectedSat();
 
-    if (!sat || !sat.isSatellite()) {
+    if (!sat?.isSatellite()) {
       ServiceLocator.getUiManager().toast(noSelectionMsg, ToastMsgType.critical);
 
       return null;

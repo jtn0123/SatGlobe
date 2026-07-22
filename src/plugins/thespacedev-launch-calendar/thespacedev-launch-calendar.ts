@@ -315,16 +315,16 @@ export class TheSpaceDevLaunchCalendarPlugin extends KeepTrackPlugin {
         rocketURL: '',
       };
 
-      if (typeof launchLibResult.last_updated !== 'undefined') {
+      if (launchLibResult.last_updated !== undefined) {
         launchInfo.updated = new Date(launchLibResult.last_updated);
       }
-      launchInfo.name = typeof launchLibResult.name !== 'undefined' ? launchLibResult.name : l('msgs.unknown');
+      launchInfo.name = launchLibResult.name ?? l('msgs.unknown');
       launchInfo.location = launchLibResult.pad?.location?.name.split(',', 1)[0] ?? l('msgs.unknown');
       launchInfo.locationURL = launchLibResult.pad?.wiki_url ?? '';
-      if (typeof launchLibResult.launch_service_provider !== 'undefined') {
-        launchInfo.agency = typeof launchLibResult.launch_service_provider.name !== 'undefined' ? launchLibResult.launch_service_provider.name : l('msgs.unknown');
-        launchInfo.country = typeof launchLibResult.launch_service_provider.country_code !== 'undefined' ? launchLibResult.launch_service_provider.country_code : l('msgs.unknown');
-        if (typeof launchLibResult.launch_service_provider.wiki_url !== 'undefined') {
+      if (launchLibResult.launch_service_provider !== undefined) {
+        launchInfo.agency = launchLibResult.launch_service_provider.name ?? l('msgs.unknown');
+        launchInfo.country = launchLibResult.launch_service_provider.country_code ?? l('msgs.unknown');
+        if (launchLibResult.launch_service_provider.wiki_url !== undefined) {
           launchInfo.agencyURL = launchLibResult.launch_service_provider.wiki_url;
         }
       } else {
@@ -336,7 +336,7 @@ export class TheSpaceDevLaunchCalendarPlugin extends KeepTrackPlugin {
         launchInfo.mission = launchLibResult.mission.description;
         launchInfo.missionName = launchLibResult.mission.name;
         launchInfo.missionType = launchLibResult.mission.type;
-        if (typeof launchLibResult.mission.wiki_url !== 'undefined') {
+        if (launchLibResult.mission.wiki_url !== undefined) {
           launchInfo.missionURL = launchLibResult.mission.wiki_url;
         }
       }
@@ -344,7 +344,7 @@ export class TheSpaceDevLaunchCalendarPlugin extends KeepTrackPlugin {
         launchInfo.rocket = launchLibResult.rocket?.configuration.full_name;
         launchInfo.rocketConfig = launchLibResult.rocket?.configuration.name;
         launchInfo.rocketFamily = launchLibResult.rocket?.configuration.family;
-        if (typeof launchLibResult.rocket.configuration.wiki_url !== 'undefined') {
+        if (launchLibResult.rocket.configuration.wiki_url !== undefined) {
           launchInfo.rocketURL = launchLibResult.rocket.configuration.wiki_url;
         }
       }

@@ -376,7 +376,7 @@ export const onmessageProcessing = (m: PositionCruncherIncomingMsg) => {
         fieldOfViewSetLength = m.data.fieldOfViewSetLength;
       }
 
-      if (typeof m.data.markerMode !== 'undefined') {
+      if (m.data.markerMode !== undefined) {
         markerMode = m.data.markerMode;
       }
 

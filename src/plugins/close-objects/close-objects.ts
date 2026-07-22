@@ -325,9 +325,7 @@ export class CloseObjectsPlugin extends KeepTrackPlugin {
         continue;
       }
 
-      if (typeof sat.position === 'undefined') {
-        sat.position = <TemeVec3>SatMath.getEci(sat, new Date()).position || { x: <Kilometers>0, y: <Kilometers>0, z: <Kilometers>0 };
-      }
+      sat.position ??= <TemeVec3>SatMath.getEci(sat, new Date()).position || { x: <Kilometers>0, y: <Kilometers>0, z: <Kilometers>0 };
 
       if (Number.isNaN(sat.position.x) || Number.isNaN(sat.position.y) || Number.isNaN(sat.position.z)) {
         continue;
@@ -402,7 +400,7 @@ export class CloseObjectsPlugin extends KeepTrackPlugin {
     for (const posCso of csoListUnique) {
       const pos1 = posCso.sat1.position;
 
-      if (typeof pos1 === 'undefined') {
+      if (pos1 === undefined) {
         continue;
       }
 
@@ -415,7 +413,7 @@ export class CloseObjectsPlugin extends KeepTrackPlugin {
 
       const pos2 = posCso.sat2.position;
 
-      if (typeof pos2 === 'undefined') {
+      if (pos2 === undefined) {
         continue;
       }
 

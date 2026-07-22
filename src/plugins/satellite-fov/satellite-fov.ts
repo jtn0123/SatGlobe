@@ -624,7 +624,7 @@ export class SatelliteFov extends KeepTrackPlugin {
 
   private static renderEarthCenterConeRow_(mesh: ConeMesh): string {
     const currentSat = PluginRegistry.getPlugin(SelectSatManager)?.getSelectedSat();
-    const isSelected = currentSat && mesh.obj.id === currentSat.id;
+    const isSelected = currentSat?.id === mesh.obj.id;
     const nameSpan = isSelected
       ? html`<span style="color: var(--color-dark-text-accent);">${mesh.obj.name}</span>`
       : html`<span>${mesh.obj.name}</span>`;
@@ -643,7 +643,7 @@ export class SatelliteFov extends KeepTrackPlugin {
 
   private static renderSatToSatConeRow_(mesh: ConeMesh): string {
     const currentSat = PluginRegistry.getPlugin(SelectSatManager)?.getSelectedSat();
-    const isSelected = currentSat && mesh.obj.id === currentSat.id;
+    const isSelected = currentSat?.id === mesh.obj.id;
     const sourceName = mesh.obj.name;
     const targetName = mesh.targetObj?.name ?? t7e('Common.unknown');
     const label = `${sourceName} → ${targetName}`;

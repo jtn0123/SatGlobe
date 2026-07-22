@@ -140,7 +140,7 @@ export class ChipList {
 
     const id = removeBtn.dataset.chipId;
 
-    if (typeof id === 'undefined') {
+    if (id === undefined) {
       return;
     }
 

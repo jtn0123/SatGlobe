@@ -229,7 +229,7 @@ export class DopsPlugin extends KeepTrackPlugin {
           let latLon = inputManager.mouse.latLon;
           const dragPosition = inputManager.mouse.dragPosition;
 
-          if (typeof latLon === 'undefined' || Number.isNaN(latLon.lat) || Number.isNaN(latLon.lon)) {
+          if (latLon === undefined || Number.isNaN(latLon.lat) || Number.isNaN(latLon.lon)) {
             errorManagerInstance.debug('latLon undefined!');
             const gmst = ServiceLocator.getTimeManager().gmst;
 
@@ -263,7 +263,7 @@ export class DopsPlugin extends KeepTrackPlugin {
       case 'dops-24dops-rmb': {
         const latLon = ServiceLocator.getInputManager().mouse.latLon;
 
-        if (typeof latLon === 'undefined' || Number.isNaN(latLon.lat) || Number.isNaN(latLon.lon)) {
+        if (latLon === undefined || Number.isNaN(latLon.lat) || Number.isNaN(latLon.lon)) {
           errorManagerInstance.warn(t7e('plugins.DopsPlugin.errorMsgs.invalidLocation'));
 
           return;
