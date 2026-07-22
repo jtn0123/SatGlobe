@@ -43,7 +43,7 @@ import { fileURLToPath } from 'node:url';
 import { type Browser, type ConsoleMessage, chromium, type Page } from 'playwright';
 import { DEFAULT_ALLOWLIST } from '../test/e2e/console-listener';
 import { fixedGitExecutable } from '../build/lib/fixed-executables';
-import { assertInspectionId } from './lib/inspection-id';
+import { assertInspectionId, redactInspectionId } from './lib/inspection-id';
 
 const BASE_URL = process.env.BASE_URL ?? 'http://localhost:5544';
 const ROOT_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -336,6 +336,7 @@ const updateManifest = (spec: InspectSpec, files: string[], viewport: { width: n
 
 const main = async (): Promise<void> => {
   const spec = readSpec();
+  const logLabel = redactInspectionId(spec.id);
 
   const ping = await fetch(BASE_URL).catch(() => null);
 
@@ -373,21 +374,19 @@ const main = async (): Promise<void> => {
       }
     });
 
-    log(`[${spec.id}] booting (catalog=${spec.catalog === true ? 'ON' : 'off'})...`);
+    log(`[${logLabel}] booting (catalog=${spec.catalog === true ? 'ON' : 'off'})...`);
     const bootMs = await boot(page, spec);
 
-    log(`[${spec.id}] ready in ${(bootMs / 1000).toFixed(1)}s - driving...`);
+    log(`[${logLabel}] ready in ${(bootMs / 1000).toFixed(1)}s - driving...`);
     await drive(page, spec);
 
     const files = await capture(page, spec, outDir);
 
-    for (const f of files) {
-      log(`[${spec.id}] wrote ${path.relative(ROOT_DIR, f)}`);
-    }
+    log(`[${logLabel}] wrote ${files.length} capture(s)`);
 
     if (spec.keep) {
       updateManifest(spec, files, viewport);
-      log(`[${spec.id}] manifest updated: ${path.relative(ROOT_DIR, MANIFEST)}`);
+      log(`[${logLabel}] manifest updated: ${path.relative(ROOT_DIR, MANIFEST)}`);
     }
 
     await context.close();
@@ -396,12 +395,12 @@ const main = async (): Promise<void> => {
   }
 
   if (violations.length > 0) {
-    log(`\n[${spec.id}] ⚠ ${violations.length} non-benign console/page error(s):`);
+    log(`\n[${logLabel}] ⚠ ${violations.length} non-benign console/page error(s):`);
     for (const v of violations) {
       log(`  ${v}`);
     }
   } else {
-    log(`\n[${spec.id}] clean boot - no non-benign console/page errors.`);
+    log(`\n[${logLabel}] clean boot - no non-benign console/page errors.`);
   }
 };
 
