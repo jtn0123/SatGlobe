@@ -513,7 +513,7 @@ export class CatalogManager {
         .filter((controlSite) => controlSite.type < SpaceObjectType.MAX_SPACE_OBJECT_TYPE)
         .filter(StringExtractor.controlSiteTypeFilter)
         // Add the static properties to the control site objects
-        .map((controlSite) => ({ ...{ static: true }, ...controlSite }))
+        .map((controlSite) => ({ static: true, ...controlSite }))
         // Add the control site objects to the static set
         .forEach((controlSite) => {
           this.staticSet.push(controlSite);

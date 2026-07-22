@@ -659,11 +659,9 @@ export class NewLaunch extends KeepTrackPlugin {
 
     const newSat = new Satellite({
       ...info,
-      ...{
-        position: pos,
-        velocity: vel,
-        source: 'User Created',
-      },
+      position: pos,
+      velocity: vel,
+      source: 'User Created',
     });
 
     newSat.active = true;

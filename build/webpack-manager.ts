@@ -60,13 +60,11 @@ export class WebpackManager {
     if (mode === 'development') {
       baseConfig = {
         ...baseConfig,
-        ...{
-          cache: true,
-          devtool: 'source-map',
-          // devtool: 'eval-source-map',
-          optimization: {
-            minimize: false,
-          },
+        cache: true,
+        devtool: 'source-map',
+        // devtool: 'eval-source-map',
+        optimization: {
+          minimize: false,
         },
       };
     }
@@ -75,37 +73,35 @@ export class WebpackManager {
     if (mode === 'production') {
       baseConfig = {
         ...baseConfig,
-        ...{
-          devtool: 'hidden-source-map',
-          /*
-           * ADR 0002 bundle budget: fail the production build if any JS asset or
-           * entrypoint grows past the limit (baseline: main.js ~5.2 MiB after
-           * non-English locale resources moved to on-demand chunks).
-           * Non-JS assets (textures, fonts, icons) are budgeted separately, not here.
-           */
-          performance: {
-            hints: 'error' as const,
-            assetFilter: (assetFilename: string) => assetFilename.endsWith('.js'),
-            maxAssetSize: 6.5 * 1024 * 1024,
-            maxEntrypointSize: 6.5 * 1024 * 1024,
-          },
-          optimization: {
-            minimizer: [
-              new SwcJsMinimizerRspackPlugin({
-                minimizerOptions: {
-                  compress: {
-                    keep_classnames: true,
-                  },
-                  mangle: {
-                    keep_classnames: true,
-                  },
+        devtool: 'hidden-source-map',
+        /*
+         * ADR 0002 bundle budget: fail the production build if any JS asset or
+         * entrypoint grows past the limit (baseline: main.js ~5.2 MiB after
+         * non-English locale resources moved to on-demand chunks).
+         * Non-JS assets (textures, fonts, icons) are budgeted separately, not here.
+         */
+        performance: {
+          hints: 'error' as const,
+          assetFilter: (assetFilename: string) => assetFilename.endsWith('.js'),
+          maxAssetSize: 6.5 * 1024 * 1024,
+          maxEntrypointSize: 6.5 * 1024 * 1024,
+        },
+        optimization: {
+          minimizer: [
+            new SwcJsMinimizerRspackPlugin({
+              minimizerOptions: {
+                compress: {
+                  keep_classnames: true,
                 },
-              }),
-              new LightningCssMinimizerRspackPlugin({
-                // CSS minimizer configuration
-              }),
-            ],
-          },
+                mangle: {
+                  keep_classnames: true,
+                },
+              },
+            }),
+            new LightningCssMinimizerRspackPlugin({
+              // CSS minimizer configuration
+            }),
+          ],
         },
       };
     }
@@ -267,31 +263,29 @@ export class WebpackManager {
   private static createMainConfig_(baseConfig: Configuration, dirName: string, subFolder: string, pubPath = '') {
     return <Configuration>({
       ...baseConfig,
-      ...{
-        name: 'MainFiles',
-        entry: {
-          main: ['./src/main.ts'],
-        },
-        output: {
-          // Add hash to the end of the file name if not embeded
-          filename: `[name]${subFolder === 'dist' ? '.[contenthash]' : ''}.js`,
-          path: `${dirName}/../${subFolder}/js`,
-          publicPath: `./${pubPath}js/`,
-        },
-        plugins: [
-          this.versionDefine_,
-          new HtmlRspackPlugin({
-            filename: '../index.html',
-            template: './public/index.html',
-          }),
-          new DotEnv({
-            systemvars: true,
-            path: `./${this.config.envFilePath}`,
-            allowEmptyValues: true,
-          }),
-          new ProgressPlugin(reporter.createCompileProgressHandler('main')),
-        ],
+      name: 'MainFiles',
+      entry: {
+        main: ['./src/main.ts'],
       },
+      output: {
+        // Add hash to the end of the file name if not embeded
+        filename: `[name]${subFolder === 'dist' ? '.[contenthash]' : ''}.js`,
+        path: `${dirName}/../${subFolder}/js`,
+        publicPath: `./${pubPath}js/`,
+      },
+      plugins: [
+        this.versionDefine_,
+        new HtmlRspackPlugin({
+          filename: '../index.html',
+          template: './public/index.html',
+        }),
+        new DotEnv({
+          systemvars: true,
+          path: `./${this.config.envFilePath}`,
+          allowEmptyValues: true,
+        }),
+        new ProgressPlugin(reporter.createCompileProgressHandler('main')),
+      ],
     });
   }
 
@@ -301,31 +295,29 @@ export class WebpackManager {
   private static createAuthConfig_(baseConfig: Configuration, dirName: string, subFolder: string, pubPath = '') {
     return <Configuration>({
       ...baseConfig,
-      ...{
-        name: 'AuthFiles',
-        entry: {
-          'popup-callback': ['./src/plugins-pro/user-account/popup-callback.ts'],
-        },
-        output: {
-          // Add hash to the end of the file name if not embeded
-          filename: `[name]${subFolder === 'dist' ? '.[contenthash]' : ''}.js`,
-          path: `${dirName}/../${subFolder}/auth`,
-          publicPath: `../${pubPath}`,
-        },
-        plugins: [
-          this.versionDefine_,
-          new HtmlRspackPlugin({
-            filename: '../auth/callback.html',
-            template: './src/plugins-pro/user-account/callback.html',
-          }),
-          new DotEnv({
-            systemvars: true,
-            path: `./${this.config.envFilePath}`,
-            allowEmptyValues: true,
-          }),
-          new ProgressPlugin(reporter.createCompileProgressHandler('auth')),
-        ],
+      name: 'AuthFiles',
+      entry: {
+        'popup-callback': ['./src/plugins-pro/user-account/popup-callback.ts'],
       },
+      output: {
+        // Add hash to the end of the file name if not embeded
+        filename: `[name]${subFolder === 'dist' ? '.[contenthash]' : ''}.js`,
+        path: `${dirName}/../${subFolder}/auth`,
+        publicPath: `../${pubPath}`,
+      },
+      plugins: [
+        this.versionDefine_,
+        new HtmlRspackPlugin({
+          filename: '../auth/callback.html',
+          template: './src/plugins-pro/user-account/callback.html',
+        }),
+        new DotEnv({
+          systemvars: true,
+          path: `./${this.config.envFilePath}`,
+          allowEmptyValues: true,
+        }),
+        new ProgressPlugin(reporter.createCompileProgressHandler('auth')),
+      ],
     });
   }
 
@@ -361,18 +353,16 @@ export class WebpackManager {
 
     return ({
       ...baseConfig,
-      ...{
-        name: 'WebWorkers',
-        entry,
-        output: {
-          filename: '[name].js',
-          path: `${dirName}/../${subFolder}/js`,
-          publicPath: `./${pubPath}js/`,
-        },
-        plugins: [
-          new ProgressPlugin(reporter.createCompileProgressHandler('workers')),
-        ],
+      name: 'WebWorkers',
+      entry,
+      output: {
+        filename: '[name].js',
+        path: `${dirName}/../${subFolder}/js`,
+        publicPath: `./${pubPath}js/`,
       },
+      plugins: [
+        new ProgressPlugin(reporter.createCompileProgressHandler('workers')),
+      ],
     });
   }
 }
