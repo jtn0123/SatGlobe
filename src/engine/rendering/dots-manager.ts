@@ -912,7 +912,7 @@ export class DotsManager {
     }
 
     if (mData.satPos) {
-      if (!this.positionData || this.positionData.length !== mData.satPos.length) {
+      if (this.positionData?.length !== mData.satPos.length) {
         this.positionData = new Float32Array(mData.satPos);
         // Force full GPU buffer reallocation on next draw since size changed
         this.positionBufferOneTime_ = false;
@@ -923,7 +923,7 @@ export class DotsManager {
     }
 
     if (mData.satVel) {
-      if (!this.velocityData || this.velocityData.length !== mData.satVel.length) {
+      if (this.velocityData?.length !== mData.satVel.length) {
         this.velocityData = new Float32Array(mData.satVel);
       } else {
         this.velocityData.set(mData.satVel, 0);
@@ -931,7 +931,7 @@ export class DotsManager {
     }
 
     if (mData.satInView?.length > 0) {
-      if (!this.inViewData || this.inViewData.length !== mData.satInView.length) {
+      if (this.inViewData?.length !== mData.satInView.length) {
         this.inViewData = new Int8Array(mData.satInView);
       } else {
         this.inViewData.set(mData.satInView, 0);
@@ -939,7 +939,7 @@ export class DotsManager {
     }
 
     if (mData.satInSun?.length > 0) {
-      if (!this.inSunData || this.inSunData.length !== mData.satInSun.length) {
+      if (this.inSunData?.length !== mData.satInSun.length) {
         this.inSunData = new Int8Array(mData.satInSun);
       } else {
         this.inSunData.set(mData.satInSun, 0);

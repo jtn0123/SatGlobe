@@ -344,7 +344,7 @@ export class BreakupAnalysis extends KeepTrackPlugin implements ICommandPaletteC
     for (let i = 0; i < numSats; i++) {
       const obj = catalogManager.objectCache[i];
 
-      if (!obj || !obj.isSatellite()) {
+      if (!obj?.isSatellite()) {
         continue;
       }
 

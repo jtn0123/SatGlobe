@@ -19,7 +19,7 @@ const getRandomMessage_ = () => {
 };
 
 const ensureOverlayExists_ = (): HTMLElement => {
-  if (overlayEl_ && overlayEl_.isConnected) {
+  if (overlayEl_?.isConnected) {
     return overlayEl_;
   }
 

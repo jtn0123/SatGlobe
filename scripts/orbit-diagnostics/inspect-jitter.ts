@@ -216,7 +216,7 @@ const main = async (): Promise<void> => {
     for (const row of perFrame[i]) {
       const pXs = prev.get(row.y);
 
-      if (!pXs || pXs.length !== row.xs.length) {
+      if (pXs?.length !== row.xs.length) {
         continue;
       }
       for (let k = 0; k < row.xs.length; k++) {

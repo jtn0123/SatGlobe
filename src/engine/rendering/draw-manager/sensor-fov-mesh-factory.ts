@@ -48,7 +48,7 @@ export class SensorFovMeshFactory extends CustomMeshFactory<SensorFovMesh> {
     if (!didWeDrawSomething) {
       const sensorFovPlugin = PluginRegistry.getPlugin(SensorFov);
 
-      if (sensorFovPlugin && sensorFovPlugin.isMenuButtonActive) {
+      if (sensorFovPlugin?.isMenuButtonActive) {
         ServiceLocator.getUiManager().toast('No valid FOV to draw! We can\'t draw multiple Deep Space sensors at once.', ToastMsgType.caution);
         sensorFovPlugin.disableFovView();
       }

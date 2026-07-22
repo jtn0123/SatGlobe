@@ -904,13 +904,13 @@ export class SensorTimeline extends KeepTrackPlugin {
       plotHeight += gapBetweenRows + barHeight + interBarHeight;
 
       if (this.detailedPlot) {
-        if (SatinFoVs[i] && SatinFoVs[i].sensor.type === SpaceObjectType.OPTICAL) {
+        if (SatinFoVs[i]?.sensor.type === SpaceObjectType.OPTICAL) {
           plotHeight += gapBetweenRows + barHeight + interBarHeight;
         }
-        if (StationInNights[i] && StationInNights[i].sensor.type === SpaceObjectType.OPTICAL) {
+        if (StationInNights[i]?.sensor.type === SpaceObjectType.OPTICAL) {
           plotHeight += gapBetweenRows + barHeight + interBarHeight;
         }
-        if (this.useWeather && clearSkies[i] && clearSkies[i].sensor.type === SpaceObjectType.OPTICAL) {
+        if (this.useWeather && clearSkies[i]?.sensor.type === SpaceObjectType.OPTICAL) {
           plotHeight += gapBetweenRows + barHeight + interBarHeight;
         }
       }
@@ -932,19 +932,19 @@ export class SensorTimeline extends KeepTrackPlugin {
 
       if (this.detailedPlot) {
         // Draw "in FoV" pass (only for OPTICAL sensors)
-        if (SatinFoVs[i] && SatinFoVs[i].sensor.type === SpaceObjectType.OPTICAL) {
+        if (SatinFoVs[i]?.sensor.type === SpaceObjectType.OPTICAL) {
           this.drawPasses_(SatinFoVs[i], i, startHourOffset, startTime, yPos, barHeight, nameOffset);
           yPos += gapBetweenRows + barHeight + interBarHeight;
         }
 
         // Draw "in Eclipse" pass (only for OPTICAL sensors)
-        if (StationInNights[i] && StationInNights[i].sensor.type === SpaceObjectType.OPTICAL) {
+        if (StationInNights[i]?.sensor.type === SpaceObjectType.OPTICAL) {
           this.drawPasses_(StationInNights[i], i, startHourOffset, startTime, yPos, barHeight, nameOffset);
           yPos += gapBetweenRows + barHeight + interBarHeight;
         }
 
         // Draw "has good weather" pass (only for OPTICAL sensors and if useWeather)
-        if (this.useWeather && clearSkies[i] && clearSkies[i].sensor.type === SpaceObjectType.OPTICAL) {
+        if (this.useWeather && clearSkies[i]?.sensor.type === SpaceObjectType.OPTICAL) {
           this.drawPasses_(clearSkies[i], i, startHourOffset, startTime, yPos, barHeight, nameOffset);
           yPos += gapBetweenRows + barHeight + interBarHeight;
         }

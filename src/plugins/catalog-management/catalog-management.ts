@@ -662,7 +662,7 @@ export class CatalogManagementPlugin extends KeepTrackPlugin {
   protected getSelectedSatellite_(noSelectionMsg = l('toasts.noSatelliteSelected')): Satellite | null {
     const sat = PluginRegistry.getPlugin(SelectSatManager)?.getSelectedSat();
 
-    if (!sat || !sat.isSatellite()) {
+    if (!sat?.isSatellite()) {
       ServiceLocator.getUiManager().toast(noSelectionMsg, ToastMsgType.critical);
 
       return null;

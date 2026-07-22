@@ -279,7 +279,7 @@ export class Calculator extends KeepTrackPlugin {
     getEl('calc-output-sections')?.addEventListener('click', (e) => {
       const target = (e.target as HTMLElement).closest('.calc-output-value') as HTMLElement | null;
 
-      if (target && target.textContent && target.textContent !== '-') {
+      if (target?.textContent && target.textContent !== '-') {
         this.copyText_(target.textContent);
       }
     });
@@ -769,7 +769,7 @@ export class Calculator extends KeepTrackPlugin {
 
     const sat = ServiceLocator.getCatalogManager().getObject(selectSatManager.selectedSat);
 
-    if (!sat || !sat.isSatellite()) {
+    if (!sat?.isSatellite()) {
       errorManagerInstance.warn(l('errorMsgs.notASatellite'));
 
       return;

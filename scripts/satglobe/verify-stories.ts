@@ -631,7 +631,7 @@ function waitForChildClose(child: ChildProcessWithoutNullStreams, timeoutMs: num
 
 /** Stops only the static-server child created by this process. */
 async function stopStaticServer(server: StaticServerProcess | null): Promise<void> {
-  if (!server || server.child.exitCode !== null) {
+  if (server?.child.exitCode !== null) {
     return;
   }
   server.child.kill('SIGTERM');

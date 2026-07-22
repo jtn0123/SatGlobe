@@ -976,7 +976,7 @@ export class CreateSat extends KeepTrackPlugin {
       const satId = catalogManagerInstance.sccNum2Id(scc);
       const sat = catalogManagerInstance.getObject(satId, GetSatType.EXTRA_ONLY) as Satellite;
 
-      if (!sat || !sat.tle1 || !sat.tle2) {
+      if (!sat?.tle1 || !sat.tle2) {
         ServiceLocator.getUiManager().toast(t7e('plugins.CreateSat.errorMsgs.noValidTle' as T7eKey), ToastMsgType.error, true);
 
         return;

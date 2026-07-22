@@ -332,7 +332,7 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
     setScaleMode(view.scaleMode);
     adapter.setScaleMode(view.scaleMode);
     adapter.setCamera(view.camera);
-    if (!restoredBeat || restoredBeat.simulationTimeOffsetHours === undefined) {
+    if (restoredBeat?.simulationTimeOffsetHours === undefined) {
       adapter.setSimulationTime(view.simulationTime);
     }
     adapter.setEncoding(view.encoding);

@@ -197,13 +197,13 @@ export class SelectSatManager extends KeepTrackPlugin implements ISettingsContri
 
     const obj = ServiceLocator.getCatalogManager().getObject(satId);
 
-    if (!obj || !obj.active) {
+    if (!obj?.active) {
       this.selectSatReset_();
     } else {
       const objWithPos = obj as unknown as { position: TemeVec3; name: string };
 
       // Check if object is at position (0,0,0) which is inside Earth - only for objects with position property
-      if (objWithPos.position && objWithPos.position.x === 0 && objWithPos.position.y === 0 && objWithPos.position.z === 0 && objWithPos.name !== SolarBody.Earth) {
+      if (objWithPos.position?.x === 0 && objWithPos.position.y === 0 && objWithPos.position.z === 0 && objWithPos.name !== SolarBody.Earth) {
         ServiceLocator.getUiManager().toast(t7e('SelectSatManager.objectInsideEarth'), ToastMsgType.caution);
 
         return;
@@ -482,7 +482,7 @@ export class SelectSatManager extends KeepTrackPlugin implements ISettingsContri
       const covMatrix = createSampleCovarianceFromTle(sat.tle1, sat.tle2).matrix.elements;
       const computed = covarianceDisplayRadii(ricSigmasFromCovarianceMatrix(covMatrix), settingsManager.covarianceConfidenceLevel);
 
-      if (computed && computed[0] && computed[1] && computed[2]) {
+      if (computed?.[0] && computed[1] && computed[2]) {
         radii = computed;
       } else {
         errorManagerInstance.log(`${logContext}: Invalid covariance matrix`);

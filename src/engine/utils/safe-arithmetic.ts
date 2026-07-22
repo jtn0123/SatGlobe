@@ -142,7 +142,7 @@ class Parser_ {
     for (;;) {
       const token = this.peek_();
 
-      if (!token || token.type !== 'op' || PRECEDENCE_[token.value] < minPrecedence) {
+      if (token?.type !== 'op' || PRECEDENCE_[token.value] < minPrecedence) {
         break;
       }
 
@@ -185,7 +185,7 @@ class Parser_ {
       const value = this.parseExpression(0);
       const closing = this.next_();
 
-      if (!closing || closing.type !== 'paren' || closing.value !== ')') {
+      if (closing?.type !== 'paren' || closing.value !== ')') {
         throw new Error('Mismatched parentheses');
       }
 

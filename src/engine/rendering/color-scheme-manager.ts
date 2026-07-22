@@ -278,7 +278,7 @@ export class ColorSchemeManager {
       // Restore clean (pre-overlay) color data before the scheme loop so that
       // dots NOT recolored in this partial batch start from un-overlaid values.
       // Without this, partial updates compound the overlay on untouched dots.
-      if (this.fovFadeAlpha_ && this.cleanColorData_ && this.cleanColorData_.length === this.colorData.length) {
+      if (this.fovFadeAlpha_ && this.cleanColorData_?.length === this.colorData.length) {
         this.colorData.set(this.cleanColorData_);
       }
 
@@ -304,7 +304,7 @@ export class ColorSchemeManager {
        * per-frame path repaints previously overlaid dots from this snapshot.
        */
       if (this.fovFadeAlpha_ || this.currentColorScheme?.isStaticColorScheme) {
-        if (!this.cleanColorData_ || this.cleanColorData_.length !== this.colorData.length) {
+        if (this.cleanColorData_?.length !== this.colorData.length) {
           this.cleanColorData_ = new Float32Array(this.colorData.length);
         }
         this.cleanColorData_.set(this.colorData);
@@ -418,13 +418,13 @@ export class ColorSchemeManager {
       }
       const data = this.colorCruncher_.consumeColorData();
 
-      if (data && data.colorData.length === this.colorData.length) {
+      if (data?.colorData.length === this.colorData.length) {
         this.colorData.set(data.colorData);
         this.pickableData.set(data.pickableData);
         this.markColorDirty_();
         // Save clean copy before overlay so setFovFadeAlpha can reapply without compounding
         if (this.fovFadeAlpha_) {
-          if (!this.cleanColorData_ || this.cleanColorData_.length !== this.colorData.length) {
+          if (this.cleanColorData_?.length !== this.colorData.length) {
             this.cleanColorData_ = new Float32Array(this.colorData.length);
           }
           this.cleanColorData_.set(this.colorData);
@@ -1029,7 +1029,7 @@ export class ColorSchemeManager {
     }
 
     // Restore clean color data before reapplying overlay to avoid compounding
-    if (this.cleanColorData_ && this.cleanColorData_.length === this.colorData.length) {
+    if (this.cleanColorData_?.length === this.colorData.length) {
       this.colorData.set(this.cleanColorData_);
       this.markColorDirty_();
     } else if (alpha && !hadOverlay) {
@@ -1085,7 +1085,7 @@ export class ColorSchemeManager {
     if (selSat === this.lastOverlaidSel_ && hovSat === this.lastOverlaidHover_) {
       return;
     }
-    if (this.cleanColorData_ && this.cleanColorData_.length === this.colorData.length) {
+    if (this.cleanColorData_?.length === this.colorData.length) {
       for (const index of [this.lastOverlaidSel_, this.lastOverlaidHover_]) {
         if (index >= 0) {
           this.colorData.set(this.cleanColorData_.subarray(index * 4, index * 4 + 4), index * 4);
