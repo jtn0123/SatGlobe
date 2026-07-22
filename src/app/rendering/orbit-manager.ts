@@ -395,7 +395,7 @@ export class OrbitManager {
     if (uiManagerInstance.searchManager?.isResultsOpen && !settingsManager.disableUI && !settingsManager.lowPerf) {
       const currentSearchSats = uiManagerInstance.searchManager.getLastResultGroup()?.ids;
 
-      if (typeof currentSearchSats !== 'undefined') {
+      if (currentSearchSats !== undefined) {
         if (this.updateAllThrottle_ >= currentSearchSats.length) {
           this.updateAllThrottle_ = 0;
         }
@@ -585,7 +585,7 @@ export class OrbitManager {
   }
 
   private static checkColorBufferValidity_(index: number, colorData: Float32Array): boolean {
-    return typeof colorData[index] !== 'undefined';
+    return colorData[index] !== undefined;
   }
 
   private drawInViewObjectOrbit_(mainCameraInstance: Camera): void {
@@ -693,7 +693,7 @@ export class OrbitManager {
     if (id === -1) {
       return;
     } // no hover object
-    if (typeof this.glBuffers_[id] === 'undefined') {
+    if (this.glBuffers_[id] === undefined) {
       // colorData is sized to numObjects but glBuffers_ is sized to missileSats,
       // so an id can pass an upstream colorData check yet have no orbit buffer
       // (e.g. FOV markers, or stale picking values). Skip rather than crash the render loop.

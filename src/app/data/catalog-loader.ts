@@ -1444,7 +1444,7 @@ export class CatalogLoader {
 
     const i = catalogManagerInstance.sccIndex[canonicalKey];
 
-    if (typeof i === 'undefined' || !tempSatData[i]) {
+    if (i === undefined || !tempSatData[i]) {
       CatalogLoader.processAsciiCatalogUnknown_(element, tempSatData, catalogManagerInstance);
 
       return;
@@ -1473,10 +1473,10 @@ export class CatalogLoader {
       return;
     }
 
-    if (typeof element.ON === 'undefined') {
+    if (element.ON === undefined) {
       element.ON = 'Unknown';
     }
-    if (typeof element.OT === 'undefined') {
+    if (element.OT === undefined) {
       element.OT = SpaceObjectType.UNKNOWN;
     }
     const intlDes = this.parseIntlDes_(element.TLE1);
@@ -1494,7 +1494,7 @@ export class CatalogLoader {
     // If the canonical key is already claimed (e.g. by an earlier load path
     // that wrote the same satellite under either its alpha-5 or numeric form),
     // route through Known_ to update in place instead of orphaning the prior slot.
-    if (typeof catalogManagerInstance.sccIndex[sccNum] !== 'undefined' &&
+    if (catalogManagerInstance.sccIndex[sccNum] !== undefined &&
         tempSatData[catalogManagerInstance.sccIndex[sccNum]]) {
       CatalogLoader.processAsciiCatalogKnown_(catalogManagerInstance, element, tempSatData as Satellite[]);
 
@@ -1604,10 +1604,10 @@ export class CatalogLoader {
       } // Don't Process Bad Satellite Information
       const canonicalKey = CatalogLoader.canonicalSccKey(element.SCC) ?? element.SCC.toString();
 
-      if (typeof catalogManagerInstance.sccIndex[canonicalKey] !== 'undefined') {
+      if (catalogManagerInstance.sccIndex[canonicalKey] !== undefined) {
         const i = catalogManagerInstance.sccIndex[canonicalKey];
 
-        if (typeof tempSatData[i] === 'undefined') {
+        if (tempSatData[i] === undefined) {
           continue;
         }
         tempSatData[i].tle1 = element.TLE1 as TleLine1;
@@ -1670,7 +1670,7 @@ export class CatalogLoader {
         continue;
       }
 
-      if (typeof catalogManagerInstance.sccIndex[`${scc}`] !== 'undefined') {
+      if (catalogManagerInstance.sccIndex[`${scc}`] !== undefined) {
         /*
          * console.warn('Duplicate Satellite Found in jsCatalog');
          * NOTE: We don't trust the jsCatalog, so we don't update the TLEs

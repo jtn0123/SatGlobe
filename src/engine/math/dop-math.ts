@@ -115,7 +115,7 @@ export abstract class DopMath {
     gpsElevationMask: Degrees | ElevationMaskFn = <Degrees>10,
     includeAllSatPositions = false,
   ): DopResult {
-    if (typeof lat === 'undefined' || typeof lon === 'undefined') {
+    if (lat === undefined || lon === undefined) {
       return { pdop: 'N/A', hdop: 'N/A', gdop: 'N/A', vdop: 'N/A', tdop: 'N/A', visibleSats: 0 };
     }
 

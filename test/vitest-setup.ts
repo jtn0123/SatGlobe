@@ -106,7 +106,7 @@ global.settingsManager = settingsManager;
 
 global.document.url = 'https://keeptrack.space';
 global.document.includeNodeLocations = true;
-if (typeof global.window === 'undefined') {
+if (global.window === undefined) {
   global.window = global.document.parentWindow;
 }
 
@@ -527,7 +527,7 @@ class RequestAnimationFrameMockSession {
   triggerNextAnimationFrame(time = performance.now()) {
     const nextEntry = this.queue.entries().next().value;
 
-    if (typeof nextEntry === 'undefined') {
+    if (nextEntry === undefined) {
       return;
     }
 

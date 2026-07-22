@@ -61,7 +61,7 @@ export class MeshRenderer {
       return;
     }
     if (
-      typeof this.meshManager_.currentMeshObject.id === 'undefined' || typeof this.meshManager_.currentMeshObject.model === 'undefined' ||
+      this.meshManager_.currentMeshObject.id === undefined || this.meshManager_.currentMeshObject.model === undefined ||
       this.meshManager_.currentMeshObject.id === -1) {
       return;
     }
@@ -107,7 +107,7 @@ export class MeshRenderer {
     if (!this.meshManager_.currentMeshObject?.model?.mesh) {
       return;
     }
-    if (typeof this.meshManager_.currentMeshObject?.id === 'undefined' || this.meshManager_.currentMeshObject?.id === -1) {
+    if (this.meshManager_.currentMeshObject?.id === undefined || this.meshManager_.currentMeshObject?.id === -1) {
       return;
     }
 
@@ -203,7 +203,7 @@ export class MeshRenderer {
       }
       const layoutKey = this.attribs_[attrName];
 
-      if (typeof this.attrIndices_[attrName] !== 'undefined' && this.attrIndices_[attrName] !== -1) {
+      if (this.attrIndices_[attrName] !== undefined && this.attrIndices_[attrName] !== -1) {
         const attr = model.layout.attributeMap[layoutKey];
 
         gl.vertexAttribPointer(this.attrIndices_[attrName], attr.size, gl[attr.type], attr.normalized, attr.stride, attr.offset);

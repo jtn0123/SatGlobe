@@ -288,7 +288,7 @@ export class BestPassPlugin extends KeepTrackPlugin {
   protected lastResultTruncated_ = false;
 
   protected findBestPasses_(sats: string, sensor: DetailedSensor | null): lookanglesRow[] {
-    const sensors = this.getSearchSensors_(sensor).filter((s) => s && typeof s.minAz !== 'undefined');
+    const sensors = this.getSearchSensors_(sensor).filter((s) => s && s.minAz !== undefined);
 
     if (sensors.length === 0) {
       ServiceLocator.getUiManager().toast(t7e('plugins.BestPassPlugin.errorMsgs.SensorFormatError' as Parameters<typeof t7e>[0]), ToastMsgType.critical);

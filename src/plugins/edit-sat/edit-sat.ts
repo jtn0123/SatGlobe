@@ -141,7 +141,7 @@ export class EditSat extends KeepTrackPlugin {
   };
 
   protected onContextMenuAction_(targetId: string, clickedSatId?: number): void {
-    if (typeof clickedSatId === 'undefined' || clickedSatId === null) {
+    if (clickedSatId === undefined || clickedSatId === null) {
       throw new Error('clickedSat is undefined');
     }
 

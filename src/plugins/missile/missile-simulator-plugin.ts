@@ -522,7 +522,7 @@ export class MissileSimulatorPlugin extends KeepTrackPlugin {
   private lastVisibleRvCount_ = -1;
 
   private updateLoop_(): void {
-    if (typeof missileManager === 'undefined' || missileManager.missileArray.length === 0) {
+    if (missileManager === undefined || missileManager.missileArray.length === 0) {
       this.lastVisibleRvCount_ = -1;
 
       return;

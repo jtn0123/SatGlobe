@@ -362,7 +362,7 @@ export function ecef2rae<D extends number>(lla: LlaVec3<Degrees, D>, ecef: EcefV
 }
 
 export const jday = (year?: number, mon?: number, day?: number, hr?: number, minute?: number, sec?: number) => {
-  if (typeof year === 'undefined') {
+  if (year === undefined) {
     const now = new Date();
     const jDayStart = new Date(now.getUTCFullYear(), 0, 0);
     const jDayDiff = now.getDate() - jDayStart.getDate();
@@ -371,11 +371,11 @@ export const jday = (year?: number, mon?: number, day?: number, hr?: number, min
   }
 
   if (
-    typeof mon === 'undefined' ||
-    typeof day === 'undefined' ||
-    typeof hr === 'undefined' ||
-    typeof minute === 'undefined' ||
-    typeof sec === 'undefined'
+    mon === undefined ||
+    day === undefined ||
+    hr === undefined ||
+    minute === undefined ||
+    sec === undefined
   ) {
     throw new Error('Invalid date');
   }

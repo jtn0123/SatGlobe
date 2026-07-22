@@ -103,7 +103,7 @@ function handleStartSearch_(msg: CoMsgStartSearch): void {
     // TCA sample (the TCA search re-propagates the same satellite hundreds of times).
     const satCache: (Satellite | null | undefined)[] = new Array(sats.length).fill(undefined);
     const getSat = (i: number): Satellite | null => {
-      if (typeof satCache[i] === 'undefined') {
+      if (satCache[i] === undefined) {
         satCache[i] = buildSatellite_(sats[i]);
       }
 

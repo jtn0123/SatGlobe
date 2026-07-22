@@ -65,7 +65,7 @@ export class TimeManager {
 
   // Propagation Time Functions
   calculateSimulationTime(newSimulationTime?: Date | null): Date {
-    if (typeof newSimulationTime !== 'undefined' && newSimulationTime !== null) {
+    if (newSimulationTime !== undefined && newSimulationTime !== null) {
       this.simulationTimeObj.setTime(newSimulationTime.getTime());
 
       return this.simulationTimeObj;

@@ -345,7 +345,7 @@ export abstract class ColorScheme {
 
     if (catalogManagerInstance.isSensorManagerLoaded &&
         sensorManagerInstance.currentSensors[0].type === SpaceObjectType.OBSERVER &&
-        typeof sat.vmag === 'undefined') {
+        sat.vmag === undefined) {
       return true;
     }
 
@@ -369,7 +369,7 @@ export abstract class ColorScheme {
 
       if (catalogManagerInstance.isSensorManagerLoaded &&
           sensorManagerInstance.currentSensors[0].type === SpaceObjectType.OBSERVER &&
-          typeof sat.vmag === 'undefined') {
+          sat.vmag === undefined) {
         return null;
       }
 

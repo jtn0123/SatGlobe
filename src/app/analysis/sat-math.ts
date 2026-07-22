@@ -477,16 +477,16 @@ export abstract class SatMath {
       return { az: 0, el: 0 };
     }
 
-    if (typeof pos1 === 'undefined') {
+    if (pos1 === undefined) {
       throw new Error('Sat1 position is undefined');
     }
-    if (typeof pos2 === 'undefined') {
+    if (pos2 === undefined) {
       throw new Error('Sat2 position is undefined');
     }
-    if (typeof vel1 === 'undefined') {
+    if (vel1 === undefined) {
       throw new Error('Sat1 velocity is undefined');
     }
-    if (typeof vel2 === 'undefined') {
+    if (vel2 === undefined) {
       throw new Error('Sat2 velocity is undefined');
     }
 
@@ -519,10 +519,10 @@ export abstract class SatMath {
       return Number.NaN;
     }
     // Sanity checks
-    if (typeof pos1 === 'undefined') {
+    if (pos1 === undefined) {
       throw new Error('Sat1 position is undefined');
     }
-    if (typeof pos2 === 'undefined') {
+    if (pos2 === undefined) {
       throw new Error('Sat2 position is undefined');
     }
 

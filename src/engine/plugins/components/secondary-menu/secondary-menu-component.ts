@@ -306,7 +306,7 @@ export class SecondaryMenuComponent {
 
     if (element) {
       // Position the menu
-      if (this.config.leftOffset !== null && typeof this.config.leftOffset !== 'undefined') {
+      if (this.config.leftOffset !== null && this.config.leftOffset !== undefined) {
         element.style.left = `${this.config.leftOffset}px`;
       } else {
         const sideMenuRect = parentSideMenu?.getBoundingRect() ?? getEl(this.sideMenuElementName)?.getBoundingClientRect();

@@ -154,13 +154,13 @@ export class HoverManager {
       // the shader-transformed polar positions — use the mouse position directly.
       const isPolarView = ServiceLocator.getMainCamera().cameraType === CameraType.POLAR_VIEW;
 
-      if (!isPolarView || typeof screenX === 'undefined' || typeof screenY === 'undefined') {
+      if (!isPolarView || screenX === undefined || screenY === undefined) {
         const satScreenPositionArray = renderer.getScreenCoords(obj);
 
         if (
           satScreenPositionArray.error ||
-          typeof satScreenPositionArray.x === 'undefined' ||
-          typeof satScreenPositionArray.y === 'undefined' ||
+          satScreenPositionArray.x === undefined ||
+          satScreenPositionArray.y === undefined ||
           satScreenPositionArray.x > window.innerWidth ||
           satScreenPositionArray.y > window.innerHeight
         ) {
@@ -358,7 +358,7 @@ export class HoverManager {
   }
 
   private showHoverDetails_(id: number, satX?: number, satY?: number) {
-    if (typeof this.satHoverBoxDOM === 'undefined' || this.satHoverBoxDOM === null) {
+    if (this.satHoverBoxDOM === undefined || this.satHoverBoxDOM === null) {
       return;
     }
 
@@ -419,7 +419,7 @@ export class HoverManager {
   }
 
   setHover(i: number): void {
-    if (typeof i === 'undefined' || i === null) {
+    if (i === undefined || i === null) {
       errorManagerInstance.debug('setHover called with no id');
 
       return;

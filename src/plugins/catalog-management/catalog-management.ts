@@ -488,7 +488,7 @@ export class CatalogManagementPlugin extends KeepTrackPlugin {
     const newEntries = asciiCatalog.filter((entry) => {
       const key = CatalogLoader.canonicalSccKey(entry.SCC);
 
-      return key !== null && typeof sccIndex[key] === 'undefined';
+      return key !== null && sccIndex[key] === undefined;
     });
 
     if (newEntries.length === 0) {

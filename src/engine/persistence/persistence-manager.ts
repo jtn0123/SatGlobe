@@ -126,7 +126,7 @@ export class PersistenceManager {
 
     const value = this.cache_.get(key as StorageKey);
 
-    if (typeof value === 'undefined') {
+    if (value === undefined) {
       return fallback;
     }
 
@@ -140,7 +140,7 @@ export class PersistenceManager {
       return;
     }
 
-    if (value === null || typeof value === 'undefined') {
+    if (value === null || value === undefined) {
       this.removeItem(key);
 
       return;

@@ -143,7 +143,7 @@ export class MobileManager {
           settingsManager.minDistanceFromSatellite = <Kilometers>25;
           settingsManager.isLoadLastSensor = false;
         } else {
-          if (typeof settingsManager.enableHoverOverlay === 'undefined') {
+          if (settingsManager.enableHoverOverlay === undefined) {
             settingsManager.enableHoverOverlay = true;
           }
 

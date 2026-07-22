@@ -678,7 +678,7 @@ export class SettingsManager {
         Object.keys(overrides.plugins).forEach((rawKey) => {
           const _key = pluginKeyAliases[rawKey] ?? rawKey;
 
-          if (!(_key in plugins) || typeof overrides.plugins[rawKey] === 'undefined') {
+          if (!(_key in plugins) || overrides.plugins[rawKey] === undefined) {
             return;
           }
           this.plugins[_key] = overrides.plugins[rawKey];
@@ -910,7 +910,7 @@ export class SettingsManager {
         this.installDirectory = '/';
         break;
     }
-    if (typeof this.installDirectory === 'undefined') {
+    if (this.installDirectory === undefined) {
       // Put Your Custom Install Directory Here
       this.installDirectory = '/';
     }

@@ -343,7 +343,7 @@ export class LookAnglesPlugin extends KeepTrackPlugin {
     // If isRiseSetOnly is true, add a column for type
     const tdType: HTMLTableCellElement = tr.insertCell();
 
-    if (lookAngleData.length > 0 && typeof lookAngleData[0].type !== 'undefined') {
+    if (lookAngleData.length > 0 && lookAngleData[0].type !== undefined) {
 
       tdType.appendChild(document.createTextNode(l('table.type')));
     }
@@ -439,7 +439,7 @@ export class LookAnglesPlugin extends KeepTrackPlugin {
 
 
   private settingsRisesetChange_(e: Event, isRiseSetChecked?: boolean): void {
-    if (typeof e === 'undefined' || e === null) {
+    if (e === undefined || e === null) {
       throw new Error('e is undefined');
     }
 

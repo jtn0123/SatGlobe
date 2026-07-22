@@ -104,7 +104,7 @@ export class SatInfoBoxOrbital extends KeepTrackPlugin {
   }
 
   private updateOrbitData_(obj: BaseObject): void {
-    if (obj === null || typeof obj === 'undefined') {
+    if (obj === null || obj === undefined) {
       return;
     }
 

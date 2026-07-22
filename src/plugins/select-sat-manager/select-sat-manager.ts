@@ -578,7 +578,7 @@ export class SelectSatManager extends KeepTrackPlugin implements ISettingsContri
   }
 
   lastSelectedSat(id?: number): number {
-    if (typeof id !== 'undefined' && id !== null) {
+    if (id !== undefined && id !== null) {
       this.lastSelectedSat_ = id;
     }
 

@@ -445,7 +445,7 @@ export class WebGLRenderer {
         if (satScreenPositionArray.error) {
           return;
         }
-        if (typeof satScreenPositionArray.x === 'undefined' || typeof satScreenPositionArray.y === 'undefined') {
+        if (satScreenPositionArray.x === undefined || satScreenPositionArray.y === undefined) {
           return;
         }
         if (satScreenPositionArray.x > window.innerWidth || satScreenPositionArray.y > window.innerHeight) {
@@ -656,13 +656,13 @@ export class WebGLRenderer {
    * @deprecated
    */
   resizePostProcessingTexture(gl: WebGL2RenderingContext, sun: Sun, postProcessingManagerRef: PostProcessingManager): void {
-    if (typeof gl === 'undefined' || gl === null) {
+    if (gl === undefined || gl === null) {
       throw new Error('gl is undefined or null');
     }
-    if (typeof sun === 'undefined' || sun === null) {
+    if (sun === undefined || sun === null) {
       throw new Error('sun is undefined or null');
     }
-    if (typeof postProcessingManagerRef === 'undefined' || postProcessingManagerRef === null) {
+    if (postProcessingManagerRef === undefined || postProcessingManagerRef === null) {
       throw new Error('postProcessingManager is undefined or null');
     }
 

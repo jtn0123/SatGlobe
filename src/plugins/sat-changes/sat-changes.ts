@@ -103,7 +103,7 @@ export const satChng = (row: number, testOverride?: undefined): void => {
   if (typeof row !== 'number') {
     throw new Error('Row must be a number');
   }
-  if (row !== -1 && typeof satChngTable[row] === 'undefined') {
+  if (row !== -1 && satChngTable[row] === undefined) {
     throw new Error('Row does not exist');
   }
 

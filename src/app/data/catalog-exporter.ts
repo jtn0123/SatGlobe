@@ -66,7 +66,7 @@ export class CatalogExporter {
 
       satOnlyData.sort((a, b) => a.sccNum.localeCompare(b.sccNum, 'en', { numeric: true }));
       for (const sat of satOnlyData) {
-        if (typeof sat.tle1 === 'undefined' || typeof sat.tle2 === 'undefined') {
+        if (sat.tle1 === undefined || sat.tle2 === undefined) {
           continue;
         }
         if (isDeleteAnalysts && sat.country === 'ANALSAT') {

@@ -434,7 +434,7 @@ export class SensorManager {
            */
           const isMatchString = typeof selectedSensor === 'string' && sensors[sensor].objName === selectedSensor;
           const isMatchObj = typeof selectedSensor !== 'string' && sensors[sensor] === selectedSensor;
-          const isMatchsensorId = typeof sensorId !== 'undefined' && sensors[sensor].sensorId === sensorId;
+          const isMatchsensorId = sensorId !== undefined && sensors[sensor].sensorId === sensorId;
 
           if (isMatchString || isMatchObj || isMatchsensorId) {
             this.currentSensors = [sensors[sensor]];
@@ -540,8 +540,8 @@ export class SensorManager {
 
   verifySensors(sensors: DetailedSensor[] | undefined): DetailedSensor[] {
     // If no sensor passed to function then try to use the 'currentSensor'
-    if (typeof sensors === 'undefined' || sensors === null) {
-      if (typeof this.currentSensors === 'undefined') {
+    if (sensors === undefined || sensors === null) {
+      if (this.currentSensors === undefined) {
         throw new Error('getTEARR requires a sensor or for a sensor to be currently selected.');
       } else {
         sensors = this.currentSensors;
@@ -577,10 +577,10 @@ export class SensorManager {
     if (currentSensor !== null) {
       try {
         // If there is a sensorId set use that
-        if (typeof currentSensor[0] === 'undefined' || currentSensor[0] === null) {
+        if (currentSensor[0] === undefined || currentSensor[0] === null) {
           this.setSensor(null, currentSensor[1]);
           // If the sensor is a string, load that collection of sensors
-        } else if (typeof currentSensor[0].objName === 'undefined') {
+        } else if (currentSensor[0].objName === undefined) {
           this.setSensor(currentSensor[0], currentSensor[1]);
         } else {
           // Seems to be a single sensor without a sensorId, load that

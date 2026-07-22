@@ -1178,7 +1178,7 @@ export class Missile {
       return null;
     }
 
-    if (typeof minAltitude === 'undefined') {
+    if (minAltitude === undefined) {
       minAltitude = 0;
     }
 
