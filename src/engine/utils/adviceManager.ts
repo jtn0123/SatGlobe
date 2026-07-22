@@ -31,7 +31,7 @@ export class AdviceManager {
   private helpTextDOM: HTMLElement;
   private isAdviceEnabled = true;
   private isAdviceOpen = false;
-  private tutIconDOM: HTMLElement;
+  private readonly tutIconDOM: HTMLElement;
 
   public clearAdvice(): void {
     this.helpHeaderDOM?.classList.remove('help-header-sel');

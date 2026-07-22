@@ -10,7 +10,7 @@ export enum StorageProviderType {
 type ProviderFactory = (config?: StorageProviderConfig) => StorageProvider;
 
 export class StorageProviderFactory {
-  private registry_: Map<string, ProviderFactory> = new Map();
+  private readonly registry_: Map<string, ProviderFactory> = new Map();
 
   constructor() {
     // Seed with built-in providers

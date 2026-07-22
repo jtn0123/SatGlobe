@@ -6,10 +6,10 @@ import { Line, LineColors, LineDescription } from './line';
 import { ServiceLocator } from '@app/engine/core/service-locator';
 
 export class SensorScanHorizonLine extends Line {
-  private sensor: DetailedSensor;
+  private readonly sensor: DetailedSensor;
   private az_: Degrees = -90 as Degrees;
-  private minAz_: Degrees;
-  private maxAz_: Degrees;
+  private readonly minAz_: Degrees;
+  private readonly maxAz_: Degrees;
 
   constructor(sensor: DetailedSensor, face = 1, faces = 2, color: vec4 = LineColors.CYAN) {
     super();

@@ -323,7 +323,7 @@ export class EditSat extends KeepTrackPlugin {
   // =========================================================================
 
   /** Combined handler: refresh the calculated readout and the ghost orbit. */
-  private onElementInput_ = (): void => {
+  private readonly onElementInput_ = (): void => {
     this.updateDerived_();
     this.updatePreview_();
   };

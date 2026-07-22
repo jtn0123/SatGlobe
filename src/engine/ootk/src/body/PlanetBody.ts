@@ -149,7 +149,7 @@ const AU_PER_DAY_TO_KM_PER_S = KM_PER_AU / 86400;
  * ```
  */
 export class PlanetBody extends CelestialBody {
-  private planetData_: PlanetData;
+  private readonly planetData_: PlanetData;
 
   private constructor(planetName: string) {
     const data = PLANET_DATA[planetName];

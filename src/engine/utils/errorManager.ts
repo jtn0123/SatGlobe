@@ -77,8 +77,8 @@ export function isOpaqueWindowError(e: Pick<ErrorEvent, 'error' | 'message' | 'f
 
 export class ErrorManager {
   private minLevel_: LogLevel;
-  private signatureWindow_ = new Map<string, number>();
-  private newGithubIssueUrl_: (options: Options) => string;
+  private readonly signatureWindow_ = new Map<string, number>();
+  private readonly newGithubIssueUrl_: (options: Options) => string;
 
   constructor() {
     if (!isThisNode() && window.location.hostname === 'localhost') {

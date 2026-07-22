@@ -115,7 +115,7 @@ export class ModalInput extends DraggableModal {
     document.addEventListener('keydown', this.handleKeyDown_);
   }
 
-  private handleKeyDown_ = (event: KeyboardEvent): void => {
+  private readonly handleKeyDown_ = (event: KeyboardEvent): void => {
     if (event.key === 'Escape' && this.boxEl?.style.display !== 'none') {
       this.handleCancel_();
     }

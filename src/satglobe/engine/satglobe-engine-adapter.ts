@@ -90,7 +90,7 @@ export class SatGlobeEngineAdapter {
   private highlightedCatalogIds_: ReadonlySet<string> = new Set();
   private conjunctionHighlightActive_ = false;
   private conjunctionFeed_: ConjunctionFeedV1 | null = null;
-  private interval_: number | null = null;
+  private readonly interval_: number | null = null;
   private conjunctionIdleHandle_: number | null = null;
   private conjunctionLoadTimeoutHandle_: number | null = null;
   private conjunctionAbortController_: AbortController | null = null;

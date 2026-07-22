@@ -22,7 +22,7 @@ export interface ProgramParams {
 }
 
 export class WebGlProgramHelper {
-  private gl_: WebGL2RenderingContext;
+  private readonly gl_: WebGL2RenderingContext;
   name: string;
   vertexShader: WebGLShader;
   vertexShaderCode: string;

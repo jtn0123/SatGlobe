@@ -5,7 +5,7 @@ import { Line, LineColors, LineDescription } from './line';
 import { ServiceLocator } from '@app/engine/core/service-locator';
 
 export class SatToSunLine extends Line {
-  private sat: Satellite | OemSatellite;
+  private readonly sat: Satellite | OemSatellite;
 
   constructor(sat: Satellite | OemSatellite) {
     super();

@@ -90,12 +90,12 @@ export class Camera {
   inputHandler = new CameraInputHandler(this);
   readonly transition = new CameraTransition();
 
-  private chaseSpeed_ = 0.0005;
+  private readonly chaseSpeed_: number = 0.0005;
   private wasDragging_ = false;
   private fpsLastTime_ = <Milliseconds>0;
-  private isRayCastingEarth_ = false;
-  private panMovementSpeed_ = 0.5;
-  private localRotateMovementSpeed_ = 0.00005;
+  private readonly isRayCastingEarth_: boolean = false;
+  private readonly panMovementSpeed_: number = 0.5;
+  private readonly localRotateMovementSpeed_: number = 0.00005;
 
   // Flat map state (public: read by renderers for shader uniforms)
   flatMapPanX = 0; // km, longitude direction
@@ -108,7 +108,7 @@ export class Camera {
   polarViewZoom = 1; // 1 = full hemisphere visible
 
   // Camera mode delegates (plugin-provided camera modes like flat map, polar view)
-  private cameraModeDelegates_ = new Map<CameraType, ICameraModeDelegate>();
+  private readonly cameraModeDelegates_ = new Map<CameraType, ICameraModeDelegate>();
   private lastCameraType_: CameraType = CameraType.FIXED_TO_EARTH;
   private fovTarget_: Radians | null = null;
   private fovDefault_: Radians | null = null;
@@ -166,14 +166,14 @@ export class Camera {
     this.lastCameraType_ = this.cameraType;
   }
 
-  private normForward_ = vec3.create();
-  private normLeft_ = vec3.create();
-  private normUp_ = vec3.create();
+  private readonly normForward_ = vec3.create();
+  private readonly normLeft_ = vec3.create();
+  private readonly normUp_ = vec3.create();
 
   // LVLH frame basis vectors for FIXED_TO_SAT mode (reused each frame)
-  private lvlhRadial_ = vec3.create();
-  private lvlhInTrack_ = vec3.create();
-  private lvlhCrossTrack_ = vec3.create();
+  private readonly lvlhRadial_ = vec3.create();
+  private readonly lvlhInTrack_ = vec3.create();
+  private readonly lvlhCrossTrack_ = vec3.create();
   private lvlhTempMatrix_ = mat4.create();
 
   private yawErr_ = <Radians>0;
@@ -1158,10 +1158,10 @@ export class Camera {
     return this.state.zoomLevel;
   }
 
-  private astronomyEye_ = vec3.create();
-  private astronomyZenith_ = vec3.create();
-  private astronomyEast_ = vec3.create();
-  private astronomyNorth_ = vec3.create();
+  private readonly astronomyEye_ = vec3.create();
+  private readonly astronomyZenith_ = vec3.create();
+  private readonly astronomyEast_ = vec3.create();
+  private readonly astronomyNorth_ = vec3.create();
 
   private drawAstronomy_(sensorPos: { lat: number; lon: number; gmst: GreenwichMeanSiderealTime; x: number; y: number; z: number }) {
     // Eye position = sensor ECI position

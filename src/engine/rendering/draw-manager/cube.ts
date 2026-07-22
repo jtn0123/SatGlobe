@@ -34,7 +34,7 @@ export class Box {
     this.drawSizeU = <Kilometers>(w * 2);
   }
 
-  private attribs_ = {
+  private readonly attribs_ = {
     // Vertices are interleaved position + normal (6 floats), but the flat
     // translucent box only reads position; the normal data is skipped by stride.
     a_position: new BufferAttribute({
@@ -45,7 +45,7 @@ export class Box {
     }),
   };
 
-  private buffers_ = {
+  private readonly buffers_ = {
     vertCount: 0,
     combinedBuf: null as unknown as WebGLBuffer,
     vertPosBuf: null as unknown as WebGLBuffer,
@@ -63,12 +63,12 @@ export class Box {
     return this.hasValidPose_;
   }
 
-  private textureMap_ = {
+  private readonly textureMap_ = {
     src: <string><unknown>null,
     texture: <WebGLTexture><unknown>null,
   };
 
-  private uniforms_ = {
+  private readonly uniforms_ = {
     u_pMatrix: <WebGLUniformLocation><unknown>null,
     u_camMatrix: <WebGLUniformLocation><unknown>null,
     u_mvMatrix: <WebGLUniformLocation><unknown>null,
@@ -215,7 +215,7 @@ export class Box {
     gl.bindVertexArray(null);
   }
 
-  private shaders_ = {
+  private readonly shaders_ = {
     frag: glsl`#version 300 es
       precision highp float;
       out vec4 fragColor;

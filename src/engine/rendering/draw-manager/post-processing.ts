@@ -58,7 +58,7 @@ export class PostProcessingManager {
     },
   };
 
-  private frameBufferInfos = {
+  private readonly frameBufferInfos = {
     one: {
       frameBuffer: <WebGLFramebuffer><unknown>null,
       texture: <WebGLTexture><unknown>null,
@@ -71,7 +71,7 @@ export class PostProcessingManager {
     },
   };
 
-  private shaderCode = postProcessingShaderCode;
+  private readonly shaderCode = postProcessingShaderCode;
   curFbi: {
     texture: WebGLTexture;
     frameBuffer?: WebGLFramebuffer;

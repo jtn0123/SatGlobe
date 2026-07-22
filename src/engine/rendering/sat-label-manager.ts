@@ -50,14 +50,14 @@ export class SatLabelManager {
   private labeledSatIds_: number[] = [];
   private labelGlyphCounts_: number[] = [];
 
-  private attribs_ = {
+  private readonly attribs_ = {
     a_quadVertex: new BufferAttribute({ location: 0, vertices: 2, offset: 0 }),
     a_satPosition: new BufferAttribute({ location: 1, vertices: 3, offset: 0 }),
     a_glyphIndex: new BufferAttribute({ location: 2, vertices: 1, offset: 0 }),
     a_charOffset: new BufferAttribute({ location: 3, vertices: 1, offset: 0 }),
   };
 
-  private uniforms_ = {
+  private readonly uniforms_ = {
     u_pMvCamMatrix: <WebGLUniformLocation><unknown>null,
     u_screenSize: <WebGLUniformLocation><unknown>null,
     u_glyphSize: <WebGLUniformLocation><unknown>null,
