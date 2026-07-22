@@ -237,7 +237,7 @@ const buildCacheEntry_ = (obj: CruncherSat): void => {
   if (!tle1 || !tle2) {
     // Sensors Start Active; Markers and Missiles Start Inactive
     obj.active = Boolean(obj.lat);
-    objCache.push({ ...obj, ...{ active: obj.active } });
+    objCache.push({ ...obj, active: obj.active });
 
     return;
   }

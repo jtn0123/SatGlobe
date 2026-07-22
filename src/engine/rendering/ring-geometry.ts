@@ -42,7 +42,6 @@ export class RingGeometry extends BufferGeometry {
     super({
       type: 'RingGeometry',
       attributes: {
-        ...{
           position: new BufferAttribute({
             location: 0,
             vertices: 3,
@@ -62,7 +61,6 @@ export class RingGeometry extends BufferGeometry {
             offset: Float32Array.BYTES_PER_ELEMENT * 6,
           }),
           ...attributes,
-        },
       },
     });
     this.gl = gl;

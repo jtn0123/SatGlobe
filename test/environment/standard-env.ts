@@ -115,7 +115,7 @@ export const setupStandardEnvironment = (dependencies?: Constructor<KeepTrackPlu
 
   const dotsManagerInstance = new DotsManager();
 
-  dotsManagerInstance.inViewData = Array(100).fill(0) as unknown as Int8Array;
+  dotsManagerInstance.inViewData = new Array(100).fill(0) as unknown as Int8Array;
 
   Container.getInstance().registerSingleton(Singletons.DotsManager, dotsManagerInstance);
 
@@ -169,9 +169,9 @@ export const setupStandardEnvironment = (dependencies?: Constructor<KeepTrackPlu
   Container.getInstance().registerSingleton(Singletons.SensorMath, sensorMathInstance);
   Container.getInstance().registerSingleton(Singletons.SoundManager, soundManagerInstance);
 
-  ServiceLocator.getColorSchemeManager().colorData = new Float32Array(Array(100).fill(0));
-  ServiceLocator.getDotsManager().sizeData = new Int8Array(Array(100).fill(0));
-  ServiceLocator.getDotsManager().positionData = new Float32Array(Array(100).fill(0));
+  ServiceLocator.getColorSchemeManager().colorData = new Float32Array(new Array(100).fill(0));
+  ServiceLocator.getDotsManager().sizeData = new Int8Array(new Array(100).fill(0));
+  ServiceLocator.getDotsManager().positionData = new Float32Array(new Array(100).fill(0));
   // Setup a mock catalog
   const sat2 = defaultSat.clone();
 
@@ -238,9 +238,9 @@ export const enableConsoleErrors = () => {
 
 export const standardSelectSat = () => {
   ServiceLocator.getCatalogManager().objectCache = [defaultSat];
-  ServiceLocator.getColorSchemeManager().colorData = new Float32Array(Array(100).fill(0));
-  ServiceLocator.getDotsManager().sizeData = Array(100).fill(0) as unknown as Int8Array;
-  ServiceLocator.getDotsManager().positionData = Array(100).fill(0) as unknown as Float32Array;
+  ServiceLocator.getColorSchemeManager().colorData = new Float32Array(new Array(100).fill(0));
+  ServiceLocator.getDotsManager().sizeData = new Array(100).fill(0) as unknown as Int8Array;
+  ServiceLocator.getDotsManager().positionData = new Array(100).fill(0) as unknown as Float32Array;
   ServiceLocator.getCatalogManager().getObject = () => defaultSat;
   PluginRegistry.getPlugin(SelectSatManager)?.selectSat(0);
 };

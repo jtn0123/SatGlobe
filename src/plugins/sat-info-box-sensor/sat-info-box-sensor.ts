@@ -161,7 +161,7 @@ export class SatInfoBoxSensor extends KeepTrackPlugin {
     let sunTime: SunTime;
     const timeManagerInstance = ServiceLocator.getTimeManager();
     const sensorManagerInstance = ServiceLocator.getSensorManager();
-    let now = new Date(timeManagerInstance.simulationTimeObj.getTime());
+    let now = new Date(timeManagerInstance.simulationTimeObj);
 
     try {
       sunTime = Sun.getTimes(now, sensorManagerInstance.currentSensors[0].lat, sensorManagerInstance.currentSensors[0].lon);
@@ -175,7 +175,7 @@ export class SatInfoBoxSensor extends KeepTrackPlugin {
     }
 
     // Reset the time to the current simulation time
-    now = new Date(timeManagerInstance.simulationTimeObj.getTime());
+    now = new Date(timeManagerInstance.simulationTimeObj);
 
     // If No Sensor, then Ignore Sun Exclusion
     const satSunDom = getEl(EL.SUN);

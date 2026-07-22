@@ -3,6 +3,7 @@ import { CatalogSource } from '../enums/CatalogSource';
 import { HistoryConfig } from '../objects/History';
 import {
   LaunchDetails,
+  KilometersPerSecond,
   OperationsDetails,
   SpaceCraftDetails,
   SpaceObjectType,
@@ -26,6 +27,8 @@ export interface SatelliteParams extends LaunchDetails, SpaceCraftDetails, Opera
   sccNum?: string;
   intlDes?: string;
   position?: TemeVec3;
+  /** Initial velocity in the TEME frame. */
+  velocity?: TemeVec3<KilometersPerSecond>;
   time?: Date;
 
   // ==================== Detailed Properties (merged from DetailedSatellite) ====================

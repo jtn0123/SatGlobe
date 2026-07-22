@@ -129,7 +129,7 @@ export class PolynomialRegression {
     order: number,
     { printIter = false }: { printIter?: boolean } = {},
   ): PolynomicalRegressionResult {
-    const simplex = DownhillSimplex.generateSimplex(Float64Array.from(Array(order + 1).fill(1.0)));
+    const simplex = DownhillSimplex.generateSimplex(Float64Array.from(new Array(order + 1).fill(1.0)));
 
     /**
      * Sum of squared errors.

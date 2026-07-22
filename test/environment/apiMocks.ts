@@ -495,7 +495,7 @@ export const keepTrackApiStubs = {
       getIdFromEci: vi.fn(),
       selectSat: vi.fn(),
       satData: [
-        { ...defaultSat, ...{ id: '0' } },
+        { ...defaultSat, id: '0' },
         defaultSat,
         { id: '2', type: SpaceObjectType.STAR, name: 'test' },
         { id: '3', type: SpaceObjectType.PHASED_ARRAY_RADAR, static: true, name: 'test' },

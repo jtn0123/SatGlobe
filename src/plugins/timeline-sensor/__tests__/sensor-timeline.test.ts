@@ -137,10 +137,12 @@ describe('SensorTimeline behavior', () => {
     PluginRegistry.getPlugin(SelectSatManager)!.selectedSat = -1; // updateTimeline early-returns
 
     setVal('sensor-timeline-setting-total-length', '48');
+    setVal('sensor-timeline-setting-interval', '60');
     setVal('sensor-timeline-setting-bad-length', '120');
     setVal('sensor-timeline-setting-avg-length', '300');
 
     expect(p().lengthOfLookAngles_).toBe(48);
+    expect(p().angleCalculationInterval_).toBe(60);
     expect(p().lengthOfBadPass_).toBe(120);
     expect(p().lengthOfAvgPass_).toBe(300);
   });

@@ -236,7 +236,7 @@ export abstract class CelestialBody extends BaseObject {
         transitTime = new Date((riseMs + setMs) / 2);
       } else {
         // Set is before rise (body is currently up)
-        transitTime = new Date(date.getTime());
+        transitTime = new Date(date);
       }
     }
 

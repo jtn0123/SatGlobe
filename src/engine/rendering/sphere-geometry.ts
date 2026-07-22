@@ -86,7 +86,6 @@ export class SphereGeometry extends BufferGeometry {
     super({
       type: 'SphereGeometry',
       attributes: {
-        ...{
           position: new BufferAttribute({
             location: 0,
             vertices: 3,
@@ -106,7 +105,6 @@ export class SphereGeometry extends BufferGeometry {
             offset: Float32Array.BYTES_PER_ELEMENT * 6,
           }),
           ...attributes,
-        },
       },
     });
     this.gl = gl;

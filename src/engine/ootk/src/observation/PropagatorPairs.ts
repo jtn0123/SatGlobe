@@ -22,8 +22,8 @@ export class PropagatorPairs {
     // Do nothing.
   }
 
-  private _high: (Propagator | null)[] = Array(6).fill(null);
-  private _low: (Propagator | null)[] = Array(6).fill(null);
+  private _high: (Propagator | null)[] = new Array(6).fill(null);
+  private _low: (Propagator | null)[] = new Array(6).fill(null);
 
   set(index: number, high: Propagator, low: Propagator): void {
     this._high[index] = high;

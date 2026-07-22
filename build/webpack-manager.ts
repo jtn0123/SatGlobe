@@ -60,14 +60,12 @@ export class WebpackManager {
     if (mode === 'development') {
       baseConfig = {
         ...baseConfig,
-        ...{
           cache: true,
           devtool: 'source-map',
           // devtool: 'eval-source-map',
           optimization: {
             minimize: false,
           },
-        },
       };
     }
 
@@ -75,7 +73,6 @@ export class WebpackManager {
     if (mode === 'production') {
       baseConfig = {
         ...baseConfig,
-        ...{
           devtool: 'hidden-source-map',
           /*
            * ADR 0002 bundle budget: fail the production build if any JS asset or
@@ -106,7 +103,6 @@ export class WebpackManager {
               }),
             ],
           },
-        },
       };
     }
 
@@ -267,7 +263,6 @@ export class WebpackManager {
   private static createMainConfig_(baseConfig: Configuration, dirName: string, subFolder: string, pubPath = '') {
     return <Configuration>({
       ...baseConfig,
-      ...{
         name: 'MainFiles',
         entry: {
           main: ['./src/main.ts'],
@@ -291,7 +286,6 @@ export class WebpackManager {
           }),
           new ProgressPlugin(reporter.createCompileProgressHandler('main')),
         ],
-      },
     });
   }
 
@@ -301,7 +295,6 @@ export class WebpackManager {
   private static createAuthConfig_(baseConfig: Configuration, dirName: string, subFolder: string, pubPath = '') {
     return <Configuration>({
       ...baseConfig,
-      ...{
         name: 'AuthFiles',
         entry: {
           'popup-callback': ['./src/plugins-pro/user-account/popup-callback.ts'],
@@ -325,7 +318,6 @@ export class WebpackManager {
           }),
           new ProgressPlugin(reporter.createCompileProgressHandler('auth')),
         ],
-      },
     });
   }
 
@@ -361,7 +353,6 @@ export class WebpackManager {
 
     return ({
       ...baseConfig,
-      ...{
         name: 'WebWorkers',
         entry,
         output: {
@@ -372,7 +363,6 @@ export class WebpackManager {
         plugins: [
           new ProgressPlugin(reporter.createCompileProgressHandler('workers')),
         ],
-      },
     });
   }
 }

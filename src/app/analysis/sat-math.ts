@@ -594,7 +594,7 @@ export abstract class SatMath {
       const lla = eci2lla(params.eciPts, gmst);
 
 
-      return { ...lla, ...{ time: now.getTime() } };
+      return { ...lla, time: now.getTime() };
     }, undefined, orbits);
   }
 

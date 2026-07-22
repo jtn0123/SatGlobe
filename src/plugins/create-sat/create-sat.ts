@@ -917,11 +917,9 @@ export class CreateSat extends KeepTrackPlugin {
 
       const newSat = new Satellite({
         ...info,
-        ...{
-          position: pos,
-          velocity: vel,
-          source: inputParams.source,
-        },
+        position: pos,
+        velocity: vel,
+        source: inputParams.source,
       });
 
       // Add to catalog
