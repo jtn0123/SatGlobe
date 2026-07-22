@@ -61,7 +61,7 @@ describe('AccessCalculator', () => {
 
         const windows = AccessCalculator.calculateAccess(polarStation, geoSat, start, end);
 
-        expect(windows.length).toBe(0);
+        expect(windows).toHaveLength(0);
       });
 
       it('should respect start and end bounds', () => {
@@ -117,7 +117,7 @@ describe('AccessCalculator', () => {
         const windowsLowRes = AccessCalculator.calculateAccess(midLatStation, iss, start, end, {}, 10000);
 
         // Should find same number of passes
-        expect(windowsHighRes.length).toBe(windowsLowRes.length);
+        expect(windowsHighRes).toHaveLength(windowsLowRes.length);
 
         // High-res times should be within 10s of low-res times
         for (let i = 0; i < windowsHighRes.length; i++) {
@@ -457,7 +457,7 @@ describe('AccessCalculator', () => {
 
       expect(issWindows).toBeDefined();
       expect(cloneWindows).toBeDefined();
-      expect(issWindows!.length).toBe(cloneWindows!.length);
+      expect(issWindows!).toHaveLength(cloneWindows!.length);
     });
 
     it('should apply constraints to all targets', () => {

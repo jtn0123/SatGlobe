@@ -298,7 +298,7 @@ describe('CountriesMenu behavior', () => {
 
     const commands = plugin.getCommandPaletteCommands();
 
-    expect(commands.length).toBe(2);
+    expect(commands).toHaveLength(2);
     expect(commands[0].label).toContain('Canada');
 
     const clickSpy = vi.spyOn(plugin as unknown as { countryMenuClick_(c: string): void }, 'countryMenuClick_').mockImplementation(() => undefined);

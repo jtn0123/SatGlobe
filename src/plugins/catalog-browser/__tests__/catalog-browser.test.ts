@@ -53,7 +53,7 @@ describe('CatalogBrowserPlugin_composition', () => {
 
     const keepTrackCatalogCount = 3; // default, celestrak-only, vimpel-only
 
-    expect(commands.length).toBe(totalEntries + keepTrackCatalogCount);
+    expect(commands).toHaveLength(totalEntries + keepTrackCatalogCount);
     expect(commands.some((c) => c.id === 'CatalogBrowserPlugin.load.starlink')).toBe(true);
     expect(commands.some((c) => c.id === 'CatalogBrowserPlugin.load.gps-ops')).toBe(true);
   });

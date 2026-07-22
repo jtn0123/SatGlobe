@@ -30,36 +30,6 @@ ClassicalElements {
 }
 `;
 
-exports[`ClassicalElements > should return the PositionVelocity object 1`] = `
-{
-  "position": Vector3D {
-    "x": 1538.2233358428962,
-    "y": 5102.261204021967,
-    "z": 4432.634965003576,
-  },
-  "velocity": Vector3D {
-    "x": -7.3415189093793,
-    "y": 0.6516718453998642,
-    "z": 1.7933882499862026,
-  },
-}
-`;
-
-exports[`ClassicalElements > should return the PositionVelocity object 2`] = `
-{
-  "position": Vector3D {
-    "x": 3699.9682301219336,
-    "y": -4340.514588573352,
-    "z": 3939.5098844969084,
-  },
-  "velocity": Vector3D {
-    "x": -6.276352257339577,
-    "y": -3.9904909019658032,
-    "z": 1.4943961405848338,
-  },
-}
-`;
-
 exports[`ClassicalElements > should return the mean longitude 1`] = `7.675800884962325`;
 
 exports[`ClassicalElements > should return the mean longitude 2`] = `7.224398200203262`;

@@ -178,7 +178,7 @@ describe('shared recents store', () => {
 
     const stored = loadRecents();
 
-    expect(stored.length).toBe(20);
+    expect(stored).toHaveLength(20);
     expect(stored[0].id).toBe('menu-24');
   });
 

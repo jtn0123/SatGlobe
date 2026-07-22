@@ -51,49 +51,21 @@ describe('Interpolator', () => {
   });
 
   describe('overlap', () => {
-    it('should return overlap window when interpolators fully overlap', () => {
-      const other = new MockInterpolator(startEpoch, endEpoch);
-      const result = interpolator.overlap(other);
-
-      expect(result).not.toBeNull();
-      expect(result?.start.posix).toBe(startEpoch.posix);
-      expect(result?.end.posix).toBe(endEpoch.posix);
-    });
-
-    it('should return overlap window when interpolators partially overlap', () => {
+    it.each([
+      ['fully overlap', 1000, 2000, 1000, 2000],
+      ['partially overlap', 1500, 2500, 1500, 2000],
+      ['contain the other window', 1200, 1800, 1200, 1800],
+      ['contain this window', 500, 2500, 1000, 2000],
+    ])('returns the overlap when windows %s', (_label, otherStart, otherEnd, expectedStart, expectedEnd) => {
       const other = new MockInterpolator(
-        new EpochUTC(1500 as Seconds),
-        new EpochUTC(2500 as Seconds),
+        new EpochUTC(otherStart as Seconds),
+        new EpochUTC(otherEnd as Seconds),
       );
       const result = interpolator.overlap(other);
 
       expect(result).not.toBeNull();
-      expect(result?.start.posix).toBe(1500);
-      expect(result?.end.posix).toBe(2000);
-    });
-
-    it('should return overlap when other interpolator is fully contained', () => {
-      const other = new MockInterpolator(
-        new EpochUTC(1200 as Seconds),
-        new EpochUTC(1800 as Seconds),
-      );
-      const result = interpolator.overlap(other);
-
-      expect(result).not.toBeNull();
-      expect(result?.start.posix).toBe(1200);
-      expect(result?.end.posix).toBe(1800);
-    });
-
-    it('should return overlap when this interpolator is fully contained', () => {
-      const other = new MockInterpolator(
-        new EpochUTC(500 as Seconds),
-        new EpochUTC(2500 as Seconds),
-      );
-      const result = interpolator.overlap(other);
-
-      expect(result).not.toBeNull();
-      expect(result?.start.posix).toBe(1000);
-      expect(result?.end.posix).toBe(2000);
+      expect(result?.start.posix).toBe(expectedStart);
+      expect(result?.end.posix).toBe(expectedEnd);
     });
 
     it('should return null when interpolators do not overlap', () => {

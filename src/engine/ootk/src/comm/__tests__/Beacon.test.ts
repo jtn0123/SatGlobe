@@ -219,7 +219,7 @@ describe('Beacon', () => {
       const transmissions = beacon.getTransmissionsInRange(start, end);
 
       // Should have 3 transmissions (at 0s, 60s, 120s)
-      expect(transmissions.length).toBe(3);
+      expect(transmissions).toHaveLength(3);
       expect(transmissions[0].start).toEqual(epoch);
       expect(transmissions[1].start).toEqual(new Date(epoch.getTime() + 60000));
       expect(transmissions[2].start).toEqual(new Date(epoch.getTime() + 120000));
@@ -237,7 +237,7 @@ describe('Beacon', () => {
 
       const transmissions = beacon.getTransmissionsInRange(start, end);
 
-      expect(transmissions.length).toBe(0);
+      expect(transmissions).toHaveLength(0);
     });
 
     it('should truncate transmission end time at range end', () => {
@@ -252,7 +252,7 @@ describe('Beacon', () => {
 
       const transmissions = beacon.getTransmissionsInRange(start, end);
 
-      expect(transmissions.length).toBe(1);
+      expect(transmissions).toHaveLength(1);
       expect(transmissions[0].end).toEqual(end);
     });
   });

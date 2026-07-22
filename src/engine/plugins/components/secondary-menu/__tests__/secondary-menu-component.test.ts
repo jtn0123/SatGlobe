@@ -12,15 +12,6 @@ import { ServiceLocator } from '@app/engine/core/service-locator';
 import * as slideUtils from '@app/engine/utils/slide';
 import * as dragUtils from '@app/engine/utils/click-and-drag';
 
-// Mock ServiceLocator
-vi.mock('@app/engine/core/service-locator', () => ({
-  ServiceLocator: {
-    getSoundManager: vi.fn().mockReturnValue({
-      play: vi.fn(),
-    }),
-  },
-}));
-
 // Spies for module functions
 let mockSlideInRight: vi.SpyInstance;
 let mockSlideOutLeft: vi.SpyInstance;
@@ -55,6 +46,7 @@ describe('SecondaryMenuComponent', () => {
     mockSlideInRight?.mockRestore();
     mockSlideOutLeft?.mockRestore();
     mockClickAndDragWidth?.mockRestore();
+    vi.restoreAllMocks();
   });
 
   const createConfig = (overrides: Partial<ISecondaryMenuConfig> = {}): ISecondaryMenuConfig => ({
@@ -366,7 +358,7 @@ describe('SecondaryMenuComponent', () => {
       expect(component.opened).toBe(false);
     });
 
-    it.skip('should play click sound on button click', () => {
+    it('should play click sound on button click', () => {
       const mockPlay = vi.fn();
 
       vi.spyOn(ServiceLocator, 'getSoundManager').mockReturnValue({
@@ -442,7 +434,7 @@ describe('SecondaryMenuComponent', () => {
       expect(onDownload).toHaveBeenCalled();
     });
 
-    it.skip('should play export sound on download', () => {
+    it('should play export sound on download', () => {
       const mockPlay = vi.fn();
 
       vi.spyOn(ServiceLocator, 'getSoundManager').mockReturnValue({

@@ -155,8 +155,8 @@ describe('FormatTle.createTle against CelesTrak stations data', () => {
       const tleParams = ommJsonToTleParams(omm);
       const result = FormatTle.createTle(tleParams);
 
-      expect(result.tle1.length).toBe(69);
-      expect(result.tle2.length).toBe(69);
+      expect(result.tle1).toHaveLength(69);
+      expect(result.tle2).toHaveLength(69);
     });
   });
 });

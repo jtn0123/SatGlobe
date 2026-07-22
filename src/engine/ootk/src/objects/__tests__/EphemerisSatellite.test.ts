@@ -251,7 +251,7 @@ describe('EphemerisSatellite', () => {
       const path = sat.getOrbitPath(10);
 
       expect(path).toBeInstanceOf(Float32Array);
-      expect(path.length).toBe(40); // 10 points * 4 values each (x, y, z, t)
+      expect(path).toHaveLength(40); // 10 points * 4 values each (x, y, z, t)
     });
 
     it('should interpolate between ephemeris points', () => {
@@ -281,7 +281,7 @@ describe('EphemerisSatellite', () => {
       const path = sat.getEphemerisAsFloat32();
 
       expect(path).toBeInstanceOf(Float32Array);
-      expect(path.length).toBe(24); // 6 points * 4 values each
+      expect(path).toHaveLength(24); // 6 points * 4 values each
     });
   });
 

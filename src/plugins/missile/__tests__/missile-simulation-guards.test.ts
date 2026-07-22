@@ -34,8 +34,8 @@ describe('MissileSimulation degenerate-output guards', () => {
 
     // The regression the guards protect: lat/lon lists must never fall short of the
     // altitude list, and must contain no NaN tail.
-    expect(t.lonList.length).toBe(t.altList.length);
-    expect(t.latList.length).toBe(t.altList.length);
+    expect(t.lonList).toHaveLength(t.altList.length);
+    expect(t.latList).toHaveLength(t.altList.length);
     expect(t.latList.every((v) => Number.isFinite(v))).toBe(true);
     expect(t.lonList.every((v) => Number.isFinite(v))).toBe(true);
   });
@@ -55,8 +55,8 @@ describe('MissileSimulation degenerate-output guards', () => {
       if (res.kind === 'success') {
         const t = res.trajectory;
 
-        expect(t.latList.length).toBe(t.altList.length);
-        expect(t.lonList.length).toBe(t.altList.length);
+        expect(t.latList).toHaveLength(t.altList.length);
+        expect(t.lonList).toHaveLength(t.altList.length);
         expect(t.latList.every((v) => Number.isFinite(v))).toBe(true);
         expect(t.lonList.every((v) => Number.isFinite(v))).toBe(true);
       } else {

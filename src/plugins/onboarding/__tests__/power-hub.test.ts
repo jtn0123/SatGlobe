@@ -84,7 +84,7 @@ describe('power-hub', () => {
     const { host } = renderHub(state);
     const rows = host.querySelectorAll('[data-chapter-id]');
 
-    expect(rows.length).toBe(getAvailableChapters().length);
+    expect(rows).toHaveLength(getAvailableChapters().length);
     expect(host.querySelector('[data-chapter-id="essentials"] .kt-hub-status-done')).not.toBeNull();
     expect(host.querySelector('[data-chapter-id="time"] .kt-hub-status-half')).not.toBeNull();
   });

@@ -202,8 +202,8 @@ describe('Satellite sccNum derivation from TLE construction', () => {
 
       expect(tle.line1.substring(2, 7)).toBe('99999');
       expect(tle.line2.substring(2, 7)).toBe('99999');
-      expect(tle.line1.length).toBe(69);
-      expect(tle.line2.length).toBe(69);
+      expect(tle.line1).toHaveLength(69);
+      expect(tle.line2).toHaveLength(69);
     });
 
     it('returns a Tle with alpha-5 satnum when input TLE used alpha-5', () => {

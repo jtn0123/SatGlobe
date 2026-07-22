@@ -173,7 +173,7 @@ describe('Collisions_class', () => {
       plugin['isLoggedIn_'] = true;
 
       // Ensure collision list is empty
-      expect(plugin['collisionList_'].length).toBe(0);
+      expect(plugin['collisionList_']).toHaveLength(0);
 
       // Call onBottomIconClick which triggers parseCollisionData_
       plugin.onBottomIconClick();
@@ -185,7 +185,7 @@ describe('Collisions_class', () => {
       await Promise.resolve(); // Resolve .catch()/.finally()
       await Promise.resolve(); // Extra safety flush
 
-      expect(plugin['collisionList_'].length).toBe(2);
+      expect(plugin['collisionList_']).toHaveLength(2);
       // Restore fake timers to avoid leaking real timers to other test files
       vi.useFakeTimers();
     });
@@ -257,7 +257,7 @@ describe('Collisions_class', () => {
 
       const headerRow = table.rows[0];
 
-      expect(headerRow.cells.length).toBe(6);
+      expect(headerRow.cells).toHaveLength(6);
     });
   });
 });

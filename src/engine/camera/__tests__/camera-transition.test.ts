@@ -52,7 +52,7 @@ describe('CameraTransition', () => {
 
     expect(result).not.toBeNull();
     // Result is a mat4 (the effective view matrix)
-    expect(result!.length).toBe(16);
+    expect(result!).toHaveLength(16);
   });
 
   it('should return null after duration completes', () => {

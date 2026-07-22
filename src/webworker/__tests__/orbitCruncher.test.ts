@@ -60,7 +60,7 @@ describe('orbitCruncher worker', () => {
     expect(last.typ).toBe(MSG.RESPONSE_DATA);
     expect(last.satId).toBe(0);
     expect(last.pointsOut).toBeInstanceOf(Float32Array);
-    expect(last.pointsOut.length).toBe((NUM_SEGS + 1) * 4);
+    expect(last.pointsOut).toHaveLength((NUM_SEGS + 1) * 4);
     // A real LEO orbit should produce non-zero coordinates somewhere.
     expect(last.pointsOut.some((v) => v !== 0)).toBe(true);
   });

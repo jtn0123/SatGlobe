@@ -40,8 +40,8 @@ describe('OrbitFinder TLE generation with extended sccNums', () => {
     expect(outTle2.substring(2, 7)).toBe('25544');
 
     // And the resulting TLE lines must be exactly 69 chars (SGP4 contract).
-    expect(outTle1.length).toBe(69);
-    expect(outTle2.length).toBe(69);
+    expect(outTle1).toHaveLength(69);
+    expect(outTle2).toHaveLength(69);
   });
 
   it('keeps producing 5-char satnums for legacy numeric sccNums (regression guard)', () => {

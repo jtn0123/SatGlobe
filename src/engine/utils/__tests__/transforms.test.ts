@@ -97,49 +97,14 @@ describe('normalizeAngle_function', () => {
  */
 
 describe('lon2yaw_function', () => {
-  // Tests that the function returns a valid yaw angle when given a valid longitude and date
-  it('test_valid_longitude_and_date', () => {
-    const lon = <Degrees>45;
-    const date = new Date('2022-01-01T00:00:00.000Z');
-    const yaw = lon2yaw(lon, date);
-
-    expect(yaw).toMatchSnapshot();
-  });
-
-  // Tests that the function returns a valid yaw angle when given a valid longitude and a date that is one hour ahead of UTC
-  it('test_valid_longitude_and_date_one_hour_ahead_of_UTC', () => {
-    const lon = <Degrees>45;
-    const date = new Date('2022-01-01T01:00:00.000Z');
-    const yaw = lon2yaw(lon, date);
-
-    expect(yaw).toMatchSnapshot();
-  });
-
-  // Tests that the function returns a valid yaw angle when given a valid longitude and a date that is one hour behind UTC
-  it('test_valid_longitude_and_date_one_hour_behind_UTC', () => {
-    const lon = <Degrees>45;
-    const date = new Date('2022-01-01T23:00:00.000Z');
-    const yaw = lon2yaw(lon, date);
-
-    expect(yaw).toMatchSnapshot();
-  });
-
-  // Tests that the function returns a valid yaw angle when given a longitude of 180 degrees
-  it('test_longitude_180_degrees', () => {
-    const lon = <Degrees>180;
-    const date = new Date('2022-01-01T00:00:00.000Z');
-    const yaw = lon2yaw(lon, date);
-
-    expect(yaw).toMatchSnapshot();
-  });
-
-  // Tests that the function returns a valid yaw angle when given a longitude of -180 degrees
-  it('test_longitude_minus_180_degrees', () => {
-    const lon = <Degrees>-180;
-    const date = new Date('2022-01-01T00:00:00.000Z');
-    const yaw = lon2yaw(lon, date);
-
-    expect(yaw).toMatchSnapshot();
+  it.each([
+    [45, '2022-01-01T00:00:00.000Z', -2.137417468454856],
+    [45, '2022-01-01T01:00:00.000Z', -1.8756180806557063],
+    [45, '2022-01-01T23:00:00.000Z', -2.399216856254005],
+    [180, '2022-01-01T00:00:00.000Z', 0.21877702173748914],
+    [-180, '2022-01-01T00:00:00.000Z', 0.21877702173748848],
+  ])('converts longitude %d at %s to the expected yaw', (longitude, isoDate, expectedYaw) => {
+    expect(lon2yaw(longitude as Degrees, new Date(isoDate))).toBe(expectedYaw);
   });
 
   // Tests that the function returns NaN when given an invalid date
@@ -627,28 +592,12 @@ describe('dateFromJday_function', () => {
  */
 
 describe('dateToLocalInIso_function', () => {
-  // Tests that passing a valid date object returns a string in ISO format with local time.
-  it('test_valid_date_object_returns_iso_with_local_time', () => {
-    const date = new Date('2022-01-01T00:00:00Z');
-    const result = dateToLocalInIso(date);
-
-    expect(result).toMatchSnapshot();
-  });
-
-  // Tests that passing a date object with a timezone ahead of UTC returns a string in ISO format with local time.
-  it('test_date_object_with_timezone_ahead_of_utc_returns_iso_with_local_time', () => {
-    const date = new Date('2022-01-01T12:00:00+02:00');
-    const result = dateToLocalInIso(date);
-
-    expect(result).toMatchSnapshot();
-  });
-
-  // Tests that passing a date object with a timezone behind UTC returns a string in ISO format with local time.
-  it('test_date_object_with_timezone_behind_utc_returns_iso_with_local_time', () => {
-    const date = new Date('2022-01-01T12:00:00-02:00');
-    const result = dateToLocalInIso(date);
-
-    expect(result).toMatchSnapshot();
+  it.each([
+    ['2022-01-01T00:00:00Z', '2022-01-01 00:00:00 '],
+    ['2022-01-01T12:00:00+02:00', '2022-01-01 10:00:00 '],
+    ['2022-01-01T12:00:00-02:00', '2022-01-01 14:00:00 '],
+  ])('converts %s to local ISO time', (isoDate, expected) => {
+    expect(dateToLocalInIso(new Date(isoDate))).toBe(expected);
   });
 
   // Tests that passing an invalid date object throws an error.

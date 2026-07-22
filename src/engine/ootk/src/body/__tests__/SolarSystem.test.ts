@@ -106,7 +106,7 @@ describe('SolarSystem', () => {
       const stars = SolarSystem.getByType(CelestialBodyType.STAR);
 
       expect(stars).toContain(Sun);
-      expect(stars.length).toBe(1);
+      expect(stars).toHaveLength(1);
     });
 
     it('should return moon type bodies', () => {

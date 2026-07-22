@@ -42,7 +42,7 @@ describe('Translation files validation', () => {
   });
 
   // Test all translation files
-  const locales = ['en', 'de', 'es', 'fr', 'ja', 'ko', 'ru', 'uk', 'zh'];
+  const locales = ['de', 'es', 'fr', 'ja', 'ko', 'ru', 'uk', 'zh'];
 
   locales.forEach((locale) => {
     test(`${locale}.json should contain all translation keys`, () => {

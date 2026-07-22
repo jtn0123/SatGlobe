@@ -65,7 +65,7 @@ describe('StateCovariance', () => {
       const covariance = new StateCovariance(matrix, CovarianceFrame.RIC);
       const sigmas = covariance.sigmas();
 
-      expect(sigmas.toArray().length).toBe(6);
+      expect(sigmas.toArray()).toHaveLength(6);
     });
 
     it('should handle zero variance values', () => {

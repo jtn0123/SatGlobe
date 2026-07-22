@@ -92,7 +92,7 @@ describe('DraggableBox', () => {
       box.open();
       box.open();
 
-      expect(document.querySelectorAll('#twice-box').length).toBe(1);
+      expect(document.querySelectorAll('#twice-box')).toHaveLength(1);
     });
 
     it('renders a dock button only when dockable', () => {

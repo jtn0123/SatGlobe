@@ -5,28 +5,28 @@ describe('Vector', () => {
   it('should create a Vector with elements and get its length', () => {
     const v = new Vector([1, 2, 3]);
 
-    expect(v.length).toBe(3);
+    expect(v).toHaveLength(3);
   });
 
   // create a Vector with all elements set to zero and get its length
   it('should create a Vector with all elements set to zero and get its length', () => {
     const v = Vector.zero(3);
 
-    expect(v.length).toBe(3);
+    expect(v).toHaveLength(3);
   });
 
   // create a Vector with all elements set to a value and get its length
   it('should create a Vector with all elements set to a value and get its length', () => {
     const v = Vector.filled(3, 5);
 
-    expect(v.length).toBe(3);
+    expect(v).toHaveLength(3);
   });
 
   // create a Vector from a list of elements and get its length
   it('should create a Vector from a list of elements and get its length', () => {
     const v = Vector.fromList([1, 2, 3]);
 
-    expect(v.length).toBe(3);
+    expect(v).toHaveLength(3);
   });
 
   // get the x, y, and z components of a Vector
@@ -49,7 +49,7 @@ describe('Vector', () => {
   it('should create a Vector with an empty array of elements', () => {
     const v = new Vector([]);
 
-    expect(v.length).toBe(0);
+    expect(v).toHaveLength(0);
   });
 
   // create a Vector with a negative length

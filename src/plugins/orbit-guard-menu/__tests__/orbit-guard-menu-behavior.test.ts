@@ -64,8 +64,8 @@ describe('OrbitGuardMenuPlugin behavior', () => {
     const rows = getEl('maneuver-detection-table')!.querySelectorAll('tr');
 
     // 1 header + 3 data rows.
-    expect(rows.length).toBe(4);
-    expect(getEl('maneuver-detection-table')!.querySelectorAll('.maneuver-object').length).toBe(3);
+    expect(rows).toHaveLength(4);
+    expect(getEl('maneuver-detection-table')!.querySelectorAll('.maneuver-object')).toHaveLength(3);
   });
 
   it('pagination advances and retreats across pages', () => {
@@ -131,8 +131,8 @@ describe('OrbitGuardMenuPlugin behavior', () => {
 
     p().parseManeuverData_();
 
-    await vi.waitFor(() => expect(p().orbitGuardEvents.length).toBe(2));
-    expect(getEl('maneuver-detection-table')!.querySelectorAll('.maneuver-object').length).toBe(2);
+    await vi.waitFor(() => expect(p().orbitGuardEvents).toHaveLength(2));
+    expect(getEl('maneuver-detection-table')!.querySelectorAll('.maneuver-object')).toHaveLength(2);
   });
 
   it('parseManeuverData_ warns on a non-ok response', async () => {

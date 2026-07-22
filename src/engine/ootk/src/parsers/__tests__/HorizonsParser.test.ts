@@ -29,7 +29,7 @@ $$EOE
 
       expect(result).toHaveProperty('ephemeris');
       expect(Array.isArray(result.ephemeris)).toBe(true);
-      expect(result.ephemeris.length).toBe(2);
+      expect(result.ephemeris).toHaveLength(2);
     });
 
     it('should extract epoch correctly', () => {

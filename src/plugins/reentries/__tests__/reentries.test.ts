@@ -163,7 +163,7 @@ describe('Reentries_class', () => {
       plugin['isLoggedIn_'] = true;
 
       // Ensure TIP list is empty
-      expect(plugin['tipList_'].length).toBe(0);
+      expect(plugin['tipList_']).toHaveLength(0);
 
       // Call onBottomIconClick which triggers parseTipData_
       plugin.onBottomIconClick();
@@ -175,7 +175,7 @@ describe('Reentries_class', () => {
       await Promise.resolve(); // Resolve setTipList_
       await Promise.resolve(); // Extra safety flush
 
-      expect(plugin['tipList_'].length).toBe(2);
+      expect(plugin['tipList_']).toHaveLength(2);
     });
 
     it('should not fetch if TIP list is already populated', () => {
@@ -220,7 +220,7 @@ describe('Reentries_class', () => {
       plugin['setTipList_'](dataWithDuplicate);
 
       // Should only keep 2 entries (one per NORAD_CAT_ID)
-      expect(plugin['tipList_'].length).toBe(2);
+      expect(plugin['tipList_']).toHaveLength(2);
     });
   });
 
@@ -277,7 +277,7 @@ describe('Reentries_class', () => {
 
       const headerRow = table.rows[0];
 
-      expect(headerRow.cells.length).toBe(11);
+      expect(headerRow.cells).toHaveLength(11);
     });
   });
 
@@ -293,7 +293,7 @@ describe('Reentries_class', () => {
 
       const headerRow = table.rows[0];
 
-      expect(headerRow.cells.length).toBe(8);
+      expect(headerRow.cells).toHaveLength(8);
     });
   });
 

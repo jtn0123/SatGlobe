@@ -176,63 +176,28 @@ describe('RungeKutta4Propagator', () => {
     });
 
     describe('ephemerisManeuver', () => {
-      it('should generate ephemeris with single impulsive maneuver', () => {
-        const start = epoch;
-        const finish = epoch.roll(180 as Seconds);
-        const maneuverEpoch = epoch.roll(60 as Seconds);
+      it.each([
+        { label: 'single impulsive', finishSeconds: 180, maneuverSeconds: [60], finite: false, interval: undefined },
+        { label: 'multiple impulsive', finishSeconds: 300, maneuverSeconds: [60, 180], finite: false, interval: undefined },
+        { label: 'finite burn', finishSeconds: 240, maneuverSeconds: [90], finite: true, interval: 30 as Seconds },
+      ])('should generate ephemeris with a $label maneuver', ({ finishSeconds, maneuverSeconds, finite, interval }) => {
         const deltaV = new Vector3D(0.1, 0, 0) as Vector3D<KilometersPerSecond>;
-        const thrust = new Thrust(
-          maneuverEpoch,
-          deltaV.x * 1000 as MetersPerSecond,
-          deltaV.y * 1000 as MetersPerSecond,
-          deltaV.z * 1000 as MetersPerSecond,
-        );
-        const result = propagator.ephemerisManeuver(start, finish, [thrust]);
-
-        expect(result).toBeDefined();
-      });
-
-      it('should generate ephemeris with multiple maneuvers', () => {
-        const start = epoch;
-        const finish = epoch.roll(300 as Seconds);
-        const maneuver1Epoch = epoch.roll(60 as Seconds);
-        const maneuver2Epoch = epoch.roll(180 as Seconds);
-        const deltaV = new Vector3D(0.1, 0, 0) as Vector3D<KilometersPerSecond>;
-        const thrust1 = new Thrust(
-          maneuver1Epoch,
-          deltaV.x * 1000 as MetersPerSecond,
-          deltaV.y * 1000 as MetersPerSecond,
-          deltaV.z * 1000 as MetersPerSecond,
-        );
-        const thrust2 = new Thrust(
-          maneuver2Epoch,
-          deltaV.x * 1000 as MetersPerSecond,
-          deltaV.y * 1000 as MetersPerSecond,
-          deltaV.z * 1000 as MetersPerSecond,
-        );
-        const result = propagator.ephemerisManeuver(start, finish, [thrust1, thrust2]);
-
-        expect(result).toBeDefined();
-      });
-
-      it('should generate ephemeris with finite burn maneuver', () => {
-        const start = epoch;
-        const finish = epoch.roll(240 as Seconds);
-        const maneuverStart = epoch.roll(60 as Seconds);
-        const maneuverStop = epoch.roll(120 as Seconds);
-        const centerEpoch = epoch.roll(90 as Seconds); // Midpoint of maneuver
-        const deltaV = new Vector3D(0.1, 0, 0) as Vector3D<KilometersPerSecond>;
-        const magnitude = deltaV.magnitude() * 1000; // 100 m/s
-        const duration = maneuverStop.difference(maneuverStart); // 60 seconds
-        const durationRate = (duration / magnitude) as SecondsPerMeterPerSecond;
-        const thrust = new Thrust(
-          centerEpoch,
+        const durationRate = finite
+          ? (60 / (deltaV.magnitude() * 1000)) as SecondsPerMeterPerSecond
+          : undefined;
+        const thrusts = maneuverSeconds.map((maneuverSecond) => new Thrust(
+          epoch.roll(maneuverSecond as Seconds),
           deltaV.x * 1000 as MetersPerSecond,
           deltaV.y * 1000 as MetersPerSecond,
           deltaV.z * 1000 as MetersPerSecond,
           durationRate,
+        ));
+        const result = propagator.ephemerisManeuver(
+          epoch,
+          epoch.roll(finishSeconds as Seconds),
+          thrusts,
+          interval,
         );
-        const result = propagator.ephemerisManeuver(start, finish, [thrust], 30 as Seconds);
 
         expect(result).toBeDefined();
       });

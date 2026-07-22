@@ -81,7 +81,7 @@ DATA_STOP
       expect(parsed).toBeDefined();
       expect(parsed.header).toBeDefined();
       expect(parsed.dataBlocks).toBeDefined();
-      expect(parsed.dataBlocks.length).toBe(1);
+      expect(parsed.dataBlocks).toHaveLength(1);
     });
 
     it('should parse header fields', () => {
@@ -109,7 +109,7 @@ DATA_STOP
       const parsed = OemParser.parse(sampleOemContent);
       const ephemeris = parsed.dataBlocks[0].ephemeris;
 
-      expect(ephemeris.length).toBe(3);
+      expect(ephemeris).toHaveLength(3);
       expect(ephemeris[0].position.x).toBeCloseTo(6878.137, 3);
       expect(ephemeris[0].velocity.y).toBeCloseTo(7.612, 3);
     });
@@ -117,7 +117,7 @@ DATA_STOP
     it('should parse multiple data blocks', () => {
       const parsed = OemParser.parse(multiBlockOemContent);
 
-      expect(parsed.dataBlocks.length).toBe(2);
+      expect(parsed.dataBlocks).toHaveLength(2);
       expect(parsed.dataBlocks[0].metadata.OBJECT_NAME).toBe('SAT1');
       expect(parsed.dataBlocks[1].metadata.OBJECT_NAME).toBe('SAT2');
       expect(parsed.dataBlocks[1].metadata.CENTER_NAME).toBe('MOON');
@@ -138,16 +138,16 @@ CREATION_DATE = 2024-01-01
     it('should handle minimal OEM content', () => {
       const parsed = OemParser.parse(minimalOemContent);
 
-      expect(parsed.dataBlocks.length).toBe(1);
-      expect(parsed.dataBlocks[0].ephemeris.length).toBe(1);
+      expect(parsed.dataBlocks).toHaveLength(1);
+      expect(parsed.dataBlocks[0].ephemeris).toHaveLength(1);
     });
 
     it('should handle Windows line endings', () => {
       const windowsContent = sampleOemContent.replace(/\n/gu, '\r\n');
       const parsed = OemParser.parse(windowsContent);
 
-      expect(parsed.dataBlocks.length).toBe(1);
-      expect(parsed.dataBlocks[0].ephemeris.length).toBe(3);
+      expect(parsed.dataBlocks).toHaveLength(1);
+      expect(parsed.dataBlocks[0].ephemeris).toHaveLength(3);
     });
 
     it('should skip malformed ephemeris lines', () => {
@@ -167,7 +167,7 @@ DATA_STOP
 `;
       const parsed = OemParser.parse(contentWithBadLine);
 
-      expect(parsed.dataBlocks[0].ephemeris.length).toBe(2);
+      expect(parsed.dataBlocks[0].ephemeris).toHaveLength(2);
     });
   });
 
@@ -182,57 +182,20 @@ DATA_STOP
       STOP_TIME: '2024-01-01T01:00:00',
     };
 
-    it('should return LAGRANGE for Lagrange interpolation', () => {
-      const metadata: OemMetadata = {
+    it.each([
+      ['uppercase Lagrange', 'LAGRANGE', InterpolatorType.LAGRANGE],
+      ['lowercase Lagrange', 'lagrange', InterpolatorType.LAGRANGE],
+      ['Hermite', 'HERMITE', InterpolatorType.CUBIC_SPLINE],
+      ['Chebyshev', 'CHEBYSHEV', InterpolatorType.CHEBYSHEV],
+      ['an omitted value', undefined, InterpolatorType.LAGRANGE],
+      ['an unknown value', 'UNKNOWN_TYPE', InterpolatorType.LAGRANGE],
+    ])('returns the recommended interpolator for %s', (_label, interpolation, expected) => {
+      const metadata = {
         ...baseMetadata,
-        INTERPOLATION: 'LAGRANGE',
-      };
+        ...(interpolation === undefined ? {} : { INTERPOLATION: interpolation }),
+      } as OemMetadata;
 
-      expect(OemParser.getRecommendedInterpolator(metadata)).toBe(InterpolatorType.LAGRANGE);
-    });
-
-    it('should return LAGRANGE for lowercase lagrange', () => {
-      const metadata: OemMetadata = {
-        ...baseMetadata,
-        INTERPOLATION: 'lagrange',
-      };
-
-      expect(OemParser.getRecommendedInterpolator(metadata)).toBe(InterpolatorType.LAGRANGE);
-    });
-
-    it('should return CUBIC_SPLINE for Hermite interpolation', () => {
-      const metadata: OemMetadata = {
-        ...baseMetadata,
-        INTERPOLATION: 'HERMITE',
-      };
-
-      expect(OemParser.getRecommendedInterpolator(metadata)).toBe(InterpolatorType.CUBIC_SPLINE);
-    });
-
-    it('should return CHEBYSHEV for Chebyshev interpolation', () => {
-      const metadata: OemMetadata = {
-        ...baseMetadata,
-        INTERPOLATION: 'CHEBYSHEV',
-      };
-
-      expect(OemParser.getRecommendedInterpolator(metadata)).toBe(InterpolatorType.CHEBYSHEV);
-    });
-
-    it('should return LAGRANGE for undefined interpolation', () => {
-      const metadata: OemMetadata = {
-        ...baseMetadata,
-      };
-
-      expect(OemParser.getRecommendedInterpolator(metadata)).toBe(InterpolatorType.LAGRANGE);
-    });
-
-    it('should return LAGRANGE for unknown interpolation type', () => {
-      const metadata: OemMetadata = {
-        ...baseMetadata,
-        INTERPOLATION: 'UNKNOWN_TYPE',
-      };
-
-      expect(OemParser.getRecommendedInterpolator(metadata)).toBe(InterpolatorType.LAGRANGE);
+      expect(OemParser.getRecommendedInterpolator(metadata)).toBe(expected);
     });
   });
 
@@ -312,8 +275,8 @@ DATA_STOP
 `;
       const parsed = OemParser.parse(contentWithCovariance);
 
-      expect(parsed.dataBlocks.length).toBe(1);
-      expect(parsed.dataBlocks[0].ephemeris.length).toBe(1);
+      expect(parsed.dataBlocks).toHaveLength(1);
+      expect(parsed.dataBlocks[0].ephemeris).toHaveLength(1);
       // Covariance is stored but processing is deferred
       expect(parsed.dataBlocks[0].covariance).toBeDefined();
     });
@@ -372,7 +335,7 @@ DATA_STOP
       const parsed = OemParser.parse(contentWithWhitespace);
 
       expect(parsed.dataBlocks[0].metadata.OBJECT_NAME).toBe('SAT WITH SPACES');
-      expect(parsed.dataBlocks[0].ephemeris.length).toBe(1);
+      expect(parsed.dataBlocks[0].ephemeris).toHaveLength(1);
     });
 
     it('should handle different center bodies', () => {

@@ -91,7 +91,7 @@ describe('Inc2AltPlots_class', () => {
 
       expect(data).toBeDefined();
       expect(Array.isArray(data)).toBe(true);
-      expect(data.length).toBe(8);
+      expect(data).toHaveLength(8);
       expect(data[0].name).toBe('Starlink');
       expect(data[data.length - 1].name).toBe('Other');
     });

@@ -247,33 +247,15 @@ describe('parseGetVariables', () => {
     expect(settingsManager.isEnableJscCatalog).toBe(false);
   });
 
-  it('should set externalTLEs for CATNR', () => {
-    parseGetVariables(['CATNR=456'], settingsManager);
-    expect(settingsManager.dataSources.externalTLEs).toBe('https://celestrak.org/NORAD/elements/gp.php?CATNR=456&FORMAT=3LE');
-    expect(settingsManager.dataSources.externalTLEsOnly).toBe(true);
-  });
-
-  it('should set externalTLEs for NAME', () => {
-    parseGetVariables(['NAME=SATNAME'], settingsManager);
-    expect(settingsManager.dataSources.externalTLEs).toBe('https://celestrak.org/NORAD/elements/gp.php?NAME=SATNAME&FORMAT=3LE');
-    expect(settingsManager.dataSources.externalTLEsOnly).toBe(true);
-  });
-
-  it('should set externalTLEs for INTDES', () => {
-    parseGetVariables(['INTDES=2022-001A'], settingsManager);
-    expect(settingsManager.dataSources.externalTLEs).toBe('https://celestrak.org/NORAD/elements/gp.php?INTDES=2022-001A&FORMAT=3LE');
-    expect(settingsManager.dataSources.externalTLEsOnly).toBe(true);
-  });
-
-  it('should set externalTLEs for GROUP', () => {
-    parseGetVariables(['GROUP=STARLINK'], settingsManager);
-    expect(settingsManager.dataSources.externalTLEs).toBe('https://celestrak.org/NORAD/elements/gp.php?GROUP=STARLINK&FORMAT=3LE');
-    expect(settingsManager.dataSources.externalTLEsOnly).toBe(true);
-  });
-
-  it('should set externalTLEs for SPECIAL', () => {
-    parseGetVariables(['SPECIAL=GEO'], settingsManager);
-    expect(settingsManager.dataSources.externalTLEs).toBe('https://celestrak.org/NORAD/elements/gp.php?SPECIAL=GEO&FORMAT=3LE');
+  it.each([
+    ['CATNR', '456'],
+    ['NAME', 'SATNAME'],
+    ['INTDES', '2022-001A'],
+    ['GROUP', 'STARLINK'],
+    ['SPECIAL', 'GEO'],
+  ])('should set externalTLEs for %s', (key, value) => {
+    parseGetVariables([`${key}=${value}`], settingsManager);
+    expect(settingsManager.dataSources.externalTLEs).toBe(`https://celestrak.org/NORAD/elements/gp.php?${key}=${value}&FORMAT=3LE`);
     expect(settingsManager.dataSources.externalTLEsOnly).toBe(true);
   });
 

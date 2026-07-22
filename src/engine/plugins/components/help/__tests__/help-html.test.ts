@@ -43,7 +43,7 @@ describe('buildHelpHtml', () => {
     expect(result).toContain('<figcaption>The menu open.</figcaption>');
     expect(result).toContain('Heading-less section.');
     // Second section has no heading element
-    expect(result.match(/help-section-heading/gu)?.length).toBe(1);
+    expect(result.match(/help-section-heading/gu)).toHaveLength(1);
   });
 
   it('renders tips as a callout list with the shared heading', () => {

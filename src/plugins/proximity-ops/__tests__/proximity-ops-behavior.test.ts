@@ -139,7 +139,7 @@ describe('ProximityOps behavior', () => {
 
       const matches = findSatsAvALeo(sats as never, 51.6, 100);
 
-      expect(matches.length).toBe(1);
+      expect(matches).toHaveLength(1);
     });
 
     it('findSatsAvAGeo matches GEO satellites near the target longitude', () => {
@@ -150,7 +150,7 @@ describe('ProximityOps behavior', () => {
 
       const matches = findSatsAvAGeo(sats as never, 10, new Date('2026-05-31T00:00:00.000Z'));
 
-      expect(matches.length).toBe(1);
+      expect(matches).toHaveLength(1);
     });
   });
 });

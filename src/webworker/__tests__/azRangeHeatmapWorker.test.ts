@@ -96,10 +96,10 @@ describe('azRangeHeatmapWorker', () => {
 
     const result = posted.find((p) => p.typ === OUT.RESULT)!;
 
-    expect(result.bins!.length).toBe(36);
-    expect(result.bins![0].length).toBe(10);
-    expect(result.binSatNums!.length).toBe(36);
-    expect(result.binSatNums![0].length).toBe(10);
+    expect(result.bins!).toHaveLength(36);
+    expect(result.bins![0]).toHaveLength(10);
+    expect(result.binSatNums!).toHaveLength(36);
+    expect(result.binSatNums![0]).toHaveLength(10);
   });
 
   it('skips a malformed TLE entry but still produces a RESULT', async () => {

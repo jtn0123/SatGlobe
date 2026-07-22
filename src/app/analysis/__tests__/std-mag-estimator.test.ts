@@ -49,8 +49,8 @@ describe('lookupKnownVmag', () => {
     const sat = makeSat({ name: 'COSMOS-DEBRIS-7' });
     const sat2 = makeSat({ name: 'RANDOM-FAKESAT-7' });
 
-    expect(lookupKnownVmag(sat)).toBe(null);
-    expect(lookupKnownVmag(sat2)).toBe(null);
+    expect(lookupKnownVmag(sat)).toBeNull();
+    expect(lookupKnownVmag(sat2)).toBeNull();
   });
 
   it('matches the canonical "COSMOS NNN" naming format', () => {
@@ -62,13 +62,13 @@ describe('lookupKnownVmag', () => {
   it('refuses to apply payload-name presets to debris/rocket bodies', () => {
     const sat = makeSat({ name: 'STARLINK-1234', type: SpaceObjectType.DEBRIS });
 
-    expect(lookupKnownVmag(sat)).toBe(null);
+    expect(lookupKnownVmag(sat)).toBeNull();
   });
 
   it('returns null when name is empty and bus is unset', () => {
     const sat = makeSat({ name: '' });
 
-    expect(lookupKnownVmag(sat)).toBe(null);
+    expect(lookupKnownVmag(sat)).toBeNull();
   });
 });
 
@@ -103,13 +103,13 @@ describe('deriveCrossSectionAreaM2', () => {
   it('returns null when nothing usable is provided', () => {
     const sat = makeSat({});
 
-    expect(deriveCrossSectionAreaM2(sat)).toBe(null);
+    expect(deriveCrossSectionAreaM2(sat)).toBeNull();
   });
 
   it('ignores zero or non-numeric strings', () => {
     const sat = makeSat({ length: '0 m', diameter: 'unknown', span: '' });
 
-    expect(deriveCrossSectionAreaM2(sat)).toBe(null);
+    expect(deriveCrossSectionAreaM2(sat)).toBeNull();
   });
 });
 
@@ -186,7 +186,7 @@ describe('estimateStdMagWithSource', () => {
   it('returns null when no signal is available', () => {
     const sat = makeSat({ name: 'UNCATALOGED-42' });
 
-    expect(estimateStdMagWithSource(sat)).toBe(null);
+    expect(estimateStdMagWithSource(sat)).toBeNull();
   });
 });
 
@@ -200,7 +200,7 @@ describe('estimateStdMag (numeric convenience)', () => {
   it('returns null when no source is available', () => {
     const sat = makeSat({ name: 'UNCATALOGED-42' });
 
-    expect(estimateStdMag(sat)).toBe(null);
+    expect(estimateStdMag(sat)).toBeNull();
   });
 });
 

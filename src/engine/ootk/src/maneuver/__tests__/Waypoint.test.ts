@@ -127,7 +127,7 @@ describe('Waypoint', () => {
         [postManeuver],
       );
 
-      expect(result.length).toBe(2);
+      expect(result).toHaveLength(2);
       expect(result[0]).toBe(preManeuver);
       expect(result[1]).toBe(postManeuver);
     });

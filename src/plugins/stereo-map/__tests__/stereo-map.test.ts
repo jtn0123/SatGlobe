@@ -111,7 +111,7 @@ describe('StereoMapPlugin_class', () => {
       const commands = plugin.getCommandPaletteCommands();
 
       expect(commands).toBeDefined();
-      expect(commands.length).toBe(2);
+      expect(commands).toHaveLength(2);
     });
 
     it('should have unique command IDs', () => {

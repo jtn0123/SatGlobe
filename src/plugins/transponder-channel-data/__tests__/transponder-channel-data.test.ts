@@ -85,7 +85,7 @@ describe('TransponderChannelData_class', () => {
       const plugin = new TransponderChannelData();
       const shortcuts = plugin.getKeyboardShortcuts();
 
-      expect(shortcuts.length).toBe(1);
+      expect(shortcuts).toHaveLength(1);
       expect(shortcuts[0].key).toBe('T');
       expect(shortcuts[0].callback).toBeDefined();
     });
@@ -148,7 +148,7 @@ describe('TransponderChannelData_class', () => {
       if (table) {
         expect(table.rows.length).toBeGreaterThan(0);
       }
-      expect(plugin['dataCache_'].length).toBe(2);
+      expect(plugin['dataCache_']).toHaveLength(2);
     });
 
     it('should apply the filter to the displayed rows', () => {
@@ -160,7 +160,7 @@ describe('TransponderChannelData_class', () => {
       plugin['filterQuery_'] = 'BBC Two';
       plugin['renderTable_']();
 
-      expect(plugin['dataCache_'].length).toBe(1);
+      expect(plugin['dataCache_']).toHaveLength(1);
       expect(plugin['dataCache_'][0].tvchannel).toBe('BBC Two');
     });
   });

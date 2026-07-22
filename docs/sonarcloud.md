@@ -24,6 +24,7 @@ The following line-level disposition is kept next to the affected command with `
 | Rule | Path | Rationale and compensating control |
 |---|---|---|
 | `docker:S7026` | `configs/satglobe/healthcheck.sh` | S7026 recommends Docker `ADD` for build-time downloads, but this `wget` call is a runtime HTTP health probe and `ADD` cannot replace it. The Docker regression test locks the endpoint and command, while the image smoke test requires the container to reach Docker's `healthy` state. |
+| `typescript:S1607` | `src/__tests__/sgp4-wasm.spec.ts` | The in-app parity journey requires license-restricted Sgp4Prop artifacts that cannot be committed or installed on public CI runners. The conditional skip carries Playwright's runtime reason and runs automatically when an authorized developer deploys all four local artifacts; the open TypeScript SGP4 benchmark remains blocking in CI. |
 
 ## Quality gate
 

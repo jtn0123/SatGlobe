@@ -143,7 +143,7 @@ describe('SunBody', () => {
 
       // Returns [sunSatAngle, centralBodyApparentRadius, sunApparentRadius]
       expect(Array.isArray(angles)).toBe(true);
-      expect(angles.length).toBe(3);
+      expect(angles).toHaveLength(3);
       expect(typeof angles[0]).toBe('number');
       expect(typeof angles[1]).toBe('number');
       expect(typeof angles[2]).toBe('number');

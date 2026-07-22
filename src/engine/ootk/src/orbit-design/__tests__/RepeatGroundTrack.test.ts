@@ -194,25 +194,15 @@ describe('RepeatGroundTrack', () => {
         expect(elements).toBeDefined();
       });
 
-      it('should handle polar orbits (90 degrees)', () => {
-        const elements = RepeatGroundTrack.calculate(15, 1, 90 as Degrees, { epoch: testEpoch });
+      it.each([
+        ['polar', 90],
+        ['retrograde', 120],
+        ['equatorial', 0],
+      ])('should handle %s orbits at %d degrees', (_label, inclination) => {
+        const elements = RepeatGroundTrack.calculate(15, 1, inclination as Degrees, { epoch: testEpoch });
 
         expect(elements).toBeDefined();
-        expect(elements.inclinationDegrees).toBeCloseTo(90, 1);
-      });
-
-      it('should handle retrograde orbits (>90 degrees)', () => {
-        const elements = RepeatGroundTrack.calculate(15, 1, 120 as Degrees, { epoch: testEpoch });
-
-        expect(elements).toBeDefined();
-        expect(elements.inclinationDegrees).toBeCloseTo(120, 1);
-      });
-
-      it('should handle equatorial orbits (0 degrees)', () => {
-        const elements = RepeatGroundTrack.calculate(15, 1, 0 as Degrees, { epoch: testEpoch });
-
-        expect(elements).toBeDefined();
-        expect(elements.inclinationDegrees).toBeCloseTo(0, 1);
+        expect(elements.inclinationDegrees).toBeCloseTo(inclination, 1);
       });
     });
   });

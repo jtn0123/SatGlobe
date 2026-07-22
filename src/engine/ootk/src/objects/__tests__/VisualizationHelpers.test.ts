@@ -32,7 +32,7 @@ describe('VisualizationHelpers', () => {
         (entry) => entry.data.value * 2,
       );
 
-      expect(timeSeries.length).toBe(3);
+      expect(timeSeries).toHaveLength(3);
       expect(timeSeries[0].value).toBe(20);
       expect(timeSeries[1].value).toBe(40);
       expect(timeSeries[2].value).toBe(60);
@@ -166,7 +166,7 @@ describe('VisualizationHelpers', () => {
       const track = VisualizationHelpers.generateGroundTrack(sat, start, end, stepMs);
 
       // Should have 11 points (0, 1, 2, ..., 10 minutes inclusive)
-      expect(track.length).toBe(11);
+      expect(track).toHaveLength(11);
     });
 
     it('should have latitude in valid range', () => {
@@ -280,7 +280,7 @@ describe('VisualizationHelpers', () => {
 
       const boundary = VisualizationHelpers.generateFOVBoundary(sensor, samples);
 
-      expect(boundary.length).toBe(samples);
+      expect(boundary).toHaveLength(samples);
     });
 
     it('should return empty array for invalid samples', () => {
@@ -371,7 +371,7 @@ describe('VisualizationHelpers', () => {
 
       const boundary = VisualizationHelpers.generateFOVBoundary(sensor, 36);
 
-      expect(boundary.length).toBe(36);
+      expect(boundary).toHaveLength(36);
       // All elevations should be near 45 degrees for zenith-pointed 45-deg half-angle
       boundary.forEach((point) => {
         expect(point.el).toBeGreaterThan(40);
@@ -406,7 +406,7 @@ describe('VisualizationHelpers', () => {
 
       const boundary = VisualizationHelpers.generateFOVBoundary(sensor, 72);
 
-      expect(boundary.length).toBe(72);
+      expect(boundary).toHaveLength(72);
       boundary.forEach((point) => {
         expect(Number.isFinite(point.ecef.x)).toBe(true);
         expect(Number.isFinite(point.ecef.y)).toBe(true);

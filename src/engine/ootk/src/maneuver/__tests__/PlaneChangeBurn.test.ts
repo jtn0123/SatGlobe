@@ -21,7 +21,7 @@ describe('PlaneChangeBurn', () => {
     ['descending', 100, 200, 'descending'],
     ['nearest', 100, 200, 'ascending'],
     ['nearest', 200, 100, 'descending'],
-  ] as const)('honors the %s node preference', (preference, ascending, descending, expectedNode) => {
+  ] as const)('honors the %s preference with ascending=%i and descending=%i', (preference, ascending, descending, expectedNode) => {
     vi.spyOn(PlaneChangeBurn, 'timeToNodes').mockReturnValue({ ascending, descending });
 
     const result = PlaneChangeBurn.compute(elements, 0.6, 0, preference);

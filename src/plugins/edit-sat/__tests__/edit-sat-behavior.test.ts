@@ -31,7 +31,7 @@ describe('EditSat behavior', () => {
     p().populateFormFields_(defaultSat);
 
     expect((getEl('es-scc') as HTMLInputElement).value).toBe(defaultSat.sccNum);
-    expect((getEl('es-inc') as HTMLInputElement).value.length).toBe(8);
+    expect((getEl('es-inc') as HTMLInputElement).value).toHaveLength(8);
     expect((getEl('es-meanmo') as HTMLInputElement).value.length).toBeGreaterThan(0);
   });
 

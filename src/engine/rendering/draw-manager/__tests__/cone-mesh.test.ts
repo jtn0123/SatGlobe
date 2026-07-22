@@ -40,8 +40,8 @@ describe('ConeMesh', () => {
     const m = mesh as any;
 
     expect(m.isLoaded_).toBe(true);
-    expect(m.vertices_.length).toBe((1 + 100 + 1) * 3);
-    expect(m.indices_.length).toBe(100 * 3);
+    expect(m.vertices_).toHaveLength((1 + 100 + 1) * 3);
+    expect(m.indices_).toHaveLength(100 * 3);
   });
 
   describe('update', () => {

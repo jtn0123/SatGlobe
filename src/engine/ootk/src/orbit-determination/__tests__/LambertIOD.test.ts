@@ -238,43 +238,19 @@ describe('LambertIOD', () => {
     const startEpoch = EpochUTC.fromDateTimeString('2024-01-01T12:00:00.000Z');
     const propagator = new KeplerPropagator(createLeoOrbit(startEpoch));
 
-    it('should handle short arc transfers (< 90 degrees)', () => {
-      // Short time interval for small angular change
-      const { p1, p2, t1, t2, truthState } = generateTwoPositions(propagator, startEpoch, 180);
+    it.each([
+      ['short', 180, 0.1, 0.001],
+      ['medium', 600, 0.5, 0.005],
+      ['longer', 1200, 5.0, 3.0],
+    ])('should handle %s arc transfers', (_label, interval, positionTolerance, velocityTolerance) => {
+      const { p1, p2, t1, t2, truthState } = generateTwoPositions(propagator, startEpoch, interval);
 
       const iod = new LambertIOD();
       const result = iod.estimate(p1, p2, t1, t2);
 
       expect(result).not.toBeNull();
       if (result) {
-        validateStateAccuracy(result, truthState, 0.1, 0.001);
-      }
-    });
-
-    it('should handle medium arc transfers (90-180 degrees)', () => {
-      // Medium time interval
-      const { p1, p2, t1, t2, truthState } = generateTwoPositions(propagator, startEpoch, 600);
-
-      const iod = new LambertIOD();
-      const result = iod.estimate(p1, p2, t1, t2);
-
-      expect(result).not.toBeNull();
-      if (result) {
-        validateStateAccuracy(result, truthState, 0.5, 0.005);
-      }
-    });
-
-    it('should handle longer arc transfers', () => {
-      // Longer time interval (but less than half orbit)
-      const { p1, p2, t1, t2, truthState } = generateTwoPositions(propagator, startEpoch, 1200);
-
-      const iod = new LambertIOD();
-      const result = iod.estimate(p1, p2, t1, t2);
-
-      expect(result).not.toBeNull();
-      if (result) {
-        // Longer arcs can have higher numerical error in velocity
-        validateStateAccuracy(result, truthState, 5.0, 3.0);
+        validateStateAccuracy(result, truthState, positionTolerance, velocityTolerance);
       }
     });
   });
@@ -472,7 +448,7 @@ describe('LambertIOD', () => {
       const success = LambertIOD.solve(r1, r2, dth, tau, mRev, v1);
 
       expect(success).toBe(true);
-      expect(v1.length).toBe(2);
+      expect(v1).toHaveLength(2);
       expect(typeof v1[0]).toBe('number'); // Radial velocity
       expect(typeof v1[1]).toBe('number'); // Tangential velocity
     });

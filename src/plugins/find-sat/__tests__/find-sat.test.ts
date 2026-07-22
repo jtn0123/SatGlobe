@@ -769,44 +769,18 @@ describe('FindSatPlugin_class', () => {
     expect(() => plugin['findByLooksSubmit_']()).not.toThrow();
   });
 
-  it('should find satellites with object type Payload', () => {
+  it.each([
+    ['Payload', '1'],
+    ['Rocket Body', '2'],
+    ['Debris', '3'],
+  ])('should find satellites with object type %s', (_label, objectType) => {
     const plugin = new FindSatPlugin();
 
     websiteInit(plugin);
 
     const objTypeInput = getEl('fbl-type') as HTMLInputElement;
 
-    objTypeInput.value = '1';
-    const incInput = getEl('fbl-inc') as HTMLInputElement;
-
-    incInput.value = '50';
-
-    expect(() => plugin['findByLooksSubmit_']()).not.toThrow();
-  });
-
-  it('should find satellites with object type Rocket Body', () => {
-    const plugin = new FindSatPlugin();
-
-    websiteInit(plugin);
-
-    const objTypeInput = getEl('fbl-type') as HTMLInputElement;
-
-    objTypeInput.value = '2';
-    const incInput = getEl('fbl-inc') as HTMLInputElement;
-
-    incInput.value = '50';
-
-    expect(() => plugin['findByLooksSubmit_']()).not.toThrow();
-  });
-
-  it('should find satellites with object type Debris', () => {
-    const plugin = new FindSatPlugin();
-
-    websiteInit(plugin);
-
-    const objTypeInput = getEl('fbl-type') as HTMLInputElement;
-
-    objTypeInput.value = '3';
+    objTypeInput.value = objectType;
     const incInput = getEl('fbl-inc') as HTMLInputElement;
 
     incInput.value = '50';

@@ -58,8 +58,8 @@ describe('Latitude & longitude conversions', () => {
     });
   });
 
-  validGeodeticToEcef.forEach((item) => {
-    it('convert valid LLA coordinates to ECEF', () => {
+  validGeodeticToEcef.forEach((item, index) => {
+    it(`convert valid LLA coordinates to ECEF (case ${index + 1})`, () => {
       const ecefCoordinates = lla2ecef(item.lla);
 
       expect(ecefCoordinates.x).toBeCloseTo(item.ecef.x);
@@ -68,8 +68,8 @@ describe('Latitude & longitude conversions', () => {
     });
   });
 
-  validEciToGeodetic.forEach((item) => {
-    it('convert valid ECI coordinates to LLA', () => {
+  validEciToGeodetic.forEach((item, index) => {
+    it(`convert valid ECI coordinates to LLA (case ${index + 1})`, () => {
       const llaCoordinates = eci2lla(item.eci, item.gmst);
 
       expect(llaCoordinates.lon).toBeCloseTo(item.lla.lon);
@@ -78,8 +78,8 @@ describe('Latitude & longitude conversions', () => {
     });
   });
 
-  validEciToEcef.forEach((item) => {
-    it('convert valid ECI coordinates to ECEF', () => {
+  validEciToEcef.forEach((item, index) => {
+    it(`convert valid ECI coordinates to ECEF (case ${index + 1})`, () => {
       const ecefCoordinates = eci2ecef(item.eci, item.gmst);
 
       expect(ecefCoordinates.x).toBeCloseTo(item.ecef.x);
@@ -88,8 +88,8 @@ describe('Latitude & longitude conversions', () => {
     });
   });
 
-  validEcefToEci.forEach((item) => {
-    it('convert valid ECEF coordinates to ECI', () => {
+  validEcefToEci.forEach((item, index) => {
+    it(`convert valid ECEF coordinates to ECI (case ${index + 1})`, () => {
       const eciCoordinates = ecef2eci(item.ecef, item.gmst);
 
       expect(eciCoordinates.x).toBeCloseTo(item.eci.x);

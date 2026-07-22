@@ -292,8 +292,8 @@ describe('MissileManager (baseline - pre-refactor)', () => {
       expect(result.missile!.type).toBe(SpaceObjectType.BALLISTIC_MISSILE);
       expect(result.missile!.country).toBe('Russia');
       expect(result.missile!.latList.length).toBeGreaterThan(0);
-      expect(result.missile!.lonList.length).toBe(result.missile!.latList.length);
-      expect(result.missile!.altList.length).toBe(result.missile!.latList.length);
+      expect(result.missile!.lonList).toHaveLength(result.missile!.latList.length);
+      expect(result.missile!.altList).toHaveLength(result.missile!.latList.length);
       expect(result.missile!.maxAlt).toBeGreaterThan(0);
     }, 60_000);
   });
