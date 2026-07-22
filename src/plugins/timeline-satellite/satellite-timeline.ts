@@ -166,25 +166,25 @@ export class SatelliteTimeline extends KeepTrackPlugin {
         this.ctxStatic_ = this.canvasStatic_.getContext('2d')!;
 
         getEl('satellite-timeline-setting-total-length')!.addEventListener('change', () => {
-          this.lengthOfLookAngles_ = Number.parseFloat((<HTMLInputElement>getEl('satellite-timeline-setting-total-length')).value) as Hours;
+          this.lengthOfLookAngles_ = parseFloat((<HTMLInputElement>getEl('satellite-timeline-setting-total-length')).value) as Hours;
           this.ctxStatic_.reset();
           this.updateTimeline();
         });
 
         getEl('satellite-timeline-setting-interval')!.addEventListener('change', () => {
-          this.angleCalculationInterval_ = Number.parseFloat((<HTMLInputElement>getEl('satellite-timeline-setting-interval')).value) as Seconds;
+          this.angleCalculationInterval_ = parseFloat((<HTMLInputElement>getEl('satellite-timeline-setting-interval')).value) as Seconds;
           this.ctxStatic_.reset();
           this.updateTimeline();
         });
 
         getEl('satellite-timeline-setting-bad-length')!.addEventListener('change', () => {
-          this.lengthOfBadPass_ = Number.parseFloat((<HTMLInputElement>getEl('satellite-timeline-setting-bad-length')).value) as Seconds;
+          this.lengthOfBadPass_ = parseFloat((<HTMLInputElement>getEl('satellite-timeline-setting-bad-length')).value) as Seconds;
           this.ctxStatic_.reset();
           this.updateTimeline();
         });
 
         getEl('satellite-timeline-setting-avg-length')!.addEventListener('change', () => {
-          this.lengthOfAvgPass_ = Number.parseFloat((<HTMLInputElement>getEl('satellite-timeline-setting-avg-length')).value) as Seconds;
+          this.lengthOfAvgPass_ = parseFloat((<HTMLInputElement>getEl('satellite-timeline-setting-avg-length')).value) as Seconds;
           this.ctxStatic_.reset();
           this.updateTimeline();
         });
