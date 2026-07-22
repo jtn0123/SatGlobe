@@ -21,6 +21,7 @@ const HTML = '<!doctype html><html><body><main>SatGlobe</main></body></html>';
 const INDEX_TEMPLATE_PATH = resolve(process.cwd(), 'public/index.html');
 const SERVICE_WORKER_BOOTSTRAP_PATH = resolve(process.cwd(), 'public/service-worker-bootstrap.js');
 const NGINX_CONFIG_PATH = resolve(process.cwd(), 'configs/satglobe/nginx.conf');
+const SATGLOBE_HEALTHCHECK_PATH = resolve(process.cwd(), 'configs/satglobe/healthcheck.sh');
 const SATGLOBE_DOCKERFILE_PATH = resolve(process.cwd(), 'Dockerfile.satglobe');
 
 interface HttpResponse {
@@ -112,6 +113,7 @@ describe('dev-server HTML responses', () => {
 
   it('builds the production image without lifecycle scripts and runs nginx unprivileged', () => {
     const dockerfile = readFileSync(SATGLOBE_DOCKERFILE_PATH, 'utf8');
+    const healthcheck = readFileSync(SATGLOBE_HEALTHCHECK_PATH, 'utf8');
     const nginxConfig = readFileSync(NGINX_CONFIG_PATH, 'utf8');
 
     expect(dockerfile).toContain('RUN npm ci --ignore-scripts');
@@ -119,7 +121,8 @@ describe('dev-server HTML responses', () => {
     expect(dockerfile).toContain('USER nginx');
     expect(dockerfile).toContain('EXPOSE 8080');
     expect(dockerfile).toContain('HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3');
-    expect(dockerfile).toContain('http://127.0.0.1:8080/');
+    expect(dockerfile).toContain('CMD ["/usr/local/bin/satglobe-healthcheck"]');
+    expect(healthcheck).toContain('http://127.0.0.1:8080/');
     expect(nginxConfig).toMatch(/^\s*listen 8080;$/mu);
   });
 
