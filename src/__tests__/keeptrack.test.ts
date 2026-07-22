@@ -74,7 +74,9 @@ const setupStandardEnvironment = () => {
         onmessage: null as ((ev: MessageEvent) => void) | null } } as any;
 
     // Call the onmessage handler only if it is set to avoid "possibly null" invocation.
-    catalogManagerInstance.satCruncher.onmessage?.({ data: { type: 'satData', data: [] } as unknown as SatCruncherMessageData } as unknown as MessageEvent);
+    catalogManagerInstance.satCruncherThread.worker.onmessage?.(
+      { data: { type: 'satData', data: [] } as unknown as SatCruncherMessageData } as unknown as MessageEvent,
+    );
   });
 
   // Pretend webGl works

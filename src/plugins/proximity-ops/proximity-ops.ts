@@ -1,7 +1,7 @@
 import { MenuMode, ToastMsgType } from '@app/engine/core/interfaces';
 import { getEl } from '@app/engine/utils/get-el';
 
-import { SatMath, StringifiedNumber } from '@app/app/analysis/sat-math';
+import { StringifiedNumber } from '@app/app/analysis/sat-math';
 import { ProximityOpsThreadManager } from '@app/app/threads/proximity-ops-thread-manager';
 import { drawPairLine, jumpToTca, RemovableLine } from '@app/engine/conjunction/conjunction-row-actions';
 import { PluginRegistry } from '@app/engine/core/plugin-registry';
@@ -670,7 +670,7 @@ export class ProximityOps extends KeepTrackPlugin {
    * Finds the satellites related to a primary satellite based on the orbit type
    * and duration, with the primary as the first element. GEO filters on longitude
    * proximity and orbital period; LEO filters on inclination and RAAN proximity.
-   * Stays on the main thread because it uses `SatMath.normalizeRaan` and the live
+   * Stays on the main thread because it uses `Satellite.normalizeRaan` and the live
    * catalog.
    */
   private findSatsById_(primarySatID: number, type: string, duration: Seconds): Satellite[] {
@@ -708,11 +708,11 @@ export class ProximityOps extends KeepTrackPlugin {
     } else if (type === RPOType.LEO) {
       const nowDate = ServiceLocator.getTimeManager().getOffsetTimeObj(0);
 
-      const raan1 = SatMath.normalizeRaan(primarySat, nowDate);
+      const raan1 = primarySat.normalizeRaan(nowDate);
 
       sats = allSats
         .filter((sat) => {
-          const raan2 = SatMath.normalizeRaan(sat, nowDate);
+          const raan2 = sat.normalizeRaan(nowDate);
 
           return sat.tle1 &&
             (180 - Math.abs(Math.abs(primarySat.inclination - sat.inclination) - 180)) < 5 &&

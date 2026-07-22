@@ -42,6 +42,11 @@ export class PluginRegistry {
     return !!this.instance_.loadedPlugins.find((plugin) => plugin.id === pluginName);
   }
 
+  /** Retrieves a loaded plugin by its stable runtime id. */
+  static getPluginById<T extends KeepTrackPlugin>(pluginId: string): T | null {
+    return (this.instance_.loadedPlugins.find((plugin) => plugin.id === pluginId) as T | undefined) ?? null;
+  }
+
   /**
    * Retrieves a plugin by its name.
    *
@@ -52,10 +57,6 @@ export class PluginRegistry {
    * @returns The plugin with the specified name, or null if not found.
    */
   static getPluginByName<T extends KeepTrackPlugin>(pluginName: string): T | null {
-    if (this.instance_.loadedPlugins.some((plugin: KeepTrackPlugin) => plugin.id === pluginName)) {
-      return this.instance_.loadedPlugins.find((plugin: KeepTrackPlugin) => plugin.id === pluginName) as T;
-    }
-
-    return null;
+    return this.getPluginById<T>(pluginName);
   }
 }

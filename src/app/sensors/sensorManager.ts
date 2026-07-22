@@ -128,7 +128,7 @@ export class SensorManager {
 
       // Wait for position cruncher to process new sensor data, then force full recolor
       waitForCruncher({
-        cruncher: ServiceLocator.getCatalogManager().satCruncher,
+        cruncher: ServiceLocator.getCatalogManager().satCruncherThread.worker,
         cb: () => {
           ServiceLocator.getColorSchemeManager().calculateColorBuffers(true);
         },
@@ -318,10 +318,10 @@ export class SensorManager {
     PluginRegistry.getPlugin(SensorSurvFence)?.setBottomIconToDisabled();
     PluginRegistry.getPlugin(LookAnglesPlugin)?.setBottomIconToUnselected();
     PluginRegistry.getPlugin(LookAnglesPlugin)?.setBottomIconToDisabled();
-    PluginRegistry.getPluginByName('Planetarium')?.setBottomIconToUnselected();
-    PluginRegistry.getPluginByName('Planetarium')?.setBottomIconToDisabled();
-    PluginRegistry.getPluginByName('Astronomy')?.setBottomIconToUnselected();
-    PluginRegistry.getPluginByName('Astronomy')?.setBottomIconToDisabled();
+    PluginRegistry.getPluginById('Planetarium')?.setBottomIconToUnselected();
+    PluginRegistry.getPluginById('Planetarium')?.setBottomIconToDisabled();
+    PluginRegistry.getPluginById('Astronomy')?.setBottomIconToUnselected();
+    PluginRegistry.getPluginById('Astronomy')?.setBottomIconToDisabled();
 
     this.resetTimeoutId_ = setTimeout(() => {
       this.resetTimeoutId_ = null;
@@ -497,7 +497,7 @@ export class SensorManager {
     this.updatePositionCruncher_();
 
     waitForCruncher({
-      cruncher: ServiceLocator.getCatalogManager().satCruncher,
+      cruncher: ServiceLocator.getCatalogManager().satCruncherThread.worker,
       cb: () => {
         ServiceLocator.getColorSchemeManager().calculateColorBuffers(true);
       },
@@ -524,8 +524,8 @@ export class SensorManager {
         PluginRegistry.getPlugin(SensorInfoPlugin)?.setBottomIconToUnselected();
         PluginRegistry.getPlugin(SensorFov)?.setBottomIconToUnselected();
         PluginRegistry.getPlugin(SensorSurvFence)?.setBottomIconToUnselected();
-        PluginRegistry.getPluginByName('Planetarium')?.setBottomIconToUnselected();
-        PluginRegistry.getPluginByName('Astronomy')?.setBottomIconToUnselected();
+        PluginRegistry.getPluginById('Planetarium')?.setBottomIconToUnselected();
+        PluginRegistry.getPluginById('Astronomy')?.setBottomIconToUnselected();
 
         if (getEl('reset-sensor-button', true)) {
           (getEl('reset-sensor-button') as HTMLButtonElement).disabled = false;

@@ -223,7 +223,7 @@ export class CustomSensorPlugin extends KeepTrackPlugin {
         triggerSubmit(<HTMLFormElement>getEl('custom-sensor-menu-form'));
         catalogManagerInstance.satCruncherThread.sendSunlightViewToggle(true);
         waitForCruncher({
-          cruncher: catalogManagerInstance.satCruncher,
+          cruncher: catalogManagerInstance.satCruncherThread.worker,
           cb: () => {
             colorSchemeManagerInstance.setColorScheme(colorSchemeManagerInstance.colorSchemeInstances.SunlightColorScheme, true);
           },

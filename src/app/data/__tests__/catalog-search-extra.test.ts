@@ -1,13 +1,11 @@
-import { vi } from 'vitest';
 import { CatalogSearch } from '@app/app/data/catalog-search';
-import { SatMath } from '@app/app/analysis/sat-math';
 import { CatalogSource, Satellite, SpaceObjectType } from '@ootk/src/main';
 
 /*
  * Branch coverage for CatalogSearch paths the existing suite never reaches:
  * the RAAN-wraparound logic in findObjsByOrbit, findReentry, and the
- * special-event debris carve-outs in yearOrLess. normalizeRaan is mocked so
- * the wraparound geometry is deterministic instead of propagation-dependent.
+ * special-event debris carve-outs in yearOrLess. Satellite.normalizeRaan is
+ * stubbed so the wraparound geometry is deterministic instead of propagation-dependent.
  */
 describe('CatalogSearch.findObjsByOrbit', () => {
   // Lightweight stubs — findObjsByOrbit only reads isStatic/inclination/period/id.
@@ -16,16 +14,9 @@ describe('CatalogSearch.findObjsByOrbit', () => {
     inclination: 51,
     period: 90,
     isStatic: () => false,
-    testRaan: raan,
+    normalizeRaan: () => raan,
     ...over,
   }) as unknown as Satellite;
-
-  beforeEach(() => {
-    // Return the per-stub RAAN we tagged on each object.
-    vi.spyOn(SatMath, 'normalizeRaan').mockImplementation((s: Satellite) => (s as unknown as { testRaan: number }).testRaan);
-  });
-
-  afterEach(() => vi.restoreAllMocks());
 
   it('matches within tolerance in the normal (non-wrapping) case', () => {
     const target = stub(0, 168);

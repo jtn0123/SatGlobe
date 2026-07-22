@@ -191,7 +191,7 @@ export class ColorSchemeManager {
 
   calcColorBufsNextCruncher(): void {
     waitForCruncher({
-      cruncher: ServiceLocator.getCatalogManager().satCruncher,
+      cruncher: ServiceLocator.getCatalogManager().satCruncherThread.worker,
       cb: () => {
         ServiceLocator.getColorSchemeManager().calculateColorBuffers();
       },

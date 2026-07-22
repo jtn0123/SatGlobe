@@ -1372,7 +1372,7 @@ export abstract class KeepTrackPlugin {
       return;
     }
     if (this.isRequireSatelliteSelected) {
-      const selectSatManager = PluginRegistry.getPluginByName('SelectSatManager');
+      const selectSatManager = PluginRegistry.getPluginById('SelectSatManager');
 
       if (!selectSatManager || (selectSatManager as unknown as { selectedSat: number }).selectedSat === -1) {
         return;
@@ -1417,7 +1417,7 @@ export abstract class KeepTrackPlugin {
      * const searchDom = getEl('search', true);
      * if (!selectSatManagerInstance || (selectSatManagerInstance?.selectedSat === -1 && (!searchDom || (<HTMLInputElement>searchDom).value === ''))) {
      */
-    if (((PluginRegistry.getPluginByName('SelectSatManager') as unknown as { selectedSat: number } | null)?.selectedSat ?? -1) === -1) {
+    if (((PluginRegistry.getPluginById('SelectSatManager') as unknown as { selectedSat: number } | null)?.selectedSat ?? -1) === -1) {
       errorManagerInstance.warnToast(t7e('errorMsgs.SelectSatelliteFirst'));
       this.shakeBottomIcon();
 

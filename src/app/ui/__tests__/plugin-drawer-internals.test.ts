@@ -109,7 +109,7 @@ describe('PluginDrawer internals', () => {
   });
 
   it('createDrawerDom_ renders the app launcher when LaunchpadPlugin is loaded', () => {
-    vi.spyOn(PluginRegistry, 'getPluginByName').mockReturnValue({} as never);
+    vi.spyOn(PluginRegistry, 'getPluginById').mockReturnValue({} as never);
 
     p().createDrawerDom_();
 
@@ -117,7 +117,7 @@ describe('PluginDrawer internals', () => {
   });
 
   it('createDrawerDom_ omits the app launcher when LaunchpadPlugin is absent', () => {
-    vi.spyOn(PluginRegistry, 'getPluginByName').mockReturnValue(null as never);
+    vi.spyOn(PluginRegistry, 'getPluginById').mockReturnValue(null as never);
 
     p().createDrawerDom_();
 

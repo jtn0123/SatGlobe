@@ -22,6 +22,7 @@ import {
   eci2lla,
   linearDistance,
   lla2eci,
+  relativeVelocity,
 } from '@ootk/src/main';
 import { dateFormat } from '../../engine/utils/dateFormat';
 import { SatMath, SunStatus } from '../analysis/sat-math';
@@ -285,7 +286,7 @@ export class SensorMath {
       return '';
     }
 
-    const velApart = SatMath.velocity(hoverVel, secondaryVel).toFixed(3);
+    const velApart = relativeVelocity(hoverVel, secondaryVel).toFixed(3);
 
     return `<br />Relative velocity: ${velApart} km/s`;
   }
