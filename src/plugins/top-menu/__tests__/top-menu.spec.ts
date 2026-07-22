@@ -29,10 +29,8 @@ test.describe('TopMenu', () => {
     // is NaN for any extended ID and would produce undefined-behavior sort.
     await searchInput.fill('799500766');
 
-    // Give the debounced search a moment to run.
-    await page.waitForTimeout(500);
-
-    // No new console errors should appear from the search path.
+    // fill() dispatches the input event synchronously; the search path has no
+    // timer, so the clean-console assertion is the observable completion gate.
     expectCleanBoot(page);
   });
 });

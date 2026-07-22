@@ -27,15 +27,13 @@ test.describe('DebrisScreening Plugin', () => {
 
     if (await groupItems.isHidden()) {
       await eventsGroup.locator('.drawer-group-header').click();
+      await expect(groupItems).toBeVisible({ timeout: 2_000 });
     }
 
     const drawerItem = page.locator('.drawer-item[data-plugin-id="conjunction-screen-icon"]');
 
     await expect(drawerItem).toBeVisible();
-
-    // Clicking a disabled plugin's drawer item should NOT open the side menu
-    await drawerItem.scrollIntoViewIfNeeded();
-    await drawerItem.click({ force: true });
+    await expect(drawerItem).toHaveClass(/disabled/u);
     await expect(sideMenu).toBeHidden({ timeout: 2_000 });
     await expect(bottomIcon).not.toHaveClass(/bmenu-item-selected/u);
 

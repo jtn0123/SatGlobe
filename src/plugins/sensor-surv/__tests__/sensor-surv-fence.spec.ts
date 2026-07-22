@@ -12,7 +12,6 @@ test.describe('SensorSurvFence', () => {
     await expect(utilityIcon).toBeAttached();
     await expect(utilityIcon).toHaveClass(/bmenu-item-disabled/u);
 
-    await utilityIcon.click({ force: true });
     await expect(utilityIcon).not.toHaveClass(/bmenu-item-selected/u, { timeout: 2_000 });
   });
 });

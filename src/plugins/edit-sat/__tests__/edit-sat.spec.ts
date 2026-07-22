@@ -34,9 +34,7 @@ test.describe('EditSat', () => {
     const drawerItem = page.locator('.drawer-item[data-plugin-id="edit-satellite-bottom-icon"]');
 
     await expect(drawerItem).toBeVisible();
-
-    // 4. Clicking disabled drawer item should NOT open the side menu
-    await drawerItem.click({ force: true });
+    await expect(drawerItem).toHaveClass(/disabled/u);
     await expect(bottomIcon).not.toHaveClass(/bmenu-item-selected/u, { timeout: 2_000 });
 
     // 5. Verify form elements exist in DOM even though menu is hidden

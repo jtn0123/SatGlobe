@@ -2,7 +2,7 @@ import { expect, test } from '@test/e2e/coverage';
 import { waitForAppReady } from '@test/e2e/keeptrack-fixtures';
 
 test.describe('SatInfoBox and Related Plugins', () => {
-  test('sat-infobox container and all sub-plugin sections are created in DOM', async ({ page }) => {
+  test('sat-infobox container and public sub-plugin sections are created in DOM', async ({ page }) => {
     await waitForAppReady(page, {
       plugins: {
         SatInfoBoxCore: { enabled: true },
@@ -40,12 +40,6 @@ test.describe('SatInfoBox and Related Plugins', () => {
     // Collapse icon for identifiers section
     await expect(page.locator('#sat-identifier-data-collapse')).toBeAttached();
 
-    // ── SatInfoBoxActions (Pro) ────────────────────────────────────────
-    await expect(page.locator('#sat-info-box-actions')).toBeAttached();
-
-    // ── SatInfoBoxLinks (Pro) ──────────────────────────────────────────
-    await expect(page.locator('#links-section')).toBeAttached();
-
     // ── SatInfoBoxOrbital ──────────────────────────────────────────────
     await expect(page.locator('#orbital-section')).toBeAttached();
     await expect(page.locator('#sat-latitude')).toBeAttached();
@@ -74,17 +68,14 @@ test.describe('SatInfoBox and Related Plugins', () => {
     // Secondary satellite section
     await expect(page.locator('#secondary-sat-info')).toBeAttached();
 
-    // ── SatInfoBoxMission (Pro) ────────────────────────────────────────
-    await expect(page.locator('#sat-mission-data')).toBeAttached();
-
     // ── SatInfoBoxSensor ───────────────────────────────────────────────
     await expect(page.locator('#sensor-sat-info')).toBeAttached();
     await expect(page.locator('#sat-range')).toBeAttached();
     await expect(page.locator('#sat-azimuth')).toBeAttached();
     await expect(page.locator('#sat-elevation')).toBeAttached();
 
-    // ── SatInfoBoxDoppler (Pro) ────────────────────────────────────────
-    await expect(page.locator('#doppler-sat-info')).toBeAttached();
+    // Private extensions are not bundled into a clean public checkout.
+    await expect(page.locator('#sat-info-box-actions, #links-section, #sat-mission-data, #doppler-sat-info')).toHaveCount(0);
 
     // ── Container should be hidden (no satellite selected) ─────────────
     await expect(container).toHaveClass(/start-hidden/u);

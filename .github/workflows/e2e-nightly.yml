@@ -1,9 +1,7 @@
 ---
-# Nightly run of the FULL Playwright suite (86 spec files). The PR pipeline
-# runs only the SatGlobe journey spec; the remaining plugin/app journeys live
-# here so they cannot rot invisibly. Failures surface on the Actions tab and
-# in the uploaded report; promote stabilized specs into the PR pipeline and
-# quarantine (skip + issue) any that prove flaky.
+# Nightly run of the generic public application Playwright suite. The PR
+# pipeline owns the dedicated SatGlobe profile journey, which is intentionally
+# excluded here so every spec runs against the bundle it was written for.
 name: Nightly full E2E
 
 "on":
@@ -20,7 +18,7 @@ permissions:
 
 jobs:
   e2e-full:
-    name: Full Playwright suite
+    name: Public plugin and application suite
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
@@ -50,10 +48,10 @@ jobs:
         # Locally installed binary, not npx (sonar githubactions:S6505/S8543).
         run: ./node_modules/.bin/playwright install chromium --with-deps
 
-      - name: Build the production bundle
+      - name: Build the public production bundle
         run: npm run build
 
-      - name: Run the full Playwright suite
+      - name: Run the public plugin and application suite
         run: ./node_modules/.bin/playwright test
 
       - name: Upload Playwright report

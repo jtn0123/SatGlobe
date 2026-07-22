@@ -65,11 +65,8 @@ test.describe('CatalogManagement Plugin', () => {
     await expect(ephemBtn).toBeAttached();
     await expect(ephemBtn).toBeDisabled();
 
-    // Verify Pro CCSDS buttons exist (dev server runs Pro build)
-    await expect(page.locator('#de-export-opm')).toBeAttached();
-    await expect(page.locator('#de-export-oem')).toBeAttached();
-    await expect(page.locator('#de-export-omm')).toBeAttached();
-    await expect(page.locator('#de-export-omm-catalog')).toBeAttached();
+    // Private CCSDS extensions are intentionally absent from a clean public build.
+    await expect(page.locator('#de-export-opm, #de-export-oem, #de-export-omm, #de-export-omm-catalog')).toHaveCount(0);
 
     // Close via the side menu close button
     await page.locator('#catalog-management-menu-close-btn').click();

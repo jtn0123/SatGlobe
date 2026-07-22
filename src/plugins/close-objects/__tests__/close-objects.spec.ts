@@ -2,7 +2,7 @@ import { test, expect } from '@test/e2e/coverage';
 import { waitForAppReady } from '@test/e2e/keeptrack-fixtures';
 
 test.describe('CloseObjects Plugin', () => {
-  test('open side menu, verify find button and pro results elements, then close', async ({ page }) => {
+  test('opens the public search menu without private extension controls', async ({ page }) => {
     await waitForAppReady(page, {
       plugins: { CloseObjectsPlugin: { enabled: true } },
       settings: { isDisableLoginGate: true, isMobileModeEnabled: true },
@@ -38,18 +38,8 @@ test.describe('CloseObjects Plugin', () => {
     // Verify the find button exists
     await expect(page.locator('#co-find-btn')).toBeVisible();
 
-    // Verify Pro secondary menu settings form elements
-    await expect(page.locator('form#co-pro-settings-form')).toBeAttached();
-    await expect(page.locator('#co-pro-radius')).toBeAttached();
-    await expect(page.locator('#co-pro-radius')).toHaveValue('50');
-    await expect(page.locator('#co-pro-alt-min')).toBeAttached();
-    await expect(page.locator('#co-pro-alt-min')).toHaveValue('0');
-    await expect(page.locator('#co-pro-alt-max')).toBeAttached();
-    await expect(page.locator('#co-pro-alt-max')).toHaveValue('50000');
-
-    // Verify Pro results table and count elements
-    await expect(page.locator('#co-pro-results-table')).toBeAttached();
-    await expect(page.locator('#co-pro-results-count')).toBeAttached();
+    // Private settings/results extensions are intentionally absent here.
+    await expect(page.locator('#co-pro-settings-form, #co-pro-results-table, #co-pro-results-count')).toHaveCount(0);
 
     // Close via the side menu close button
     await page.locator('#close-objects-menu-close-btn').click();
