@@ -94,7 +94,7 @@ export class ProfileLoader {
     const envVars = dotenv.parse(readFileSync(envPath));
 
     // Point dotenv-webpack at this profile's env file
-    config.envFilePath = relative(this.rootDir_, envPath).replace(/\\/gu, '/');
+    config.envFilePath = relative(this.rootDir_, envPath).replaceAll(/\\/gu, '/');
 
     if (envVars.MODE) {
       config.mode = envVars.MODE as BuildConfig['mode'];
@@ -130,7 +130,7 @@ export class ProfileLoader {
       const profileFilePath = join(profileDir, fileName);
 
       if (existsSync(profileFilePath)) {
-        const relativePath = relative(this.rootDir_, profileFilePath).replace(/\\/gu, '/');
+        const relativePath = relative(this.rootDir_, profileFilePath).replaceAll(/\\/gu, '/');
 
         (config as Record<string, string>)[mapping.configKey] = relativePath;
         logWithStyle(`  ${mapping.configKey}: ${relativePath}`, ConsoleStyles.DEBUG);

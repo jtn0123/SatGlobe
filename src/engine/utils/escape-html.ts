@@ -5,8 +5,8 @@
  * before it is concatenated into an innerHTML/insertAdjacentHTML payload.
  */
 export const escapeHtml = (text: string): string => text
-  .replace(/&/gu, '&amp;')
-  .replace(/</gu, '&lt;')
-  .replace(/>/gu, '&gt;')
-  .replace(/"/gu, '&quot;')
-  .replace(/'/gu, '&#39;');
+  .replaceAll(/&/gu, '&amp;')
+  .replaceAll(/</gu, '&lt;')
+  .replaceAll(/>/gu, '&gt;')
+  .replaceAll(/"/gu, '&quot;')
+  .replaceAll(/'/gu, '&#39;');
