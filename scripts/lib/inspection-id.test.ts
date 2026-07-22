@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { assertInspectionId } from './inspection-id';
+import { assertInspectionId, redactInspectionId } from './inspection-id';
 
 describe('assertInspectionId', () => {
   it('accepts portable identifiers used by saved inspection recipes', () => {
@@ -12,4 +12,13 @@ describe('assertInspectionId', () => {
       expect(() => assertInspectionId(value)).toThrow('spec.id must be');
     },
   );
+});
+
+describe('redactInspectionId', () => {
+  it.each(['customer-alpha', 'private-feature.v2'])('does not expose inspection identifier %j in logs', (value) => {
+    const label = redactInspectionId(value);
+
+    expect(label).toBe('inspection');
+    expect(label).not.toContain(value);
+  });
 });
