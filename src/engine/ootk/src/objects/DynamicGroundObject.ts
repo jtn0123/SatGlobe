@@ -353,7 +353,7 @@ export class DynamicGroundObject extends GroundObject {
    */
   get waypoints(): WaypointData[] {
     return this.waypoints_.map((wp) => ({
-      time: new Date(wp.time.getTime()),
+      time: new Date(wp.time),
       lat: wp.lat,
       lon: wp.lon,
       alt: wp.alt,
@@ -374,14 +374,14 @@ export class DynamicGroundObject extends GroundObject {
    * Returns the start time of the waypoint path.
    */
   get startTime(): Date {
-    return new Date(this.waypoints_[0].time.getTime());
+    return new Date(this.waypoints_[0].time);
   }
 
   /**
    * Returns the end time of the waypoint path.
    */
   get endTime(): Date {
-    return new Date(this.waypoints_[this.waypoints_.length - 1].time.getTime());
+    return new Date(this.waypoints_[this.waypoints_.length - 1].time);
   }
 
   /**
@@ -474,7 +474,7 @@ export class DynamicGroundObject extends GroundObject {
     // Otherwise, sample from waypoints
     if (this.waypoints_.length <= maxPoints) {
       return this.waypoints_.map((wp) => ({
-        time: new Date(wp.time.getTime()),
+        time: new Date(wp.time),
         lla: { lat: wp.lat, lon: wp.lon, alt: wp.alt },
       }));
     }
@@ -488,7 +488,7 @@ export class DynamicGroundObject extends GroundObject {
       const wp = this.waypoints_[idx];
 
       result.push({
-        time: new Date(wp.time.getTime()),
+        time: new Date(wp.time),
         lla: { lat: wp.lat, lon: wp.lon, alt: wp.alt },
       });
     }
@@ -537,7 +537,7 @@ export class DynamicGroundObject extends GroundObject {
       id: this.id,
       name: this.name,
       waypoints: this.waypoints_.map((wp) => ({
-        time: new Date(wp.time.getTime()),
+        time: new Date(wp.time),
         lat: wp.lat,
         lon: wp.lon,
         alt: wp.alt,
