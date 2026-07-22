@@ -160,8 +160,8 @@ export function buildColorDataArrays(objectCache: BaseObject[]): ColorDataArrays
   };
 
   // Initialize NaN defaults for optional float fields
-  data.rcs.fill(NaN);
-  data.vmag.fill(NaN);
+  data.rcs.fill(Number.NaN);
+  data.vmag.fill(Number.NaN);
 
   for (let i = 0; i < n; i++) {
     const obj = objectCache[i];
@@ -204,11 +204,11 @@ export function buildColorDataArrays(objectCache: BaseObject[]): ColorDataArrays
       const epochYearStr = sat.tle1.substring(18, 20);
       const epochDayStr = sat.tle1.substring(20, 32);
 
-      data.tle1EpochYear[i] = parseInt(epochYearStr, 10) || 0;
-      data.tle1EpochDay[i] = parseFloat(epochDayStr) || 0;
+      data.tle1EpochYear[i] = Number.parseInt(epochYearStr, 10) || 0;
+      data.tle1EpochDay[i] = Number.parseFloat(epochDayStr) || 0;
 
       if (sat.tle1.length > 65) {
-        data.tle1Confidence[i] = parseInt(sat.tle1.substring(64, 65), 10) || 0;
+        data.tle1Confidence[i] = Number.parseInt(sat.tle1.substring(64, 65), 10) || 0;
       }
     }
 

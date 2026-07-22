@@ -35,7 +35,7 @@ export function findBestWorstHdop(dopsList: DopList): BestWorstHdop {
   let worstVal = -Infinity;
 
   for (let i = 0; i < dopsList.length; i++) {
-    const val = parseFloat(dopsList[i].dops.hdop);
+    const val = Number.parseFloat(dopsList[i].dops.hdop);
 
     if (!Number.isFinite(val)) {
       continue;

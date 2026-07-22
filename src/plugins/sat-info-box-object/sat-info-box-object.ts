@@ -520,7 +520,7 @@ export class SatInfoBoxObject extends KeepTrackPlugin {
     // Respect the "no estimation" opt-out: show only what's literally in the
     // catalog, fall back to Unknown otherwise.
     if (settingsManager.plugins.SatInfoBoxObject?.isEstimateRcs === false) {
-      if (typeof sat.rcs === 'number' && !isNaN(sat.rcs)) {
+      if (typeof sat.rcs === 'number' && !Number.isNaN(sat.rcs)) {
         satRcsEl.innerHTML = `${sat.rcs} m<sup>2</sup>`;
         satRcsEl.setAttribute('kt-tooltip', `${SatMath.mag2db(sat.rcs).toFixed(2)} dBsm`);
       } else {

@@ -235,14 +235,14 @@ export function calculateDerivedParams(meanMotion: number, eccentricity: number)
  *   several days from epoch to the current time.
  */
 export function buildPreviewTleFromForm(read: (idSuffix: string) => string, sat?: Satellite): { tle1: TleLine1; tle2: TleLine2 } | null {
-  const inc = parseFloat(read('inc'));
-  const meanmo = parseFloat(read('meanmo'));
-  const rasc = parseFloat(read('rasc'));
-  const argPe = parseFloat(read('argPe'));
-  const meana = parseFloat(read('meana'));
-  const ecen = parseInt(read('ecen'), 10) / 1e7;
+  const inc = Number.parseFloat(read('inc'));
+  const meanmo = Number.parseFloat(read('meanmo'));
+  const rasc = Number.parseFloat(read('rasc'));
+  const argPe = Number.parseFloat(read('argPe'));
+  const meana = Number.parseFloat(read('meana'));
+  const ecen = Number.parseInt(read('ecen'), 10) / 1e7;
 
-  if ([inc, meanmo, rasc, argPe, meana].some(isNaN) || isNaN(ecen) || meanmo <= 0 || ecen < 0 || ecen >= 1) {
+  if ([inc, meanmo, rasc, argPe, meana].some(Number.isNaN) || Number.isNaN(ecen) || meanmo <= 0 || ecen < 0 || ecen >= 1) {
     return null;
   }
 

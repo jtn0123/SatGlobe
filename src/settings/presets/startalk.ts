@@ -71,7 +71,7 @@ export const starTalk = (settingsManager: SettingsManager) => {
    */
   settingsManager.timeMachineString = (yearStr) => {
     ServiceLocator.getUiManager().dismissAllToasts(); // Dismiss All Toast Messages (workaround to avoid animations)
-    const yearPrefix = parseInt(yearStr) < 57 ? '20' : '19';
+    const yearPrefix = Number.parseInt(yearStr) < 57 ? '20' : '19';
     const english = `In ${yearPrefix}${yearStr}`;
     /*
      * const french = `En ${yearPrefix}${yearStr}`;

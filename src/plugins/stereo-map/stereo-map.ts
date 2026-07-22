@@ -769,9 +769,9 @@ export class StereoMap extends KeepTrackPlugin {
     const styleRadios = document.querySelectorAll<HTMLInputElement>('input[name="stereo-map-style"]');
 
     if (orbitInput) {
-      const val = parseFloat(orbitInput.value);
+      const val = Number.parseFloat(orbitInput.value);
 
-      if (!isNaN(val) && val >= 0.5 && val <= 20) {
+      if (!Number.isNaN(val) && val >= 0.5 && val <= 20) {
         this.orbitMultiplier_ = val;
       }
     }
@@ -862,9 +862,9 @@ export class StereoMap extends KeepTrackPlugin {
       return;
     }
 
-    const val = parseFloat(orbitInput.value);
+    const val = Number.parseFloat(orbitInput.value);
 
-    if (isNaN(val) || val < 0.5 || val > 20) {
+    if (Number.isNaN(val) || val < 0.5 || val > 20) {
       return;
     }
 
@@ -889,9 +889,9 @@ export class StereoMap extends KeepTrackPlugin {
       return;
     }
 
-    const minutes = parseFloat(minutesInput.value);
+    const minutes = Number.parseFloat(minutesInput.value);
 
-    if (isNaN(minutes) || minutes < 1) {
+    if (Number.isNaN(minutes) || minutes < 1) {
       return;
     }
 

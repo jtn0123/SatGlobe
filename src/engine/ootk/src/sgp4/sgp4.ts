@@ -381,22 +381,22 @@ export class Sgp4 {
     // satnum here is only a label on the propagator record.
     satrec.satnum = tleLine1.charAt(7) === 'V' ? '0' : tleLine1.substring(2, 7);
 
-    satrec.epochyr = parseInt(tleLine1.substring(18, 20));
-    satrec.epochdays = parseFloat(tleLine1.substring(20, 32));
-    satrec.ndot = parseFloat(tleLine1.substring(33, 43));
-    satrec.nddot = parseFloat(
+    satrec.epochyr = Number.parseInt(tleLine1.substring(18, 20));
+    satrec.epochdays = Number.parseFloat(tleLine1.substring(20, 32));
+    satrec.ndot = Number.parseFloat(tleLine1.substring(33, 43));
+    satrec.nddot = Number.parseFloat(
       `${tleLine1.substring(44, 45)}.${tleLine1.substring(45, 50)}E${tleLine1.substring(50, 52)}`,
     );
-    satrec.bstar = parseFloat(
+    satrec.bstar = Number.parseFloat(
       `${tleLine1.substring(53, 54)}.${tleLine1.substring(54, 59)}E${tleLine1.substring(59, 61)}`,
     );
 
-    satrec.inclo = parseFloat(tleLine2.substring(8, 16));
-    satrec.nodeo = parseFloat(tleLine2.substring(17, 25));
-    satrec.ecco = parseFloat(`.${tleLine2.substring(26, 33)}`);
-    satrec.argpo = parseFloat(tleLine2.substring(34, 42));
-    satrec.mo = parseFloat(tleLine2.substring(43, 51));
-    satrec.no = parseFloat(tleLine2.substring(52, 63));
+    satrec.inclo = Number.parseFloat(tleLine2.substring(8, 16));
+    satrec.nodeo = Number.parseFloat(tleLine2.substring(17, 25));
+    satrec.ecco = Number.parseFloat(`.${tleLine2.substring(26, 33)}`);
+    satrec.argpo = Number.parseFloat(tleLine2.substring(34, 42));
+    satrec.mo = Number.parseFloat(tleLine2.substring(43, 51));
+    satrec.no = Number.parseFloat(tleLine2.substring(52, 63));
 
     // ---- find no, ndot, nddot ----
     satrec.no /= xpdotp; //   Rad/min
@@ -493,17 +493,17 @@ export class Sgp4 {
 
     satrec.satnum = omm.NORAD_CAT_ID;
 
-    satrec.epochyr = parseInt(omm.epoch.year.toString().slice(-2));
+    satrec.epochyr = Number.parseInt(omm.epoch.year.toString().slice(-2));
     satrec.epochdays = omm.epoch.doy;
-    satrec.ndot = parseFloat(omm.MEAN_MOTION_DOT);
-    satrec.nddot = parseFloat(omm.MEAN_MOTION_DDOT);
-    satrec.bstar = parseFloat(omm.BSTAR);
-    satrec.inclo = parseFloat(omm.INCLINATION);
-    satrec.nodeo = parseFloat(omm.RA_OF_ASC_NODE);
-    satrec.ecco = parseFloat(omm.ECCENTRICITY);
-    satrec.argpo = parseFloat(omm.ARG_OF_PERICENTER);
-    satrec.mo = parseFloat(omm.MEAN_ANOMALY);
-    satrec.no = parseFloat(omm.MEAN_MOTION);
+    satrec.ndot = Number.parseFloat(omm.MEAN_MOTION_DOT);
+    satrec.nddot = Number.parseFloat(omm.MEAN_MOTION_DDOT);
+    satrec.bstar = Number.parseFloat(omm.BSTAR);
+    satrec.inclo = Number.parseFloat(omm.INCLINATION);
+    satrec.nodeo = Number.parseFloat(omm.RA_OF_ASC_NODE);
+    satrec.ecco = Number.parseFloat(omm.ECCENTRICITY);
+    satrec.argpo = Number.parseFloat(omm.ARG_OF_PERICENTER);
+    satrec.mo = Number.parseFloat(omm.MEAN_ANOMALY);
+    satrec.no = Number.parseFloat(omm.MEAN_MOTION);
 
     // ---- find no, ndot, nddot ----
     satrec.no /= xpdotp; //   Rad/min

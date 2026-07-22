@@ -143,8 +143,8 @@ export class EpochUTC extends Epoch {
   static fromDefinitiveString(definitiveString: string): EpochUTC {
     const fields = definitiveString.trim().split(' ') as [string, string];
     const dateFields = fields[0].split('/') as [string, string];
-    const day = parseInt(dateFields[0]);
-    const year = parseInt(dateFields[1]);
+    const day = Number.parseInt(dateFields[0]);
+    const year = Number.parseInt(dateFields[1]);
 
     const timeField = fields[1];
     // Add day - 1 days in milliseconds to the epoch.

@@ -143,7 +143,7 @@ const ecfOrbitsSelect_ = (): OwnSettingDescriptor => {
       options: ECF_ORBIT_OPTIONS.map((value) => ({ value, label: value })),
       get: () => String(settingsManager.numberOfEcfOrbitsToDraw),
       set: (next: string) => {
-        const parsed = parseInt(next, 10);
+        const parsed = Number.parseInt(next, 10);
 
         if (!Number.isNaN(parsed)) {
           setCount(parsed);

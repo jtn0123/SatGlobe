@@ -358,7 +358,7 @@ export class DebrisScreening extends KeepTrackPlugin {
     }
 
     if (tcaMs) {
-      jumpToTca(parseInt(tcaMs, 10));
+      jumpToTca(Number.parseInt(tcaMs, 10));
     }
   }
 
@@ -372,10 +372,10 @@ export class DebrisScreening extends KeepTrackPlugin {
       const timeManager = ServiceLocator.getTimeManager();
 
       const satId = catalogManager.sccNum2Id((<HTMLInputElement>getEl(`${this.formPrefix_}-scc`)).value.trim());
-      const timeVal = <Hours>parseFloat((<HTMLInputElement>getEl(`${this.formPrefix_}-time`)).value);
-      const uVal = parseFloat((<HTMLInputElement>getEl(`${this.formPrefix_}-u`)).value) as Kilometers;
-      const vVal = parseFloat((<HTMLInputElement>getEl(`${this.formPrefix_}-v`)).value) as Kilometers;
-      const wVal = parseFloat((<HTMLInputElement>getEl(`${this.formPrefix_}-w`)).value) as Kilometers;
+      const timeVal = <Hours>Number.parseFloat((<HTMLInputElement>getEl(`${this.formPrefix_}-time`)).value);
+      const uVal = Number.parseFloat((<HTMLInputElement>getEl(`${this.formPrefix_}-u`)).value) as Kilometers;
+      const vVal = Number.parseFloat((<HTMLInputElement>getEl(`${this.formPrefix_}-v`)).value) as Kilometers;
+      const wVal = Number.parseFloat((<HTMLInputElement>getEl(`${this.formPrefix_}-w`)).value) as Kilometers;
       const sat = catalogManager.getObject(satId, GetSatType.SKIP_POS_VEL);
 
       // OemSatellite passes isSatellite() but has no tle1/tle2/apogee/perigee
@@ -631,9 +631,9 @@ export class DebrisScreening extends KeepTrackPlugin {
   private drawSearchBox_(): void {
     const scene = ServiceLocator.getScene();
 
-    const uVal = parseFloat((<HTMLInputElement>getEl(`${this.formPrefix_}-u`)).value) as Kilometers;
-    const vVal = parseFloat((<HTMLInputElement>getEl(`${this.formPrefix_}-v`)).value) as Kilometers;
-    const wVal = parseFloat((<HTMLInputElement>getEl(`${this.formPrefix_}-w`)).value) as Kilometers;
+    const uVal = Number.parseFloat((<HTMLInputElement>getEl(`${this.formPrefix_}-u`)).value) as Kilometers;
+    const vVal = Number.parseFloat((<HTMLInputElement>getEl(`${this.formPrefix_}-v`)).value) as Kilometers;
+    const wVal = Number.parseFloat((<HTMLInputElement>getEl(`${this.formPrefix_}-w`)).value) as Kilometers;
 
     scene.searchBox.setCubeSize(uVal, vVal, wVal);
   }

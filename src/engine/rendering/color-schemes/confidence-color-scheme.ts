@@ -53,7 +53,7 @@ export class ConfidenceColorScheme extends ColorScheme {
       };
     }
 
-    const confidenceScore = parseInt(sat.tle1.substring(64, 65)) || 0;
+    const confidenceScore = Number.parseInt(sat.tle1.substring(64, 65)) || 0;
     let pickable: Pickable;
     let color: [number, number, number, number];
 

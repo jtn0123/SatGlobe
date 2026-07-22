@@ -288,9 +288,9 @@ export class ShortTermFences extends KeepTrackPlugin {
       return;
     }
 
-    const az = parseFloat((<HTMLInputElement>getEl('stf-az')).value);
-    const el = parseFloat((<HTMLInputElement>getEl('stf-el')).value);
-    const rng = parseFloat((<HTMLInputElement>getEl('stf-rng')).value);
+    const az = Number.parseFloat((<HTMLInputElement>getEl('stf-az')).value);
+    const el = Number.parseFloat((<HTMLInputElement>getEl('stf-el')).value);
+    const rng = Number.parseFloat((<HTMLInputElement>getEl('stf-rng')).value);
 
     if (![az, el, rng].every((v) => Number.isFinite(v))) {
       return;
@@ -298,8 +298,8 @@ export class ShortTermFences extends KeepTrackPlugin {
 
     const azExtEl = <HTMLInputElement>getEl('stf-azExt');
     const elExtEl = <HTMLInputElement>getEl('stf-elExt');
-    let azExt = parseFloat(azExtEl.value);
-    let elExt = parseFloat(elExtEl.value);
+    let azExt = Number.parseFloat(azExtEl.value);
+    let elExt = Number.parseFloat(elExtEl.value);
 
     if (azExt > STF_MAX_EXTENT_DEG) {
       azExt = STF_MAX_EXTENT_DEG;

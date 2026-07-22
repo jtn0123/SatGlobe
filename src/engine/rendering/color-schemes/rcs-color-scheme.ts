@@ -106,7 +106,7 @@ export class RcsColorScheme extends ColorScheme {
     for (const sat of sats) {
       const rcs = estimateRcs(sat, this.catalogStats_);
 
-      if (rcs !== null && isFinite(rcs) && rcs > 0) {
+      if (rcs !== null && Number.isFinite(rcs) && rcs > 0) {
         rcsValues.push(rcs);
       }
     }
@@ -167,7 +167,7 @@ export class RcsColorScheme extends ColorScheme {
     const sat = obj as Satellite;
     const rcs = estimateRcs(sat, this.catalogStats_);
 
-    if (rcs === null || !isFinite(rcs) || rcs <= 0) {
+    if (rcs === null || !Number.isFinite(rcs) || rcs <= 0) {
       if (this.objectTypeFlags.rcsUnknown) {
         return {
           color: this.colorTheme.rcsUnknown,

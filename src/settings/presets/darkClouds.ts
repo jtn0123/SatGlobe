@@ -109,7 +109,7 @@ export const darkClouds = (settingsManager: SettingsManager) => {
     ServiceLocator.getUiManager().dismissAllToasts(); // Dismiss All Toast Messages (workaround to avoid animations)
     const satellitesSpan = `<span style="color: rgb(35, 255, 35);">${t7e('darkClouds.satellites')}</span>`;
     const debrisSpan = `<span style="color: rgb(255, 255, 35);">${t7e('darkClouds.debris')}</span>`;
-    const yearPrefix = parseInt(yearStr) < 57 ? '20' : '19';
+    const yearPrefix = Number.parseInt(yearStr) < 57 ? '20' : '19';
     let inYearString = `${t7e('darkClouds.in')} ${yearPrefix}${yearStr}`;
 
     if (i18next.language === 'zh') {

@@ -77,7 +77,7 @@ export class ObservationOptical extends Observation {
     const slantRange = offset.magnitude();
     const theta = actual.angle(expected);
 
-    if (isNaN(theta)) {
+    if (Number.isNaN(theta)) {
       return 0.0;
     }
 

@@ -477,7 +477,7 @@ export class Satellite extends SpaceObject {
       },
     };
 
-    this.epochYear = parseInt(YYYY.slice(2, 4));
+    this.epochYear = Number.parseInt(YYYY.slice(2, 4));
     this.epochDay = dayOfYear;
     this.meanMoDev1 = Number(omm.MEAN_MOTION_DOT);
     this.meanMoDev2 = Number(omm.MEAN_MOTION_DDOT);
@@ -549,13 +549,13 @@ export class Satellite extends SpaceObject {
    */
   static isValidSatrec(satrec: SatelliteRecord): boolean {
     if (
-      isNaN(satrec.a) ||
-      isNaN(satrec.am) ||
-      isNaN(satrec.alta) ||
-      isNaN(satrec.em) ||
-      isNaN(satrec.mo) ||
-      isNaN(satrec.ecco) ||
-      isNaN(satrec.no)
+      Number.isNaN(satrec.a) ||
+      Number.isNaN(satrec.am) ||
+      Number.isNaN(satrec.alta) ||
+      Number.isNaN(satrec.em) ||
+      Number.isNaN(satrec.mo) ||
+      Number.isNaN(satrec.ecco) ||
+      Number.isNaN(satrec.no)
     ) {
       return false;
     }
@@ -1429,7 +1429,7 @@ export class Satellite extends SpaceObject {
 
     // Check if positions are identical
     if (pos1.x === pos2.x && pos1.y === pos2.y && pos1.z === pos2.z) {
-      return NaN as Radians;
+      return Number.NaN as Radians;
     }
 
     // Compute vectors from sat2 to sun and sat2 to sat1

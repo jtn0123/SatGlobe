@@ -57,9 +57,9 @@ export function getFreeAnalystScc(): string | null {
       continue;
     }
 
-    const num = parseInt(sat.sccNum, 10);
+    const num = Number.parseInt(sat.sccNum, 10);
 
-    if (!isNaN(num) && num >= 90_000 && num <= 99_999 && (lowest === null || num < lowest)) {
+    if (!Number.isNaN(num) && num >= 90_000 && num <= 99_999 && (lowest === null || num < lowest)) {
       lowest = num;
     }
   }
@@ -110,14 +110,14 @@ export function applyOrbitPreset(prefix: string, presetId: OrbitPresetId): void 
  * @returns false if the mean motion is missing/invalid.
  */
 export function applySunSyncInclination(prefix: string): boolean {
-  const meanmo = parseFloat((getEl(`${prefix}-meanmo`, true) as HTMLInputElement | null)?.value ?? '');
-  const ecenRaw = parseInt((getEl(`${prefix}-ecen`, true) as HTMLInputElement | null)?.value ?? '', 10) / 1e7;
+  const meanmo = Number.parseFloat((getEl(`${prefix}-meanmo`, true) as HTMLInputElement | null)?.value ?? '');
+  const ecenRaw = Number.parseInt((getEl(`${prefix}-ecen`, true) as HTMLInputElement | null)?.value ?? '', 10) / 1e7;
 
-  if (isNaN(meanmo) || meanmo <= 0) {
+  if (Number.isNaN(meanmo) || meanmo <= 0) {
     return false;
   }
 
-  const ecc = isNaN(ecenRaw) ? 0 : ecenRaw;
+  const ecc = Number.isNaN(ecenRaw) ? 0 : ecenRaw;
   const n = (meanmo * 2 * Math.PI) / 86_400; // rad/s
   const sma = (Earth.mu / (n * n)) ** (1 / 3); // km
   const meanAltKm = sma - Earth.radiusEquator;
@@ -189,14 +189,14 @@ export function cloneSelectedSatellite(prefix: string): boolean {
  */
 export function buildPreviewTleFromForm(prefix: string): { tle1: TleLine1; tle2: TleLine2 } | null {
   const v = (id: string): string => (getEl(`${prefix}-${id}`, true) as HTMLInputElement | null)?.value?.trim() ?? '';
-  const inc = parseFloat(v('inc'));
-  const meanmo = parseFloat(v('meanmo'));
-  const rasc = parseFloat(v('rasc'));
-  const argPe = parseFloat(v('argPe'));
-  const meana = parseFloat(v('meana'));
-  const ecen = parseInt(v('ecen'), 10) / 1e7;
+  const inc = Number.parseFloat(v('inc'));
+  const meanmo = Number.parseFloat(v('meanmo'));
+  const rasc = Number.parseFloat(v('rasc'));
+  const argPe = Number.parseFloat(v('argPe'));
+  const meana = Number.parseFloat(v('meana'));
+  const ecen = Number.parseInt(v('ecen'), 10) / 1e7;
 
-  if ([inc, meanmo, rasc, argPe, meana].some(isNaN) || isNaN(ecen) || meanmo <= 0 || ecen < 0 || ecen >= 1) {
+  if ([inc, meanmo, rasc, argPe, meana].some(Number.isNaN) || Number.isNaN(ecen) || meanmo <= 0 || ecen < 0 || ecen >= 1) {
     return null;
   }
 

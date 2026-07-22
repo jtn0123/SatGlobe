@@ -154,7 +154,7 @@ const attachToggleListeners_ = (c: ISettingToggleControl, el: HTMLInputElement):
 
 const attachNumberListeners_ = (c: ISettingNumberControl, el: HTMLInputElement): void => {
   el.addEventListener('change', () => {
-    const parsed = parseFloat(el.value);
+    const parsed = Number.parseFloat(el.value);
 
     if (Number.isNaN(parsed)) {
       el.value = String(c.get());

@@ -212,24 +212,24 @@ export function parseBreakupParams(
   raw: BreakupRawForm,
   defaultStartNum: number,
 ): { params: BreakupVariationParams; startNumWasInvalid: boolean } {
-  const breakupCount = parseInt(raw.count);
-  const radialDeltaV = parseFloat(raw.radialDv);
-  const inTrackDeltaV = parseFloat(raw.inTrackDv);
-  const crossTrackDeltaV = parseFloat(raw.crossTrackDv);
-  let startNum = parseInt(raw.startNum);
+  const breakupCount = Number.parseInt(raw.count);
+  const radialDeltaV = Number.parseFloat(raw.radialDv);
+  const inTrackDeltaV = Number.parseFloat(raw.inTrackDv);
+  const crossTrackDeltaV = Number.parseFloat(raw.crossTrackDv);
+  let startNum = Number.parseInt(raw.startNum);
   let startNumWasInvalid = false;
 
-  if (isNaN(startNum)) {
+  if (Number.isNaN(startNum)) {
     startNum = defaultStartNum;
     startNumWasInvalid = true;
   }
 
   // Negative spreads are meaningless (the distribution is already symmetric); floor at 0.
-  const nonNeg = (n: number) => (isNaN(n) ? 0 : Math.max(0, n));
+  const nonNeg = (n: number) => (Number.isNaN(n) ? 0 : Math.max(0, n));
 
   return {
     params: {
-      breakupCount: isNaN(breakupCount) ? 0 : breakupCount,
+      breakupCount: Number.isNaN(breakupCount) ? 0 : breakupCount,
       radialDeltaV: nonNeg(radialDeltaV),
       inTrackDeltaV: nonNeg(inTrackDeltaV),
       crossTrackDeltaV: nonNeg(crossTrackDeltaV),
@@ -340,7 +340,7 @@ export function buildFragmentTle(
   // (it would reenter). Such a state has a mean motion the TLE format can't hold
   // (the parser rejects > 18 rev/day, ~sub-orbital). Reject it here so the caller
   // skips this fragment instead of throwing deep inside the Satellite constructor.
-  const meanMotion = parseFloat(fit.tle2.substring(52, 63));
+  const meanMotion = Number.parseFloat(fit.tle2.substring(52, 63));
 
   if (!(meanMotion > 0 && meanMotion <= MAX_TLE_MEAN_MOTION)) {
     throw new Error(`Fragment is sub-orbital (mean motion ${meanMotion.toFixed(2)} rev/day) and would reenter`);

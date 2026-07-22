@@ -427,9 +427,9 @@ export class OdmExporter {
    */
   private static getEphemerisType_(satellite: Satellite): number {
     if (satellite.tle1) {
-      const val = parseInt(satellite.tle1.charAt(62), 10);
+      const val = Number.parseInt(satellite.tle1.charAt(62), 10);
 
-      return isNaN(val) ? 0 : val;
+      return Number.isNaN(val) ? 0 : val;
     }
 
     return 0;
@@ -453,9 +453,9 @@ export class OdmExporter {
    */
   private static getElementSetNo_(satellite: Satellite): number {
     if (satellite.tle1) {
-      const val = parseInt(satellite.tle1.substring(64, 68).trim(), 10);
+      const val = Number.parseInt(satellite.tle1.substring(64, 68).trim(), 10);
 
-      return isNaN(val) ? 999 : val;
+      return Number.isNaN(val) ? 999 : val;
     }
 
     return 999;
@@ -466,9 +466,9 @@ export class OdmExporter {
    */
   private static getRevAtEpoch_(satellite: Satellite): number {
     if (satellite.tle2) {
-      const val = parseInt(satellite.tle2.substring(63, 68).trim(), 10);
+      const val = Number.parseInt(satellite.tle2.substring(63, 68).trim(), 10);
 
-      return isNaN(val) ? 0 : val;
+      return Number.isNaN(val) ? 0 : val;
     }
 
     return 0;

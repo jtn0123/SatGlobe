@@ -619,9 +619,9 @@ export class OmmParser {
       throw new ParseError(`Missing required ${key} field`, 'OMM');
     }
 
-    const parsed = parseFloat(value);
+    const parsed = Number.parseFloat(value);
 
-    if (isNaN(parsed)) {
+    if (Number.isNaN(parsed)) {
       throw new ParseError(`Invalid numeric value for ${key}: ${value}`, 'OMM');
     }
 
@@ -638,9 +638,9 @@ export class OmmParser {
       return undefined;
     }
 
-    const parsed = parseFloat(value);
+    const parsed = Number.parseFloat(value);
 
-    return isNaN(parsed) ? undefined : parsed;
+    return Number.isNaN(parsed) ? undefined : parsed;
   }
 
   /**
@@ -653,9 +653,9 @@ export class OmmParser {
       return undefined;
     }
 
-    const parsed = parseInt(value, 10);
+    const parsed = Number.parseInt(value, 10);
 
-    return isNaN(parsed) ? undefined : parsed;
+    return Number.isNaN(parsed) ? undefined : parsed;
   }
 
   /**

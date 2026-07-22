@@ -496,13 +496,13 @@ export class SettingsManager {
     this.isDrawSun = PersistenceManager.getInstance().checkIfEnabled(StorageKey.SETTINGS_DRAW_SUN, this.isDrawSun) as boolean;
     this.isDrawCovarianceEllipsoid = PersistenceManager.getInstance().checkIfEnabled(StorageKey.SETTINGS_DRAW_COVARIANCE_ELLIPSOID, this.isDrawCovarianceEllipsoid) as boolean;
 
-    const storedConfidence = parseInt(PersistenceManager.getInstance().getItem(StorageKey.SETTINGS_COVARIANCE_CONFIDENCE_LEVEL) ?? '', 10);
+    const storedConfidence = Number.parseInt(PersistenceManager.getInstance().getItem(StorageKey.SETTINGS_COVARIANCE_CONFIDENCE_LEVEL) ?? '', 10);
 
     if (storedConfidence >= 1 && storedConfidence <= 3) {
       this.covarianceConfidenceLevel = storedConfidence;
     }
     this.isBlackEarth = PersistenceManager.getInstance().checkIfEnabled(StorageKey.SETTINGS_DRAW_BLACK_EARTH, this.isBlackEarth) as boolean;
-    this.isDrawAtmosphere = parseInt(PersistenceManager.getInstance().getItem(StorageKey.SETTINGS_DRAW_ATMOSPHERE) ?? '1') as AtmosphereSettings;
+    this.isDrawAtmosphere = Number.parseInt(PersistenceManager.getInstance().getItem(StorageKey.SETTINGS_DRAW_ATMOSPHERE) ?? '1') as AtmosphereSettings;
     this.isDrawAurora = PersistenceManager.getInstance().checkIfEnabled(StorageKey.SETTINGS_DRAW_AURORA, this.isDrawAurora) as boolean;
     this.isDrawGraticule = PersistenceManager.getInstance().checkIfEnabled(StorageKey.SETTINGS_DRAW_GRATICULE, this.isDrawGraticule) as boolean;
     this.isDrawFlatMapTerminator =
@@ -519,7 +519,7 @@ export class SettingsManager {
     const satLabelModeV2String = PersistenceManager.getInstance().getItem(StorageKey.SETTINGS_SAT_LABEL_MODE_V2);
 
     if (satLabelModeV2String !== null) {
-      this.satLabelMode = parseInt(satLabelModeV2String) as SatLabelMode;
+      this.satLabelMode = Number.parseInt(satLabelModeV2String) as SatLabelMode;
     } else {
       // Migrate from old boolean key
       const oldLabelMode = PersistenceManager.getInstance().checkIfEnabled(StorageKey.SETTINGS_SAT_LABEL_MODE, true) as boolean;

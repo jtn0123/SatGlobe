@@ -61,8 +61,8 @@ export function parseEphemerisParams(
   rawSpanHours: string | null | undefined,
   rawStepSec: string | null | undefined,
 ): EphemerisParseResult {
-  let spanHours = parseFloat(rawSpanHours ?? '');
-  let stepSec = parseFloat(rawStepSec ?? '');
+  let spanHours = Number.parseFloat(rawSpanHours ?? '');
+  let stepSec = Number.parseFloat(rawStepSec ?? '');
 
   // `!(x > 0)` rejects NaN, 0, and negatives in one check.
   if (!(spanHours > 0)) {

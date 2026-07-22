@@ -246,15 +246,15 @@ export class ConstellationGenerator {
     const colonParts = trimmed.split(':');
 
     if (colonParts.length === 3) {
-      const altitude = parseFloat(colonParts[0]);
-      const inclination = parseFloat(colonParts[1]);
+      const altitude = Number.parseFloat(colonParts[0]);
+      const inclination = Number.parseFloat(colonParts[1]);
       const walkerPart = colonParts[2];
 
-      if (isNaN(altitude)) {
+      if (Number.isNaN(altitude)) {
         throw new ValidationError('Invalid altitude in pattern', 'pattern', pattern);
       }
 
-      if (isNaN(inclination)) {
+      if (Number.isNaN(inclination)) {
         throw new ValidationError('Invalid inclination in pattern', 'pattern', pattern);
       }
 
@@ -286,11 +286,11 @@ export class ConstellationGenerator {
       );
     }
 
-    const totalSats = parseInt(parts[0], 10);
-    const planes = parseInt(parts[1], 10);
-    const phasing = parseInt(parts[2], 10);
+    const totalSats = Number.parseInt(parts[0], 10);
+    const planes = Number.parseInt(parts[1], 10);
+    const phasing = Number.parseInt(parts[2], 10);
 
-    if (isNaN(totalSats) || isNaN(planes) || isNaN(phasing)) {
+    if (Number.isNaN(totalSats) || Number.isNaN(planes) || Number.isNaN(phasing)) {
       throw new ValidationError('Walker pattern values must be integers', 'pattern', originalPattern);
     }
 

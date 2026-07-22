@@ -87,7 +87,7 @@ const uiManagerFinal = () => {
     const hiddenRow = (<any>evt.currentTarget).attributes.hiddenrow.value;
 
     if (hiddenRow !== null) {
-      satChng(parseInt(hiddenRow));
+      satChng(Number.parseInt(hiddenRow));
     }
   });
 };
@@ -164,7 +164,7 @@ export const getSatChngJson = (json) => {
   }
   for (const element of json) {
     const prefix = element.year > 50 ? '19' : '20';
-    const year = parseInt(prefix + element.year.toString());
+    const year = Number.parseInt(prefix + element.year.toString());
     let date = dateFromJday(year, element.day);
 
     date = new Date(date.getTime() + (element.day % 1) * 1440 * 60000);

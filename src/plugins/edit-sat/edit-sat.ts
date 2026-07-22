@@ -233,7 +233,7 @@ export class EditSat extends KeepTrackPlugin {
       if (per === '') {
         return;
       }
-      (<HTMLInputElement>getEl(`${p}-meanmo`)).value = (1440 / parseFloat(per)).toFixed(4);
+      (<HTMLInputElement>getEl(`${p}-meanmo`)).value = (1440 / Number.parseFloat(per)).toFixed(4);
       this.onElementInput_();
     });
 
@@ -243,7 +243,7 @@ export class EditSat extends KeepTrackPlugin {
       if (meanmo === '') {
         return;
       }
-      (<HTMLInputElement>getEl(`${p}-per`)).value = (1440 / parseFloat(meanmo)).toFixed(4);
+      (<HTMLInputElement>getEl(`${p}-per`)).value = (1440 / Number.parseFloat(meanmo)).toFixed(4);
       this.onElementInput_();
     });
   }
@@ -288,7 +288,7 @@ export class EditSat extends KeepTrackPlugin {
     (<HTMLInputElement>getEl(`${p}-year`)).value = sat.tle1.substr(18, 2);
     (<HTMLInputElement>getEl(`${p}-day`)).value = sat.tle1.substr(20, 12);
     (<HTMLInputElement>getEl(`${p}-meanmo`)).value = sat.tle2.substr(52, 11);
-    (<HTMLInputElement>getEl(`${p}-per`)).value = (1440 / parseFloat(sat.tle2.substr(52, 11))).toFixed(4);
+    (<HTMLInputElement>getEl(`${p}-per`)).value = (1440 / Number.parseFloat(sat.tle2.substr(52, 11))).toFixed(4);
 
     const rasc = sat.rightAscension.toFixed(4).padStart(8, '0');
 
@@ -331,10 +331,10 @@ export class EditSat extends KeepTrackPlugin {
   /** Recompute the read-only apogee/perigee/period readout from the form. */
   private updateDerived_(): void {
     const p = EditSat.elementPrefix;
-    const meanmo = parseFloat((<HTMLInputElement>getEl(`${p}-meanmo`)).value);
-    const ecen = parseInt((<HTMLInputElement>getEl(`${p}-ecen`)).value, 10) / 1e7;
+    const meanmo = Number.parseFloat((<HTMLInputElement>getEl(`${p}-meanmo`)).value);
+    const ecen = Number.parseInt((<HTMLInputElement>getEl(`${p}-ecen`)).value, 10) / 1e7;
 
-    if (isNaN(meanmo) || meanmo <= 0 || isNaN(ecen)) {
+    if (Number.isNaN(meanmo) || meanmo <= 0 || Number.isNaN(ecen)) {
       return;
     }
 

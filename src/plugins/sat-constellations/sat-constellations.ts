@@ -661,7 +661,7 @@ export class SatConstellations extends KeepTrackPlugin {
       const satId = tr?.dataset.satId;
 
       if (satId) {
-        PluginRegistry.getPlugin(SelectSatManager)?.selectSat(parseInt(satId));
+        PluginRegistry.getPlugin(SelectSatManager)?.selectSat(Number.parseInt(satId));
       }
     });
   }
@@ -681,12 +681,12 @@ export class SatConstellations extends KeepTrackPlugin {
       return;
     }
 
-    const incMin = parseFloat((getEl('sc-filter-inc-min') as HTMLInputElement)?.value) || 0;
-    const incMax = parseFloat((getEl('sc-filter-inc-max') as HTMLInputElement)?.value) || 180;
-    const altMin = parseFloat((getEl('sc-filter-alt-min') as HTMLInputElement)?.value) || 0;
-    const altMax = parseFloat((getEl('sc-filter-alt-max') as HTMLInputElement)?.value) || 100000;
-    const raanMin = parseFloat((getEl('sc-filter-raan-min') as HTMLInputElement)?.value) || 0;
-    const raanMax = parseFloat((getEl('sc-filter-raan-max') as HTMLInputElement)?.value) || 360;
+    const incMin = Number.parseFloat((getEl('sc-filter-inc-min') as HTMLInputElement)?.value) || 0;
+    const incMax = Number.parseFloat((getEl('sc-filter-inc-max') as HTMLInputElement)?.value) || 180;
+    const altMin = Number.parseFloat((getEl('sc-filter-alt-min') as HTMLInputElement)?.value) || 0;
+    const altMax = Number.parseFloat((getEl('sc-filter-alt-max') as HTMLInputElement)?.value) || 100000;
+    const raanMin = Number.parseFloat((getEl('sc-filter-raan-min') as HTMLInputElement)?.value) || 0;
+    const raanMax = Number.parseFloat((getEl('sc-filter-raan-max') as HTMLInputElement)?.value) || 360;
     const nameFilter = (getEl('sc-filter-name') as HTMLInputElement)?.value || '';
 
     let nameRegex: RegExp | null = null;

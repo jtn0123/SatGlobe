@@ -52,7 +52,7 @@ export class DateTimeManager extends KeepTrackPlugin {
   }
 
   updateDateTime(date: Date) {
-    if (!date || isNaN(date.getTime())) {
+    if (!date || Number.isNaN(date.getTime())) {
       return;
     }
 

@@ -229,7 +229,7 @@ export class DopsPlugin extends KeepTrackPlugin {
           let latLon = inputManager.mouse.latLon;
           const dragPosition = inputManager.mouse.dragPosition;
 
-          if (typeof latLon === 'undefined' || isNaN(latLon.lat) || isNaN(latLon.lon)) {
+          if (typeof latLon === 'undefined' || Number.isNaN(latLon.lat) || Number.isNaN(latLon.lon)) {
             errorManagerInstance.debug('latLon undefined!');
             const gmst = ServiceLocator.getTimeManager().gmst;
 
@@ -263,7 +263,7 @@ export class DopsPlugin extends KeepTrackPlugin {
       case 'dops-24dops-rmb': {
         const latLon = ServiceLocator.getInputManager().mouse.latLon;
 
-        if (typeof latLon === 'undefined' || isNaN(latLon.lat) || isNaN(latLon.lon)) {
+        if (typeof latLon === 'undefined' || Number.isNaN(latLon.lat) || Number.isNaN(latLon.lon)) {
           errorManagerInstance.warn(t7e('plugins.DopsPlugin.errorMsgs.invalidLocation'));
 
           return;
@@ -310,7 +310,7 @@ export class DopsPlugin extends KeepTrackPlugin {
    * Override in pro plugin to return a terrain-aware function.
    */
   protected getElevationMask_(): Degrees | ElevationMaskFn {
-    return <Degrees>parseFloat((<HTMLInputElement>getEl('dops-el')).value);
+    return <Degrees>Number.parseFloat((<HTMLInputElement>getEl('dops-el')).value);
   }
 
   protected updateSideMenu(): void {
@@ -318,9 +318,9 @@ export class DopsPlugin extends KeepTrackPlugin {
     const catalogManagerInstance = ServiceLocator.getCatalogManager();
     const timeManagerInstance = ServiceLocator.getTimeManager();
 
-    const lat = <Degrees>parseFloat((<HTMLInputElement>getEl('dops-lat')).value);
-    const lon = <Degrees>parseFloat((<HTMLInputElement>getEl('dops-lon')).value);
-    const alt = <Kilometers>parseFloat((<HTMLInputElement>getEl('dops-alt')).value);
+    const lat = <Degrees>Number.parseFloat((<HTMLInputElement>getEl('dops-lat')).value);
+    const lon = <Degrees>Number.parseFloat((<HTMLInputElement>getEl('dops-lon')).value);
+    const alt = <Kilometers>Number.parseFloat((<HTMLInputElement>getEl('dops-alt')).value);
 
     if (!isValidLocation(lat, lon, alt)) {
       ServiceLocator.getUiManager().toast(t7e('plugins.DopsPlugin.errorMsgs.invalidLocation'), ToastMsgType.caution);

@@ -297,7 +297,7 @@ export class ProximityOps extends KeepTrackPlugin {
         return;
       }
 
-      const row = parseInt((<HTMLElement>tr).dataset.row ?? '', 10);
+      const row = Number.parseInt((<HTMLElement>tr).dataset.row ?? '', 10);
 
       if (Number.isNaN(row)) {
         return;
@@ -407,9 +407,9 @@ export class ProximityOps extends KeepTrackPlugin {
   /** Build the (plain-number, clone-safe) search parameters from the current form. */
   private buildParams_(): RpoSearchParams {
     return {
-      maxDis: parseFloat(<StringifiedNumber>(<HTMLInputElement>getEl('proximity-ops-maxDis')).value) || 0,
-      maxVel: parseFloat(<StringifiedNumber>(<HTMLInputElement>getEl('proximity-ops-maxVel')).value) || 0,
-      durationSec: (parseFloat(<StringifiedNumber>(<HTMLInputElement>getEl('proximity-ops-duration')).value) || 0) * 60 ** 2,
+      maxDis: Number.parseFloat(<StringifiedNumber>(<HTMLInputElement>getEl('proximity-ops-maxDis')).value) || 0,
+      maxVel: Number.parseFloat(<StringifiedNumber>(<HTMLInputElement>getEl('proximity-ops-maxVel')).value) || 0,
+      durationSec: (Number.parseFloat(<StringifiedNumber>(<HTMLInputElement>getEl('proximity-ops-duration')).value) || 0) * 60 ** 2,
       baseTimeMs: this.timeManagerInstance.getOffsetTimeObj(0).getTime(),
       stepSeconds: DEFAULT_STEP_SECONDS,
       refineToleranceMs: DEFAULT_REFINE_TOLERANCE_MS,

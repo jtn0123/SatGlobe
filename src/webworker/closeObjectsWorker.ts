@@ -206,7 +206,7 @@ function handleStartSearch_(msg: CoMsgStartSearch): void {
         const p2 = propagateToTime_(sat2, time);
 
         if (!p1 || !p2) {
-          return NaN;
+          return Number.NaN;
         }
 
         return distance_(p1, p2);

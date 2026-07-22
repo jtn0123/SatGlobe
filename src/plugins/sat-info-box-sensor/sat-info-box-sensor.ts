@@ -250,7 +250,7 @@ export class SatInfoBoxSensor extends KeepTrackPlugin {
       const sensorManagerInstance = ServiceLocator.getSensorManager();
 
       if (obj instanceof Satellite) {
-        if (!obj.position?.x || !obj.position?.y || !obj.position?.z || isNaN(obj.position?.x) || isNaN(obj.position?.y) || isNaN(obj.position?.z)) {
+        if (!obj.position?.x || !obj.position?.y || !obj.position?.z || Number.isNaN(obj.position?.x) || Number.isNaN(obj.position?.y) || Number.isNaN(obj.position?.z)) {
           const newPosition = SatMath.getEci(obj, timeManagerInstance.simulationTimeObj).position as { x: number; y: number; z: number };
 
           if (!newPosition || (newPosition?.x === 0 && newPosition?.y === 0 && newPosition?.z === 0)) {

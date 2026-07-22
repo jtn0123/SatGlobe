@@ -596,26 +596,26 @@ export class FindSatPlugin extends KeepTrackPlugin {
 
   // eslint-disable-next-line require-await
   protected async findByLooksSubmit_(): Promise<void> {
-    const az = parseFloat((<HTMLInputElement>getEl('fbl-azimuth')).value);
-    const el = parseFloat((<HTMLInputElement>getEl('fbl-elevation')).value);
-    const rng = parseFloat((<HTMLInputElement>getEl('fbl-range')).value);
-    const inc = parseFloat((<HTMLInputElement>getEl('fbl-inc')).value);
-    const period = parseFloat((<HTMLInputElement>getEl('fbl-period')).value);
-    const tleAge = parseFloat((<HTMLInputElement>getEl('fbl-tleAge')).value);
-    const rcs = parseFloat((<HTMLInputElement>getEl('fbl-rcs')).value);
-    const azMarg = parseFloat((<HTMLInputElement>getEl('fbl-azimuth-margin')).value);
-    const elMarg = parseFloat((<HTMLInputElement>getEl('fbl-elevation-margin')).value);
-    const rngMarg = parseFloat((<HTMLInputElement>getEl('fbl-range-margin')).value);
-    const incMarg = parseFloat((<HTMLInputElement>getEl('fbl-inc-margin')).value);
-    const periodMarg = parseFloat((<HTMLInputElement>getEl('fbl-period-margin')).value);
-    const tleAgeMarg = parseFloat((<HTMLInputElement>getEl('fbl-tleAge-margin')).value);
-    const rcsMarg = parseFloat((<HTMLInputElement>getEl('fbl-rcs-margin')).value);
-    const typeValues = FindSatPlugin.readMultiSelect_('fbl-type').map(Number).filter((n) => !isNaN(n));
+    const az = Number.parseFloat((<HTMLInputElement>getEl('fbl-azimuth')).value);
+    const el = Number.parseFloat((<HTMLInputElement>getEl('fbl-elevation')).value);
+    const rng = Number.parseFloat((<HTMLInputElement>getEl('fbl-range')).value);
+    const inc = Number.parseFloat((<HTMLInputElement>getEl('fbl-inc')).value);
+    const period = Number.parseFloat((<HTMLInputElement>getEl('fbl-period')).value);
+    const tleAge = Number.parseFloat((<HTMLInputElement>getEl('fbl-tleAge')).value);
+    const rcs = Number.parseFloat((<HTMLInputElement>getEl('fbl-rcs')).value);
+    const azMarg = Number.parseFloat((<HTMLInputElement>getEl('fbl-azimuth-margin')).value);
+    const elMarg = Number.parseFloat((<HTMLInputElement>getEl('fbl-elevation-margin')).value);
+    const rngMarg = Number.parseFloat((<HTMLInputElement>getEl('fbl-range-margin')).value);
+    const incMarg = Number.parseFloat((<HTMLInputElement>getEl('fbl-inc-margin')).value);
+    const periodMarg = Number.parseFloat((<HTMLInputElement>getEl('fbl-period-margin')).value);
+    const tleAgeMarg = Number.parseFloat((<HTMLInputElement>getEl('fbl-tleAge-margin')).value);
+    const rcsMarg = Number.parseFloat((<HTMLInputElement>getEl('fbl-rcs-margin')).value);
+    const typeValues = FindSatPlugin.readMultiSelect_('fbl-type').map(Number).filter((n) => !Number.isNaN(n));
     const objType = typeValues.length === 0 || typeValues.includes(0) ? 0 : typeValues;
-    const raan = parseFloat((<HTMLInputElement>getEl('fbl-raan')).value);
-    const raanMarg = parseFloat((<HTMLInputElement>getEl('fbl-raan-margin')).value);
-    const argPe = parseFloat((<HTMLInputElement>getEl('fbl-argPe')).value);
-    const argPeMarg = parseFloat((<HTMLInputElement>getEl('fbl-argPe-margin')).value);
+    const raan = Number.parseFloat((<HTMLInputElement>getEl('fbl-raan')).value);
+    const raanMarg = Number.parseFloat((<HTMLInputElement>getEl('fbl-raan-margin')).value);
+    const argPe = Number.parseFloat((<HTMLInputElement>getEl('fbl-argPe')).value);
+    const argPeMarg = Number.parseFloat((<HTMLInputElement>getEl('fbl-argPe-margin')).value);
     const countryValues = FindSatPlugin.readMultiSelect_('fbl-country');
     // Country option values are already pipe-joined code groups, so joining selections keeps the searchSats_ format
     const countryCode = countryValues.length === 0 || countryValues.includes('All') ? 'All' : countryValues.join('|');
@@ -654,7 +654,7 @@ export class FindSatPlugin extends KeepTrackPlugin {
     // Az/el/range are computed relative to the selected sensor, so a search that
     // uses them needs one. Block early with a clear message rather than letting
     // it throw deep in the look-angle math.
-    const needsSensor = [az, el, rng].some((value) => !isNaN(value) && isFinite(value));
+    const needsSensor = [az, el, rng].some((value) => !Number.isNaN(value) && Number.isFinite(value));
 
     this.runSearch_(searchParams, needsSensor);
   }
@@ -771,7 +771,7 @@ export class FindSatPlugin extends KeepTrackPlugin {
 
   /** True when a numeric parameter was actually supplied (not NaN / Infinity). */
   private static isNumericCriteria_(value: number): boolean {
-    return !isNaN(value) && isFinite(value);
+    return !Number.isNaN(value) && Number.isFinite(value);
   }
 
   /** Returns the supplied margin when valid, otherwise the provided fallback. */

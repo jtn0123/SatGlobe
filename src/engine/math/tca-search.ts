@@ -51,13 +51,13 @@ export const findTca = (
     return null;
   }
 
-  let bestT = NaN;
+  let bestT = Number.NaN;
   let bestD = Infinity;
 
   for (let t = startMs; t <= endMs; t += coarseStepMs) {
     const d = distFn(t);
 
-    if (isFinite(d) && d < bestD) {
+    if (Number.isFinite(d) && d < bestD) {
       bestD = d;
       bestT = t;
     }
@@ -66,12 +66,12 @@ export const findTca = (
   // Always sample the window end so the scan never misses the final segment
   const dEnd = distFn(endMs);
 
-  if (isFinite(dEnd) && dEnd < bestD) {
+  if (Number.isFinite(dEnd) && dEnd < bestD) {
     bestD = dEnd;
     bestT = endMs;
   }
 
-  if (isNaN(bestT)) {
+  if (Number.isNaN(bestT)) {
     return null;
   }
 
@@ -82,7 +82,7 @@ export const findTca = (
   const refinedD = distFn(refinedT);
 
   // Guard against a refinement landing on a failed-propagation sample
-  if (isFinite(refinedD) && refinedD <= bestD) {
+  if (Number.isFinite(refinedD) && refinedD <= bestD) {
     return { tcaMs: refinedT, missKm: refinedD };
   }
 

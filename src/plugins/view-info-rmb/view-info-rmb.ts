@@ -58,7 +58,7 @@ export class ViewInfoRmbPlugin extends KeepTrackPlugin {
           let latLon = ServiceLocator.getInputManager().mouse.latLon;
           const dragPosition = ServiceLocator.getInputManager().mouse.dragPosition;
 
-          if (typeof latLon === 'undefined' || isNaN(latLon.lat) || isNaN(latLon.lon)) {
+          if (typeof latLon === 'undefined' || Number.isNaN(latLon.lat) || Number.isNaN(latLon.lon)) {
             errorManagerInstance.debug('latLon undefined!');
             const gmst = ServiceLocator.getTimeManager().gmst;
 
