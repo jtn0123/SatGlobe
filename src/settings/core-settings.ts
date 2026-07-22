@@ -86,9 +86,18 @@ export class CoreSettings {
   /**
    * Asset base path for deployments hosted below the webserver root.
    * This remains part of the self-hosting and offline-loading contract until every asset loader
-   * uses a centralized runtime base URL.
+   * uses a centralized runtime base URL. Non-empty values are normalized to end in `/` because
+   * existing loaders append relative asset paths directly.
    */
-  installDirectory = '';
+  private installDirectory_ = '';
+
+  get installDirectory(): string {
+    return this.installDirectory_;
+  }
+
+  set installDirectory(value: string) {
+    this.installDirectory_ = value && !value.endsWith('/') ? `${value}/` : value;
+  }
   /** Flag to determine if external data is available */
   offlineMode = false;
   /** Controls how internet-dependent plugin icons behave when offline */

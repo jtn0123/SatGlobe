@@ -132,7 +132,7 @@ export class DetailedSensor extends GroundStation {
   system?: string;
   freqBand?: string;
 
-  // Serialized primary FOV scalar contract. getFieldOfView() only aggregates an attached OOTK sensor.
+  // Serialized primary FOV scalar contract. getFieldOfView() returns an attached OOTK sensor's single FOV.
   minAz: Degrees;
   maxAz: Degrees;
   minEl: Degrees;
@@ -140,7 +140,7 @@ export class DetailedSensor extends GroundStation {
   minRng: Kilometers;
   maxRng: Kilometers;
 
-  // Serialized secondary FOV scalar contract for multi-face sensors.
+  // Serialized secondary FOV scalar contract for multi-face sensors. getFaceFovs() returns attached per-face FOVs.
   minAz2?: Degrees;
   maxAz2?: Degrees;
   minEl2?: Degrees;
