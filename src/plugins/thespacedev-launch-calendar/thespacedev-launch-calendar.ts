@@ -318,12 +318,12 @@ export class TheSpaceDevLaunchCalendarPlugin extends KeepTrackPlugin {
       if (launchLibResult.last_updated !== undefined) {
         launchInfo.updated = new Date(launchLibResult.last_updated);
       }
-      launchInfo.name = launchLibResult.name !== undefined ? launchLibResult.name : l('msgs.unknown');
+      launchInfo.name = launchLibResult.name ?? l('msgs.unknown');
       launchInfo.location = launchLibResult.pad?.location?.name.split(',', 1)[0] ?? l('msgs.unknown');
       launchInfo.locationURL = launchLibResult.pad?.wiki_url ?? '';
       if (launchLibResult.launch_service_provider !== undefined) {
-        launchInfo.agency = launchLibResult.launch_service_provider.name !== undefined ? launchLibResult.launch_service_provider.name : l('msgs.unknown');
-        launchInfo.country = launchLibResult.launch_service_provider.country_code !== undefined ? launchLibResult.launch_service_provider.country_code : l('msgs.unknown');
+        launchInfo.agency = launchLibResult.launch_service_provider.name ?? l('msgs.unknown');
+        launchInfo.country = launchLibResult.launch_service_provider.country_code ?? l('msgs.unknown');
         if (launchLibResult.launch_service_provider.wiki_url !== undefined) {
           launchInfo.agencyURL = launchLibResult.launch_service_provider.wiki_url;
         }

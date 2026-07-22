@@ -1132,7 +1132,7 @@ export class ColorSchemeManager {
   private setSelectedAndHoverBuffer_() {
     const selSat = PluginRegistry.getPlugin(SelectSatManager)?.selectedSat;
 
-    this.lastOverlaidSel_ = selSat === undefined ? -1 : selSat;
+    this.lastOverlaidSel_ = selSat ?? -1;
     this.lastOverlaidHover_ = -1;
     if (selSat !== undefined && selSat !== -1) {
       // Selected satellites are always one color so forget whatever we just did

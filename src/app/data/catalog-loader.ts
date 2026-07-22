@@ -1473,12 +1473,8 @@ export class CatalogLoader {
       return;
     }
 
-    if (element.ON === undefined) {
-      element.ON = 'Unknown';
-    }
-    if (element.OT === undefined) {
-      element.OT = SpaceObjectType.UNKNOWN;
-    }
+    element.ON ??= 'Unknown';
+    element.OT ??= SpaceObjectType.UNKNOWN;
     const intlDes = this.parseIntlDes_(element.TLE1);
     // sccNum here is the display-canonical numeric form (6-digit for alpha-5
     // inputs, passthrough otherwise). The Satellite class itself enforces

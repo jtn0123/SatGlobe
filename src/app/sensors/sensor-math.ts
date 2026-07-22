@@ -164,7 +164,7 @@ export class SensorMath {
     const sensor = sensors[0];
 
     // Set default timing settings. These will be changed to find look angles at different times in future.
-    const now = propTime !== undefined ? propTime : timeManagerInstance.simulationTimeObj;
+    const now = propTime ?? timeManagerInstance.simulationTimeObj;
     const { m, gmst } = SatMath.calculateTimeVariables(now, sat.satrec);
     const positionEci = <TemeVec3>Sgp4.propagate(sat.satrec, m!).position;
 

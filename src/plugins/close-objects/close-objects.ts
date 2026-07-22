@@ -325,9 +325,7 @@ export class CloseObjectsPlugin extends KeepTrackPlugin {
         continue;
       }
 
-      if (sat.position === undefined) {
-        sat.position = <TemeVec3>SatMath.getEci(sat, new Date()).position || { x: <Kilometers>0, y: <Kilometers>0, z: <Kilometers>0 };
-      }
+      sat.position ??= <TemeVec3>SatMath.getEci(sat, new Date()).position || { x: <Kilometers>0, y: <Kilometers>0, z: <Kilometers>0 };
 
       if (Number.isNaN(sat.position.x) || Number.isNaN(sat.position.y) || Number.isNaN(sat.position.z)) {
         continue;

@@ -1178,9 +1178,7 @@ export class Missile {
       return null;
     }
 
-    if (minAltitude === undefined) {
-      minAltitude = 0;
-    }
+    minAltitude ??= 0;
 
     // This function will calculate the path the rocket will take in terms of coordinates
     const LatList: number[] = [];

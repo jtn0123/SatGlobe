@@ -338,7 +338,7 @@ export class MeshManager {
 
   private updateModel_(selectedDate: Date, obj: BaseObject) {
     try {
-      this.currentMeshObject.id = obj?.id !== undefined ? obj.id : -1;
+      this.currentMeshObject.id = obj?.id ?? -1;
 
       if (this.currentMeshObject.id === undefined || this.currentMeshObject.id === -1) {
         return;
