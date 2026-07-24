@@ -1,6 +1,6 @@
 # SatGlobe roadmap and recovery ledger
 
-Last updated: 2026-07-24T06:09:51Z
+Last updated: 2026-07-24T06:16:17Z
 
 This file is the durable product roadmap and the live ledger for the approved
 legacy-work recovery. It is intentionally Markdown so every decision, test
@@ -243,6 +243,8 @@ reachable from `main`, an archive ref, or a verified replacement commit.
 | 2026-07-24T05:58:42Z | `0ecddc01` | Exact recovery-lane and Sonar-branch archive refs | Verified | Seven temporary lane tips and the independent two-commit Sonar branch are now reachable from exact named archive refs; no worktree or branch was removed before this preservation check |
 | 2026-07-24T06:07:13Z | `352149c4` | Git-native worktree and branch cleanup | Verified | Two worktrees remain: root `main` at `7c67dd20` and the clean recovery worktree. Only local/remote `main` and consolidation heads remain; seven lanes, the guided worktree, old first-play, merged PR #70, and PR #51–#68 heads were removed after exact archival. Existing root `.Codex` audit artifacts were preserved untouched |
 | 2026-07-24T06:09:51Z | `4e8a6a2d` | Final ledger, dependency-input, diff, and main-integration checks | Verified | Performance ledger remains valid with zero accepted current records and two governed profiles; the full PR diff passes `git diff --check`; branch is 0 behind current `origin/main`; `package.json` and `package-lock.json` are unchanged from the already verified zero-vulnerability production audit at `45490afb` |
+| 2026-07-24T06:14:24Z | `a79f01fe` | GitHub run `30071492608`, performance-contract job `89413590264` | Blocked | The new isolated job ran Vitest after `npm ci --ignore-scripts` without first generating locale JSON; shared Vitest setup imported app settings and failed on missing `src/locales/fr.json` before executing any policy test |
+| 2026-07-24T06:16:17Z | `42814e7f` | Performance-job locale prerequisite and exact local replay | Verified | Added the same `npm run generate-t7e` prerequisite used by existing test jobs. Locale generation, the exact four-test policy command, focused tooling lint, base-aware ledger validation, and `git diff --check` all passed; no budget or policy changed |
 
 Every later validation entry must identify the exact tested commit. Raw
 benchmark and story artifacts remain ignored; governed evidence is committed
