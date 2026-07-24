@@ -1,6 +1,6 @@
 # SatGlobe roadmap and recovery ledger
 
-Last updated: 2026-07-24T04:53:52Z
+Last updated: 2026-07-24T04:57:31Z
 
 This file is the durable product roadmap and the live ledger for the approved
 legacy-work recovery. It is intentionally Markdown so every decision, test
@@ -205,6 +205,8 @@ reachable from `main`, an archive ref, or a verified replacement commit.
 | 2026-07-24T04:43:30Z | `40f7726f` | Eight legend, cohort, renderer-color, and integrated app suites plus strict SatGlobe typecheck | Verified | Eight files / 92 tests passed; strict typecheck passed with the inherited engine-import diagnostic filter only |
 | 2026-07-24T04:51:00Z | `b76a50a1` | SonarCloud PR #84 quality gate | Blocked | Reliability rating D from two new TypeScript S2871 findings: implicit string sorts in launch-year and source-label lists |
 | 2026-07-24T04:53:52Z | `45391d1b` | Explicit locale-aware sorting and focused launch explorer/cohort suites | Verified | Both Sonar findings fixed; two files / five tests passed; GitHub rescan remains pending |
+| 2026-07-24T04:53:28Z | `b76a50a1` | GitHub SatGlobe CI run `30067557968` | Blocked | Coverage, typecheck/lint/build, OOTK, CodeQL, and benchmark passed; offline E2E reported 13 passed plus one retry caused by a sub-pixel camera-settling assertion |
+| 2026-07-24T04:57:31Z | `ed26cf66` | E2E failure-log diagnosis and camera-stability assertion repair | Ported | Selection still must preserve camera intent; the test now waits for preceding easing to settle and tolerates only sub-pixel normalized drift. Final static E2E/CI rerun pending |
 
 Every later validation entry must identify the exact tested commit. Raw
 benchmark and story artifacts remain ignored; governed evidence is committed
@@ -236,6 +238,7 @@ executable imported content, or required WebGPU path is introduced.
 | 2026-07-24T04:39:46Z | `ecf5980a` | Publish the consolidated branch as draft PR #84 so CI and review can run before final readiness; draft status does not authorize merge | In progress |
 | 2026-07-24T04:43:30Z | `40f7726f` | Recover only first-play legend/cohort behavior that fits the current typed boundary; keep transient explorer state out of portable saved-view schema v1 | Ported |
 | 2026-07-24T04:53:52Z | `45391d1b` | Treat Sonar's two new implicit-sort reliability findings as attributable blockers and replace them with explicit locale-aware ordering | Verified |
+| 2026-07-24T04:57:31Z | `ed26cf66` | Keep CI's fail-on-flake policy; fix the unstable camera assertion by measuring settled product behavior rather than weakening or disabling the gate | Ported |
 
 ## After the recovery gate
 
