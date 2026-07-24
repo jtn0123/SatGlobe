@@ -271,6 +271,11 @@ export interface StoryBeat {
   orbitCatalogId?: string;
   /** Optional catalog objects whose propagated orbit lines make a multi-plane story subject legible. */
   orbitCatalogIds?: string[];
+  /**
+   * Optional cap of beat-filter-matched objects whose orbit lines are drawn,
+   * for subjects where stable catalog ids cannot be authored.
+   */
+  orbitMatchLimit?: number;
   /** Optional per-beat departures from DEFAULT_FILTERS (e.g. showing debris for a collision chapter). */
   filterOverrides?: Pick<Partial<FilterState>, 'objectKinds' | 'status' | 'regimes'>;
   reconstruction: 'observed' | 'reconstructed';

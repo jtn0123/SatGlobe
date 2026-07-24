@@ -77,6 +77,20 @@ describe('optional story beat controls', () => {
     expect(storyManifestV1Schema.safeParse(unsafe).success).toBe(false);
   });
 
+  it('bounds the filter-matched orbit cue limit to a small whole number', () => {
+    const story = structuredClone(starlinkBuildoutStory);
+
+    story.beats[0].orbitMatchLimit = 1;
+    expect(storyManifestV1Schema.parse(story).beats[0].orbitMatchLimit).toBe(1);
+    story.beats[0].orbitMatchLimit = 8;
+    expect(storyManifestV1Schema.parse(story).beats[0].orbitMatchLimit).toBe(8);
+
+    for (const orbitMatchLimit of [0, 9, 2.5, -1]) {
+      story.beats[0].orbitMatchLimit = orbitMatchLimit;
+      expect(storyManifestV1Schema.safeParse(story).success).toBe(false);
+    }
+  });
+
   it('rejects path-unsafe story, source, fact, and beat ids', () => {
     const invalidStory = structuredClone(starlinkBuildoutStory);
     const invalidSource = structuredClone(starlinkBuildoutStory);
@@ -143,7 +157,7 @@ describe('optional story beat controls', () => {
       ],
     };
     const parsed = storyManifestV1Schema.parse(legacy);
-    const optionalFields = ['launchCohort', 'simulationTimeOffsetHours', 'orbitCatalogId', 'orbitCatalogIds'] as const;
+    const optionalFields = ['launchCohort', 'simulationTimeOffsetHours', 'orbitCatalogId', 'orbitCatalogIds', 'orbitMatchLimit'] as const;
 
     expect(JSON.stringify(parsed)).toBe(JSON.stringify(legacy));
     expect(parsed.beats.every((beat) => optionalFields.every((field) => !Object.hasOwn(beat, field)))).toBe(true);

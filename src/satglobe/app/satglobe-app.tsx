@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { SatGlobeEngineAdapter } from '../engine/satglobe-engine-adapter';
+import { prepareFilterMatcher } from '../domain/filters';
 import { loadPersistedViews, persistViews } from '../domain/saved-view';
 import {
   DEFAULT_FILTERS,
@@ -30,11 +31,15 @@ import { TopBar } from './top-bar';
 import { type StoryPlaybackAction, type StoryPlaybackState, useStoryPlayback } from './use-story-playback';
 import { useLaunchTimelapse } from './use-launch-timelapse';
 import { usePlaylistLibrary } from './use-playlist-library';
+import { useReducedMotion } from './use-reduced-motion';
 import { useWorkshopFilters } from './use-workshop-filters';
 
 interface SatGlobeAppProps {
   readonly adapter: SatGlobeEngineAdapter;
 }
+
+/** Simulation acceleration while a story beat is actively playing. */
+const STORY_PLAYBACK_RATE = 60;
 
 /** Resolves portable story metadata without substituting an unrelated installed story. */
 function resolveSavedStory(view: SavedViewV1) {
@@ -62,19 +67,40 @@ function resolveSavedStory(view: SavedViewV1) {
   };
 }
 
-/** Builds a complete filter state and applies the optional sparse-subject orbit cue. */
+/** Builds a complete filter state and applies the optional sparse-subject orbit cues. */
 function applyStoryBeatVisuals(adapter: SatGlobeEngineAdapter, beat: StoryBeat): FilterState {
   adapter.clearOrbits();
+  const filters: FilterState = {
+    ...structuredClone(DEFAULT_FILTERS),
+    constellation: beat.constellation ?? '',
+    launchCohort: beat.launchCohort ?? '',
+    ...beat.filterOverrides,
+  };
   const orbitCatalogIds = new Set([
     ...(beat.orbitCatalogId ? [beat.orbitCatalogId] : []),
     ...(beat.orbitCatalogIds ?? []),
   ]);
 
+  if (beat.orbitMatchLimit) {
+    const matches = prepareFilterMatcher(filters);
+    let remaining = beat.orbitMatchLimit;
+
+    for (const object of adapter.getObjects()) {
+      if (remaining === 0) {
+        break;
+      }
+      if (matches(object) && !orbitCatalogIds.has(object.catalogId)) {
+        orbitCatalogIds.add(object.catalogId);
+        remaining -= 1;
+      }
+    }
+  }
+
   for (const catalogId of orbitCatalogIds) {
     adapter.drawOrbit(catalogId);
   }
 
-  return { ...structuredClone(DEFAULT_FILTERS), constellation: beat.constellation ?? '', launchCohort: beat.launchCohort ?? '', ...beat.filterOverrides };
+  return filters;
 }
 
 /** Recovers the retained beat's fixed anchor when Story is reopened. */
@@ -111,10 +137,13 @@ function useQuickLensHandlers(
 interface ShortcutContext {
   mode: AppMode;
   beatIndex: number;
+  shortcutsOpen: boolean;
+  sourcesOpen: boolean;
   applyBeat: (index: number) => void;
   togglePlaying: () => void;
   toggleShortcuts: () => void;
   closeShortcuts: () => void;
+  closeSources: () => void;
   switchMode: (mode: AppMode) => void;
 }
 
@@ -147,8 +176,13 @@ function handleGlobalShortcut(event: KeyboardEvent, ctx: ShortcutContext): void 
   } else if (event.key === 'f') {
     ctx.switchMode(ctx.mode === 'presentation' ? 'workshop' : 'presentation');
   } else if (event.key === 'Escape') {
-    ctx.closeShortcuts();
-    ctx.switchMode('workshop');
+    if (ctx.shortcutsOpen) {
+      ctx.closeShortcuts();
+    } else if (ctx.mode === 'story' && ctx.sourcesOpen) {
+      ctx.closeSources();
+    } else {
+      ctx.switchMode('workshop');
+    }
   } else if (ctx.mode === 'story' && event.key === 'ArrowRight') {
     ctx.applyBeat(ctx.beatIndex + 1);
   } else if (ctx.mode === 'story' && event.key === 'ArrowLeft') {
@@ -178,6 +212,20 @@ function useStoryPlayingToggle(
     }
     dispatch({ type: 'togglePlaying' });
   }, [applyBeat, dispatch, playback.beatIndex, playback.playing, storyLength]);
+}
+
+/** Runs active Story playback as a visible time-lapse while respecting motion preferences. */
+function useStoryTimeLapse(adapter: SatGlobeEngineAdapter, mode: AppMode, playing: boolean): void {
+  const reducedMotion = useReducedMotion();
+
+  useEffect(() => {
+    if (mode !== 'story' || !playing || reducedMotion) {
+      return undefined;
+    }
+    adapter.setPlaybackRate(STORY_PLAYBACK_RATE);
+
+    return () => adapter.setPlaybackRate(1);
+  }, [adapter, mode, playing, reducedMotion]);
 }
 
 /** Coordinates SatGlobe's workshop, presentation, and story states. */
@@ -232,6 +280,8 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
   }, [adapter, setFiltersImmediate]);
 
   const { playback, dispatch, applyBeat } = useStoryPlayback(story, mode === 'story', onBeatApplied);
+
+  useStoryTimeLapse(adapter, mode, playback.playing);
   const changeStory = useCallback((id: string) => {
     if (id !== storyId) {
       storyTimeAnchorRef.current = adapter.getState().simulationTime;
@@ -287,17 +337,20 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
     const onKeyDown = (event: KeyboardEvent) => handleGlobalShortcut(event, {
       mode,
       beatIndex: playback.beatIndex,
+      shortcutsOpen: showShortcuts,
+      sourcesOpen: playback.showSources,
       applyBeat,
       togglePlaying,
       toggleShortcuts: () => setShowShortcuts((show) => !show),
       closeShortcuts: () => setShowShortcuts(false),
+      closeSources: toggleSources,
       switchMode,
     });
 
     window.addEventListener('keydown', onKeyDown);
 
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [applyBeat, mode, playback.beatIndex, switchMode, togglePlaying]);
+  }, [applyBeat, mode, playback.beatIndex, playback.showSources, showShortcuts, switchMode, togglePlaying, toggleSources]);
 
   const createView = useCallback((): SavedViewV1 => {
     /*

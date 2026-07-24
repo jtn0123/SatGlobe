@@ -99,6 +99,7 @@ const beatSchema = z.object({
     .max(12)
     .refine((ids) => new Set(ids).size === ids.length, 'Expected unique catalog ids')
     .optional(),
+  orbitMatchLimit: z.number().int().min(1).max(8).optional(),
   filterOverrides: z.object({
     objectKinds: z.array(z.enum(['payload', 'rocket-body', 'debris', 'other'])).min(1).optional(),
     status: z.enum(['all', 'active', 'inactive']).optional(),

@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_CAMERA, DEFAULT_FILTERS, type AvailableConjunctionState, type PlaylistV1, type SavedViewV1, type SpaceObjectView } from '../../domain/types';
 import { storyLibrary } from '../../stories';
@@ -67,6 +67,33 @@ function stubWebGl(available = true) {
   return vi.spyOn(window.HTMLCanvasElement.prototype, 'getContext').mockImplementation(
     () => (available ? {} as WebGL2RenderingContext : null),
   );
+}
+
+/** Supplies a live reduced-motion preference to shell-level playback tests. */
+function stubMotion(reducedMotion: boolean) {
+  let matches = reducedMotion;
+  const listeners = new Set<() => void>();
+  const mediaQuery = {
+    get matches() {
+      return matches;
+    },
+    media: '(prefers-reduced-motion: reduce)',
+    onchange: null,
+    addEventListener: vi.fn((_type: string, listener: () => void) => listeners.add(listener)),
+    removeEventListener: vi.fn((_type: string, listener: () => void) => listeners.delete(listener)),
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  };
+
+  vi.spyOn(window, 'matchMedia').mockImplementation(() => mediaQuery);
+
+  return {
+    setReducedMotion(next: boolean) {
+      matches = next;
+      listeners.forEach((listener) => listener());
+    },
+  };
 }
 
 /** Renders a ready shell with a constructor-free adapter by default. */
@@ -227,9 +254,13 @@ describe('SatGlobeApp', () => {
     fireEvent.keyDown(window, { key: 'f' });
     expect(app.classList.contains('sg-mode-presentation')).toBe(true);
 
+    // Escape peels one layer per press: the open legend first, the mode second.
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(screen.queryByTestId('keyboard-legend')).toBeNull();
+    expect(app.classList.contains('sg-mode-presentation')).toBe(true);
+
     fireEvent.keyDown(window, { key: 'Escape' });
     expect(app.classList.contains('sg-mode-workshop')).toBe(true);
-    expect(screen.queryByTestId('keyboard-legend')).toBeNull();
   });
 
   it('uses arrow and space shortcuts to navigate and play a story', () => {
@@ -276,6 +307,56 @@ describe('SatGlobeApp', () => {
     fireEvent.keyDown(dialog, { key: 'Escape' });
 
     expect(app.classList.contains('sg-mode-story')).toBe(true);
+    expect(screen.queryByRole('dialog', { name: 'Sources and technical facts' })).toBeNull();
+  });
+
+  it('closes only the sources drawer when Escape is pressed outside the dialog', () => {
+    renderApp();
+    const app = screen.getByTestId('satglobe-app');
+
+    fireEvent.click(screen.getByTestId('story-mode'));
+    fireEvent.click(screen.getByRole('button', { name: 'Sources · Facts' }));
+    expect(screen.getByRole('dialog', { name: 'Sources and technical facts' })).toBeTruthy();
+
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(app.classList.contains('sg-mode-story')).toBe(true);
+    expect(screen.queryByRole('dialog', { name: 'Sources and technical facts' })).toBeNull();
+
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(app.classList.contains('sg-mode-workshop')).toBe(true);
+  });
+
+  it('runs 60x only during active Story playback and reacts to reduced motion', () => {
+    const motion = stubMotion(false);
+    const { methods } = renderApp();
+
+    fireEvent.click(screen.getByTestId('story-mode'));
+    expect(methods.setPlaybackRate).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByTestId('story-play'));
+    expect(methods.setPlaybackRate).toHaveBeenLastCalledWith(60);
+
+    act(() => motion.setReducedMotion(true));
+    expect(methods.setPlaybackRate).toHaveBeenLastCalledWith(1);
+
+    act(() => motion.setReducedMotion(false));
+    expect(methods.setPlaybackRate).toHaveBeenLastCalledWith(60);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open workshop' }));
+    expect(methods.setPlaybackRate).toHaveBeenLastCalledWith(1);
+  });
+
+  it('does not resurrect the sources drawer when Story mode is re-entered', () => {
+    renderApp();
+
+    fireEvent.click(screen.getByTestId('story-mode'));
+    fireEvent.click(screen.getByRole('button', { name: 'Sources · Facts' }));
+    expect(screen.getByRole('dialog', { name: 'Sources and technical facts' })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open workshop' }));
+    fireEvent.click(screen.getByTestId('story-mode'));
+
+    expect(screen.getByTestId('story-deck')).toBeTruthy();
     expect(screen.queryByRole('dialog', { name: 'Sources and technical facts' })).toBeNull();
   });
 
@@ -408,6 +489,32 @@ describe('SatGlobeApp', () => {
 
     expect(methods.clearOrbits).toHaveBeenCalledTimes(1);
     expect(methods.drawOrbit.mock.calls.map(([catalogId]) => catalogId)).toEqual(sixPlanesBeat.orbitCatalogIds);
+  });
+
+  it('draws capped filter-matched orbit cues for beats without stable authored ids', () => {
+    const heoStory = storyLibrary.find(({ id }) => id === 'launch-to-orbit')!;
+    const heoBeat = heoStory.beats.find(({ id }) => id === 'transfer-population')!;
+    const heo = (catalogId: string, overrides: Partial<SpaceObjectView> = {}): SpaceObjectView =>
+      ({ ...selectedObject, catalogId, regime: 'heo', apogeeKm: 39_000, ...overrides });
+    const { methods } = renderApp({
+      objects: [
+        heo('101'),
+        { ...selectedObject, catalogId: '102' },
+        heo('103', { kind: 'debris' }),
+        heo('104'),
+        heo('105'),
+        heo('106'),
+        heo('107'),
+      ],
+    });
+
+    expect(heoBeat.orbitMatchLimit).toBe(4);
+    fireEvent.click(screen.getByTestId('story-mode'));
+    fireEvent.change(screen.getByTestId('story-picker'), { target: { value: heoStory.id } });
+    methods.drawOrbit.mockClear();
+    fireEvent.click(screen.getByRole('button', { name: `Go to ${heoBeat.title}` }));
+
+    expect(methods.drawOrbit.mock.calls.map(([catalogId]) => catalogId)).toEqual(['101', '104', '105', '106']);
   });
 
   it('restores a saved story id and absolute offset-beat time without applying the offset twice', async () => {
