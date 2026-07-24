@@ -450,7 +450,11 @@ test.describe('SatGlobe workshop', () => {
     await search.fill('STARLINK-1008');
     await page.getByTestId('search-results').getByRole('button').first().click();
     await expect(page.getByTestId('object-inspector')).toContainText('STARLINK');
-    await expect.poll(readZoom).toBeCloseTo(cameraBeforeSelection?.zoom ?? 0, 4);
+    // Selection must not start a focus zoom. Let the preceding authored-camera
+    // easing finish, then compare at a product-relevant tolerance instead of
+    // racing sub-pixel floating-point drift on the current frame.
+    await expect.poll(readAnimationFrameZoomDelta).toBeLessThan(0.00005);
+    expect(await readZoom()).toBeCloseTo(cameraBeforeSelection?.zoom ?? 0, 3);
     expect(await page.evaluate(() => window.settingsManager.isFocusOnSatelliteWhenSelected)).toBe(false);
     expect(await page.evaluate(() => window.settingsManager.noMeshManager)).toBe(true);
     await expect(page.getByTestId('scale-disclosure')).toContainText('SEMANTIC SCALE');
