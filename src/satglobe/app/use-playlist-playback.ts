@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
+import { useCallback, useEffect, useReducer, useRef } from 'react';
 import type { PlaylistEntryV1, PlaylistV1 } from '../domain/types';
+import { useReducedMotion } from './use-reduced-motion';
 
 export interface PlaylistPlaybackState {
   entryIndex: number;
@@ -42,28 +43,6 @@ export function playlistPlaybackReducer(
     default:
       return state;
   }
-}
-
-/** Tracks the accessibility preference so the player can expose manual-only transport. */
-function useReducedMotion(): boolean {
-  const [reducedMotion, setReducedMotion] = useState(() => (
-    typeof window.matchMedia === 'function' &&
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  ));
-
-  useEffect(() => {
-    if (typeof window.matchMedia !== 'function') {
-      return undefined;
-    }
-    const query = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const update = () => setReducedMotion(query.matches);
-
-    query.addEventListener?.('change', update);
-
-    return () => query.removeEventListener?.('change', update);
-  }, []);
-
-  return reducedMotion;
 }
 
 /**
@@ -132,7 +111,14 @@ export function usePlaylistPlayback(
     }
     const entry = playlist.entries[entryIndex];
     const startedAt = performance.now() - playback.progress * entry.durationMs;
+    let advanced = false;
     const advance = () => {
+      // A congested event loop can queue more than one interval callback
+      // before React commits the seek and cleans this effect up.
+      if (advanced) {
+        return;
+      }
+      advanced = true;
       if (entryIndex < playlist.entries.length - 1) {
         applyEntry(entryIndex + 1);
       } else {

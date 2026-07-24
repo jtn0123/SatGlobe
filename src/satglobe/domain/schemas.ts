@@ -23,6 +23,7 @@ export const filterStateSchema = z.object({
   altitudeKm: numericRangeSchema,
   inclinationDeg: numericRangeSchema,
   launchCohort: z.string().max(120),
+  launchYearMax: z.number().int().min(1957).max(9_999).optional(),
   constellation: z.string().max(120),
   countryOrOperator: z.string().max(120),
 }).strict();

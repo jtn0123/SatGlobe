@@ -24,6 +24,7 @@ import {
   type ScaleMode,
   type VisualEncoding,
 } from '../domain/types';
+import { catalogLaunchYear } from '../domain/launch-years';
 import { loadConjunctionFeed } from '../runtime/conjunction-loader';
 import {
   COUNT_UPDATE_MEASURE,
@@ -722,6 +723,7 @@ export class SatGlobeEngineAdapter {
       status: isSatellite ? statusLabels[sat.status] ?? 'Unknown' : 'Unknown',
       internationalDesignator: intlDes,
       launchDate,
+      launchYear: catalogLaunchYear({ internationalDesignator: intlDes, launchDate }),
       launchVehicle: isSatellite ? sat.launchVehicle || '' : '',
       owner,
       country,

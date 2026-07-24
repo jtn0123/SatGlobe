@@ -239,6 +239,173 @@ button {
   font-size: 7px;
 }
 
+.sg-launch-timelapse {
+  position: absolute;
+  z-index: 9;
+  top: 92px;
+  left: 50%;
+  width: clamp(430px, 42vw, 620px);
+  padding: 11px 14px 9px;
+  border: 1px solid var(--sg-line, rgba(176, 208, 202, 0.18));
+  background:
+    linear-gradient(90deg, rgba(138, 213, 207, 0.045), transparent 38%, rgba(233, 201, 127, 0.04)),
+    rgba(4, 12, 15, 0.84);
+  box-shadow: 0 18px 56px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(16px) saturate(80%);
+  transform: translateX(-50%);
+  pointer-events: auto;
+}
+
+.sg-launch-timelapse::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 14px;
+  width: 64px;
+  height: 1px;
+  background: var(--sg-accent, #e9c97f);
+  opacity: 0.72;
+}
+
+.sg-launch-timelapse header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  gap: 2px 16px;
+}
+
+.sg-launch-timelapse header span,
+.sg-launch-timelapse header small {
+  color: var(--sg-ink-muted, #b9c0bd);
+  font-size: 8px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.sg-launch-timelapse header strong {
+  grid-row: 1 / span 2;
+  grid-column: 2;
+  color: var(--sg-accent, #e9c97f);
+  font-family: ui-monospace, 'SFMono-Regular', monospace;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+}
+
+.sg-launch-timelapse header small {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  letter-spacing: 0.06em;
+  text-transform: none;
+}
+
+.sg-launch-timelapse-transport {
+  display: grid;
+  grid-template-columns: 27px 31px 27px 1fr 43px;
+  align-items: center;
+  gap: 5px;
+  margin-top: 9px;
+}
+
+.sg-launch-timelapse-transport > button {
+  width: 27px;
+  height: 27px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--sg-line, rgba(176, 208, 202, 0.18));
+  background: rgba(0, 0, 0, 0.18);
+  color: var(--sg-ink-muted, #b9c0bd);
+  cursor: pointer;
+}
+
+.sg-launch-timelapse-transport > button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.sg-launch-timelapse-transport .sg-launch-timelapse-play {
+  width: 31px;
+  border-color: rgba(233, 201, 127, 0.45);
+  color: var(--sg-accent, #e9c97f);
+}
+
+.sg-launch-timelapse-scrub {
+  position: relative;
+  height: 27px;
+  display: flex;
+  align-items: center;
+}
+
+.sg-launch-timelapse-scrub input {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--sg-accent, #e9c97f);
+  cursor: pointer;
+}
+
+.sg-launch-timelapse-ticks {
+  position: absolute;
+  z-index: 1;
+  left: 7px;
+  right: 7px;
+  top: 13px;
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.sg-launch-timelapse-ticks i {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(185, 192, 189, 0.46);
+}
+
+.sg-launch-timelapse-ticks i.is-past {
+  background: var(--sg-accent, #e9c97f);
+  box-shadow: 0 0 6px rgba(233, 201, 127, 0.7);
+}
+
+.sg-launch-timelapse-counter {
+  color: var(--sg-ink-muted, #b9c0bd);
+  font-family: ui-monospace, 'SFMono-Regular', monospace;
+  font-size: 8px;
+  text-align: right;
+}
+
+.sg-launch-timelapse-stops {
+  margin: 4px 0 0 100px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.sg-launch-timelapse-stops button {
+  padding: 2px 0;
+  border: 0;
+  background: transparent;
+  color: rgba(185, 192, 189, 0.64);
+  font-family: ui-monospace, 'SFMono-Regular', monospace;
+  font-size: 7px;
+  cursor: pointer;
+}
+
+.sg-launch-timelapse-stops button.is-current {
+  color: var(--sg-ink, #f5f1e8);
+}
+
+.sg-launch-timelapse-motion-note {
+  display: block;
+  margin: 5px 0 0 100px;
+  color: var(--sg-accent, #e9c97f);
+  font-size: 8px;
+  line-height: 1.4;
+}
+
 .sg-panel {
   position: absolute;
   top: 88px;
@@ -1937,12 +2104,23 @@ body.sg-story .sg-scale-disclosure {
   .sg-topbar-center { display: none; }
   .sg-panel { padding: 14px; }
   .sg-time-dock { grid-template-columns: var(--panel-width) 46px 1fr 46px 50px; }
+  .sg-launch-timelapse { width: clamp(390px, 44vw, 500px); }
+}
+
+/* Below this point the centered transport cannot fit between two panels. */
+@media (max-width: 1190px) {
+  .sg-inspector { display: none; }
+  .sg-launch-timelapse {
+    right: 18px;
+    left: auto;
+    width: min(500px, calc(100vw - 394px));
+    transform: none;
+  }
 }
 
 @media (max-width: 900px) {
   .sg-topbar { grid-template-columns: 1fr auto; }
   .sg-discover { width: min(340px, calc(100vw - 36px)); }
-  .sg-inspector { display: none; }
   .sg-time-dock { grid-template-columns: 0 42px 1fr 42px 44px; }
   .sg-time-tools { overflow: hidden; padding: 0; border: 0; }
   .sg-scale-disclosure { display: none; }
@@ -2040,6 +2218,8 @@ body.sg-story .sg-scale-disclosure {
 }
 
 @media (max-width: 760px) {
+  .sg-launch-timelapse { display: none; }
+
   .sg-small-screen-note {
     position: fixed;
     z-index: 40;

@@ -22,6 +22,8 @@ export interface FilterState {
   altitudeKm: NumericRange;
   inclinationDeg: NumericRange;
   launchCohort: string;
+  /** Cumulative launch-history boundary; absent means no upper-year filter. */
+  launchYearMax?: number;
   constellation: string;
   countryOrOperator: string;
 }
@@ -112,6 +114,8 @@ export interface SpaceObjectView {
   status: string;
   internationalDesignator: string;
   launchDate: string;
+  /** Strict year derived from the designator, with ISO launch date as fallback. */
+  launchYear?: number | null;
   launchVehicle: string;
   owner: string;
   country: string;
