@@ -48,7 +48,7 @@ function item(id: string, label: string, color: RgbaColor, count?: number): Lege
 }
 
 /** Adds the transient conjunction key only while the renderer is dimming context around those subjects. */
-function withHighlight(
+export function withConjunctionHighlight(
   legend: VisualLegend,
   conjunctionHighlightActive: boolean,
   highlightedObjectCount: number,
@@ -77,6 +77,37 @@ export function buildVisualLegend(
   conjunctionHighlightActive = false,
   highlightedObjectCount = 0,
 ): VisualLegend {
+  if (encoding === 'orbital-plane') {
+    return withConjunctionHighlight({
+      encoding,
+      title: 'Relative plane density',
+      kind: 'threshold',
+      items: [
+        item('high', '> 75% of peak', [1, 0, 0, 1]),
+        item('medium', '> 25–75%', [1, 0.5, 0, 1]),
+        item('low', '> 10–25%', [1, 1, 0, 1]),
+        item('context', '≤ 10%', [1, 1, 1, 0.3]),
+      ],
+      disclosure: 'Density is binned by inclination and mean altitude relative to this installed catalog.',
+    }, conjunctionHighlightActive, highlightedObjectCount);
+  }
+  if (encoding === 'data-age') {
+    return withConjunctionHighlight({
+      encoding,
+      title: 'GP element age',
+      kind: 'threshold',
+      items: [
+        item('age1', '< 0.5 day', [0, 1, 0, 0.9]),
+        item('age2', '0.5–1 day', [0.6, 0.996, 0, 0.9]),
+        item('age3', '1–1.5 days', [0.8, 1, 0, 0.9]),
+        item('age4', '1.5–2 days', [1, 1, 0, 0.9]),
+        item('age5', '2–2.5 days', [1, 0.8, 0, 0.9]),
+        item('age6', '2.5–3 days', [1, 0.6, 0, 0.9]),
+        item('age7', '≥ 3 days', [1, 0, 0, 0.9]),
+      ],
+      disclosure: 'Older elements can make propagated positions less representative.',
+    }, conjunctionHighlightActive, highlightedObjectCount);
+  }
   const matcher = prepareFilterMatcher(filters);
   const visible = objects.filter(matcher);
 
@@ -97,7 +128,7 @@ export function buildVisualLegend(
       .sort(([aId, aCount], [bId, bCount]) => bCount - aCount || aId.localeCompare(bId))
       .slice(0, 6);
 
-    return withHighlight({
+    return withConjunctionHighlight({
       encoding,
       title: 'Launch cohorts',
       kind: 'cohort',
@@ -132,7 +163,7 @@ export function buildVisualLegend(
     }
   }
 
-  const legends: Record<Exclude<VisualEncoding, 'launch-cohort'>, VisualLegend> = {
+  const legends: Record<Exclude<VisualEncoding, 'launch-cohort' | 'orbital-plane' | 'data-age'>, VisualLegend> = {
     'object-type': {
       encoding, title: 'Object class', kind: 'categorical', items: [
         item('payload', 'Payload', OBJECT_COLORS.payload, counts.kinds.get('payload') ?? 0),
@@ -150,25 +181,6 @@ export function buildVisualLegend(
         item('other', 'Other', REGIME_COLORS.other, counts.regimes.get('other') ?? 0),
       ],
     },
-    'orbital-plane': {
-      encoding, title: 'Relative plane density', kind: 'threshold', items: [
-        item('high', '> 75% of peak', [1, 0, 0, 1]),
-        item('medium', '> 25–75%', [1, 0.5, 0, 1]),
-        item('low', '> 10–25%', [1, 1, 0, 1]),
-        item('context', '≤ 10%', [1, 1, 1, 0.3]),
-      ], disclosure: 'Density is binned by inclination and mean altitude relative to this installed catalog.',
-    },
-    'data-age': {
-      encoding, title: 'GP element age', kind: 'threshold', items: [
-        item('age1', '< 0.5 day', [0, 1, 0, 0.9]),
-        item('age2', '0.5–1 day', [0.6, 0.996, 0, 0.9]),
-        item('age3', '1–1.5 days', [0.8, 1, 0, 0.9]),
-        item('age4', '1.5–2 days', [1, 1, 0, 0.9]),
-        item('age5', '2–2.5 days', [1, 0.8, 0, 0.9]),
-        item('age6', '2.5–3 days', [1, 0.6, 0, 0.9]),
-        item('age7', '≥ 3 days', [1, 0, 0, 0.9]),
-      ], disclosure: 'Older elements can make propagated positions less representative.',
-    },
     starlink: {
       encoding, title: 'Starlink catalog state', kind: 'categorical', items: [
         item('operational', 'Known active', STARLINK_COLORS.operational, counts.starlinkActive),
@@ -177,5 +189,5 @@ export function buildVisualLegend(
     },
   };
 
-  return withHighlight(legends[encoding], conjunctionHighlightActive, highlightedObjectCount);
+  return withConjunctionHighlight(legends[encoding], conjunctionHighlightActive, highlightedObjectCount);
 }

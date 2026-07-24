@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import type { SatGlobeEngineAdapter } from '../engine/satglobe-engine-adapter';
-import { buildVisualLegend } from '../domain/encodings';
+import { buildVisualLegend, withConjunctionHighlight } from '../domain/encodings';
 import { buildStarlinkLaunchCohorts } from '../domain/launch-cohorts';
 import {
   DEFAULT_FILTERS,
@@ -37,15 +37,17 @@ export function useLaunchCohortExplorer({
     () => buildStarlinkLaunchCohorts(objects, stories),
     [objects, stories],
   );
+  const baseLegend = useMemo(
+    () => buildVisualLegend(engine.encoding, objects, filters),
+    [engine.encoding, filters, objects],
+  );
   const legend = useMemo(
-    () => buildVisualLegend(
-      engine.encoding,
-      objects,
-      filters,
+    () => withConjunctionHighlight(
+      baseLegend,
       engine.conjunctionHighlightActive,
       engine.highlightedObjectCount,
     ),
-    [engine.conjunctionHighlightActive, engine.encoding, engine.highlightedObjectCount, filters, objects],
+    [baseLegend, engine.conjunctionHighlightActive, engine.highlightedObjectCount],
   );
   const select = useCallback((cohort: LaunchCohortView) => setSelectedCohortId(cohort.id), []);
   const clearSelection = useCallback(() => setSelectedCohortId(undefined), []);

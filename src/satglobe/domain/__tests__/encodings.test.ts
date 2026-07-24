@@ -74,4 +74,17 @@ describe('live visual legend', () => {
     });
     expect(inactive.items.some(({ id }) => id === 'close-approach-highlight')).toBe(false);
   });
+
+  it('does not rescan catalog objects for threshold-only legends', () => {
+    const unreadable = {} as SpaceObjectView;
+
+    Object.defineProperty(unreadable, 'active', {
+      get: () => {
+        throw new Error('threshold legends must not inspect catalog fields');
+      },
+    });
+
+    expect(() => buildVisualLegend('orbital-plane', [unreadable], DEFAULT_FILTERS)).not.toThrow();
+    expect(() => buildVisualLegend('data-age', [unreadable], DEFAULT_FILTERS)).not.toThrow();
+  });
 });

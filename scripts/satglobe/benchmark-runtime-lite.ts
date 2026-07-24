@@ -693,6 +693,16 @@ try {
       `conjunction lens p95 ${freshConjunctionLens.domResponseMs.p95.toFixed(1)} ms exceeds ${MAX_CONJUNCTION_LENS_P95_MS} ms`,
     );
   }
+  for (const [label, interaction] of [
+    ['Starlink lens', freshStarlinkLens],
+    ['conjunction lens', freshConjunctionLens],
+  ] as const) {
+    if (interaction.longTaskMaxMs.p95 > policy.absoluteBudgets.longTaskMaxMs) {
+      failures.push(
+        `${label} longest-task p95 ${interaction.longTaskMaxMs.p95.toFixed(1)} ms exceeds ${policy.absoluteBudgets.longTaskMaxMs} ms`,
+      );
+    }
+  }
   if (playlistPlayback.pausedFrames.medianFps < MIN_IDLE_MEDIAN_FPS) {
     failures.push(`paused playlist median ${playlistPlayback.pausedFrames.medianFps} fps is below ${MIN_IDLE_MEDIAN_FPS} fps`);
   }

@@ -165,6 +165,11 @@ describe('performance report contract', () => {
     const candidate = report();
 
     candidate.metrics.steadyStateFrames.idle = { medianFps: 50, p95FrameMs: 30, slowestFrameMs: 40 };
+    candidate.metrics.interactions.freshStarlinkLens!.longTaskMaxMs = {
+      ...distribution,
+      p95: 75,
+      max: 75,
+    };
     candidate.metrics.soak = {
       requestedDurationMs: 120_000,
       measuredDurationMs: 120_010,
@@ -191,6 +196,7 @@ describe('performance report contract', () => {
     expect(evaluateAbsoluteBudgets(candidate, policy).map(({ metric }) => metric)).toEqual(expect.arrayContaining([
       'steadyStateFrames.idle.medianFps',
       'steadyStateFrames.idle.p95FrameMs',
+      'interactions.freshStarlinkLens.longTaskMaxMs.p95',
       'soak.frames.p95FrameMs',
       'soak.slowFramePercent',
       'soak.longTaskMaxMs',

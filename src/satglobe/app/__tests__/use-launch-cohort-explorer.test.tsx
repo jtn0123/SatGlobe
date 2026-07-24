@@ -34,6 +34,54 @@ const object = (catalogId: string, internationalDesignator: string): SpaceObject
 });
 
 describe('useLaunchCohortExplorer', () => {
+  it('adds a highlight key without rescanning an unchanged catalog legend', () => {
+    const objects = [object('1', '2021-021A')];
+    let catalogReads = 0;
+
+    Object.defineProperty(objects[0], 'active', {
+      get: () => {
+        catalogReads += 1;
+
+        return true;
+      },
+    });
+    const { adapter, state } = makeAdapter({
+      objects,
+      state: {
+        encoding: 'object-type',
+        filters: { ...structuredClone(DEFAULT_FILTERS), status: 'all' },
+      },
+    });
+    const options = {
+      adapter,
+      filters: state.filters,
+      stories: [] as const,
+      onNotice: vi.fn(),
+      onOpenStory: vi.fn(),
+      setFiltersWithEncodingImmediate: vi.fn(),
+    };
+    const { result, rerender } = renderHook(
+      ({ engine }: { engine: EngineState }) => useLaunchCohortExplorer({ ...options, engine }),
+      { initialProps: { engine: state } },
+    );
+
+    expect(catalogReads).toBeGreaterThan(0);
+    catalogReads = 0;
+    rerender({
+      engine: {
+        ...state,
+        conjunctionHighlightActive: true,
+        highlightedObjectCount: 1,
+      },
+    });
+
+    expect(catalogReads).toBe(0);
+    expect(result.current.legend.items[0]).toMatchObject({
+      id: 'close-approach-highlight',
+      count: 1,
+    });
+  });
+
   it('rebuilds cohorts and the live legend when a same-count catalog snapshot changes', () => {
     const firstObjects = [object('1', '2021-021A')];
     const secondObjects = [object('2', '2022-001A')];
