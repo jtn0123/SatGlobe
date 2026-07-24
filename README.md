@@ -70,7 +70,7 @@ npm run verify:satglobe
 npm run test:e2e:satglobe
 ```
 
-The main verification command runs TypeScript checking, the full source lint gate, focused unit tests, offline-behavior tests, and the production build. The Playwright journey separately exercises the real WebGL app at 1280×720, 1440p, and 4K.
+The main verification command runs TypeScript checking, the full source lint gate, focused unit tests, performance-ledger validation, the production build, and explicit total/per-JavaScript output budgets. The Playwright journey separately exercises the real WebGL app at 1280×720, 1440p, and 4K.
 
 Other useful commands:
 
@@ -80,6 +80,11 @@ Other useful commands:
 | `npm run catalog:verify` | Download or reuse cached inputs and validate a candidate catalog |
 | `npm run catalog:refresh` | Atomically install a validated local catalog snapshot |
 | `npm run docker:satglobe` | Build the static local-serving image |
+| `npm run benchmark:satglobe` | Measure five fresh production-app loads and interactions |
+| `npm run benchmark:satglobe:soak` | Add a two-minute story-state stability watch |
+| `npm run performance:validate` | Validate immutable accepted performance history |
+
+The accepted current-app performance ledger starts empty; archived first-play and dated ADR measurements are not promoted as fresh evidence. See [the performance workflow](docs/performance/README.md) for fair-comparison and record-acceptance rules.
 
 ## Architecture
 
@@ -92,7 +97,7 @@ src/satglobe/app       React workshop, presentation, and story UI
 src/satglobe/domain    Versioned schemas and pure product logic
 src/satglobe/engine    The only SatGlobe module allowed to import KeepTrack internals
 src/satglobe/stories   Validated, sourced story manifests
-scripts/satglobe       Manual catalog refresh and validation
+scripts/satglobe       Catalog, story audit, benchmark, ledger, and build-budget tooling
 ```
 
 Read [SATGLOBE.md](SATGLOBE.md) for operating details and [ADR 0001](docs/adr/0001-satglobe-source-fork.md) for the fork, offline-runtime, and upstream-sync decisions.

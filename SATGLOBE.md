@@ -85,17 +85,37 @@ npm run typecheck
 npm run lint
 npm run test:satglobe
 npm run build:satglobe
+npm run check:build:satglobe
 npm run test:e2e:satglobe
 npm run verify:stories
 ```
 
-`npm run verify:satglobe` runs the application and story-walker typechecks, the full source lint gate, focused SatGlobe/catalog/offline unit tests, and the production build as one local checkpoint command. The Playwright journeys remain separate because they start the WebGL application in Chromium.
+`npm run verify:satglobe` runs the application and story-walker typechecks, the full source lint gate, focused SatGlobe/catalog/offline unit tests, performance-ledger validation, the production build, and the total/aggregate/per-JavaScript output budgets as one local checkpoint command. The Playwright journeys remain separate because they start the WebGL application in Chromium.
 
 `npm run verify:stories` invokes a runner that always creates a fresh production profile itself, so calling `npx tsx scripts/satglobe/verify-stories.ts` directly cannot certify a stale ignored `dist/`. It serves that profile and walks all ten stories in headed Chromium at 1440×900. Before Story opens, the runner stops propagation at rate `0` and fixes the audit clock to the installed catalog's `newestElementEpoch`; every story is reset to that same anchor. It rejects picker/library drift, engine errors, empty scenes, and authored camera/filter/encoding/time mismatches.
 
 Fixed 1440×900 viewport evidence is written under the ignored `test-results/satglobe-story-shots/<run-key>/` path. Every clean or dirty key includes the Git SHA, a compact UTC timestamp, and a UUID; dirty keys are explicitly marked, and the runner creates the leaf directory exclusively instead of reusing an earlier run. `manifest.json` records the fixed audit anchor, the fresh production tree's SHA-256 identity, and a SHA-256 for every screenshot. Set `SATGLOBE_STORY_HEADLESS=1` for automation.
 
 The upstream test suite is available with `npm test`. The one machine-dependent snapshot from the v13.4.0 import baseline (a weather-coordinate floating-point difference around 1e-12) has been replaced with a stable projection, so the full suite is expected to pass on any machine.
+
+## Performance records
+
+Build and serve the production profile before running the headed hardware analyzer:
+
+```bash
+npm run build:satglobe
+npm run check:build:satglobe
+npm run start:satglobe:static
+
+# From another terminal:
+npm run benchmark:satglobe
+npm run benchmark:satglobe:soak
+npm run performance:compare -- --input benchmark-results/satglobe/<run>.raw.json --profile apple-m4-1440p
+npm run performance:record -- --input benchmark-results/satglobe/<run>.raw.json --profile apple-m4-1440p --label "Meaningful change"
+npm run performance:validate
+```
+
+The normal benchmark uses at least five fresh-page samples; the soak adds two minutes of frame, long-task, heap, and WebGL-context observation. Raw reports are ignored. Accepted records are compact and immutable. The current combined-app ledger intentionally contains no accepted measurements yet, so old first-play M4 numbers must not be cited as its baseline. See [docs/performance/README.md](docs/performance/README.md) and [ADR 0004](docs/adr/0004-performance-governance.md).
 
 ## Docker
 
