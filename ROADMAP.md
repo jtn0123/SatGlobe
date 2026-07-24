@@ -1,6 +1,6 @@
 # SatGlobe roadmap and recovery ledger
 
-Last updated: 2026-07-24T04:57:31Z
+Last updated: 2026-07-24T05:01:39Z
 
 This file is the durable product roadmap and the live ledger for the approved
 legacy-work recovery. It is intentionally Markdown so every decision, test
@@ -156,7 +156,8 @@ reachable from `main`, an archive ref, or a verified replacement commit.
   is pending.
 - [x] `Ported` — Selective renderer-consistent legend and Starlink cohort
   recovery; runtime desktop/E2E verification is pending.
-- [ ] `Pending` — Current performance governance and final documentation.
+- [x] `Ported` — Current performance governance and final documentation;
+  five-sample benchmark and two-minute soak evidence are pending.
 - [x] `Verified` — Open replacement draft PR #84 and link it from every closed
   PR #51–#68.
 - [ ] `Pending` — Integrate latest main, satisfy all mergeability gates, mark
@@ -173,11 +174,12 @@ reachable from `main`, an archive ref, or a verified replacement commit.
 | PR #55 | `bb834479`, `2a300cf6`, `8813cf38` | Strict v1/v2 parsing with v2-only installation, v2 time provenance, UTC epoch handling, candidate catalog/feed/manifest coherence, deterministic large-artifact validation, and offline fallback | Verified |
 | PR #56 | `e342cd7b` | Exact six-artifact transaction: schema v2, 35,049 objects, zero rejects, and catalog SHA-256 `9fae7a2fa46004ae13fa863890547f9947036bfcfe8357ef9a7d67bbf6076a1b` | Verified |
 | PR #58 | `ad07e829`, `497e030f` | GNSS-family and Landsat-continuity manifests, verified representative IDs, and current official sources; library now ten stories / 51 beats | Verified |
-| PR #53 | `616dc0d0` | Strict 2–24-entry local playlists, atomic import/export, persistence, editing/reorder/delete, Present playback, and reduced-motion behavior | Ported |
+| PR #53 | `616dc0d0`, `bf27732c` | Strict 2–24-entry local playlists, atomic import/export, persistence, editing/reorder/delete, Present playback, reduced-motion behavior, and cleanup when Presentation ends | Ported |
 | PR #60 | `8df5c429` | Strict cumulative launch-year filtering, decade stops, atomic application, autoplay, and shared reactive reduced-motion handling | Ported |
-| Guided-Story patch `5cb03505…` | `413add27` | Bounded deterministic orbit cues, Story-only 60× time, complete 1× cleanup, layered Escape, source reset, and one-second reduced-motion progress | Ported |
+| Guided-Story patch `5cb03505…` | `413add27`, `f53bb34d` | Bounded deterministic orbit cues, Story-only 60× time, complete 1× cleanup, layered Escape, source reset on pause/completion, and one-second reduced-motion progress | Ported |
 | PR #62 | `a620e5ec` | One-pending-request next-frame WebGL capture and full-resolution canvas-only PNG download with failure cleanup | Ported |
-| First-play branch `e456209a` | `40f7726f` | Shared launch-designator normalization and renderer color definitions, counted live legend, close-approach key, and searchable/year-filtered Starlink cohort exploration without changing saved-view v1 | Ported |
+| First-play branch `e456209a` | `40f7726f`, `18762641`, `f391d306` | Shared launch-designator normalization and renderer color definitions, complete counted live legend including unknown cohorts, close-approach key, snapshot-aware searchable/year-filtered Starlink cohort exploration, and unchanged saved-view v1 | Ported |
+| Archived performance policy | `d9fb8075` | Seven requested commands, immutable-record validation, five-sample benchmark, two-minute soak, current build budgets, empty honest current-app ledger, and historical-only archived M4 claims | Ported |
 
 ## Validation ledger
 
@@ -207,6 +209,9 @@ reachable from `main`, an archive ref, or a verified replacement commit.
 | 2026-07-24T04:53:52Z | `45391d1b` | Explicit locale-aware sorting and focused launch explorer/cohort suites | Verified | Both Sonar findings fixed; two files / five tests passed; GitHub rescan remains pending |
 | 2026-07-24T04:53:28Z | `b76a50a1` | GitHub SatGlobe CI run `30067557968` | Blocked | Coverage, typecheck/lint/build, OOTK, CodeQL, and benchmark passed; offline E2E reported 13 passed plus one retry caused by a sub-pixel camera-settling assertion |
 | 2026-07-24T04:57:31Z | `ed26cf66` | E2E failure-log diagnosis and camera-stability assertion repair | Ported | Selection still must preserve camera intent; the test now waits for preceding easing to settle and tolerates only sub-pixel normalized drift. Final static E2E/CI rerun pending |
+| 2026-07-24T04:57:44Z | `52163e42` | Independent integrated product review | Verified | Reproduced and fixed stale playlist resurrection, Story Sources persistence after stop, unknown-cohort legend omission, and stale same-count snapshot cohorts; 17 focused files / 143 tests plus strict/normal typecheck and lint passed in isolation |
+| 2026-07-24T04:57:58Z | `b7080695` | Performance governance validation | Verified | Four contract tests, 360 SatGlobe tests, TypeScript, strict typecheck, lint, production build, 352.0 MiB/12.8 MiB build budget, and empty-ledger validation passed; one-sample smoke was correctly rejected as evidence |
+| 2026-07-24T05:01:39Z | `d9fb8075` | `npm run test:satglobe -- --maxWorkers=1` on the consolidated head | Verified | 41 files / 365 tests passed, including catalog, stories, product review fixes, security policy, and performance contracts |
 
 Every later validation entry must identify the exact tested commit. Raw
 benchmark and story artifacts remain ignored; governed evidence is committed
@@ -239,6 +244,7 @@ executable imported content, or required WebGPU path is introduced.
 | 2026-07-24T04:43:30Z | `40f7726f` | Recover only first-play legend/cohort behavior that fits the current typed boundary; keep transient explorer state out of portable saved-view schema v1 | Ported |
 | 2026-07-24T04:53:52Z | `45391d1b` | Treat Sonar's two new implicit-sort reliability findings as attributable blockers and replace them with explicit locale-aware ordering | Verified |
 | 2026-07-24T04:57:31Z | `ed26cf66` | Keep CI's fail-on-flake policy; fix the unstable camera assertion by measuring settled product behavior rather than weakening or disabling the gate | Ported |
+| 2026-07-24T05:01:39Z | `d9fb8075` | Accept the independent product review's four reproduced lifecycle/data-truth fixes and initialize performance governance with zero accepted current records until fresh measurements pass policy | Verified |
 
 ## After the recovery gate
 
