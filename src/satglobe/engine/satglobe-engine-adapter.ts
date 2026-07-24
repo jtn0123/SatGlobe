@@ -25,10 +25,19 @@ import {
   type VisualEncoding,
 } from '../domain/types';
 import { loadConjunctionFeed } from '../runtime/conjunction-loader';
+import {
+  COUNT_UPDATE_MEASURE,
+  FILTER_APPLY_MEASURE,
+  measureSync,
+  RECOLOR_MEASURE,
+} from '../runtime/performance-measure';
 import { SatGlobeColorScheme } from './satglobe-color-scheme';
 import { isKnownActivePayloadStatus, objectKindFromSpaceObjectType } from './satglobe-object-state';
 
 export type EngineStateListener = (state: EngineState) => void;
+export type SatGlobeVisualStateUpdate = Partial<Pick<EngineState, 'filters' | 'encoding'>>;
+
+type VisualStateCause = 'filters' | 'encoding' | 'combined' | 'highlight' | 'hydrate';
 
 type ConjunctionFeedLoader = (signal: AbortSignal) => Promise<ConjunctionFeedV1>;
 type IdleScheduler = (callback: () => void, timeoutMs: number) => number;
@@ -235,21 +244,40 @@ export class SatGlobeEngineAdapter {
   }
 
   setFilters(filters: FilterState): void {
-    this.conjunctionHighlightActive_ = false;
-    this.highlightedCatalogIds_ = new Set();
-    this.patchState_({
-      filters: structuredClone(filters),
-      conjunctionHighlightActive: false,
-      highlightedObjectCount: 0,
-    }, false);
-    this.applyVisualState_(this.rebuildFilterVisibility_());
+    this.setVisualState({ filters });
   }
 
   setEncoding(encoding: VisualEncoding): void {
+    this.setVisualState({ encoding });
+  }
+
+  /** Applies related filter/encoding changes through one catalog recolor. */
+  setVisualState(update: SatGlobeVisualStateUpdate): void {
+    const filters = update.filters;
+    const encoding = update.encoding;
+
+    if (filters === undefined && encoding === undefined) {
+      return;
+    }
+    let cause: VisualStateCause = 'encoding';
+
+    if (filters !== undefined) {
+      cause = encoding === undefined ? 'filters' : 'combined';
+    }
+
     this.conjunctionHighlightActive_ = false;
     this.highlightedCatalogIds_ = new Set();
-    this.patchState_({ encoding, conjunctionHighlightActive: false, highlightedObjectCount: 0 }, false);
-    this.applyVisualState_(this.filterVisibleCatalogIds_.size);
+    this.patchState_({
+      ...(filters === undefined ? {} : { filters: structuredClone(filters) }),
+      ...(encoding === undefined ? {} : { encoding }),
+      conjunctionHighlightActive: false,
+      highlightedObjectCount: 0,
+    }, false);
+    const visibleCount = filters === undefined
+      ? this.filterVisibleCatalogIds_.size
+      : measureSync(FILTER_APPLY_MEASURE, { cause }, () => this.rebuildFilterVisibility_());
+
+    this.applyVisualState_(visibleCount, cause);
   }
 
   /**
@@ -276,7 +304,7 @@ export class SatGlobeEngineAdapter {
       return;
     }
 
-    this.applyVisualState_(this.visibleCountWithHighlight_());
+    this.applyVisualState_(this.visibleCountWithHighlight_(), 'highlight');
   }
 
   setScaleMode(mode: ScaleMode): void {
@@ -388,7 +416,7 @@ export class SatGlobeEngineAdapter {
         // CatalogLoader rebuilds color buffers before it emits catalogReloaded.
         // A retained conjunction lens may resolve to a different population in
         // this hydrate, so force exactly one post-resolution GPU recolor.
-        this.applyVisualState_(this.visibleCountWithHighlight_());
+        this.applyVisualState_(this.visibleCountWithHighlight_(), 'hydrate');
       }
       this.poll_();
       this.scheduleConjunctionLoad_();
@@ -467,7 +495,7 @@ export class SatGlobeEngineAdapter {
         conjunctions,
       }, !highlightChanged);
       if (highlightChanged) {
-        this.applyVisualState_(this.visibleCountWithHighlight_());
+        this.applyVisualState_(this.visibleCountWithHighlight_(), 'highlight');
       }
     }
   }
@@ -505,22 +533,26 @@ export class SatGlobeEngineAdapter {
     manager.setColorScheme(this.colorScheme_, true);
   }
 
-  private applyVisualState_(visibleCount: number): void {
-    this.colorScheme_?.setState(
-      this.state_.filters,
-      this.state_.encoding,
-      this.highlightedCatalogIds_,
-    );
-    if (this.colorScheme_) {
-      try {
-        ServiceLocator.getColorSchemeManager().setColorScheme(this.colorScheme_, true);
-      } catch (error) {
-        // Color buffers may still be initializing; the next update applies the state.
-        errorManagerInstance.log(`SatGlobe adapter: recolor deferred (${error instanceof Error ? error.message : String(error)})`);
+  private applyVisualState_(visibleCount: number, cause: VisualStateCause): void {
+    measureSync(RECOLOR_MEASURE, { cause }, () => {
+      this.colorScheme_?.setState(
+        this.state_.filters,
+        this.state_.encoding,
+        this.highlightedCatalogIds_,
+      );
+      if (this.colorScheme_) {
+        try {
+          ServiceLocator.getColorSchemeManager().setColorScheme(this.colorScheme_, true);
+        } catch (error) {
+          // Color buffers may still be initializing; the next update applies the state.
+          errorManagerInstance.log(`SatGlobe adapter: recolor deferred (${error instanceof Error ? error.message : String(error)})`);
+        }
       }
-    }
-    this.patchState_({ visibleCount }, false);
-    this.emit_();
+    });
+    measureSync(COUNT_UPDATE_MEASURE, { cause }, () => {
+      this.patchState_({ visibleCount }, false);
+      this.emit_();
+    });
   }
 
   /** Rebuilds the filter-only baseline; highlight clicks never enter this O(catalog) path. */

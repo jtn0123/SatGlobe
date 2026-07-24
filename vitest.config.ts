@@ -74,12 +74,13 @@ export default defineConfig({
       reportOnFailure: true,
       // Re-baselined against the full src denominator (coverage.include now counts every
       // src file, not just imported ones). Actuals: lines 72.13 / statements 72.16 /
-      // functions 74.45 / branches 58.02 — ratchet upward as coverage climbs.
+      // functions 74.45 / branches 58.02. Post-Wave-1 actuals are lines 72.80 /
+      // statements 72.83 / functions 75.32 / branches 59.02.
       thresholds: {
-        statements: 71,
-        branches: 57,
-        functions: 73,
-        lines: 71,
+        statements: 72,
+        branches: 58,
+        functions: 74,
+        lines: 72,
       },
     },
     include: ['**/?(*.)+(test).?(m)[jt]s?(x)'],

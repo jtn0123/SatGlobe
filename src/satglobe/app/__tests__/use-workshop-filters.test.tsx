@@ -1,5 +1,5 @@
 import { act, cleanup, renderHook } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_FILTERS, type FilterState } from '../../domain/types';
 import { useWorkshopFilters } from '../use-workshop-filters';
 import { makeAdapter } from './test-adapter';
@@ -10,13 +10,21 @@ const makeFilters = (status: FilterState['status']): FilterState => ({
 });
 
 describe('useWorkshopFilters', () => {
+  beforeEach(() => {
+    vi.useRealTimers();
+    vi.useFakeTimers();
+  });
+
   afterEach(() => {
     cleanup();
+    const timerCount = vi.getTimerCount();
+
+    vi.clearAllTimers();
     vi.useRealTimers();
+    expect(timerCount).toBe(0);
   });
 
   it('coalesces staggered slider changes 120 ms after the final value', () => {
-    vi.useFakeTimers();
     const { adapter, methods } = makeAdapter();
     const { result } = renderHook(() => useWorkshopFilters(adapter));
     const first = makeFilters('active');
@@ -43,7 +51,6 @@ describe('useWorkshopFilters', () => {
   });
 
   it('applies an immediate change synchronously', () => {
-    vi.useFakeTimers();
     const { adapter, methods } = makeAdapter();
     const { result } = renderHook(() => useWorkshopFilters(adapter));
     const next = makeFilters('inactive');
@@ -56,7 +63,6 @@ describe('useWorkshopFilters', () => {
   });
 
   it('cancels a pending slider change before applying an immediate change', () => {
-    vi.useFakeTimers();
     const { adapter, methods } = makeAdapter();
     const { result } = renderHook(() => useWorkshopFilters(adapter));
     const stale = makeFilters('inactive');
@@ -73,8 +79,25 @@ describe('useWorkshopFilters', () => {
     expect(methods.setFilters).toHaveBeenCalledWith(immediate);
   });
 
+  it('cancels a pending slider change before one combined visual-state update', () => {
+    const { adapter, methods } = makeAdapter();
+    const { result } = renderHook(() => useWorkshopFilters(adapter));
+    const stale = makeFilters('inactive');
+    const immediate = makeFilters('active');
+
+    act(() => {
+      result.current.setFiltersDebounced(stale);
+      result.current.setFiltersWithEncodingImmediate(immediate, 'orbital-plane');
+    });
+    act(() => vi.advanceTimersByTime(120));
+
+    expect(result.current.filters).toBe(immediate);
+    expect(methods.setVisualState).toHaveBeenCalledOnce();
+    expect(methods.setVisualState).toHaveBeenCalledWith({ filters: immediate, encoding: 'orbital-plane' });
+    expect(methods.setFilters).not.toHaveBeenCalled();
+  });
+
   it('cancels a pending slider change on unmount', () => {
-    vi.useFakeTimers();
     const { adapter, methods } = makeAdapter();
     const { result, unmount } = renderHook(() => useWorkshopFilters(adapter));
 
@@ -86,7 +109,6 @@ describe('useWorkshopFilters', () => {
   });
 
   it('cancels a pending slider change when the adapter changes', () => {
-    vi.useFakeTimers();
     const first = makeAdapter();
     const second = makeAdapter();
     const { result, rerender } = renderHook(

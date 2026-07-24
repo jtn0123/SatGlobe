@@ -3,6 +3,13 @@ import path from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 import { conjunctionFeedV1Schema } from '../domain/conjunctions';
 import type { ConjunctionFeedV1, ConjunctionObjectRef } from '../domain/types';
+import {
+  COUNT_UPDATE_MEASURE,
+  FILTER_APPLY_MEASURE,
+  LENS_APPLY_MEASURE,
+  RECOLOR_MEASURE,
+  SATGLOBE_INTERACTION_MEASURES,
+} from '../runtime/performance-measure';
 
 interface InstalledCatalogRow {
   name?: string;
@@ -215,8 +222,32 @@ test.describe('SatGlobe workshop', () => {
 
   test('filters, inspects, presents, tells a story, and exports a view', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 720 });
+    await page.evaluate((names) => {
+      for (const name of names) {
+        performance.clearMeasures(name);
+      }
+    }, SATGLOBE_INTERACTION_MEASURES);
     await page.getByTestId('starlink-lens').click();
     await expect(page.getByTestId('encoding-select')).toHaveValue('orbital-plane');
+    const visualMeasures = await page.evaluate((names) => {
+      const result: Record<string, unknown[]> = {};
+
+      for (const name of names) {
+        const details: unknown[] = [];
+
+        for (const entry of performance.getEntriesByName(name) as PerformanceMeasure[]) {
+          details.push(entry.detail);
+        }
+        result[name] = details;
+      }
+
+      return result;
+    }, [LENS_APPLY_MEASURE, FILTER_APPLY_MEASURE, RECOLOR_MEASURE, COUNT_UPDATE_MEASURE] as const);
+
+    expect(visualMeasures[LENS_APPLY_MEASURE]).toEqual([{ lens: 'starlink' }]);
+    expect(visualMeasures[FILTER_APPLY_MEASURE]).toEqual([{ cause: 'combined' }]);
+    expect(visualMeasures[RECOLOR_MEASURE]).toEqual([{ cause: 'combined' }]);
+    expect(visualMeasures[COUNT_UPDATE_MEASURE]).toEqual([{ cause: 'combined' }]);
 
     const search = page.getByTestId('catalog-search');
     const readZoom = () => page.evaluate(() => window.satGlobe?.getState().camera.zoom ?? Number.NaN);

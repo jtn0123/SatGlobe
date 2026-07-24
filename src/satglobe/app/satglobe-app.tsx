@@ -10,7 +10,9 @@ import {
   type ScaleMode,
   type SpaceObjectView,
   type StoryBeat,
+  type VisualEncoding,
 } from '../domain/types';
+import { LENS_APPLY_MEASURE, measureSync } from '../runtime/performance-measure';
 import { storySimulationAnchor, storySimulationTime } from '../domain/story-time';
 import { storyLibrary } from '../stories';
 import { DiscoverPanel, getQuickLensState, type QuickLens } from './discover-panel';
@@ -81,18 +83,21 @@ function recoverRetainedStoryAnchor(adapter: SatGlobeEngineAdapter, beats: reado
 /** Keeps ordinary filter lenses and the static conjunction highlight on separate mutation paths. */
 function useQuickLensHandlers(
   adapter: SatGlobeEngineAdapter,
-  setFiltersImmediate: (filters: FilterState) => void,
+  setFiltersWithEncodingImmediate: (filters: FilterState, encoding: VisualEncoding) => void,
   conjunctionCatalogIds: readonly string[],
   conjunctionHighlightActive: boolean,
 ) {
   const quickLens = useCallback((lens: QuickLens) => {
     const { filters: next, encoding } = getQuickLensState(lens);
 
-    setFiltersImmediate(next);
-    adapter.setEncoding(encoding);
-  }, [adapter, setFiltersImmediate]);
+    measureSync(LENS_APPLY_MEASURE, { lens }, () => {
+      setFiltersWithEncodingImmediate(next, encoding);
+    });
+  }, [setFiltersWithEncodingImmediate]);
   const conjunctionLens = useCallback(
-    () => adapter.setHighlight(conjunctionHighlightActive ? [] : conjunctionCatalogIds),
+    () => measureSync(LENS_APPLY_MEASURE, { lens: 'conjunction' }, () => {
+      adapter.setHighlight(conjunctionHighlightActive ? [] : conjunctionCatalogIds);
+    }),
     [adapter, conjunctionCatalogIds, conjunctionHighlightActive],
   );
 
@@ -177,7 +182,7 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
   const [mode, setMode] = useState<AppMode>('workshop');
   const [scaleMode, setScaleMode] = useState<ScaleMode>('semantic');
   const [query, setQuery] = useState('');
-  const { filters, setFiltersImmediate, setFiltersDebounced } = useWorkshopFilters(adapter);
+  const { filters, setFiltersImmediate, setFiltersWithEncodingImmediate, setFiltersDebounced } = useWorkshopFilters(adapter);
   const [results, setResults] = useState<SpaceObjectView[]>([]);
   const [savedViews, setSavedViews] = useState<SavedViewV1[]>(() => loadPersistedViews());
   const [notice, setNotice] = useState('');
@@ -186,7 +191,7 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
   const [storyId, setStoryId] = useState(storyLibrary[0].id);
   const story = storyLibrary.find(({ id }) => id === storyId) ?? storyLibrary[0];
   const storyTimeAnchorRef = useRef(engine.simulationTime);
-  const { conjunctionLens, quickLens } = useQuickLensHandlers(adapter, setFiltersImmediate, engine.conjunctions.catalogIds, engine.conjunctionHighlightActive);
+  const { conjunctionLens, quickLens } = useQuickLensHandlers(adapter, setFiltersWithEncodingImmediate, engine.conjunctions.catalogIds, engine.conjunctionHighlightActive);
 
   useEffect(() => adapter.subscribe(setEngine), [adapter]);
 

@@ -13,6 +13,7 @@ const mutatingMethodNames = [
   'setCamera',
   'setFilters',
   'setEncoding',
+  'setVisualState',
   'setHighlight',
   'setScaleMode',
   'drawOrbit',
@@ -446,14 +447,18 @@ describe('SatGlobeApp', () => {
     expect(app.classList.contains('sg-mode-presentation')).toBe(false);
   });
 
-  it('applies a quick lens exactly once through the immediate filter path', () => {
+  it('applies a quick lens through one combined visual-state update', () => {
     const { methods } = renderApp();
 
     fireEvent.click(screen.getByTestId('starlink-lens'));
 
-    expect(methods.setFilters).toHaveBeenCalledTimes(1);
-    expect(methods.setFilters).toHaveBeenCalledWith(expect.objectContaining({ constellation: 'starlink' }));
-    expect(methods.setEncoding).toHaveBeenCalledWith('orbital-plane');
+    expect(methods.setVisualState).toHaveBeenCalledOnce();
+    expect(methods.setVisualState).toHaveBeenCalledWith({
+      filters: expect.objectContaining({ constellation: 'starlink' }),
+      encoding: 'orbital-plane',
+    });
+    expect(methods.setFilters).not.toHaveBeenCalled();
+    expect(methods.setEncoding).not.toHaveBeenCalled();
   });
 
   it('toggles the conjunction lens on and off while preserving filters and encoding', () => {
