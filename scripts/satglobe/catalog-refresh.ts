@@ -13,7 +13,7 @@ import {
   type CatalogRefreshManifest,
   type CatalogRefreshManifestV2,
 } from './catalog-manifest';
-import { buildSocratesFeed, validateSocratesFeed } from './socrates-refresh';
+import { buildSocratesFeed, validateSocratesFeed, type SocratesFeedV1 } from './socrates-refresh';
 
 /* eslint-disable jsdoc/require-jsdoc -- Refresh helpers are private or expose self-describing typed contracts. */
 
@@ -892,15 +892,14 @@ export async function stageAndInstallArtifacts(outputDirectory: string, artifact
   }
 }
 
-export function validateCatalogManifest(
+function validateParsedCatalogManifest(
+  catalog: CatalogRow[],
   catalogJson: string,
   manifestJson: string,
   options: { allowLegacySchema?: boolean } = {},
-): CatalogRefreshManifest {
-  const catalog = JSON.parse(catalogJson) as CatalogRow[];
+): { catalogById: Map<string, CatalogRow>; manifest: CatalogRefreshManifest } {
   const decodedManifest = JSON.parse(manifestJson) as unknown;
-
-  validateBaseCatalog(catalog);
+  const catalogById = validateBaseCatalog(catalog);
   const manifest = options.allowLegacySchema
     ? catalogRefreshManifestSchema.parse(decodedManifest)
     : catalogRefreshManifestV2Schema.parse(decodedManifest);
@@ -925,14 +924,60 @@ export function validateCatalogManifest(
     throw new Error(`Catalog manifest snapshotId must match the installed epoch and checksum (${expectedSnapshotId}).`);
   }
 
-  return manifest;
+  return { catalogById, manifest };
+}
+
+export function validateCatalogManifest(
+  catalogJson: string,
+  manifestJson: string,
+  options: { allowLegacySchema?: boolean } = {},
+): CatalogRefreshManifest {
+  const catalog = JSON.parse(catalogJson) as CatalogRow[];
+
+  return validateParsedCatalogManifest(catalog, catalogJson, manifestJson, options).manifest;
+}
+
+export function validateCatalogConjunctionCoherence(
+  catalogIds: { has(catalogId: string): boolean },
+  conjunctions: SocratesFeedV1,
+  manifestConjunctions: CatalogRefreshManifest['conjunctions'],
+): void {
+  const expected = {
+    snapshotId: conjunctions.snapshotId,
+    eventCount: conjunctions.conjunctions.length,
+    updatedAt: conjunctions.source.updatedAt,
+    retrievedAt: conjunctions.source.retrievedAt,
+    checksum: conjunctions.source.checksum,
+  };
+  const mismatchedField = (Object.keys(expected) as Array<keyof typeof expected>)
+    .find((field) => manifestConjunctions[field] !== expected[field]);
+
+  if (mismatchedField) {
+    throw new Error(`Catalog manifest conjunctions.${mismatchedField} does not match the candidate SOCRATES feed.`);
+  }
+  const missingCatalogIds = new Set<string>();
+
+  conjunctions.conjunctions.forEach((conjunction) => {
+    [conjunction.object1.catalogId, conjunction.object2.catalogId].forEach((catalogId) => {
+      if (!catalogIds.has(catalogId)) {
+        missingCatalogIds.add(catalogId);
+      }
+    });
+  });
+  if (missingCatalogIds.size > 0) {
+    const missing = [...missingCatalogIds].sort((left, right) => left.localeCompare(right, 'en', { numeric: true }));
+
+    throw new Error(`Candidate SOCRATES feed references catalog IDs absent from the candidate catalog: ${missing.join(', ')}.`);
+  }
 }
 
 function validateSerializedOutputs(catalogJson: string, conjunctionJson: string, manifestJson: string): void {
+  const catalog = JSON.parse(catalogJson) as CatalogRow[];
+  const { catalogById, manifest } = validateParsedCatalogManifest(catalog, catalogJson, manifestJson);
   const conjunctions = JSON.parse(conjunctionJson) as unknown;
 
-  validateCatalogManifest(catalogJson, manifestJson);
   validateSocratesFeed(conjunctions);
+  validateCatalogConjunctionCoherence(catalogById, conjunctions, manifest.conjunctions);
 }
 
 export async function refreshCatalog(options: RefreshOptions): Promise<CatalogRefreshManifestV2> {

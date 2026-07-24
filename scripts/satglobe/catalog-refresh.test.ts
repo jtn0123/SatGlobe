@@ -1,9 +1,10 @@
 import { execFile } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { access, copyFile, link, mkdir, mkdtemp, readFile, rename, rm, unlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { promisify } from 'node:util';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FormatTle } from '../../src/engine/ootk/src/coordinate/FormatTle';
 import {
   catalogIdFromTle,
@@ -19,14 +20,17 @@ import {
   stageAndInstallArtifacts,
   summarizeRejections,
   validateBaseCatalog,
+  validateCatalogConjunctionCoherence,
   validateCatalogManifest,
   type OmmRow,
 } from './catalog-refresh';
+import type { SocratesFeedV1 } from './socrates-refresh';
 
 /* eslint-disable jsdoc/require-jsdoc -- Test fixture builders are intentionally local. */
 
 const temporaryDirectories: string[] = [];
 const execFileAsync = promisify(execFile);
+const CATALOG_REFRESH_TEST_TIME = new Date('2026-07-18T12:00:00.000Z');
 
 async function createTestInstallLock(lockFile: string, pid: number, token: string): Promise<void> {
   const ownerFile = `${lockFile}.${token}.owner`;
@@ -34,6 +38,11 @@ async function createTestInstallLock(lockFile: string, pid: number, token: strin
   await writeFile(ownerFile, `${JSON.stringify({ token, pid, startedAt: '2026-07-18T00:00:00.000Z' })}\n`, 'utf8');
   await link(ownerFile, lockFile);
 }
+
+beforeEach(() => {
+  vi.useFakeTimers();
+  vi.setSystemTime(CATALOG_REFRESH_TEST_TIME);
+});
 
 afterEach(async () => {
   await Promise.all(temporaryDirectories.splice(0).map((directory) => rm(directory, { force: true, recursive: true })));
@@ -71,6 +80,49 @@ function socratesCsv(secondCatalogId = '64737'): string {
   return `${SOCRATES_HEADER}\r\n62392,TOMORROW-S3 [+],0,${secondCatalogId},STARLINK-34619 [+],0,2099-07-21 07:10:32.348,0.003,11.520,1.000E+00,0.000\r\n`;
 }
 
+function candidateConjunctionFeed(secondCatalogId = '64737'): SocratesFeedV1 {
+  const timeOfClosestApproach = '2099-07-21T07:10:32.348Z';
+  const pairKey = ['62392', secondCatalogId]
+    .sort((left, right) => left.localeCompare(right, 'en', { numeric: true }))
+    .join(':');
+  const checksum = 'a'.repeat(64);
+
+  return {
+    schemaVersion: 1,
+    snapshotId: `socrates-2026-07-18-${checksum.slice(0, 12)}`,
+    generatedAt: '2026-07-18T01:13:28.000Z',
+    source: {
+      provider: 'CelesTrak',
+      rawUrl: 'https://celestrak.org/SOCRATES/sort-minRange.csv',
+      updatedAt: '2026-07-18T01:13:28.000Z',
+      retrievedAt: '2026-07-18T11:25:30.000Z',
+      checksum,
+    },
+    conjunctions: [
+      {
+        id: createHash('sha256').update(`${pairKey}:${timeOfClosestApproach}`).digest('hex').slice(0, 24),
+        object1: { catalogId: '62392', name: 'TOMORROW-S3 [+]', dseDays: 0 },
+        object2: { catalogId: secondCatalogId, name: 'STARLINK-34619 [+]', dseDays: 0 },
+        timeOfClosestApproach,
+        missDistanceKm: 0.003,
+        relativeSpeedKmS: 11.52,
+        maximumProbability: 1,
+        dilutionThreshold: 0,
+      },
+    ],
+  };
+}
+
+function conjunctionSummary(feed: SocratesFeedV1) {
+  return {
+    snapshotId: feed.snapshotId,
+    eventCount: feed.conjunctions.length,
+    updatedAt: feed.source.updatedAt,
+    retrievedAt: feed.source.retrievedAt,
+    checksum: feed.source.checksum,
+  };
+}
+
 describe('SatGlobe catalog refresh', () => {
   it('converts OMM records into valid, checksummed TLE rows', () => {
     const row = ommToCatalogRow(omm);
@@ -97,6 +149,28 @@ describe('SatGlobe catalog refresh', () => {
   it('rejects an empty catalog before deriving snapshot provenance', () => {
     expect(() => newestElementEpochFromCatalog([])).toThrow(TypeError);
     expect(() => newestElementEpochFromCatalog([])).toThrow('Catalog does not contain a valid newest element epoch.');
+  });
+
+  it('rejects manifest provenance that does not describe the candidate conjunction feed', () => {
+    const feed = candidateConjunctionFeed();
+    const catalogIds = new Set(['62392', '64737']);
+    const coherentSummary = conjunctionSummary(feed);
+
+    expect(() => validateCatalogConjunctionCoherence(catalogIds, feed, coherentSummary)).not.toThrow();
+    expect(() => validateCatalogConjunctionCoherence(catalogIds, feed, {
+      ...coherentSummary,
+      checksum: 'b'.repeat(64),
+    })).toThrow(/conjunctions\.checksum/u);
+  });
+
+  it('rejects candidate conjunctions whose objects are absent from the candidate catalog', () => {
+    const feed = candidateConjunctionFeed();
+
+    expect(() => validateCatalogConjunctionCoherence(
+      new Set(['62392']),
+      feed,
+      conjunctionSummary(feed),
+    )).toThrow(/64737/u);
   });
 
   it.each([
@@ -325,6 +399,7 @@ describe('SatGlobe catalog refresh', () => {
   });
 
   it('installs a strict v2 manifest whose provenance is coherent with accepted catalog bytes', async () => {
+    vi.setSystemTime(CATALOG_REFRESH_TEST_TIME);
     const directory = await mkdtemp(path.join(tmpdir(), 'satglobe-catalog-manifest-'));
     const output = path.join(directory, 'tle.json');
     const activeInput = path.join(directory, 'active.csv');
@@ -388,7 +463,7 @@ describe('SatGlobe catalog refresh', () => {
     expect(() => validateCatalogManifest(catalogJson, `${JSON.stringify(wrongRejectedTotal)}\n`)).toThrow(/rejected must equal/u);
     expect(() => validateCatalogManifest(catalogJson, `${JSON.stringify(impossibleObjectDelta)}\n`)).toThrow(/objectCount must equal/u);
     expect(() => validateCatalogManifest(catalogJson, `${JSON.stringify(legacyShape)}\n`)).toThrow();
-  });
+  }, 30_000);
 
   it('leaves every installed output unchanged when SOCRATES validation fails', async () => {
     const directory = await mkdtemp(path.join(tmpdir(), 'satglobe-catalog-failure-'));

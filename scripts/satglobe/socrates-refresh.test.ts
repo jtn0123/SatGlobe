@@ -122,9 +122,7 @@ describe('SOCRATES refresh', () => {
     ));
     const catalogJson = await readFile(path.resolve('public/tle/tle.json'), 'utf8');
     const manifestJson = await readFile(path.resolve('public/tle/satglobe/manifest.json'), 'utf8');
-    // Schema v1 remains accepted only for the checked-in migration boundary;
-    // every newly generated candidate is required to use strict schema v2.
-    const manifest = validateCatalogManifest(catalogJson, manifestJson, { allowLegacySchema: true });
+    const manifest = validateCatalogManifest(catalogJson, manifestJson);
     const summary = JSON.parse(await readFile(path.resolve('public/tle/satglobe/summary.json'), 'utf8')) as {
       conjunctionCount: number;
       conjunctionSnapshotId: string;
@@ -138,6 +136,7 @@ describe('SOCRATES refresh', () => {
       retrievedAt: feed.source.retrievedAt,
       checksum: feed.source.checksum,
     });
+    expect(manifest.schemaVersion).toBe(2);
     expect(summary).toMatchObject({
       conjunctionCount: feed.conjunctions.length,
       conjunctionSnapshotId: feed.snapshotId,
