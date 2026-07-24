@@ -1,6 +1,6 @@
 # SatGlobe roadmap and recovery ledger
 
-Last updated: 2026-07-24T05:47:08Z
+Last updated: 2026-07-24T05:53:47Z
 
 This file is the durable product roadmap and the live ledger for the approved
 legacy-work recovery. It is intentionally Markdown so every decision, test
@@ -230,6 +230,9 @@ reachable from `main`, an archive ref, or a verified replacement commit.
 | 2026-07-24T05:27:32Z | `9c650030` | `npm run benchmark:satglobe:soak` | Verified | Raw report `benchmark-results/satglobe/2026-07-24T05-27-32Z.raw.json`: five fresh pages plus 120.006 seconds of Story, 7,201 frames, 59.88 median FPS, 17.6 ms frame p95, zero slow frames/long tasks/context loss/runtime errors, and heap ended 47,705,387 bytes below its start |
 | 2026-07-24T05:31:40Z | `e287a469` | Remaining live Sonar issue inspection and focused repair | Verified | Replaced the flagged 32-bit range literal with `2 ** 32`, consolidated the duplicate visually-hidden selector, and passed three launch-designator/cohort/color files with 19 tests, focused lint, and `git diff --check`; the GitHub rescan remains pending |
 | 2026-07-24T05:47:08Z | `c99ce10e` | `SATGLOBE_STORY_HEADLESS=1 npm run verify:stories` | Verified | Fresh production build captured all ten stories / 51 beats without a semantic or runtime failure; manifest `test-results/satglobe-story-shots/c99ce10e828e-20260724T053234041Z-edddb937-3e83-4827-9901-292928a476eb/manifest.json` |
+| 2026-07-24T05:49:15Z | `0b985244` | `npm run verify:satglobe` | Verified | Normal and strict typecheck, story-walker boundary, full lint, 41 files / 368 tests, performance-ledger validation, production build, emitted-script policy, and 351.9 MiB/12.8 MiB build budget passed |
+| 2026-07-24T05:52:42Z | `0b985244` | `CI=true npm run test:e2e:satglobe` | Blocked | 13 journeys passed; launch-history monotonicity read the intentionally transitioned React count before it settled after the synchronous engine transaction, and the retry also failed, so fail-on-flake correctly kept the gate red |
+| 2026-07-24T05:53:47Z | `7bb6dca3` | Launch-history settled-state E2E repeated without retries | Verified | The test now waits for both the selected timeline year and the unchanged monotonic count contract. `--repeat-each=3 --retries=0` passed all three runs in 38.9 seconds; the complete production-static E2E rerun remains pending |
 
 Every later validation entry must identify the exact tested commit. Raw
 benchmark and story artifacts remain ignored; governed evidence is committed
@@ -265,8 +268,9 @@ executable imported content, or required WebGPU path is introduced.
 | 2026-07-24T05:01:39Z | `d9fb8075` | Accept the independent product review's four reproduced lifecycle/data-truth fixes and initialize performance governance with zero accepted current records until fresh measurements pass policy | Verified |
 | 2026-07-24T05:15:12Z | `a0256455` | Do not accept a raw report whose normal interactions exceed the declared long-task budget; split live-legend work away from renderer transactions instead of weakening the 50 ms policy | Ported |
 | 2026-07-24T05:19:35Z | `ce2176ec` | Preserve synchronous atomic renderer semantics but publish React mirrors as transitions so the two workloads cannot form one browser long task | Ported |
-| 2026-07-24T05:26:08Z | `b1e37273` | Keep the soak callback browser-native so Playwright cannot serialize TypeScript runner helpers that do not exist in the measured page | Ported |
+| 2026-07-24T05:26:08Z | `b1e37273` | Keep the soak callback browser-native so Playwright cannot serialize TypeScript runner helpers that do not exist in the measured page | Verified |
 | 2026-07-24T05:31:40Z | `e287a469` | Treat all four attributable Sonar findings as mergeability blockers, including the numeric-grouping and duplicate-selector findings exposed after the initial sort repairs | Verified |
+| 2026-07-24T05:53:47Z | `7bb6dca3` | Keep the launch-history monotonicity assertion and wait for the transitioned count to settle; do not disable CI retries or weaken the product invariant | Verified |
 
 ## After the recovery gate
 
