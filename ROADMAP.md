@@ -1,6 +1,6 @@
 # SatGlobe roadmap and recovery ledger
 
-Last updated: 2026-07-24T03:59:26Z
+Last updated: 2026-07-24T04:03:37Z
 
 This file is the durable product roadmap and the live ledger for the approved
 legacy-work recovery. It is intentionally Markdown so every decision, test
@@ -109,9 +109,9 @@ objects below.
 | `codex/recovery-product-lane` | Isolated #51/#53/#60/guided/#62 forward-port | In progress |
 | `/Users/justin/Documents/SatGlobe` | Archived first-play checkout; generated Husky dirt only | Deferred |
 | `.claude/worktrees/app-roadmap-performance-0642ff` | Original dirty guided-Story source | Deferred |
-| `.codex/worktrees/7414/SatGlobe` | Clean archived geometry cleanup | Deferred |
-| 33 clean local ancestors of main | Delete after exact live recheck | Pending |
-| Six remote heads for merged PRs #24–#27, #69, and #70 | Delete after exact live recheck | Pending |
+| `.codex/worktrees/7414/SatGlobe` | Removed with Git after confirming clean exact commit; archive ref retained | Verified |
+| 33 clean local ancestors of main | Deleted non-forcibly from a current-main descendant after exact live recheck | Verified |
+| Six remote heads for merged PRs #24–#27, #69, and #70 | Deleted after GitHub state/name/SHA recheck | Verified |
 
 No branch may be deleted unless its recorded object is unchanged, it is not
 attached to a worktree, it has no dirty or untracked content, and it remains
@@ -125,7 +125,7 @@ reachable from `main`, an archive ref, or a verified replacement commit.
 - [x] `Verified` — Establish clean current-main unit, E2E, OOTK, story, build,
   and production-audit baselines.
 - [x] `Verified` — Close legacy PRs #51–#68 without merging and record closure.
-- [ ] `Pending` — Remove only reverified safe branches and the archived clean
+- [x] `Verified` — Remove only reverified safe branches and the archived clean
   geometry worktree.
 - [ ] `In progress` — Recovery ledger and current handoff.
 - [ ] `In progress` — Stability and atomic visual state from #51.
@@ -157,6 +157,7 @@ reachable from `main`, an archive ref, or a verified replacement commit.
 | 2026-07-24T03:53:47Z | `7c67dd20050481e3b1b3b5cbb26e2a298526679d` | `SATGLOBE_STORY_HEADLESS=1 npm run verify:stories` | Verified | Eight stories / 39 beats; `test-results/satglobe-story-shots/7c67dd200504-20260724T034238908Z-10f5fafe-3103-45d6-87c3-7fa4a97bfa54/manifest.json` |
 | 2026-07-24T03:49:00Z | `7c67dd20050481e3b1b3b5cbb26e2a298526679d` | `npm audit --omit=dev` | Verified | 0 production vulnerabilities across 36 production dependencies |
 | 2026-07-24T03:59:26Z | `1b99e255` | GitHub PR #51–#68 preservation comments, close operations, and live re-query | Verified | Zero open PRs; 18 closed PR head SHAs exactly matched this ledger |
+| 2026-07-24T04:03:37Z | `17dd31fc` | Remote/local branch and geometry-worktree cleanup | Verified | Six merged remote heads and 33 main-ancestor local heads removed; geometry remains at archive ref `8f901564` |
 
 Every later validation entry must identify the exact tested commit. Raw
 benchmark and story artifacts remain ignored; governed evidence is committed
@@ -182,6 +183,7 @@ executable imported content, or required WebGPU path is introduced.
 | 2026-07-24T03:53:47Z | `7c67dd20050481e3b1b3b5cbb26e2a298526679d` | Preserve old performance records as history but generate fresh evidence | Verified |
 | 2026-07-24T03:53:47Z | `7c67dd20050481e3b1b3b5cbb26e2a298526679d` | Keep geometry, dependency upgrades, saved-view v2, and broad future scope out of this PR | Deferred |
 | 2026-07-24T03:59:26Z | `1b99e255` | Close #51–#68 without merging after confirming every head remained archived | Verified |
+| 2026-07-24T04:03:37Z | `17dd31fc` | Use non-force local deletion from the current-main recovery worktree; use Git double-force only for the clean archived geometry worktree blocked by its registered uninitialized submodule | Verified |
 
 ## After the recovery gate
 
