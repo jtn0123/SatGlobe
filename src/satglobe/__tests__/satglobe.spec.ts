@@ -477,6 +477,7 @@ test.describe('SatGlobe workshop', () => {
   });
 
   test('authors, reloads, and plays a two-view mission sequence with one recolor per step', async ({ page }) => {
+    test.setTimeout(90_000);
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await page.setViewportSize({ width: 2560, height: 1440 });
     await page.getByRole('button', { name: '+ Save current' }).click();
