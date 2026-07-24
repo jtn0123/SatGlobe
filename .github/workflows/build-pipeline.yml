@@ -118,7 +118,7 @@ jobs:
         run: ./node_modules/.bin/vitest run scripts/satglobe/performance-contract.test.ts
 
       - name: Lint performance tooling
-        run: ./node_modules/.bin/eslint scripts/satglobe/benchmark-runtime-lite.ts scripts/satglobe/check-build-budget.ts scripts/satglobe/performance-contract.ts scripts/satglobe/performance-contract.test.ts scripts/satglobe/performance-ledger.ts --max-warnings 0
+        run: ./node_modules/.bin/eslint scripts/satglobe/benchmark-runtime-lite.ts scripts/satglobe/check-build-budget.ts scripts/satglobe/performance-contract.ts scripts/satglobe/performance-contract.test.ts scripts/satglobe/performance-ledger.ts scripts/satglobe/performance-report-path.ts --max-warnings 0
 
       - name: Validate immutable performance history
         env:

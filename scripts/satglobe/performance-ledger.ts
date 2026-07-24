@@ -22,6 +22,7 @@ import {
   type PerformanceProfiles,
   type SatGlobePerformanceReport,
 } from './performance-contract';
+import { resolvePerformanceReportPath } from './performance-report-path';
 
 const ROOT = path.resolve('docs/performance');
 const POLICY_PATH = path.join(ROOT, 'policy.json');
@@ -71,7 +72,7 @@ async function recordFiles(directory = RECORDS_PATH): Promise<string[]> {
     }
 
     return entry.name.endsWith('.json') ? [entryPath] : [];
-  }))).flat().sort();
+  }))).flat().sort((left, right) => left.localeCompare(right));
 }
 
 async function loadRecords(): Promise<AcceptedPerformanceRecord[]> {
@@ -82,7 +83,8 @@ async function loadRecords(): Promise<AcceptedPerformanceRecord[]> {
 }
 
 async function loadReport(filePath: string): Promise<{ report: SatGlobePerformanceReport; checksum: string }> {
-  const source = await readFile(filePath, 'utf8');
+  const safeReportPath = await resolvePerformanceReportPath(filePath);
+  const source = await readFile(safeReportPath, 'utf8');
 
   return { report: performanceReportSchema.parse(JSON.parse(source) as unknown), checksum: sha256(source) };
 }
@@ -154,7 +156,7 @@ export function renderPerformanceHistory(records: readonly AcceptedPerformanceRe
     const idle = record.report.metrics.steadyStateFrames.idle;
     const soak = record.report.metrics.soak;
 
-    lines.push(`| ${record.recordedAt.slice(0, 10)} | ${record.profileId} | ${record.testedCommit.slice(0, 8)} | ${record.label.replaceAll('|', '\\|')} | ${record.verdict} | ${idle?.medianFps.toFixed(2) ?? 'n/a'} | ${idle?.p95FrameMs.toFixed(2) ?? 'n/a'} | ${soak?.frames.p95FrameMs.toFixed(2) ?? 'n/a'} |`);
+    lines.push(`| ${record.recordedAt.slice(0, 10)} | ${record.profileId} | ${record.testedCommit.slice(0, 8)} | ${record.label.replaceAll('|', String.raw`\|`)} | ${record.verdict} | ${idle?.medianFps.toFixed(2) ?? 'n/a'} | ${idle?.p95FrameMs.toFixed(2) ?? 'n/a'} | ${soak?.frames.p95FrameMs.toFixed(2) ?? 'n/a'} |`);
   }
   if (records.length === 0) {
     lines.push('| _No accepted current-app records yet_ |  |  |  |  |  |  |  |');

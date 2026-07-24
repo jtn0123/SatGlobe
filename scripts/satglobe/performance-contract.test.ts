@@ -1,5 +1,8 @@
 /* eslint-disable jsdoc/require-jsdoc -- Focused fixtures are local to this policy test. */
-import { describe, expect, it } from 'vitest';
+import { mkdir, mkdtemp, realpath, rm, symlink, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { afterEach, describe, expect, it } from 'vitest';
 import {
   compareReports,
   comparisonKey,
@@ -9,6 +12,7 @@ import {
   profileMismatches,
   type SatGlobePerformanceReport,
 } from './performance-contract';
+import { resolvePerformanceReportPath } from './performance-report-path';
 
 const distribution = {
   samples: [10, 11, 12, 13, 14],
@@ -205,5 +209,56 @@ describe('performance report contract', () => {
       'runtimeErrors',
       'gates.runtimeBudgets',
     ]));
+  });
+});
+
+const temporaryDirectories: string[] = [];
+
+async function reportPathFixture() {
+  const parent = await mkdtemp(path.join(tmpdir(), 'satglobe-performance-path-'));
+  const reportRoot = path.join(parent, 'benchmark-results', 'satglobe');
+  const reportPath = path.join(reportRoot, 'sample.raw.json');
+
+  temporaryDirectories.push(parent);
+  await mkdir(reportRoot, { recursive: true });
+  await writeFile(reportPath, '{}\n');
+
+  return { parent, reportPath, reportRoot };
+}
+
+afterEach(async () => {
+  await Promise.all(temporaryDirectories.splice(0).map((directory) => rm(directory, {
+    force: true,
+    recursive: true,
+  })));
+});
+
+describe('performance report path policy', () => {
+  it('accepts a regular raw report inside the declared benchmark directory', async () => {
+    const { reportPath, reportRoot } = await reportPathFixture();
+
+    await expect(resolvePerformanceReportPath(reportPath, reportRoot)).resolves.toBe(await realpath(reportPath));
+  });
+
+  it('rejects traversal and non-raw filenames before reading them', async () => {
+    const { parent, reportRoot } = await reportPathFixture();
+    const outside = path.join(parent, 'outside.raw.json');
+    const wrongExtension = path.join(reportRoot, 'sample.json');
+
+    await Promise.all([writeFile(outside, '{}\n'), writeFile(wrongExtension, '{}\n')]);
+
+    await expect(resolvePerformanceReportPath(outside, reportRoot)).rejects.toThrow(/inside/u);
+    await expect(resolvePerformanceReportPath(wrongExtension, reportRoot)).rejects.toThrow(/\.raw\.json/u);
+  });
+
+  it.skipIf(process.platform === 'win32')('rejects a report symlink that resolves outside the benchmark directory', async () => {
+    const { parent, reportRoot } = await reportPathFixture();
+    const outside = path.join(parent, 'outside.raw.json');
+    const escapedLink = path.join(reportRoot, 'escaped.raw.json');
+
+    await writeFile(outside, '{}\n');
+    await symlink(outside, escapedLink);
+
+    await expect(resolvePerformanceReportPath(escapedLink, reportRoot)).rejects.toThrow(/resolves outside/u);
   });
 });

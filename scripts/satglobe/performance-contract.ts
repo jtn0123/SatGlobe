@@ -189,7 +189,7 @@ export function sha256(text: string): string {
 }
 
 function browserMajor(version: string): string {
-  return version.match(/\d+/u)?.[0] ?? version;
+  return (/\d+/u).exec(version)?.[0] ?? version;
 }
 
 function analyzerMajor(version: string): string {
@@ -353,18 +353,20 @@ function comparableMetrics(candidate: SatGlobePerformanceReport, baseline: SatGl
     });
   }
   for (const scenario of Object.keys(candidate.metrics.steadyStateFrames)) {
-    metrics.push({
-      path: `steadyStateFrames.${scenario}.p95FrameMs`,
-      candidate: candidate.metrics.steadyStateFrames[scenario]?.p95FrameMs ?? null,
-      baseline: baseline.metrics.steadyStateFrames[scenario]?.p95FrameMs ?? null,
-      lowerIsBetter: true,
-    });
-    metrics.push({
-      path: `steadyStateFrames.${scenario}.medianFps`,
-      candidate: candidate.metrics.steadyStateFrames[scenario]?.medianFps ?? null,
-      baseline: baseline.metrics.steadyStateFrames[scenario]?.medianFps ?? null,
-      lowerIsBetter: false,
-    });
+    metrics.push(
+      {
+        path: `steadyStateFrames.${scenario}.p95FrameMs`,
+        candidate: candidate.metrics.steadyStateFrames[scenario]?.p95FrameMs ?? null,
+        baseline: baseline.metrics.steadyStateFrames[scenario]?.p95FrameMs ?? null,
+        lowerIsBetter: true,
+      },
+      {
+        path: `steadyStateFrames.${scenario}.medianFps`,
+        candidate: candidate.metrics.steadyStateFrames[scenario]?.medianFps ?? null,
+        baseline: baseline.metrics.steadyStateFrames[scenario]?.medianFps ?? null,
+        lowerIsBetter: false,
+      },
+    );
   }
   for (const path of [
     ['freshStarlinkLens', 'domResponseMs', 'p95'],
