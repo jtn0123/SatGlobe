@@ -1,7 +1,9 @@
 import type { rgbaArray } from '@app/engine/core/interfaces';
-import { launchCohortColorForKey, normalizeLaunchCohort } from '../domain/launch-designator';
-
-const UNKNOWN_COHORT_COLOR: rgbaArray = [0.56, 0.59, 0.6, 0.62];
+import {
+  launchCohortColorForKey,
+  normalizeLaunchCohort,
+  UNKNOWN_LAUNCH_COHORT_COLOR,
+} from '../domain/launch-designator';
 
 export { normalizeLaunchCohort } from '../domain/launch-designator';
 
@@ -9,5 +11,5 @@ export { normalizeLaunchCohort } from '../domain/launch-designator';
 export function launchCohortColor(internationalDesignator: string | undefined): rgbaArray {
   const cohort = normalizeLaunchCohort(internationalDesignator);
 
-  return cohort ? launchCohortColorForKey(cohort) : UNKNOWN_COHORT_COLOR;
+  return cohort ? launchCohortColorForKey(cohort) : UNKNOWN_LAUNCH_COHORT_COLOR;
 }

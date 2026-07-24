@@ -1,5 +1,10 @@
 import { prepareFilterMatcher } from './filters';
-import { launchCohortColorForKey, normalizeLaunchCohort, type RgbaColor } from './launch-designator';
+import {
+  launchCohortColorForKey,
+  normalizeLaunchCohort,
+  UNKNOWN_LAUNCH_COHORT_COLOR,
+  type RgbaColor,
+} from './launch-designator';
 import type {
   FilterState,
   LegendItem,
@@ -77,12 +82,15 @@ export function buildVisualLegend(
 
   if (encoding === 'launch-cohort') {
     const counts = new Map<string, number>();
+    let unknownCount = 0;
 
     for (const object of visible) {
       const cohort = normalizeLaunchCohort(object.internationalDesignator);
 
       if (cohort) {
         counts.set(cohort, (counts.get(cohort) ?? 0) + 1);
+      } else {
+        unknownCount += 1;
       }
     }
     const top = [...counts.entries()]
@@ -93,10 +101,15 @@ export function buildVisualLegend(
       encoding,
       title: 'Launch cohorts',
       kind: 'cohort',
-      items: top.map(([id, count]) => item(id, id, launchCohortColorForKey(id), count)),
+      items: [
+        ...top.map(([id, count]) => item(id, id, launchCohortColorForKey(id), count)),
+        ...(unknownCount > 0
+          ? [item('unknown-cohort', 'Unknown designator', UNKNOWN_LAUNCH_COHORT_COLOR, unknownCount)]
+          : []),
+      ],
       disclosure: counts.size > top.length
-        ? `Showing the ${top.length} largest visible cohorts; every launch keeps its own stable color.`
-        : 'Colors identify shared international launch designators, not mission purpose.',
+        ? `Showing the ${top.length} largest visible named cohorts; gray marks lack a usable international designator.`
+        : 'Colors identify shared international launch designators, not mission purpose; gray marks lack a usable designator.',
     }, conjunctionHighlightActive, highlightedObjectCount);
   }
 

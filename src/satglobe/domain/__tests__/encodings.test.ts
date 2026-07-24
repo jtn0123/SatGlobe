@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_FILTERS, type SpaceObjectView } from '../types';
 import { buildVisualLegend, rgbaToCss, CONJUNCTION_HIGHLIGHT_COLOR } from '../encodings';
-import { launchCohortColorForKey } from '../launch-designator';
+import { launchCohortColorForKey, UNKNOWN_LAUNCH_COHORT_COLOR } from '../launch-designator';
 
 const object = (cohort: string, catalogId: string): SpaceObjectView => ({
   catalogId,
@@ -41,6 +41,25 @@ describe('live visual legend', () => {
       ['2022-001', 1],
     ]);
     expect(legend.items[0]?.color).toBe(rgbaToCss(launchCohortColorForKey('2021-021')));
+  });
+
+  it('accounts for visible objects whose launch designator has no cohort color key', () => {
+    const unknown = {
+      ...object('2021-021', '4'),
+      internationalDesignator: '',
+      launchText: '',
+    };
+    const legend = buildVisualLegend(
+      'launch-cohort',
+      [object('2021-021', '1'), unknown],
+      { ...structuredClone(DEFAULT_FILTERS), status: 'all' },
+    );
+
+    expect(legend.items.find(({ id }) => id === 'unknown-cohort')).toMatchObject({
+      count: 1,
+      color: rgbaToCss(UNKNOWN_LAUNCH_COHORT_COLOR),
+      label: 'Unknown designator',
+    });
   });
 
   it('adds and removes the temporary close-approach key with highlight ownership', () => {

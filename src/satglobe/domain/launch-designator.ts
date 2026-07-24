@@ -2,6 +2,9 @@ const UINT32_RANGE = 0x1_0000_0000;
 
 export type RgbaColor = [number, number, number, number];
 
+/** Shared renderer/legend color for objects without a usable launch designator. */
+export const UNKNOWN_LAUNCH_COHORT_COLOR: RgbaColor = [0.56, 0.59, 0.6, 0.62];
+
 /** Normalizes NORAD YY-NNN/YYNNN and YYYY-NNN launch designators to one YYYY-NNN cohort key. */
 export function normalizeLaunchCohort(internationalDesignator: string | null | undefined): string | null {
   const designator = internationalDesignator?.trim().toUpperCase() ?? '';
