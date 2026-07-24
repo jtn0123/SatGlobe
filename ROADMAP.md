@@ -128,7 +128,8 @@ reachable from `main`, an archive ref, or a verified replacement commit.
 - [x] `Verified` — Remove only reverified safe branches and the archived clean
   geometry worktree.
 - [ ] `In progress` — Recovery ledger and current handoff.
-- [x] `Ported` — Stability and atomic visual state from #51.
+- [x] `Ported` — Stability and atomic visual state from #51, including Story
+  beat filter/encoding application through the same transaction.
 - [x] `Verified` — Typed eval-free numeric replacement from #52.
 - [x] `Verified` — Pure-SGP4/WASM profile gating from #54, including explicit
   per-worker Az/Range fleet activation.
@@ -155,7 +156,7 @@ reachable from `main`, an archive ref, or a verified replacement commit.
 
 | Legacy source | Consolidated replacement | Included behavior | Status |
 | --- | --- | --- | --- |
-| PR #51 | `dd8d0816` | Transactional visual updates, resilient timing, corrected Dependabot targets, CI flake policy, and test-backed coverage ratchet | Ported |
+| PR #51 | `dd8d0816`, `14f8fa8b` | Transactional visual updates across Workshop, Present, playlists, launch history, and Story; resilient timing; corrected Dependabot targets; CI flake policy; and test-backed coverage ratchet | Ported |
 | PR #52 | `ae2c94e3`, `712af510` | Typed finite-safe vector/matrix helpers, migrated callers, and complete removal of `numeric`, its types, and `_numeric` | Verified |
 | PR #54 | `0a3fae26`, `ae12b02f`, `a193a9b8`, `66fa6c27` | Typed propagator facade, nine worker gates including the Az/Range fleet, recursive whole-output WASM-glue policy, and build-policy errors | Verified |
 | PR #57 | `9fa11775`, `8d5f2981`, `39ae5981` | SatGlobe-only Zod jitless mode, eval-free OBJ alias, scope-aware AST emitted-script guard, and exact strict CSP | Verified |
@@ -185,6 +186,7 @@ reachable from `main`, an archive ref, or a verified replacement commit.
 | 2026-07-24T04:19:12Z | `a620e5ecedf6ac97d65dba83312ab006150f3ba9` | `npm run test:satglobe -- --maxWorkers=1` | Verified | 35 files / 338 tests passed on the combined security, catalog, playlist, launch, Story, and snapshot tree |
 | 2026-07-24T04:21:25Z | `7b517fd0` | Independent security and catalog lane review | Blocked | Az/Range WASM activation, eval scanner coverage/scope, pre-install cross-artifact coherence, deterministic catalog test clock, strict installed-v2 test, and dead GNSS source require focused fixes |
 | 2026-07-24T04:27:27Z | `39ae5981c163ec74117c696bbffaadc82b1eb83f` | Focused security-review regression suite | Verified | Three files / 27 tests passed: Az/Range fleet activation, base worker configuration, and scope-aware emitted-eval policy |
+| 2026-07-24T04:36:12Z | `14f8fa8b` | `npx vitest run src/satglobe/app/__tests__/satglobe-app.test.tsx --maxWorkers=1` | Verified | One file / 41 tests; Story navigation now proves one `setVisualState` call and no separate filter or encoding mutation |
 
 Every later validation entry must identify the exact tested commit. Raw
 benchmark and story artifacts remain ignored; governed evidence is committed
@@ -211,6 +213,7 @@ executable imported content, or required WebGPU path is introduced.
 | 2026-07-24T03:53:47Z | `7c67dd20050481e3b1b3b5cbb26e2a298526679d` | Keep geometry, dependency upgrades, saved-view v2, and broad future scope out of this PR | Deferred |
 | 2026-07-24T03:59:26Z | `1b99e255` | Close #51–#68 without merging after confirming every head remained archived | Verified |
 | 2026-07-24T04:03:37Z | `17dd31fc` | Use non-force local deletion from the current-main recovery worktree; use Git double-force only for the clean archived geometry worktree blocked by its registered uninitialized submodule | Verified |
+| 2026-07-24T04:36:12Z | `14f8fa8b` | Route Story beat filters and encoding through the transactional adapter boundary so authored playback cannot publish an intermediate visual state | Verified |
 
 ## After the recovery gate
 
