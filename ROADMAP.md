@@ -1,6 +1,6 @@
 # SatGlobe roadmap and recovery ledger
 
-Last updated: 2026-07-24T04:43:30Z
+Last updated: 2026-07-24T04:53:52Z
 
 This file is the durable product roadmap and the live ledger for the approved
 legacy-work recovery. It is intentionally Markdown so every decision, test
@@ -203,6 +203,8 @@ reachable from `main`, an archive ref, or a verified replacement commit.
 | 2026-07-24T04:39:46Z | `ecf5980a` | Push consolidated branch and open draft replacement PR #84 | Verified | GitHub created `https://github.com/jtn0123/SatGlobe/pull/84` against `main`; draft remained unmergeable while recovery gates are open |
 | 2026-07-24T04:41:27Z | `ecf5980a` | Add replacement follow-up to closed PRs #51–#68 | Verified | GitHub accepted one #84 link comment on each of all 18 preserved legacy PR conversations |
 | 2026-07-24T04:43:30Z | `40f7726f` | Eight legend, cohort, renderer-color, and integrated app suites plus strict SatGlobe typecheck | Verified | Eight files / 92 tests passed; strict typecheck passed with the inherited engine-import diagnostic filter only |
+| 2026-07-24T04:51:00Z | `b76a50a1` | SonarCloud PR #84 quality gate | Blocked | Reliability rating D from two new TypeScript S2871 findings: implicit string sorts in launch-year and source-label lists |
+| 2026-07-24T04:53:52Z | `45391d1b` | Explicit locale-aware sorting and focused launch explorer/cohort suites | Verified | Both Sonar findings fixed; two files / five tests passed; GitHub rescan remains pending |
 
 Every later validation entry must identify the exact tested commit. Raw
 benchmark and story artifacts remain ignored; governed evidence is committed
@@ -233,6 +235,7 @@ executable imported content, or required WebGPU path is introduced.
 | 2026-07-24T04:38:22Z | `497e030f` | Reject catalog transactions before installation unless manifest, catalog, and conjunction-feed provenance agree; replace the retired GLONASS citation with the current official UNOOSA publication | Verified |
 | 2026-07-24T04:39:46Z | `ecf5980a` | Publish the consolidated branch as draft PR #84 so CI and review can run before final readiness; draft status does not authorize merge | In progress |
 | 2026-07-24T04:43:30Z | `40f7726f` | Recover only first-play legend/cohort behavior that fits the current typed boundary; keep transient explorer state out of portable saved-view schema v1 | Ported |
+| 2026-07-24T04:53:52Z | `45391d1b` | Treat Sonar's two new implicit-sort reliability findings as attributable blockers and replace them with explicit locale-aware ordering | Verified |
 
 ## After the recovery gate
 
