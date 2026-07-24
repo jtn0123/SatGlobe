@@ -33,7 +33,11 @@ export function storyPlaybackReducer(state: StoryPlaybackState, action: StoryPla
     case 'seek':
       return { ...state, beatIndex: action.index, progress: 0 };
     case 'togglePlaying':
-      return { ...state, playing: !state.playing };
+      return {
+        ...state,
+        playing: !state.playing,
+        showSources: state.playing ? false : state.showSources,
+      };
     case 'toggleSources':
       return { ...state, showSources: !state.showSources };
     case 'setProgress':

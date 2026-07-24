@@ -34,8 +34,11 @@ describe('storyPlaybackReducer', () => {
     expect(next).toEqual({ beatIndex: 4, playing: true, progress: 0, showSources: true });
   });
 
-  it('togglePlaying flips only the playing flag', () => {
-    expect(storyPlaybackReducer(midPlayback, { type: 'togglePlaying' }).playing).toBe(false);
+  it('togglePlaying closes sources when active playback is paused or completes', () => {
+    expect(storyPlaybackReducer(midPlayback, { type: 'togglePlaying' })).toMatchObject({
+      playing: false,
+      showSources: false,
+    });
     expect(storyPlaybackReducer(initialStoryPlayback, { type: 'togglePlaying' }).playing).toBe(true);
     expect(storyPlaybackReducer(midPlayback, { type: 'togglePlaying' }).progress).toBe(0.6);
   });
