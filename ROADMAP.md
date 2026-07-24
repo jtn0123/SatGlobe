@@ -1,6 +1,6 @@
 # SatGlobe roadmap and recovery ledger
 
-Last updated: 2026-07-24T05:01:39Z
+Last updated: 2026-07-24T05:02:52Z
 
 This file is the durable product roadmap and the live ledger for the approved
 legacy-work recovery. It is intentionally Markdown so every decision, test
@@ -176,7 +176,7 @@ reachable from `main`, an archive ref, or a verified replacement commit.
 | PR #58 | `ad07e829`, `497e030f` | GNSS-family and Landsat-continuity manifests, verified representative IDs, and current official sources; library now ten stories / 51 beats | Verified |
 | PR #53 | `616dc0d0`, `bf27732c` | Strict 2–24-entry local playlists, atomic import/export, persistence, editing/reorder/delete, Present playback, reduced-motion behavior, and cleanup when Presentation ends | Ported |
 | PR #60 | `8df5c429` | Strict cumulative launch-year filtering, decade stops, atomic application, autoplay, and shared reactive reduced-motion handling | Ported |
-| Guided-Story patch `5cb03505…` | `413add27`, `f53bb34d` | Bounded deterministic orbit cues, Story-only 60× time, complete 1× cleanup, layered Escape, source reset on pause/completion, and one-second reduced-motion progress | Ported |
+| Guided-Story patch `5cb03505…` | `413add27`, `f53bb34d`, `2c5554be` | Bounded deterministic orbit cues, Story-only 60× time, complete 1× cleanup, layered Escape, source reset on pause/completion, native citation-link keyboard behavior, and one-second reduced-motion progress | Ported |
 | PR #62 | `a620e5ec` | One-pending-request next-frame WebGL capture and full-resolution canvas-only PNG download with failure cleanup | Ported |
 | First-play branch `e456209a` | `40f7726f`, `18762641`, `f391d306` | Shared launch-designator normalization and renderer color definitions, complete counted live legend including unknown cohorts, close-approach key, snapshot-aware searchable/year-filtered Starlink cohort exploration, and unchanged saved-view v1 | Ported |
 | Archived performance policy | `d9fb8075` | Seven requested commands, immutable-record validation, five-sample benchmark, two-minute soak, current build budgets, empty honest current-app ledger, and historical-only archived M4 claims | Ported |
@@ -212,6 +212,7 @@ reachable from `main`, an archive ref, or a verified replacement commit.
 | 2026-07-24T04:57:44Z | `52163e42` | Independent integrated product review | Verified | Reproduced and fixed stale playlist resurrection, Story Sources persistence after stop, unknown-cohort legend omission, and stale same-count snapshot cohorts; 17 focused files / 143 tests plus strict/normal typecheck and lint passed in isolation |
 | 2026-07-24T04:57:58Z | `b7080695` | Performance governance validation | Verified | Four contract tests, 360 SatGlobe tests, TypeScript, strict typecheck, lint, production build, 352.0 MiB/12.8 MiB build budget, and empty-ledger validation passed; one-sample smoke was correctly rejected as evidence |
 | 2026-07-24T05:01:39Z | `d9fb8075` | `npm run test:satglobe -- --maxWorkers=1` on the consolidated head | Verified | 41 files / 365 tests passed, including catalog, stories, product review fixes, security policy, and performance contracts |
+| 2026-07-24T05:02:52Z | `2c5554be` | Sources-link keyboard regression suite | Verified | Integrated app file / 42 tests passed; Space on a focused citation link no longer bubbles into global Story playback |
 
 Every later validation entry must identify the exact tested commit. Raw
 benchmark and story artifacts remain ignored; governed evidence is committed
