@@ -1,7 +1,9 @@
 /* eslint-disable jsdoc/require-jsdoc -- Focused fixtures are local to this policy test. */
-import { mkdir, mkdtemp, realpath, rm, symlink, writeFile } from 'node:fs/promises';
+import { execFile } from 'node:child_process';
+import { mkdir, mkdtemp, realpath, rename, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { promisify } from 'node:util';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
   compareReports,
@@ -12,7 +14,12 @@ import {
   profileMismatches,
   type SatGlobePerformanceReport,
 } from './performance-contract';
-import { resolvePerformanceReportPath } from './performance-report-path';
+import {
+  openPerformanceReportFile,
+  PERFORMANCE_REPORT_ROOT,
+} from './performance-report-path';
+
+const execFileAsync = promisify(execFile);
 
 const distribution = {
   samples: [10, 11, 12, 13, 14],
@@ -235,9 +242,15 @@ afterEach(async () => {
 
 describe('performance report path policy', () => {
   it('accepts a regular raw report inside the declared benchmark directory', async () => {
-    const { reportPath, reportRoot } = await reportPathFixture();
+    const { parent, reportPath, reportRoot } = await reportPathFixture();
+    const opened = await openPerformanceReportFile(reportPath, reportRoot, parent);
 
-    await expect(resolvePerformanceReportPath(reportPath, reportRoot)).resolves.toBe(await realpath(reportPath));
+    try {
+      expect(opened.filePath).toBe(await realpath(reportPath));
+      await expect(opened.handle.readFile('utf8')).resolves.toBe('{}\n');
+    } finally {
+      await opened.handle.close();
+    }
   });
 
   it('rejects traversal and non-raw filenames before reading them', async () => {
@@ -247,18 +260,161 @@ describe('performance report path policy', () => {
 
     await Promise.all([writeFile(outside, '{}\n'), writeFile(wrongExtension, '{}\n')]);
 
-    await expect(resolvePerformanceReportPath(outside, reportRoot)).rejects.toThrow(/inside/u);
-    await expect(resolvePerformanceReportPath(wrongExtension, reportRoot)).rejects.toThrow(/\.raw\.json/u);
+    await expect(openPerformanceReportFile(outside, reportRoot, parent)).rejects.toThrow(/inside/u);
+    await expect(openPerformanceReportFile(wrongExtension, reportRoot, parent)).rejects.toThrow(/\.raw\.json/u);
   });
 
-  it.skipIf(process.platform === 'win32')('rejects a report symlink that resolves outside the benchmark directory', async () => {
+  it('rejects a report root redirected outside the trusted repository root', async () => {
+    const parent = await mkdtemp(path.join(tmpdir(), 'satglobe-performance-root-link-'));
+    const trustedRoot = path.join(parent, 'workspace');
+    const reportRoot = path.join(trustedRoot, 'benchmark-results', 'satglobe');
+    const outsideRoot = path.join(parent, 'outside');
+    const reportPath = path.join(reportRoot, 'escaped.raw.json');
+
+    temporaryDirectories.push(parent);
+    await Promise.all([
+      mkdir(path.dirname(reportRoot), { recursive: true }),
+      mkdir(outsideRoot, { recursive: true }),
+    ]);
+    await writeFile(path.join(outsideRoot, 'escaped.raw.json'), '{}\n');
+    await symlink(outsideRoot, reportRoot, process.platform === 'win32' ? 'junction' : 'dir');
+
+    await expect(openPerformanceReportFile(reportPath, reportRoot, trustedRoot)).rejects.toThrow(/root.*symlink|junction/iu);
+  });
+
+  it('rejects a nested directory link that escapes the benchmark directory', async () => {
     const { parent, reportRoot } = await reportPathFixture();
-    const outside = path.join(parent, 'outside.raw.json');
-    const escapedLink = path.join(reportRoot, 'escaped.raw.json');
+    const outsideRoot = path.join(parent, 'outside');
+    const escapedDirectory = path.join(reportRoot, 'escaped');
+    const escapedReport = path.join(escapedDirectory, 'sample.raw.json');
 
-    await writeFile(outside, '{}\n');
-    await symlink(outside, escapedLink);
+    await mkdir(outsideRoot);
+    await writeFile(path.join(outsideRoot, 'sample.raw.json'), '{}\n');
+    await symlink(outsideRoot, escapedDirectory, process.platform === 'win32' ? 'junction' : 'dir');
 
-    await expect(resolvePerformanceReportPath(escapedLink, reportRoot)).rejects.toThrow(/resolves outside/u);
+    await expect(openPerformanceReportFile(escapedReport, reportRoot, parent)).rejects.toThrow(/symlink|junction/u);
+  });
+
+  it.skipIf(process.platform === 'win32')('rejects a raw-name symlink to a differently named in-root file', async () => {
+    const { parent, reportRoot } = await reportPathFixture();
+    const payload = path.join(reportRoot, 'payload.json');
+    const alias = path.join(reportRoot, 'alias.raw.json');
+
+    await writeFile(payload, '{}\n');
+    await symlink(payload, alias);
+
+    await expect(openPerformanceReportFile(alias, reportRoot, parent)).rejects.toThrow(/symlink|junction/u);
+  });
+
+  it.skipIf(process.platform === 'win32')('keeps an opened report bound to its original file across a root-link race', async () => {
+    const { parent, reportPath, reportRoot } = await reportPathFixture();
+    const originalRoot = `${reportRoot}-original`;
+    const outsideRoot = path.join(parent, 'outside');
+
+    await writeFile(reportPath, '{"source":"inside"}\n');
+    await mkdir(outsideRoot);
+    await writeFile(path.join(outsideRoot, path.basename(reportPath)), '{"source":"outside"}\n');
+    const opened = await openPerformanceReportFile(reportPath, reportRoot, parent);
+
+    try {
+      await rename(reportRoot, originalRoot);
+      await symlink(outsideRoot, reportRoot, 'dir');
+      await expect(opened.handle.readFile('utf8')).resolves.toBe('{"source":"inside"}\n');
+    } finally {
+      await opened.handle.close();
+    }
+  });
+
+  it.skipIf(process.platform === 'win32')('rejects a raw-name FIFO without blocking the CLI', async () => {
+    await mkdir(PERFORMANCE_REPORT_ROOT, { recursive: true });
+    const insideDirectory = await mkdtemp(path.join(PERFORMANCE_REPORT_ROOT, 'path-policy-fifo-'));
+    const fifoReport = path.join(insideDirectory, 'blocked.raw.json');
+
+    temporaryDirectories.push(insideDirectory);
+    await execFileAsync('/usr/bin/mkfifo', [fifoReport]);
+    const [result] = await Promise.allSettled([
+      execFileAsync(process.execPath, [
+        '--import',
+        'tsx',
+        'scripts/satglobe/performance-ledger.ts',
+        'compare',
+        '--input',
+        fifoReport,
+        '--profile',
+        'apple-m4-1440p',
+      ], {
+        cwd: process.cwd(),
+        encoding: 'utf8',
+        killSignal: 'SIGKILL',
+        timeout: 2_000,
+      }),
+    ]);
+
+    expect(result).toMatchObject({
+      status: 'rejected',
+      reason: {
+        killed: false,
+        stderr: expect.stringContaining('Performance report must resolve to a regular file.'),
+      },
+    });
+  });
+
+  it('wires both CLI input and confirmation reports through the path policy', async () => {
+    await mkdir(PERFORMANCE_REPORT_ROOT, { recursive: true });
+    const insideDirectory = await mkdtemp(path.join(PERFORMANCE_REPORT_ROOT, 'path-policy-cli-'));
+    const outsideDirectory = await mkdtemp(path.join(tmpdir(), 'satglobe-performance-cli-outside-'));
+    const insideReport = path.join(insideDirectory, 'inside.raw.json');
+    const outsideReport = path.join(outsideDirectory, 'outside.raw.json');
+    const candidate = report();
+
+    temporaryDirectories.push(insideDirectory, outsideDirectory);
+    candidate.run.commit = '0'.repeat(40);
+    candidate.run.dirty = true;
+    await Promise.all([
+      writeFile(insideReport, `${JSON.stringify(candidate)}\n`),
+      writeFile(outsideReport, `${JSON.stringify(candidate)}\n`),
+    ]);
+
+    const [inputResult, confirmationResult] = await Promise.allSettled([
+      execFileAsync(process.execPath, [
+        '--import',
+        'tsx',
+        'scripts/satglobe/performance-ledger.ts',
+        'compare',
+        '--input',
+        outsideReport,
+        '--profile',
+        'apple-m4-1440p',
+      ], { cwd: process.cwd(), encoding: 'utf8' }),
+      execFileAsync(process.execPath, [
+        '--import',
+        'tsx',
+        'scripts/satglobe/performance-ledger.ts',
+        'record',
+        '--input',
+        insideReport,
+        '--profile',
+        'apple-m4-1440p',
+        '--label',
+        'path policy test',
+        '--confirmation',
+        outsideReport,
+        '--justification',
+        'path policy test',
+      ], { cwd: process.cwd(), encoding: 'utf8' }),
+    ]);
+
+    expect(inputResult).toMatchObject({
+      status: 'rejected',
+      reason: {
+        stderr: expect.stringContaining('Performance report must be a .raw.json file inside'),
+      },
+    });
+    expect(confirmationResult).toMatchObject({
+      status: 'rejected',
+      reason: {
+        stderr: expect.stringContaining('Performance report must be a .raw.json file inside'),
+      },
+    });
   });
 });

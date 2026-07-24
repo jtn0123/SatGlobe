@@ -22,13 +22,14 @@ import {
   type PerformanceProfiles,
   type SatGlobePerformanceReport,
 } from './performance-contract';
-import { resolvePerformanceReportPath } from './performance-report-path';
+import { openPerformanceReportFile } from './performance-report-path';
 
 const ROOT = path.resolve('docs/performance');
 const POLICY_PATH = path.join(ROOT, 'policy.json');
 const PROFILES_PATH = path.join(ROOT, 'profiles.json');
 const RECORDS_PATH = path.join(ROOT, 'records');
 const HISTORY_PATH = path.join(ROOT, 'history.md');
+const MARKDOWN_TABLE_PIPE = String.raw`\|`;
 
 interface Options {
   input?: string;
@@ -83,8 +84,14 @@ async function loadRecords(): Promise<AcceptedPerformanceRecord[]> {
 }
 
 async function loadReport(filePath: string): Promise<{ report: SatGlobePerformanceReport; checksum: string }> {
-  const safeReportPath = await resolvePerformanceReportPath(filePath);
-  const source = await readFile(safeReportPath, 'utf8');
+  const { handle } = await openPerformanceReportFile(filePath);
+  let source: string;
+
+  try {
+    source = await handle.readFile('utf8');
+  } finally {
+    await handle.close();
+  }
 
   return { report: performanceReportSchema.parse(JSON.parse(source) as unknown), checksum: sha256(source) };
 }
@@ -156,7 +163,7 @@ export function renderPerformanceHistory(records: readonly AcceptedPerformanceRe
     const idle = record.report.metrics.steadyStateFrames.idle;
     const soak = record.report.metrics.soak;
 
-    lines.push(`| ${record.recordedAt.slice(0, 10)} | ${record.profileId} | ${record.testedCommit.slice(0, 8)} | ${record.label.replaceAll('|', String.raw`\|`)} | ${record.verdict} | ${idle?.medianFps.toFixed(2) ?? 'n/a'} | ${idle?.p95FrameMs.toFixed(2) ?? 'n/a'} | ${soak?.frames.p95FrameMs.toFixed(2) ?? 'n/a'} |`);
+    lines.push(`| ${record.recordedAt.slice(0, 10)} | ${record.profileId} | ${record.testedCommit.slice(0, 8)} | ${record.label.replaceAll('|', MARKDOWN_TABLE_PIPE)} | ${record.verdict} | ${idle?.medianFps.toFixed(2) ?? 'n/a'} | ${idle?.p95FrameMs.toFixed(2) ?? 'n/a'} | ${soak?.frames.p95FrameMs.toFixed(2) ?? 'n/a'} |`);
   }
   if (records.length === 0) {
     lines.push('| _No accepted current-app records yet_ |  |  |  |  |  |  |  |');
@@ -225,11 +232,12 @@ async function record(options: Options): Promise<void> {
   if (!options.input || !options.profile || !options.label) {
     throw new Error('record requires --input, --profile, and --label.');
   }
-  const [{ report, checksum }, policy, profiles, records] = await Promise.all([
+  const [{ report, checksum }, policy, profiles, records, confirmationReport] = await Promise.all([
     loadReport(options.input),
     loadPolicy(),
     loadProfiles(),
     loadRecords(),
+    options.confirmation ? loadReport(options.confirmation) : Promise.resolve(undefined),
   ]);
 
   assertAcceptableReport(report, options.profile, profiles);
@@ -249,8 +257,11 @@ async function record(options: Options): Promise<void> {
     if (!options.confirmation || !options.justification) {
       throw new Error('A >20% regression requires --confirmation and --justification.');
     }
-    const { report: confirmation } = await loadReport(options.confirmation);
+    const confirmation = confirmationReport?.report;
 
+    if (!confirmation) {
+      throw new Error('A >20% regression requires a readable confirmation report.');
+    }
     assertAcceptableReport(confirmation, options.profile, profiles);
     if (!confirmationMatches(report, confirmation)) {
       throw new Error('Confirmation must use the same clean commit, comparison key, and catalog snapshot.');
