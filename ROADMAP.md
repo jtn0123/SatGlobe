@@ -1,6 +1,6 @@
 # SatGlobe roadmap and recovery ledger
 
-Last updated: 2026-07-24T05:56:42Z
+Last updated: 2026-07-24T05:58:42Z
 
 This file is the durable product roadmap and the live ledger for the approved
 legacy-work recovery. It is intentionally Markdown so every decision, test
@@ -72,6 +72,8 @@ All entries below were verified at 2026-07-24T03:53:47Z before source changes.
 | Dirty guided-Story worktree | base `49851ea72e310035301bad857a0c704ba76ff185` | archive commit `2abf8529b9731e765970f64e5b1ad10e2b2c5547` | Verified |
 | Dirty guided-Story patch | nine modified paths | `.git/recovery/2026-07-23/guided-story.patch`; SHA-256 `5cb03505bb7c1d2443f53213e4f177f64fa1448adb5f9bc2a102f4f2911ced25`; 19,256 bytes | Verified |
 | Corrected catalog LFS object | 21,406,172 bytes | SHA-256 `9fae7a2fa46004ae13fa863890547f9947036bfcfe8357ef9a7d67bbf6076a1b` | Verified |
+| Seven temporary recovery lanes | exact tips `8d328b67`, `c52c5909`, `b7080695`, `241aa2cc`, `d779ad79`, `44783d16`, and `27f0d1b5` | matching `refs/archive/satglobe/2026-07-23/recovery-*` refs | Verified |
+| Independent Sonar inventory/policy branch | `6342805149f6830e65a471215ff2533c9e1d73bc` | `refs/archive/satglobe/2026-07-23/sonar-cleanup-01` | Deferred |
 
 The original first-play and dirty guided-Story worktrees remain untouched
 until their selected behavior has a tested replacement.
@@ -116,7 +118,7 @@ objects below.
 | --- | --- | --- |
 | `/Users/justin/.codex/worktrees/satglobe-recovery/SatGlobe` | Clean consolidation branch from exact current main | Verified |
 | `origin/codex/satglobe-consolidated-recovery` / draft PR #84 | Published replacement branch and GitHub review surface | In progress |
-| Seven `codex/recovery-*` lane worktrees | Replacement commits are verified; exact lane-tip archive refs are required before Git-native removal | In progress |
+| Seven `codex/recovery-*` lane worktrees | Replacement commits and exact lane-tip archive refs are verified; Git-native removal pending | In progress |
 | `/Users/justin/Documents/SatGlobe` | First-play replacement verified; generated Husky dirt only; archive and checkout cleanup pending | In progress |
 | `.claude/worktrees/app-roadmap-performance-0642ff` | Guided replacement verified; saved patch still matches the dirty worktree; Git-native removal pending | In progress |
 | `codex/sonar-cleanup-01` | Two unique Sonar inventory/policy commits discovered during cleanup; preserve separately and exclude from PR #84 | Deferred |
@@ -239,6 +241,7 @@ reachable from `main`, an archive ref, or a verified replacement commit.
 | 2026-07-24T05:52:42Z | `0b985244` | `CI=true npm run test:e2e:satglobe` | Blocked | 13 journeys passed; launch-history monotonicity read the intentionally transitioned React count before it settled after the synchronous engine transaction, and the retry also failed, so fail-on-flake correctly kept the gate red |
 | 2026-07-24T05:53:47Z | `7bb6dca3` | Launch-history settled-state E2E repeated without retries | Verified | The test now waits for both the selected timeline year and the unchanged monotonic count contract. `--repeat-each=3 --retries=0` passed all three runs in 38.9 seconds; the complete production-static E2E rerun remains pending |
 | 2026-07-24T05:56:42Z | `07d0d73b` | `CI=true npm run test:e2e:satglobe` | Verified | All 14 production-static offline Chromium journeys passed in 2.0 minutes with fail-on-flake enabled and no retry |
+| 2026-07-24T05:58:42Z | `0ecddc01` | Exact recovery-lane and Sonar-branch archive refs | Verified | Seven temporary lane tips and the independent two-commit Sonar branch are now reachable from exact named archive refs; no worktree or branch was removed before this preservation check |
 
 Every later validation entry must identify the exact tested commit. Raw
 benchmark and story artifacts remain ignored; governed evidence is committed
