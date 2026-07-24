@@ -1,6 +1,6 @@
 # SatGlobe roadmap and recovery ledger
 
-Last updated: 2026-07-24T06:16:17Z
+Last updated: 2026-07-24T06:32:11Z
 
 This file is the durable product roadmap and the live ledger for the approved
 legacy-work recovery. It is intentionally Markdown so every decision, test
@@ -245,6 +245,10 @@ reachable from `main`, an archive ref, or a verified replacement commit.
 | 2026-07-24T06:09:51Z | `4e8a6a2d` | Final ledger, dependency-input, diff, and main-integration checks | Verified | Performance ledger remains valid with zero accepted current records and two governed profiles; the full PR diff passes `git diff --check`; branch is 0 behind current `origin/main`; `package.json` and `package-lock.json` are unchanged from the already verified zero-vulnerability production audit at `45490afb` |
 | 2026-07-24T06:14:24Z | `a79f01fe` | GitHub run `30071492608`, performance-contract job `89413590264` | Blocked | The new isolated job ran Vitest after `npm ci --ignore-scripts` without first generating locale JSON; shared Vitest setup imported app settings and failed on missing `src/locales/fr.json` before executing any policy test |
 | 2026-07-24T06:16:17Z | `42814e7f` | Performance-job locale prerequisite and exact local replay | Verified | Added the same `npm run generate-t7e` prerequisite used by existing test jobs. Locale generation, the exact four-test policy command, focused tooling lint, base-aware ledger validation, and `git diff --check` all passed; no budget or policy changed |
+| 2026-07-24T06:25:53Z | `41ae7a1f` | SonarCloud PR #84 analysis | Blocked | Five attributable performance-tooling findings: three minor mechanical rules, one missing explicit sort comparator affecting reliability, and one high-impact CLI path vulnerability because `--input` / `--confirmation` could read outside the documented raw-report directory |
+| 2026-07-24T06:26:13Z | `41ae7a1f` | GitHub run `30071826062`, SatGlobe offline E2E | Verified | Current hosted head passed the production-static journey suite in 8m42s |
+| 2026-07-24T06:27:15Z | `41ae7a1f` | GitHub run `30071826062`, full unit suite with coverage | Verified | Current hosted head passed the full coverage gate in 9m45s; CodeQL, type/lint/test/build, OOTK, SGP4, and the repaired performance-ledger job also passed |
+| 2026-07-24T06:32:11Z | `f90e1fc4` | Sonar performance-tooling repair and path-security regression suite | Verified | All five findings were repaired. CLI report inputs now require a canonical regular `.raw.json` descendant of `benchmark-results/satglobe`, including symlink-escape rejection. Seven focused tests, exact tooling lint, typecheck, documented real-report comparison, base-aware ledger validation, and diff check passed; Sonar rescan pending |
 
 Every later validation entry must identify the exact tested commit. Raw
 benchmark and story artifacts remain ignored; governed evidence is committed
@@ -283,6 +287,7 @@ executable imported content, or required WebGPU path is introduced.
 | 2026-07-24T05:26:08Z | `b1e37273` | Keep the soak callback browser-native so Playwright cannot serialize TypeScript runner helpers that do not exist in the measured page | Verified |
 | 2026-07-24T05:31:40Z | `e287a469` | Treat all four attributable Sonar findings as mergeability blockers, including the numeric-grouping and duplicate-selector findings exposed after the initial sort repairs | Verified |
 | 2026-07-24T05:53:47Z | `7bb6dca3` | Keep the launch-history monotonicity assertion and wait for the transitioned count to settle; do not disable CI retries or weaken the product invariant | Verified |
+| 2026-07-24T06:32:11Z | `f90e1fc4` | Constrain performance CLI inputs to the documented ignored report root and verify canonical paths so traversal and symlink escapes cannot reach arbitrary local files | Verified |
 
 ## After the recovery gate
 
