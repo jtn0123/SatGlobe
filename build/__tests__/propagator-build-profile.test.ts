@@ -12,6 +12,7 @@ import {
   PROPAGATOR_RUNTIME_REQUEST,
   PROPAGATOR_WORKER_HANDLER_REQUEST,
   SGP4_WASM_WORKER_ENTRY_NAMES,
+  shouldCopyProWasmArtifacts,
 } from '../lib/propagator-build-profile';
 import { WebpackManager } from '../webpack-manager';
 
@@ -58,6 +59,13 @@ describe('propagator build profile', () => {
     expect(loader.loadProfile('pro').propagatorBackend).toBe('sgp4-xp-wasm');
   });
 
+  it('copies proprietary WASM artifacts only for a WASM-enabled Pro profile', () => {
+    expect(shouldCopyProWasmArtifacts({ isPro: false, propagatorBackend: 'sgp4' })).toBe(false);
+    expect(shouldCopyProWasmArtifacts({ isPro: true, propagatorBackend: 'sgp4' })).toBe(false);
+    expect(shouldCopyProWasmArtifacts({ isPro: true, propagatorBackend: 'sgp4-wasm' })).toBe(true);
+    expect(shouldCopyProWasmArtifacts({ isPro: true, propagatorBackend: 'sgp4-xp-wasm' })).toBe(true);
+  });
+
   it('replaces all four optional runtime boundaries in every pure-SGP4 compiler', () => {
     const configs = WebpackManager.createConfig(configFor('sgp4'));
     const expectedTargets = new Map([
@@ -97,6 +105,7 @@ describe('propagator build profile', () => {
 
     expect(main.entry).toEqual({ main: ['./src/main.ts'] });
     expect(SGP4_WASM_WORKER_ENTRY_NAMES).toHaveLength(9);
+    expect(Object.keys(entries).sort()).toEqual(['colorCruncher', ...SGP4_WASM_WORKER_ENTRY_NAMES].sort());
 
     const workerFilesUsingHandler = Object.entries(entries)
       .filter(([, [entry]]) => readFileSync(resolve(entry.replace(/^\.\//u, '')), 'utf8')
@@ -111,43 +120,48 @@ describe('propagator build profile', () => {
 });
 
 describe('propagator bundle guard', () => {
-  const makeJsDir = (): string => {
+  const makeDistDir = (): string => {
     const dir = mkdtempSync(join(tmpdir(), 'satglobe-propagator-'));
-    const jsDir = join(dir, 'js');
 
     temporaryDirs.push(dir);
-    mkdirSync(jsDir);
+    mkdirSync(join(dir, 'js'));
 
-    return jsDir;
+    return dir;
   };
 
-  it('checks every main, worker, and async JS asset', () => {
-    const jsDir = makeJsDir();
+  it('checks every main, worker, async, auth, and copied-runtime JS asset', () => {
+    const distDir = makeDistDir();
 
-    writeFileSync(join(jsDir, 'main.js'), 'console.log("safe")');
-    writeFileSync(join(jsDir, 'positionCruncher.js'), 'Function("Module","require","__dirname", source)');
-    writeFileSync(join(jsDir, 'lazy.js'), 'cwrap("TleAddSatFrLines_wasm")');
-    writeFileSync(join(jsDir, 'main.js.map'), 'TleAddSatFrLines_wasm');
+    mkdirSync(join(distDir, 'auth'));
+    mkdirSync(join(distDir, 'wasm', 'sgp4prop'), { recursive: true });
+    writeFileSync(join(distDir, 'js', 'main.js'), 'console.log("safe")');
+    writeFileSync(join(distDir, 'js', 'positionCruncher.js'), 'Function("Module","require","__dirname", source)');
+    writeFileSync(join(distDir, 'auth', 'callback.js'), 'cwrap("TleAddSatFrLines_wasm")');
+    writeFileSync(join(distDir, 'wasm', 'sgp4prop', 'Sgp4Prop.js'), 'return { Module: Module, FS: FS };');
+    writeFileSync(join(distDir, 'js', 'main.js.map'), 'TleAddSatFrLines_wasm');
 
-    expect(inspectPropagatorBundle(jsDir)).toEqual({
-      assetCount: 3,
-      offenders: ['lazy.js', 'positionCruncher.js'],
+    expect(inspectPropagatorBundle(distDir)).toEqual({
+      assetCount: 4,
+      offenders: ['auth/callback.js', 'js/positionCruncher.js', 'wasm/sgp4prop/Sgp4Prop.js'],
     });
-    expect(() => assertPropagatorBundleProfile(jsDir, 'sgp4')).toThrow(
-      'lazy.js, positionCruncher.js',
+    expect(() => assertPropagatorBundleProfile(distDir, 'sgp4')).toThrow(
+      'auth/callback.js, js/positionCruncher.js, wasm/sgp4prop/Sgp4Prop.js',
     );
-    expect(assertPropagatorBundleProfile(jsDir, 'sgp4-xp-wasm').offenders).toHaveLength(2);
+    expect(assertPropagatorBundleProfile(distDir, 'sgp4-xp-wasm').offenders).toHaveLength(3);
   });
 
   it('accepts a pure-SGP4 output with no Emscripten module in any chunk', () => {
-    const jsDir = makeJsDir();
+    const distDir = makeDistDir();
 
-    writeFileSync(join(jsDir, 'main.js'), 'console.log("safe")');
-    writeFileSync(join(jsDir, 'orbitCruncher.js'), 'const sgp4 = "typescript"');
+    writeFileSync(join(distDir, 'js', 'main.js'), 'console.log("safe")');
+    writeFileSync(join(distDir, 'js', 'orbitCruncher.js'), 'const sgp4 = "typescript"');
 
-    expect(assertPropagatorBundleProfile(jsDir, 'sgp4')).toEqual({
+    expect(assertPropagatorBundleProfile(distDir, 'sgp4')).toEqual({
       assetCount: 2,
       offenders: [],
     });
+    expect(() => assertPropagatorBundleProfile(distDir, 'sgp4-xp-wasm')).toThrow(
+      'did not retain the optional Emscripten loader',
+    );
   });
 });
