@@ -1,6 +1,6 @@
 # SatGlobe roadmap and recovery ledger
 
-Last updated: 2026-07-24T04:21:25Z
+Last updated: 2026-07-24T04:27:27Z
 
 This file is the durable product roadmap and the live ledger for the approved
 legacy-work recovery. It is intentionally Markdown so every decision, test
@@ -83,10 +83,10 @@ objects below.
 | #51 | `ca60edf50f3a97f5a82092f535db6495cb440994` | Port stability gates, atomic visual state, trusted timing, CI flake policy, and justified coverage | Ported |
 | #52 | `7134d9fd581bf5fe9312b22762e4e57a55c9fb5e` | Port typed linear algebra and remove `numeric` | Verified |
 | #53 | `37161ae8509ec9f67abd5d0660bdf25c7f1f44dc` | Port local view playlists | Ported |
-| #54 | `087c7884442912cc5aa275f1efd9f120e82e3094` | Port pure-SGP4/WASM profile gating | Blocked |
+| #54 | `087c7884442912cc5aa275f1efd9f120e82e3094` | Port pure-SGP4/WASM profile gating | Verified |
 | #55 | `d452bde92d34a7fbd98ce69558b531d388408f62` | Port catalog provenance schema and UTC invariants | Blocked |
 | #56 | `908f3c83cba4366f3af825ea79a7d1c5a0b773b2` | Reproduce and verify the six corrected catalog artifacts | Verified |
-| #57 | `fc467f61126624105d908845695d40642541ebb8` | Port strict CSP and emitted-script inspection | Blocked |
+| #57 | `fc467f61126624105d908845695d40642541ebb8` | Port strict CSP and emitted-script inspection | Verified |
 | #58 | `db4b97ecc8e15d855ed7f4e5c677a76cf907a888` | Port GNSS and Landsat stories after source/ID verification | Blocked |
 | #59 | `3af7f2b6e96f52151e980994339197b33b9093f2` | Replace with a fresh audit from current main | Deferred |
 | #60 | `9bb7d3fff13be46c9e625bf04a706656df583307` | Port cumulative launch-history time-lapse | Ported |
@@ -130,10 +130,10 @@ reachable from `main`, an archive ref, or a verified replacement commit.
 - [ ] `In progress` — Recovery ledger and current handoff.
 - [x] `Ported` — Stability and atomic visual state from #51.
 - [x] `Verified` — Typed eval-free numeric replacement from #52.
-- [ ] `Blocked` — Pure-SGP4/WASM profile gating from #54: Az/Range worker
-  activation regression is being fixed.
-- [ ] `Blocked` — Strict CSP and emitted-script inspection from #57: escaped
-  and aliased `eval` coverage plus local-shadow scope handling are being fixed.
+- [x] `Verified` — Pure-SGP4/WASM profile gating from #54, including explicit
+  per-worker Az/Range fleet activation.
+- [x] `Verified` — Strict CSP and emitted-script inspection from #57, including
+  escaped/aliased global eval and locally shadowed safe names.
 - [ ] `Blocked` — Catalog provenance schema v2 from #55: pre-install
   cross-artifact coherence and deterministic test timing are being fixed.
 - [x] `Verified` — Corrected catalog transaction from #56.
@@ -157,8 +157,8 @@ reachable from `main`, an archive ref, or a verified replacement commit.
 | --- | --- | --- | --- |
 | PR #51 | `dd8d0816` | Transactional visual updates, resilient timing, corrected Dependabot targets, CI flake policy, and test-backed coverage ratchet | Ported |
 | PR #52 | `ae2c94e3`, `712af510` | Typed finite-safe vector/matrix helpers, migrated callers, and complete removal of `numeric`, its types, and `_numeric` | Verified |
-| PR #54 | `0a3fae26`, `ae12b02f`, `a193a9b8` | Typed propagator facade, nine worker gates, recursive whole-output WASM-glue policy, and build-policy errors | Blocked |
-| PR #57 | `9fa11775`, `8d5f2981` | SatGlobe-only Zod jitless mode, eval-free OBJ alias, AST emitted-script guard, and exact strict CSP | Blocked |
+| PR #54 | `0a3fae26`, `ae12b02f`, `a193a9b8`, `66fa6c27` | Typed propagator facade, nine worker gates including the Az/Range fleet, recursive whole-output WASM-glue policy, and build-policy errors | Verified |
+| PR #57 | `9fa11775`, `8d5f2981`, `39ae5981` | SatGlobe-only Zod jitless mode, eval-free OBJ alias, scope-aware AST emitted-script guard, and exact strict CSP | Verified |
 | PR #55 | `bb834479`, `2a300cf6` | Strict v1/v2 manifest parsing, v2 time provenance, UTC epoch handling, coherent snapshot/checksum validation, and offline fallback | Blocked |
 | PR #56 | `e342cd7b` | Exact six-artifact transaction: schema v2, 35,049 objects, zero rejects, and catalog SHA-256 `9fae7a2fa46004ae13fa863890547f9947036bfcfe8357ef9a7d67bbf6076a1b` | Verified |
 | PR #58 | `ad07e829` | GNSS-family and Landsat-continuity manifests; library now ten stories / 51 beats | Blocked |
@@ -184,6 +184,7 @@ reachable from `main`, an archive ref, or a verified replacement commit.
 | 2026-07-24T04:12:32Z | `ad07e829e97c86fd0e087e4627fb92cdd9ad57ae` | Catalog artifact inspection and focused catalog/cache/story/UI tests | Verified | Seven files / 85 tests; LFS pointer and 21,406,172-byte content match SHA-256 `9fae7a2f…`; schema v2, 35,049 rows, zero rejects |
 | 2026-07-24T04:19:12Z | `a620e5ecedf6ac97d65dba83312ab006150f3ba9` | `npm run test:satglobe -- --maxWorkers=1` | Verified | 35 files / 338 tests passed on the combined security, catalog, playlist, launch, Story, and snapshot tree |
 | 2026-07-24T04:21:25Z | `7b517fd0` | Independent security and catalog lane review | Blocked | Az/Range WASM activation, eval scanner coverage/scope, pre-install cross-artifact coherence, deterministic catalog test clock, strict installed-v2 test, and dead GNSS source require focused fixes |
+| 2026-07-24T04:27:27Z | `39ae5981c163ec74117c696bbffaadc82b1eb83f` | Focused security-review regression suite | Verified | Three files / 27 tests passed: Az/Range fleet activation, base worker configuration, and scope-aware emitted-eval policy |
 
 Every later validation entry must identify the exact tested commit. Raw
 benchmark and story artifacts remain ignored; governed evidence is committed
