@@ -80,8 +80,26 @@ describe('story library', () => {
     for (const story of wave3) {
       expect(story.beats).toHaveLength(6);
       expect(story.beats.at(-1)?.reconstruction).toBe('observed');
-      expect(story.sources.every(({ retrievedAt, url }) => retrievedAt === '2026-07-18' && url.startsWith('https://'))).toBe(true);
+      expect(story.sources.every(({ retrievedAt, url }) =>
+        ['2026-07-18', '2026-07-23'].includes(retrievedAt) && url.startsWith('https://'))).toBe(true);
     }
+  });
+
+  it('cites the current official UNOOSA publication for GLONASS architecture', () => {
+    const story = storyLibrary.find(({ id }) => id === 'gnss-families')!;
+    const source = story.sources.find(({ id }) => id === 'federal-space-agency-glonass');
+    const fact = story.facts.find(({ id }) => id === 'glonass-architecture');
+
+    expect(source).toMatchObject({
+      title: 'The Interoperable Global Navigation Satellite Systems Space Service Volume, Second Edition',
+      url: 'https://www.unoosa.org/res/oosadoc/data/documents/2021/stspace/stspace75rev_1_0_html/st_space_75rev01E.pdf',
+      retrievedAt: '2026-07-23',
+      publisher: 'United Nations Office for Outer Space Affairs',
+    });
+    expect(fact).toMatchObject({
+      sourceIds: ['federal-space-agency-glonass'],
+      text: expect.stringContaining('24 satellites in three roughly circular planes'),
+    });
   });
 
   it('keeps source, fact, and beat ids unique within every story', () => {

@@ -19,10 +19,10 @@ export const gnssFamiliesStory: StoryManifestV1 = storyManifestV1Schema.parse({
     },
     {
       id: 'federal-space-agency-glonass',
-      title: 'GLONASS Overview',
-      url: 'https://www.unoosa.org/documents/pdf/psa/gnss/ignss2009/03.pdf',
-      retrievedAt,
-      publisher: 'Russian Federal Space Agency via the United Nations Office for Outer Space Affairs',
+      title: 'The Interoperable Global Navigation Satellite Systems Space Service Volume, Second Edition',
+      url: 'https://www.unoosa.org/res/oosadoc/data/documents/2021/stspace/stspace75rev_1_0_html/st_space_75rev01E.pdf',
+      retrievedAt: '2026-07-23',
+      publisher: 'United Nations Office for Outer Space Affairs',
     },
     {
       id: 'gsc-galileo-system',
