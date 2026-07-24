@@ -820,6 +820,10 @@ describe('SatGlobeApp', () => {
 
     fireEvent.click(within(screen.getByTestId('playlist-deck')).getByRole('button', { name: 'Open workshop' }));
     expect(screen.getByTestId('satglobe-app').classList.contains('sg-playlist-active')).toBe(false);
+    fireEvent.click(screen.getByRole('button', { name: 'Present' }));
+    expect(screen.queryByTestId('playlist-deck')).toBeNull();
+    expect(document.querySelector('.sg-presentation-title')).not.toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /^Workshop$/u }));
     fireEvent.click(screen.getByTestId(`play-playlist-${playlist.id}`));
 
     expect(screen.getByTestId('playlist-deck').getAttribute('data-entry-index')).toBe('0');

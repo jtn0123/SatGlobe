@@ -45,6 +45,11 @@ export function usePlaylistLibrary({
   const [activePlaylist, setActivePlaylist] = useState<PlaylistV1 | null>(null);
 
   useEffect(() => persistPlaylists(playlists), [playlists]);
+  useEffect(() => {
+    if (mode !== 'presentation') {
+      setActivePlaylist(null);
+    }
+  }, [mode]);
 
   const savePlaylist = useCallback((playlist: PlaylistV1) => {
     setPlaylists((records) => {
