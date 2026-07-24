@@ -108,7 +108,7 @@ describe('dev-server HTML responses', () => {
 
     expect(localPolicy).toBe(SATGLOBE_CSP);
     expect(nginxPolicy).toBe(SATGLOBE_CSP);
-    expect(SATGLOBE_CSP.match(/script-src [^;]+/u)?.[0]).toBe('script-src \'self\' \'unsafe-eval\' blob:');
+    expect(SATGLOBE_CSP.match(/script-src [^;]+/u)?.[0]).toBe('script-src \'self\' blob:');
   });
 
   it('builds the production image without lifecycle scripts and runs nginx unprivileged', () => {

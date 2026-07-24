@@ -149,6 +149,9 @@ export class WebpackManager {
         extensions: ['.ts', '.tsx', '.js'],
         alias: {
           ...disabledPropagatorRuntimeAliases(rootDir, this.config.propagatorBackend),
+          ...(this.config.edition === 'satglobe'
+            ? { 'webgl-obj-loader$': resolve(rootDir, 'node_modules/webgl-obj-loader/dist/webgl-obj-loader.js') }
+            : {}),
           '@app': `${dirName}/../src`,
           '@engine': `${dirName}/../src/engine`,
           '@ootk': `${dirName}/../src/engine/ootk`,
