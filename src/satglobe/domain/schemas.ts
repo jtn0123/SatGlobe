@@ -44,6 +44,19 @@ export const savedViewV1Schema = z.object({
   }).strict(),
 }).strict();
 
+export const playlistEntryV1Schema = z.object({
+  view: savedViewV1Schema,
+  caption: z.string().trim().min(1).max(280),
+  durationMs: z.number().int().min(1_000).max(120_000),
+}).strict();
+
+export const playlistV1Schema = z.object({
+  schemaVersion: z.literal(1),
+  id: z.uuid(),
+  name: z.string().trim().min(1).max(120),
+  entries: z.array(playlistEntryV1Schema).min(2).max(24),
+}).strict();
+
 const sourceSchema = z.object({
   id: authoredIdSchema,
   title: z.string().min(1),

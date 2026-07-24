@@ -8,6 +8,7 @@ import {
   COUNT_UPDATE_MEASURE,
   FILTER_APPLY_MEASURE,
   LENS_APPLY_MEASURE,
+  PLAYLIST_APPLY_MEASURE,
   RECOLOR_MEASURE,
   SATGLOBE_INTERACTION_MEASURES,
 } from '../runtime/performance-measure';
@@ -354,6 +355,79 @@ test.describe('SatGlobe workshop', () => {
     await expect(page.getByTestId('story-play')).toHaveAttribute('aria-label', 'Pause story');
     await page.getByRole('button', { name: 'Open workshop' }).click();
     await expect(page.getByTestId('discover-panel')).toBeVisible();
+  });
+
+  test('authors, reloads, and plays a two-view mission sequence with one recolor per step', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.setViewportSize({ width: 2560, height: 1440 });
+    await page.getByRole('button', { name: '+ Save current' }).click();
+    await expect(page.getByTestId('app-notice')).toContainText('Saved');
+    await page.getByText('GEO belt', { exact: true }).click();
+    await expect(page.getByTestId('encoding-select')).toHaveValue('orbit-regime');
+    await page.getByRole('button', { name: '+ Save current' }).click();
+
+    await page.getByTestId('open-playlist-editor').click();
+    await page.getByTestId('playlist-name').fill('Two-stop orbit briefing');
+    await page.getByTestId('add-playlist-view-0').click();
+    await page.getByTestId('add-playlist-view-1').click();
+    await page.getByTestId('playlist-caption-0').fill('Begin at the high ring.');
+    await page.getByTestId('playlist-caption-1').fill('Return to the active catalog.');
+    await page.getByTestId('playlist-duration-0').fill('1');
+    await page.getByTestId('playlist-duration-1').fill('1');
+    await page.getByTestId('save-playlist').click();
+    await expect(page.getByTestId('app-notice')).toContainText('Saved playlist');
+
+    await page.reload();
+    await expect(page.getByTestId('catalog-status')).toContainText('OBJECTS · LOCAL CATALOG', { timeout: 45_000 });
+    await page.getByTestId('playlist-record').filter({ hasText: 'Two-stop orbit briefing' }).locator(':scope > button').click();
+    const deck = page.getByTestId('playlist-deck');
+
+    await expect(deck).toHaveAttribute('data-playing', 'false');
+    await expect(deck).toHaveAttribute('data-entry-index', '0');
+    await expect(page.getByTestId('playlist-caption')).toHaveText('Begin at the high ring.');
+    await expect(page.getByTestId('encoding-select')).toHaveValue('orbit-regime');
+    await expect(page.getByTestId('story-deck')).toHaveCount(0);
+    await expect(page.getByText('Sources · Facts')).toHaveCount(0);
+    await expect(page.getByTestId('discover-panel')).toBeHidden();
+    await expect(page.getByTestId('object-inspector')).toBeHidden();
+    await expect(page.locator('.sg-time-dock')).toBeHidden();
+    await expect(page.locator('.sg-presentation-title')).toHaveCount(0);
+
+    // The presentation time dock must not intercept the transport at desktop scale.
+    await page.getByTestId('playlist-next').click();
+    await expect(deck).toHaveAttribute('data-entry-index', '1');
+    await page.getByRole('button', { name: 'Previous playlist view' }).click();
+    await expect(deck).toHaveAttribute('data-entry-index', '0');
+
+    await page.evaluate((names) => {
+      for (const name of names) {
+        performance.clearMeasures(name);
+      }
+    }, SATGLOBE_INTERACTION_MEASURES);
+    await page.getByTestId('playlist-play').click();
+    await expect(deck).toHaveAttribute('data-entry-index', '1', { timeout: 5_000 });
+    await expect(deck).toHaveAttribute('data-playing', 'false');
+    await expect(page.getByTestId('playlist-caption')).toHaveText('Return to the active catalog.');
+    await expect(page.getByTestId('encoding-select')).toHaveValue('object-type');
+    const stepMeasures = await page.evaluate((names) => {
+      const result: Record<string, unknown[]> = {};
+
+      for (const name of names) {
+        const details: unknown[] = [];
+
+        for (const entry of performance.getEntriesByName(name) as PerformanceMeasure[]) {
+          details.push(entry.detail);
+        }
+        result[name] = details;
+      }
+
+      return result;
+    }, [PLAYLIST_APPLY_MEASURE, FILTER_APPLY_MEASURE, RECOLOR_MEASURE, COUNT_UPDATE_MEASURE] as const);
+
+    expect(stepMeasures[PLAYLIST_APPLY_MEASURE]).toEqual([expect.objectContaining({ entryIndex: 1 })]);
+    expect(stepMeasures[FILTER_APPLY_MEASURE]).toEqual([{ cause: 'combined' }]);
+    expect(stepMeasures[RECOLOR_MEASURE]).toEqual([{ cause: 'combined' }]);
+    expect(stepMeasures[COUNT_UPDATE_MEASURE]).toEqual([{ cause: 'combined' }]);
   });
 
   test('keeps presentation typography legible at 4K', async ({ page }) => {

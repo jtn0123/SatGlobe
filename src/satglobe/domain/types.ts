@@ -45,6 +45,20 @@ export interface SavedViewV1 {
   presentation: PresentationState;
 }
 
+export interface PlaylistEntryV1 {
+  view: SavedViewV1;
+  caption: string;
+  durationMs: number;
+}
+
+/** Portable, local-first sequence of absolute views. Playback state is never persisted. */
+export interface PlaylistV1 {
+  schemaVersion: 1;
+  id: string;
+  name: string;
+  entries: PlaylistEntryV1[];
+}
+
 export interface DataSourceRecord {
   id: string;
   title: string;

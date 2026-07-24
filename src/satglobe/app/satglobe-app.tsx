@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { SatGlobeEngineAdapter } from '../engine/satglobe-engine-adapter';
-import { importSavedView, loadPersistedViews, persistViews } from '../domain/saved-view';
+import { loadPersistedViews, persistViews } from '../domain/saved-view';
 import {
   DEFAULT_FILTERS,
   type AppMode,
@@ -21,11 +21,13 @@ import { Inspector } from './inspector';
 import { KeyboardLegend } from './keyboard-legend';
 import { ageInDays } from './labels';
 import { PresentationTitle } from './presentation-title';
+import { PlaylistDeck } from './playlist-deck';
 import { ScaleDisclosure } from './scale-disclosure';
 import { StoryDeck } from './story-deck';
 import { TimeDock } from './time-dock';
 import { TopBar } from './top-bar';
 import { type StoryPlaybackAction, type StoryPlaybackState, useStoryPlayback } from './use-story-playback';
+import { usePlaylistLibrary } from './use-playlist-library';
 import { useWorkshopFilters } from './use-workshop-filters';
 
 interface SatGlobeAppProps {
@@ -194,15 +196,12 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
   const { conjunctionLens, quickLens } = useQuickLensHandlers(adapter, setFiltersWithEncodingImmediate, engine.conjunctions.catalogIds, engine.conjunctionHighlightActive);
 
   useEffect(() => adapter.subscribe(setEngine), [adapter]);
-
   // Replacing the engine boundary starts a fresh time reference for the next story beat.
   useEffect(() => {
     storyTimeAnchorRef.current = adapter.getState().simulationTime;
   }, [adapter]);
-
   // Saved views survive reloads; persistence failures degrade to session-only.
   useEffect(() => persistViews(savedViews), [savedViews]);
-
   // WebGL2 failure otherwise presents as an eternal loading state (C1).
   useEffect(() => {
     const probe = document.createElement('canvas').getContext('webgl2');
@@ -211,7 +210,6 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
       setWebglMissing(true);
     }
   }, []);
-
   useEffect(() => {
     // Pre-ready searches would query an unbuilt catalog and flash empty results.
     setResults(engine.ready ? adapter.search(query) : []);
@@ -333,14 +331,13 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
     if (restoredBeat) {
       storyTimeAnchorRef.current = storySimulationAnchor(view.simulationTime, restoredBeat.simulationTimeOffsetHours ?? 0);
     }
-    setFiltersImmediate(view.filters);
+    setFiltersWithEncodingImmediate(view.filters, view.encoding);
     setScaleMode(view.scaleMode);
     adapter.setScaleMode(view.scaleMode);
     adapter.setCamera(view.camera);
     if (restoredBeat?.simulationTimeOffsetHours === undefined) {
       adapter.setSimulationTime(view.simulationTime);
     }
-    adapter.setEncoding(view.encoding);
     adapter.clearSelection();
     if (view.selectedObjectIds[0]) {
       adapter.selectObject(view.selectedObjectIds[0]);
@@ -360,22 +357,20 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
     }
 
     return unavailableStoryNotice;
-  }, [adapter, applyBeat, setFiltersImmediate, story, switchMode]);
+  }, [adapter, applyBeat, setFiltersWithEncodingImmediate, story, switchMode]);
 
-  const importFile = useCallback(async (file?: File) => {
-    if (!file) {
-      return;
-    }
-    try {
-      const imported = importSavedView(await file.text(), adapter.getObjects());
-      const storyWarning = applyView(imported.view);
-      const warnings = [storyWarning, ...imported.warnings].filter(Boolean).join(' ');
-
-      setNotice(warnings || `Imported “${imported.view.name}”.`);
-    } catch (error) {
-      setNotice(error instanceof Error ? error.message : 'Could not import this preset.');
-    }
-  }, [adapter, applyView]);
+  const playlistLibrary = usePlaylistLibrary({
+    adapter,
+    mode,
+    savedViews,
+    createView,
+    onApplyView: applyView,
+    onNotice: setNotice,
+    onSaveView: saveView,
+    setFiltersWithEncodingImmediate,
+    setScaleMode,
+    switchMode,
+  });
 
   const newestElementAge = ageInDays(engine.newestElementEpoch);
   const openStory = useCallback(() => {
@@ -397,7 +392,7 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
   }), [adapter]);
 
   return (
-    <main className={`sg-app sg-mode-${mode}`} data-testid="satglobe-app">
+    <main className={`sg-app sg-mode-${mode}${mode === 'presentation' && playlistLibrary.activePlaylist ? ' sg-playlist-active' : ''}`} data-testid="satglobe-app">
       <div className="sg-small-screen-note" role="note">SatGlobe is designed for larger screens — panels are limited at this size.</div>
       {/* display:contents wrapper; keeps the booting shell out of the tab order behind the loading overlay */}
       <div className="sg-boot-guard" inert={!engine.ready || undefined}>
@@ -406,25 +401,21 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
       <DiscoverPanel
         conjunctions={engine.conjunctions}
         conjunctionHighlightActive={engine.conjunctionHighlightActive}
-        createView={createView}
         encoding={engine.encoding}
         filters={filters}
         highlightedObjectCount={engine.highlightedObjectCount}
         inert={mode !== 'workshop'}
-        onApplyView={applyView}
         onConjunctionLens={conjunctionLens}
         onEncodingChange={setEncoding}
-        onImportFile={importFile}
         onQueryChange={setQuery}
         onQuickLens={quickLens}
-        onSaveView={saveView}
         onSelectResult={selectResult}
         query={query}
         results={results}
-        savedViews={savedViews}
         setFiltersDebounced={setFiltersDebounced}
         setFiltersImmediate={setFiltersImmediate}
         visibleCount={engine.visibleCount}
+        viewLibrary={playlistLibrary.viewLibrary}
       />
 
       <Inspector conjunctions={engine.conjunctions} inert={mode !== 'workshop'} object={engine.selectedObject} onClose={clearSelection} />
@@ -433,7 +424,18 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
 
       <TimeDock adapter={adapter} simulationTime={engine.simulationTime} storyLocked={mode === 'story'} />
 
-      {mode === 'presentation' && <PresentationTitle encoding={engine.encoding} objectCount={engine.visibleCount} onOpenWorkshop={openWorkshop} />}
+      {mode === 'presentation' && !playlistLibrary.activePlaylist && <PresentationTitle encoding={engine.encoding} objectCount={engine.visibleCount} onOpenWorkshop={openWorkshop} />}
+
+      {mode === 'presentation' && playlistLibrary.activePlaylist && <PlaylistDeck
+        entryIndex={playlistLibrary.player.playback.entryIndex}
+        onEntryChange={playlistLibrary.player.applyEntry}
+        onOpenWorkshop={openWorkshop}
+        onPlayingChange={playlistLibrary.player.togglePlaying}
+        playing={playlistLibrary.player.playback.playing}
+        playlist={playlistLibrary.activePlaylist}
+        progress={playlistLibrary.player.playback.progress}
+        reducedMotion={playlistLibrary.player.reducedMotion}
+      />}
 
       {mode === 'story' && <StoryDeck beatIndex={playback.beatIndex} onAuthoredView={applyAuthoredView} onBeatChange={applyBeat} onOpenWorkshop={openWorkshop} onPlayingChange={togglePlaying} onSourcesChange={toggleSources} onStoryChange={changeStory} playing={playback.playing} progress={playback.progress} showSources={playback.showSources} stories={storyLibrary} story={story} />}
 
