@@ -1,6 +1,6 @@
 # SatGlobe roadmap and recovery ledger
 
-Last updated: 2026-07-24T05:53:47Z
+Last updated: 2026-07-24T05:56:42Z
 
 This file is the durable product roadmap and the live ledger for the approved
 legacy-work recovery. It is intentionally Markdown so every decision, test
@@ -76,6 +76,12 @@ All entries below were verified at 2026-07-24T03:53:47Z before source changes.
 The original first-play and dirty guided-Story worktrees remain untouched
 until their selected behavior has a tested replacement.
 
+A later cleanup audit found the independent local branch
+`codex/sonar-cleanup-01` at
+`6342805149f6830e65a471215ff2533c9e1d73bc`. Its two unique Sonar inventory and
+policy commits are outside the approved consolidation scope; they will receive
+an exact archive ref and remain `Deferred`, not be deleted as part of a batch.
+
 ## Legacy PR disposition
 
 PRs #51–#68 were closed without merging at 2026-07-24T03:59:26Z after each
@@ -85,18 +91,18 @@ objects below.
 
 | PR | Head SHA | Planned disposition | Status |
 | --- | --- | --- | --- |
-| #51 | `ca60edf50f3a97f5a82092f535db6495cb440994` | Port stability gates, atomic visual state, trusted timing, CI flake policy, and justified coverage | Ported |
+| #51 | `ca60edf50f3a97f5a82092f535db6495cb440994` | Port stability gates, atomic visual state, trusted timing, CI flake policy, and justified coverage | Verified |
 | #52 | `7134d9fd581bf5fe9312b22762e4e57a55c9fb5e` | Port typed linear algebra and remove `numeric` | Verified |
-| #53 | `37161ae8509ec9f67abd5d0660bdf25c7f1f44dc` | Port local view playlists | Ported |
+| #53 | `37161ae8509ec9f67abd5d0660bdf25c7f1f44dc` | Port local view playlists | Verified |
 | #54 | `087c7884442912cc5aa275f1efd9f120e82e3094` | Port pure-SGP4/WASM profile gating | Verified |
 | #55 | `d452bde92d34a7fbd98ce69558b531d388408f62` | Port catalog provenance schema and UTC invariants | Verified |
 | #56 | `908f3c83cba4366f3af825ea79a7d1c5a0b773b2` | Reproduce and verify the six corrected catalog artifacts | Verified |
 | #57 | `fc467f61126624105d908845695d40642541ebb8` | Port strict CSP and emitted-script inspection | Verified |
 | #58 | `db4b97ecc8e15d855ed7f4e5c677a76cf907a888` | Port GNSS and Landsat stories after source/ID verification | Verified |
 | #59 | `3af7f2b6e96f52151e980994339197b33b9093f2` | Replace with a fresh audit from current main | Deferred |
-| #60 | `9bb7d3fff13be46c9e625bf04a706656df583307` | Port cumulative launch-history time-lapse | Ported |
+| #60 | `9bb7d3fff13be46c9e625bf04a706656df583307` | Port cumulative launch-history time-lapse | Verified |
 | #61 | `30dad92dd6796b059380a40ba7add2b05b91e20c` | Replace with a fresh audit from current main | Deferred |
-| #62 | `f890e2b8c4ab95633b813472674b40a0c5fc7ba4` | Port one-request WebGL-frame PNG capture | Ported |
+| #62 | `f890e2b8c4ab95633b813472674b40a0c5fc7ba4` | Port one-request WebGL-frame PNG capture | Verified |
 | #63 | `b36d7bff5a59307b1733faac0445148f16695426` | Replace with a fresh audit from current main | Deferred |
 | #64 | `92362bbbb2f8f32347d8d48a335b99c75f864c94` | Replace with a fresh audit from current main | Deferred |
 | #65 | `4d90ed33689f20df2929ba8183d1be47b55ce8d1` | Replace with a fresh audit from current main | Deferred |
@@ -110,11 +116,10 @@ objects below.
 | --- | --- | --- |
 | `/Users/justin/.codex/worktrees/satglobe-recovery/SatGlobe` | Clean consolidation branch from exact current main | Verified |
 | `origin/codex/satglobe-consolidated-recovery` / draft PR #84 | Published replacement branch and GitHub review surface | In progress |
-| `codex/recovery-security-lane` | Isolated #52/#54/#57 forward-port | In progress |
-| `codex/recovery-catalog-lane` | Isolated #55/#56/#58 forward-port | In progress |
-| `codex/recovery-product-lane` | Isolated #51/#53/#60/guided/#62 forward-port | In progress |
-| `/Users/justin/Documents/SatGlobe` | Archived first-play checkout; generated Husky dirt only | Deferred |
-| `.claude/worktrees/app-roadmap-performance-0642ff` | Original dirty guided-Story source | Deferred |
+| Seven `codex/recovery-*` lane worktrees | Replacement commits are verified; exact lane-tip archive refs are required before Git-native removal | In progress |
+| `/Users/justin/Documents/SatGlobe` | First-play replacement verified; generated Husky dirt only; archive and checkout cleanup pending | In progress |
+| `.claude/worktrees/app-roadmap-performance-0642ff` | Guided replacement verified; saved patch still matches the dirty worktree; Git-native removal pending | In progress |
+| `codex/sonar-cleanup-01` | Two unique Sonar inventory/policy commits discovered during cleanup; preserve separately and exclude from PR #84 | Deferred |
 | `.codex/worktrees/7414/SatGlobe` | Removed with Git after confirming clean exact commit; archive ref retained | Verified |
 | 33 clean local ancestors of main | Deleted non-forcibly from a current-main descendant after exact live recheck | Verified |
 | Six remote heads for merged PRs #24–#27, #69, and #70 | Deleted after GitHub state/name/SHA recheck | Verified |
@@ -233,6 +238,7 @@ reachable from `main`, an archive ref, or a verified replacement commit.
 | 2026-07-24T05:49:15Z | `0b985244` | `npm run verify:satglobe` | Verified | Normal and strict typecheck, story-walker boundary, full lint, 41 files / 368 tests, performance-ledger validation, production build, emitted-script policy, and 351.9 MiB/12.8 MiB build budget passed |
 | 2026-07-24T05:52:42Z | `0b985244` | `CI=true npm run test:e2e:satglobe` | Blocked | 13 journeys passed; launch-history monotonicity read the intentionally transitioned React count before it settled after the synchronous engine transaction, and the retry also failed, so fail-on-flake correctly kept the gate red |
 | 2026-07-24T05:53:47Z | `7bb6dca3` | Launch-history settled-state E2E repeated without retries | Verified | The test now waits for both the selected timeline year and the unchanged monotonic count contract. `--repeat-each=3 --retries=0` passed all three runs in 38.9 seconds; the complete production-static E2E rerun remains pending |
+| 2026-07-24T05:56:42Z | `07d0d73b` | `CI=true npm run test:e2e:satglobe` | Verified | All 14 production-static offline Chromium journeys passed in 2.0 minutes with fail-on-flake enabled and no retry |
 
 Every later validation entry must identify the exact tested commit. Raw
 benchmark and story artifacts remain ignored; governed evidence is committed
