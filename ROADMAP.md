@@ -1,6 +1,6 @@
 # SatGlobe roadmap and recovery ledger
 
-Last updated: 2026-07-24T06:32:11Z
+Last updated: 2026-07-24T06:53:16Z
 
 This file is the durable product roadmap and the live ledger for the approved
 legacy-work recovery. It is intentionally Markdown so every decision, test
@@ -41,7 +41,7 @@ PR must not be merged without separate approval.
 Draft replacement PR
 [#84](https://github.com/jtn0123/SatGlobe/pull/84) was opened from
 `codex/satglobe-consolidated-recovery` at 2026-07-24T04:39:46Z. It remains
-draft while the last recovery lane and mergeability gates are in progress.
+draft while the final mergeability rescan and external review are in progress.
 
 ## Verified starting point
 
@@ -186,7 +186,7 @@ reachable from `main`, an archive ref, or a verified replacement commit.
 | Guided-Story patch `5cb03505…` | `413add27`, `f53bb34d`, `2c5554be` | Bounded deterministic orbit cues, Story-only 60× time, complete 1× cleanup, layered Escape, source reset on pause/completion, native citation-link keyboard behavior, and one-second reduced-motion progress | Verified |
 | PR #62 | `a620e5ec` | One-pending-request next-frame WebGL capture and full-resolution canvas-only PNG download with failure cleanup | Verified |
 | First-play branch `e456209a` | `40f7726f`, `18762641`, `f391d306` | Shared launch-designator normalization and renderer color definitions, complete counted live legend including unknown cohorts, close-approach key, snapshot-aware searchable/year-filtered Starlink cohort exploration, and unchanged saved-view v1 | Verified |
-| Archived performance policy | `d9fb8075`, `a0256455`, `ce2176ec`, `b1e37273` | Seven requested commands, immutable-record validation, five-sample benchmark, two-minute soak, truthful interaction gates, work-split runtime behavior, serialization-safe soak runner, current build budgets, empty honest current-app ledger, and historical-only archived M4 claims | Verified |
+| Archived performance policy | `d9fb8075`, `a0256455`, `ce2176ec`, `b1e37273`, `0331398f` | Seven requested commands, immutable-record validation, five-sample benchmark, two-minute soak, truthful interaction gates, work-split runtime behavior, serialization-safe soak runner, repository-confined same-handle report reads, current build budgets, empty honest current-app ledger, and historical-only archived M4 claims | Verified |
 
 ## Validation ledger
 
@@ -249,6 +249,10 @@ reachable from `main`, an archive ref, or a verified replacement commit.
 | 2026-07-24T06:26:13Z | `41ae7a1f` | GitHub run `30071826062`, SatGlobe offline E2E | Verified | Current hosted head passed the production-static journey suite in 8m42s |
 | 2026-07-24T06:27:15Z | `41ae7a1f` | GitHub run `30071826062`, full unit suite with coverage | Verified | Current hosted head passed the full coverage gate in 9m45s; CodeQL, type/lint/test/build, OOTK, SGP4, and the repaired performance-ledger job also passed |
 | 2026-07-24T06:32:11Z | `f90e1fc4` | Sonar performance-tooling repair and path-security regression suite | Verified | All five findings were repaired. CLI report inputs now require a canonical regular `.raw.json` descendant of `benchmark-results/satglobe`, including symlink-escape rejection. Seven focused tests, exact tooling lint, typecheck, documented real-report comparison, base-aware ledger validation, and diff check passed; Sonar rescan pending |
+| 2026-07-24T06:38:45Z | `14ee80133e8549f530fb350a96e7bc7ca1f29a7b` | SonarCloud PR #84 analysis | Blocked | The quality gate passed with zero bugs and vulnerabilities, but the stricter recovery stop still found one attributable maintainability issue: nested template syntax in the Markdown history renderer |
+| 2026-07-24T06:43:53Z | `14ee80133e8549f530fb350a96e7bc7ca1f29a7b` | GitHub run `30072618893` | Blocked | CodeQL, Sonar, typecheck/lint/test/build, full coverage, OOTK, SGP4, and performance contracts passed. Offline E2E reached the final playlist timing read after all behavior assertions but exhausted the generic 60-second test budget; the trace showed a 22.8-second reload and renderer-backed interactions rather than a product failure |
+| 2026-07-24T06:53:16Z | `0331398fe50ba14de4afeaafc054e22e7ce80b11` | Independent path-security re-review and focused policy validation | Verified | Repository-root and nested-junction escapes reject; raw-name aliases reject; validation and reading share one no-follow handle; post-open replacement stays bound to the original file; FIFOs open nonblocking and reject as non-regular in 77 ms. Twelve focused tests, exact lint, typecheck, base-aware ledger validation, real-report comparison, and diff check passed; the remaining nested-template Sonar finding was removed |
+| 2026-07-24T06:53:16Z | `0e54caabd0000b008e2351d215833a033c088c70` | Playlist recovery E2E repeated without retries | Verified | The trace-backed 90-second budget applies only to the deliberate author, reload, and playback journey. Three production-static runs passed in 1.0 minute with `--retries=0`; global retries and fail-on-flake policy remain unchanged |
 
 Every later validation entry must identify the exact tested commit. Raw
 benchmark and story artifacts remain ignored; governed evidence is committed
@@ -288,6 +292,8 @@ executable imported content, or required WebGPU path is introduced.
 | 2026-07-24T05:31:40Z | `e287a469` | Treat all four attributable Sonar findings as mergeability blockers, including the numeric-grouping and duplicate-selector findings exposed after the initial sort repairs | Verified |
 | 2026-07-24T05:53:47Z | `7bb6dca3` | Keep the launch-history monotonicity assertion and wait for the transitioned count to settle; do not disable CI retries or weaken the product invariant | Verified |
 | 2026-07-24T06:32:11Z | `f90e1fc4` | Constrain performance CLI inputs to the documented ignored report root and verify canonical paths so traversal and symlink escapes cannot reach arbitrary local files | Verified |
+| 2026-07-24T06:53:16Z | `0331398fe50ba14de4afeaafc054e22e7ce80b11` | Treat the repository root, not a canonicalized user-controlled report root, as the trust anchor; bind validation and reading to one nonblocking no-follow file handle so links, races, and FIFOs cannot escape or hang the CLI | Verified |
+| 2026-07-24T06:53:16Z | `0e54caabd0000b008e2351d215833a033c088c70` | Give only the trace-proven long playlist author/reload/play journey a 90-second hosted-runner budget; retain fail-on-flake and the original behavioral assertions | Verified |
 
 ## After the recovery gate
 
