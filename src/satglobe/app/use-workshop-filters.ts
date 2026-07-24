@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { startTransition, useCallback, useEffect, useRef, useState } from 'react';
 import type { SatGlobeEngineAdapter } from '../engine/satglobe-engine-adapter';
 import { DEFAULT_FILTERS, type FilterState, type VisualEncoding } from '../domain/types';
 
 /**
- * Owns workshop filter state. Every UI change updates React immediately, while
- * callers choose whether the corresponding engine recolor happens now or is
- * coalesced to the trailing value of a slider drag.
+ * Owns workshop filter state. Controls mirror committed engine changes through
+ * transition work, while callers choose whether the corresponding engine
+ * recolor happens now or is coalesced to the trailing value of a slider drag.
  */
 export function useWorkshopFilters(adapter: SatGlobeEngineAdapter): {
   filters: FilterState;
@@ -25,13 +25,16 @@ export function useWorkshopFilters(adapter: SatGlobeEngineAdapter): {
 
   const setFiltersImmediate = useCallback((next: FilterState) => {
     cancelPending();
-    setFiltersState(next);
+    // The engine transaction can consume most of one frame on the full
+    // catalog. Publish its React mirror as transition work so renderer and UI
+    // reconciliation cannot combine into one browser long task.
+    startTransition(() => setFiltersState(next));
     adapter.setFilters(next);
   }, [adapter, cancelPending]);
 
   const setFiltersWithEncodingImmediate = useCallback((next: FilterState, encoding: VisualEncoding) => {
     cancelPending();
-    setFiltersState(next);
+    startTransition(() => setFiltersState(next));
     adapter.setVisualState({ filters: next, encoding });
   }, [adapter, cancelPending]);
 

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { startTransition, useCallback, useEffect, useRef, useState } from 'react';
 import type { SatGlobeEngineAdapter } from '../engine/satglobe-engine-adapter';
 import { prepareFilterMatcher } from '../domain/filters';
 import { loadPersistedViews, persistViews } from '../domain/saved-view';
@@ -317,7 +317,12 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
   const { conjunctionLens, quickLens } = useQuickLensHandlers(adapter, setFiltersWithEncodingImmediate, engine.conjunctions.catalogIds, engine.conjunctionHighlightActive);
   const { applyLaunchYear, launchBounds } = useLaunchTimelapse(adapter, setFiltersWithEncodingImmediate);
 
-  useEffect(() => adapter.subscribe(setEngine), [adapter]);
+  useEffect(() => adapter.subscribe((next) => {
+    // Renderer work is synchronous by design. Schedule the React mirror as a
+    // transition so a completed visual transaction and the shell rerender are
+    // separate browser tasks instead of one >50 ms interaction task.
+    startTransition(() => setEngine(next));
+  }), [adapter]);
   // Replacing the engine boundary starts a fresh time reference for the next story beat.
   useEffect(() => {
     storyTimeAnchorRef.current = adapter.getState().simulationTime;
