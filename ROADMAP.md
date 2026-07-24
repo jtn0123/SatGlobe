@@ -1,6 +1,6 @@
 # SatGlobe roadmap and recovery ledger
 
-Last updated: 2026-07-24T05:19:35Z
+Last updated: 2026-07-24T05:26:08Z
 
 This file is the durable product roadmap and the live ledger for the approved
 legacy-work recovery. It is intentionally Markdown so every decision, test
@@ -148,16 +148,18 @@ reachable from `main`, an archive ref, or a verified replacement commit.
 - [x] `Verified` — GNSS and Landsat stories from #58, including a live official
   UNOOSA replacement for the retired GLONASS source. The final full story walk
   remains an overall mergeability gate.
-- [x] `Ported` — View playlists from #53; runtime E2E is pending.
-- [x] `Ported` — Launch-history time-lapse from #60; runtime E2E is pending.
-- [x] `Ported` — Guided-Story worktree recovery; runtime E2E and full story
-  verification are pending.
-- [x] `Ported` — Canvas snapshot export from #62; decoded runtime export E2E
-  is pending.
-- [x] `Ported` — Selective renderer-consistent legend and Starlink cohort
-  recovery; runtime desktop/E2E verification is pending.
+- [x] `Verified` — View playlists from #53, including production-static E2E.
+- [x] `Verified` — Launch-history time-lapse from #60, including
+  production-static E2E.
+- [x] `Ported` — Guided-Story worktree recovery; production-static E2E is
+  verified and the final full story walk remains pending.
+- [x] `Verified` — Canvas snapshot export from #62, including decoded
+  full-resolution runtime export E2E.
+- [x] `Verified` — Selective renderer-consistent legend and Starlink cohort
+  recovery, including production-static desktop E2E.
 - [x] `Ported` — Current performance governance and final documentation;
-  five-sample benchmark and two-minute soak evidence are pending.
+  the truthful five-sample benchmark is verified and the two-minute soak is
+  pending.
 - [x] `Verified` — Open replacement draft PR #84 and link it from every closed
   PR #51–#68.
 - [ ] `Pending` — Integrate latest main, satisfy all mergeability gates, mark
@@ -174,12 +176,12 @@ reachable from `main`, an archive ref, or a verified replacement commit.
 | PR #55 | `bb834479`, `2a300cf6`, `8813cf38` | Strict v1/v2 parsing with v2-only installation, v2 time provenance, UTC epoch handling, candidate catalog/feed/manifest coherence, deterministic large-artifact validation, and offline fallback | Verified |
 | PR #56 | `e342cd7b` | Exact six-artifact transaction: schema v2, 35,049 objects, zero rejects, and catalog SHA-256 `9fae7a2fa46004ae13fa863890547f9947036bfcfe8357ef9a7d67bbf6076a1b` | Verified |
 | PR #58 | `ad07e829`, `497e030f` | GNSS-family and Landsat-continuity manifests, verified representative IDs, and current official sources; library now ten stories / 51 beats | Verified |
-| PR #53 | `616dc0d0`, `bf27732c` | Strict 2–24-entry local playlists, atomic import/export, persistence, editing/reorder/delete, Present playback, reduced-motion behavior, and cleanup when Presentation ends | Ported |
-| PR #60 | `8df5c429` | Strict cumulative launch-year filtering, decade stops, atomic application, autoplay, and shared reactive reduced-motion handling | Ported |
+| PR #53 | `616dc0d0`, `bf27732c` | Strict 2–24-entry local playlists, atomic import/export, persistence, editing/reorder/delete, Present playback, reduced-motion behavior, and cleanup when Presentation ends | Verified |
+| PR #60 | `8df5c429` | Strict cumulative launch-year filtering, decade stops, atomic application, autoplay, and shared reactive reduced-motion handling | Verified |
 | Guided-Story patch `5cb03505…` | `413add27`, `f53bb34d`, `2c5554be` | Bounded deterministic orbit cues, Story-only 60× time, complete 1× cleanup, layered Escape, source reset on pause/completion, native citation-link keyboard behavior, and one-second reduced-motion progress | Ported |
-| PR #62 | `a620e5ec` | One-pending-request next-frame WebGL capture and full-resolution canvas-only PNG download with failure cleanup | Ported |
-| First-play branch `e456209a` | `40f7726f`, `18762641`, `f391d306` | Shared launch-designator normalization and renderer color definitions, complete counted live legend including unknown cohorts, close-approach key, snapshot-aware searchable/year-filtered Starlink cohort exploration, and unchanged saved-view v1 | Ported |
-| Archived performance policy | `d9fb8075` | Seven requested commands, immutable-record validation, five-sample benchmark, two-minute soak, current build budgets, empty honest current-app ledger, and historical-only archived M4 claims | Ported |
+| PR #62 | `a620e5ec` | One-pending-request next-frame WebGL capture and full-resolution canvas-only PNG download with failure cleanup | Verified |
+| First-play branch `e456209a` | `40f7726f`, `18762641`, `f391d306` | Shared launch-designator normalization and renderer color definitions, complete counted live legend including unknown cohorts, close-approach key, snapshot-aware searchable/year-filtered Starlink cohort exploration, and unchanged saved-view v1 | Verified |
+| Archived performance policy | `d9fb8075`, `a0256455`, `ce2176ec`, `b1e37273` | Seven requested commands, immutable-record validation, five-sample benchmark, two-minute soak, truthful interaction gates, work-split runtime behavior, serialization-safe soak runner, current build budgets, empty honest current-app ledger, and historical-only archived M4 claims | Ported |
 
 ## Validation ledger
 
@@ -222,6 +224,10 @@ reachable from `main`, an archive ref, or a verified replacement commit.
 | 2026-07-24T05:15:12Z | `a0256455` | Long-task gate and live-legend work-splitting regressions | Ported | Threshold legends skip catalog scans; highlight-only changes reuse the base legend; benchmark now enforces interaction long tasks. Three files / ten tests, strict typecheck, focused lint, and diff check passed; hardware rerun pending |
 | 2026-07-24T05:17:32Z | `bcda9acf` | Corrected five-sample Apple M4 1440p hardware benchmark | Blocked | Truthful raw report `benchmark-results/satglobe/2026-07-24T05-16-20Z.raw.json` failed: Starlink/conjunction longest-task p95 measured 57/67 ms against the unchanged 50 ms budget |
 | 2026-07-24T05:19:35Z | `ce2176ec` | Split synchronous renderer work from React-state publication | Ported | Engine transactions remain synchronous and atomic while shell mirroring becomes transition work in a separate browser task; three files / 50 tests, strict typecheck, focused lint, and diff check passed; hardware rerun pending |
+| 2026-07-24T05:20:49Z | `8b9bf031` | Five-sample Apple M4 1440p hardware benchmark | Verified | Raw report `benchmark-results/satglobe/2026-07-24T05-20-49Z.raw.json`: hardware renderer, 59.88 median FPS, 17.6 ms frame p95, zero interaction long tasks, Starlink/conjunction response p95 58.8/60.6 ms, playlist/launch apply p95 39.9/45.8 ms, zero paused churn, one atomic filter/recolor/count pass, and zero runtime errors |
+| 2026-07-24T05:23:00Z | `8b9bf031` | Initial governed two-minute soak invocation | Blocked | The runner failed before measurement because its TypeScript keep-names transform injected an unavailable `__name` helper into the Playwright-serialized page callback |
+| 2026-07-24T05:24:19Z | `b1e37273` (report base `8b9bf031`) | One-second hardware soak callback smoke | Verified | Raw dirty-worktree report `benchmark-results/satglobe/2026-07-24T05-24-19Z.raw.json` exercised the exact callback committed in `b1e37273`: 1.011 seconds, 61 frames, 59.88 FPS, 17.4 ms frame p95, zero slow frames/long tasks/context loss/runtime errors; the run was correctly rejected only because one fresh page is below the five-sample evidence minimum |
+| 2026-07-24T05:26:08Z | `b1e37273` | Serialize the governed soak callback as browser-native source | Ported | Normal TypeScript, focused lint, diff check, and the one-second hardware smoke prove the callback executes without runner-private helpers; the required two-minute soak remains pending |
 
 Every later validation entry must identify the exact tested commit. Raw
 benchmark and story artifacts remain ignored; governed evidence is committed
@@ -257,6 +263,7 @@ executable imported content, or required WebGPU path is introduced.
 | 2026-07-24T05:01:39Z | `d9fb8075` | Accept the independent product review's four reproduced lifecycle/data-truth fixes and initialize performance governance with zero accepted current records until fresh measurements pass policy | Verified |
 | 2026-07-24T05:15:12Z | `a0256455` | Do not accept a raw report whose normal interactions exceed the declared long-task budget; split live-legend work away from renderer transactions instead of weakening the 50 ms policy | Ported |
 | 2026-07-24T05:19:35Z | `ce2176ec` | Preserve synchronous atomic renderer semantics but publish React mirrors as transitions so the two workloads cannot form one browser long task | Ported |
+| 2026-07-24T05:26:08Z | `b1e37273` | Keep the soak callback browser-native so Playwright cannot serialize TypeScript runner helpers that do not exist in the measured page | Ported |
 
 ## After the recovery gate
 
