@@ -427,7 +427,7 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
   const applyQuickLens = useCallback((lens: QuickLens) => {
     launchExplorer.clearSelection();
     quickLens(lens);
-  }, [launchExplorer, quickLens]);
+  }, [launchExplorer.clearSelection, quickLens]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => handleGlobalShortcut(event, {

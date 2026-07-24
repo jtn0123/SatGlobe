@@ -32,19 +32,20 @@ export function useLaunchCohortExplorer({
   setFiltersWithEncodingImmediate,
 }: LaunchCohortExplorerOptions) {
   const [selectedCohortId, setSelectedCohortId] = useState<string>();
+  const objects = adapter.getObjects();
   const cohorts = useMemo(
-    () => buildStarlinkLaunchCohorts(adapter.getObjects(), stories),
-    [adapter, engine.objectCount, stories],
+    () => buildStarlinkLaunchCohorts(objects, stories),
+    [objects, stories],
   );
   const legend = useMemo(
     () => buildVisualLegend(
       engine.encoding,
-      adapter.getObjects(),
+      objects,
       filters,
       engine.conjunctionHighlightActive,
       engine.highlightedObjectCount,
     ),
-    [adapter, engine.conjunctionHighlightActive, engine.encoding, engine.highlightedObjectCount, engine.objectCount, filters],
+    [engine.conjunctionHighlightActive, engine.encoding, engine.highlightedObjectCount, filters, objects],
   );
   const select = useCallback((cohort: LaunchCohortView) => setSelectedCohortId(cohort.id), []);
   const clearSelection = useCallback(() => setSelectedCohortId(undefined), []);
