@@ -30,6 +30,8 @@ const settingsOverride = {
   isDrawPoliticalMap: false,
   earthNightBrightness: 1.35,
   isDrawSelectionGlow: true,
+  // Snapshot export reads the completed frame inside Engine.draw_; no retained buffer is needed.
+  isPreserveDrawingBuffer: false,
   isFocusOnSatelliteWhenSelected: false,
   noMeshManager: true,
   isDisablePlanets: true,

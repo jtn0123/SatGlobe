@@ -44,6 +44,7 @@ interface FakeServices {
   };
   colorSchemes: { registerScheme: ReturnType<typeof vi.fn>; setColorScheme: ReturnType<typeof vi.fn> };
   orbits: { addInViewOrbit: ReturnType<typeof vi.fn>; clearInViewOrbit: ReturnType<typeof vi.fn> };
+  renderer: { cancelFrameCapture: ReturnType<typeof vi.fn>; captureNextFrame: ReturnType<typeof vi.fn> };
 }
 
 /*
@@ -109,6 +110,7 @@ vi.mock('@app/engine/core/service-locator', () => ({
     getMainCamera: () => services.camera,
     getColorSchemeManager: () => services.colorSchemes,
     getOrbitManager: () => services.orbits,
+    getRenderer: () => services.renderer,
   },
 }));
 
@@ -237,6 +239,7 @@ describe('SatGlobeEngineAdapter', () => {
     };
     services.colorSchemes = { registerScheme: vi.fn(), setColorScheme: vi.fn() };
     services.orbits = { addInViewOrbit: vi.fn(), clearInViewOrbit: vi.fn() };
+    services.renderer = { cancelFrameCapture: vi.fn(), captureNextFrame: vi.fn() };
   });
 
   afterEach(() => {
@@ -750,6 +753,20 @@ describe('SatGlobeEngineAdapter', () => {
     );
   });
 
+  it('forwards snapshot fulfillment and rejection through the renderer seam', async () => {
+    const png = new Blob(['png'], { type: 'image/png' });
+
+    services.renderer.captureNextFrame.mockResolvedValueOnce(png);
+    adapter = bootAdapter([fakeSat()]);
+
+    await expect(adapter.captureSnapshot()).resolves.toBe(png);
+    expect(services.renderer.captureNextFrame).toHaveBeenCalledOnce();
+
+    services.renderer.captureNextFrame.mockRejectedValueOnce(new Error('context lost'));
+    await expect(adapter.captureSnapshot()).rejects.toThrow('context lost');
+    expect(services.renderer.captureNextFrame).toHaveBeenCalledTimes(2);
+  });
+
   it('publishes the rendered camera pose instead of stale destination targets', () => {
     adapter = bootAdapter([fakeSat()]);
     services.camera.state.camPitch = -0.21;
@@ -811,6 +828,7 @@ describe('SatGlobeEngineAdapter', () => {
 
     expect(registered).toBeGreaterThan(0);
     adapter.dispose();
+    expect(services.renderer.cancelFrameCapture).toHaveBeenCalledOnce();
     adapter = null;
 
     const remaining = [...busHandlers.values()].reduce((total, handlers) => total + handlers.size, 0);

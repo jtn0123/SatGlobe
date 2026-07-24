@@ -1,4 +1,5 @@
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { StrictMode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_CAMERA, DEFAULT_FILTERS, type AvailableConjunctionState, type PlaylistV1, type SavedViewV1, type SpaceObjectView } from '../../domain/types';
 import { storyLibrary } from '../../stories';
@@ -10,6 +11,7 @@ const mutatingMethodNames = [
   'clearSelection',
   'setSimulationTime',
   'setPlaybackRate',
+  'captureSnapshot',
   'setCamera',
   'setFilters',
   'setEncoding',
@@ -236,6 +238,136 @@ describe('SatGlobeApp', () => {
 
     fireEvent.click(dismiss);
     expect(screen.queryByTestId('app-notice')).toBeNull();
+  });
+
+  it('guards one canvas snapshot through encoding, download, and accessible success', async () => {
+    let finishCapture: ((blob: Blob) => void) | null = null;
+    let downloadedFilename = '';
+    const downloadClick = vi.fn();
+    const createObjectURL = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:satglobe-snapshot');
+    const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+    const { methods } = renderApp();
+
+    vi.spyOn(document.body, 'append').mockImplementation((...nodes) => {
+      const anchor = nodes[0] as HTMLAnchorElement;
+
+      downloadedFilename = anchor.download;
+      anchor.click = downloadClick;
+    });
+
+    methods.captureSnapshot.mockImplementationOnce(() => new Promise((resolve) => {
+      finishCapture = resolve;
+    }));
+    const button = screen.getByTestId('snapshot-export') as HTMLButtonElement;
+
+    fireEvent.click(button);
+    fireEvent.click(button);
+
+    expect(methods.captureSnapshot).toHaveBeenCalledOnce();
+    expect(button.disabled).toBe(true);
+    expect(button.getAttribute('aria-busy')).toBe('true');
+    expect(button.getAttribute('aria-label')).toBe('Preparing canvas snapshot');
+
+    await act(async () => {
+      finishCapture!(new Blob(['png'], { type: 'image/png' }));
+      await Promise.resolve();
+    });
+    const status = within(screen.getByTestId('app-notice')).getByRole('status');
+
+    expect(status.textContent).toContain('Downloaded canvas-only snapshot');
+
+    expect(button.disabled).toBe(false);
+    expect(button.getAttribute('aria-busy')).toBeNull();
+    expect(createObjectURL).toHaveBeenCalledOnce();
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:satglobe-snapshot');
+    expect(downloadClick).toHaveBeenCalledOnce();
+    expect(downloadedFilename).toMatch(/^satglobe-view-\d{8}T\d{6}Z\.png$/u);
+    expect(status.textContent).toContain('Interface panels and captions were not included');
+  });
+
+  it('announces snapshot failure assertively and leaves no download behind', async () => {
+    const createObjectURL = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:unused');
+    const { methods } = renderApp();
+
+    methods.captureSnapshot.mockRejectedValueOnce(new Error('WebGL context lost'));
+    fireEvent.click(screen.getByTestId('snapshot-export'));
+
+    await vi.waitFor(() => expect(screen.getByRole('alert').textContent).toContain('Snapshot failed'));
+
+    expect(screen.getByRole('alert').textContent).toContain('WebGL context lost');
+    expect(screen.getByRole('alert').textContent).toContain('No file was downloaded');
+    expect(createObjectURL).not.toHaveBeenCalled();
+    expect((screen.getByTestId('snapshot-export') as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it('settles the snapshot guard when the adapter throws before returning a promise', async () => {
+    const { methods } = renderApp();
+
+    methods.captureSnapshot.mockImplementationOnce(() => {
+      throw new Error('Renderer unavailable');
+    });
+    const button = screen.getByTestId('snapshot-export') as HTMLButtonElement;
+
+    fireEvent.click(button);
+    await vi.waitFor(() => expect(screen.getByRole('alert').textContent).toContain('Renderer unavailable'));
+
+    expect(button.disabled).toBe(false);
+    expect(button.getAttribute('aria-busy')).toBeNull();
+  });
+
+  it('does not download or update shell state when capture settles after unmount', async () => {
+    let finishCapture: ((blob: Blob) => void) | null = null;
+    const createObjectURL = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:unused');
+
+    stubWebGl();
+    const testAdapter = makeAdapter();
+
+    testAdapter.methods.captureSnapshot.mockImplementationOnce(() => new Promise((resolve) => {
+      finishCapture = resolve;
+    }));
+    const { unmount } = render(<SatGlobeApp adapter={testAdapter.adapter} />);
+
+    fireEvent.click(screen.getByTestId('snapshot-export'));
+    unmount();
+    await act(async () => {
+      finishCapture!(new Blob(['png'], { type: 'image/png' }));
+      await Promise.resolve();
+    });
+
+    expect(createObjectURL).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('satglobe-app')).toBeNull();
+  });
+
+  it('keeps snapshot settlement live through the StrictMode effect probe', async () => {
+    const createObjectURL = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:satglobe-snapshot');
+    const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+
+    stubWebGl();
+    const testAdapter = makeAdapter();
+
+    vi.spyOn(document.body, 'append').mockImplementation((...nodes) => {
+      (nodes[0] as HTMLAnchorElement).click = vi.fn();
+    });
+    render(<StrictMode><SatGlobeApp adapter={testAdapter.adapter} /></StrictMode>);
+
+    fireEvent.click(screen.getByTestId('snapshot-export'));
+    await vi.waitFor(() => expect(createObjectURL).toHaveBeenCalledOnce());
+
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:satglobe-snapshot');
+    expect(within(screen.getByTestId('app-notice')).getByRole('status').textContent).toContain('Downloaded canvas-only snapshot');
+  });
+
+  it('keeps the guarded camera action available in Workshop, Present, and Story', () => {
+    renderApp();
+    const snapshot = () => screen.getByRole('button', { name: 'Download canvas snapshot' });
+
+    expect(snapshot()).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Present' }));
+    expect(snapshot()).toBeTruthy();
+    fireEvent.click(screen.getByTestId('story-mode'));
+    fireEvent.click(screen.getByRole('button', { name: 'Next beat' }));
+    expect(snapshot()).toBeTruthy();
+    expect(snapshot().getAttribute('title')).toContain('rendered canvas only');
   });
 
   it('handles the global search, legend, presentation, and escape shortcuts', () => {
