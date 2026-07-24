@@ -6,6 +6,7 @@ import {
   persistPlaylists,
   PLAYLISTS_STORAGE_KEY,
   serializePlaylist,
+  upsertPersistedPlaylist,
 } from '../playlist';
 import { DEFAULT_CAMERA, DEFAULT_FILTERS, type PlaylistV1, type SavedViewV1, type SpaceObjectView } from '../types';
 
@@ -124,5 +125,26 @@ describe('persisted playlists', () => {
         throw new Error('blocked');
       },
     })).toEqual([]);
+  });
+
+  it('rejects a 25th record instead of evicting an existing playlist', () => {
+    const records = Array.from({ length: 24 }, (_, index): PlaylistV1 => ({
+      ...playlist,
+      id: `00000000-0000-4000-8000-${String(index).padStart(12, '0')}`,
+      name: `Sequence ${index + 1}`,
+    }));
+    const overflow = {
+      ...playlist,
+      id: 'ffffffff-ffff-4fff-8fff-ffffffffffff',
+      name: 'Overflow sequence',
+    };
+    const replacement = { ...records[23], name: 'Updated sequence' };
+
+    expect(upsertPersistedPlaylist(records, overflow)).toBeNull();
+    expect(records).toHaveLength(24);
+    expect(upsertPersistedPlaylist(records, replacement)).toEqual([
+      ...records.slice(0, 23),
+      replacement,
+    ]);
   });
 });

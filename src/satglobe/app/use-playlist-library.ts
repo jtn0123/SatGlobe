@@ -1,5 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { importPlaylist, loadPersistedPlaylists, persistPlaylists } from '../domain/playlist';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  importPlaylist,
+  loadPersistedPlaylists,
+  MAX_PERSISTED_PLAYLISTS,
+  persistPlaylists,
+  upsertPersistedPlaylist,
+} from '../domain/playlist';
 import { importSavedView } from '../domain/saved-view';
 import type {
   AppMode,
@@ -42,6 +48,7 @@ export function usePlaylistLibrary({
   switchMode,
 }: UsePlaylistLibraryOptions) {
   const [playlists, setPlaylists] = useState<PlaylistV1[]>(() => loadPersistedPlaylists());
+  const playlistsRef = useRef(playlists);
   const [activePlaylist, setActivePlaylist] = useState<PlaylistV1 | null>(null);
 
   useEffect(() => persistPlaylists(playlists), [playlists]);
@@ -51,22 +58,36 @@ export function usePlaylistLibrary({
     }
   }, [mode]);
 
-  const savePlaylist = useCallback((playlist: PlaylistV1) => {
-    setPlaylists((records) => {
-      const existing = records.some(({ id }) => id === playlist.id);
+  const replacePlaylists = useCallback((records: PlaylistV1[]) => {
+    playlistsRef.current = records;
+    setPlaylists(records);
+  }, []);
+  const storePlaylist = useCallback((playlist: PlaylistV1): boolean => {
+    const records = upsertPersistedPlaylist(playlistsRef.current, playlist);
 
-      return existing
-        ? records.map((record) => (record.id === playlist.id ? playlist : record))
-        : [playlist, ...records].slice(0, 24);
-    });
+    if (!records) {
+      return false;
+    }
+    replacePlaylists(records);
     setActivePlaylist((current) => (current?.id === playlist.id ? playlist : current));
+
+    return true;
+  }, [replacePlaylists]);
+  const savePlaylist = useCallback((playlist: PlaylistV1) => {
+    if (!storePlaylist(playlist)) {
+      onNotice(`Playlist library is full (${MAX_PERSISTED_PLAYLISTS}). Delete one before saving another.`);
+
+      return false;
+    }
     onNotice(`Saved playlist “${playlist.name}” on this device.`);
-  }, [onNotice]);
+
+    return true;
+  }, [onNotice, storePlaylist]);
   const deletePlaylist = useCallback((playlistId: string) => {
-    setPlaylists((records) => records.filter(({ id }) => id !== playlistId));
+    replacePlaylists(playlistsRef.current.filter(({ id }) => id !== playlistId));
     setActivePlaylist((current) => (current?.id === playlistId ? null : current));
     onNotice('Playlist removed from this device.');
-  }, [onNotice]);
+  }, [onNotice, replacePlaylists]);
   const importPlaylistFile = useCallback(async (file?: File) => {
     if (!file) {
       return;
@@ -74,13 +95,16 @@ export function usePlaylistLibrary({
     try {
       const imported = importPlaylist(await file.text(), adapter.getObjects());
 
-      setPlaylists((records) => [imported.playlist, ...records.filter(({ id }) => id !== imported.playlist.id)].slice(0, 24));
-      setActivePlaylist((current) => (current?.id === imported.playlist.id ? imported.playlist : current));
+      if (!storePlaylist(imported.playlist)) {
+        onNotice(`Playlist library is full (${MAX_PERSISTED_PLAYLISTS}). Delete one before importing another.`);
+
+        return;
+      }
       onNotice(imported.warnings.join(' ') || `Imported playlist “${imported.playlist.name}”.`);
     } catch (error) {
       onNotice(error instanceof Error ? error.message : 'Could not import this playlist.');
     }
-  }, [adapter, onNotice]);
+  }, [adapter, onNotice, storePlaylist]);
   const importViewFile = useCallback(async (file?: File) => {
     if (!file) {
       return;

@@ -40,7 +40,9 @@ describe('LaunchExplorer', () => {
   });
 
   it('selects a cohort and opens retained members or a validated story beat', () => {
-    const selected = cohort();
+    const selected = cohort({
+      catalogMetadataWarning: 'Launch vehicle varies across retained catalog records.',
+    });
     const onSelect = vi.fn();
     const onOpenMembers = vi.fn();
     const onOpenStory = vi.fn();
@@ -54,11 +56,23 @@ describe('LaunchExplorer', () => {
     fireEvent.click(screen.getByTestId('open-cohort-story'));
     expect(onOpenMembers).toHaveBeenCalledWith(selected);
     expect(onOpenStory).toHaveBeenCalledWith(selected);
+    expect(screen.getByTestId('cohort-metadata-warning').textContent).toContain('Launch vehicle varies');
   });
 
   it('does not render a stale or unvalidated story shortcut', () => {
     render(<LaunchExplorer cohorts={[cohort({ featuredStory: undefined })]} onOpenMembers={vi.fn()} onOpenStory={vi.fn()} onSelect={vi.fn()} selectedCohortId="2021-021" />);
 
     expect(screen.queryByTestId('open-cohort-story')).toBeNull();
+  });
+
+  it('hides actions for a selected cohort outside the current results', () => {
+    render(<LaunchExplorer cohorts={[
+      cohort(),
+      cohort({ id: '2024-001', launchDate: '2024-01-02', launchVehicle: 'Falcon Heavy' }),
+    ]} onOpenMembers={vi.fn()} onOpenStory={vi.fn()} onSelect={vi.fn()} selectedCohortId="2021-021" />);
+
+    expect(screen.getByTestId('cohort-summary')).toBeTruthy();
+    fireEvent.change(screen.getByLabelText('Filter Starlink launch year'), { target: { value: '2024' } });
+    expect(screen.queryByTestId('cohort-summary')).toBeNull();
   });
 });

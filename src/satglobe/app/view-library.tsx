@@ -15,7 +15,7 @@ export interface ViewLibraryProps {
   onImportPlaylistFile: (file?: File) => Promise<void> | void;
   onImportViewFile: (file?: File) => Promise<void> | void;
   onPlayPlaylist: (playlist: PlaylistV1) => void;
-  onSavePlaylist: (playlist: PlaylistV1) => void;
+  onSavePlaylist: (playlist: PlaylistV1) => boolean | void;
   onSaveView: () => void;
 }
 
@@ -90,7 +90,11 @@ export function ViewLibrary({
 
       return;
     }
-    onSavePlaylist(normalizePlaylist(parsed.data));
+    if (onSavePlaylist(normalizePlaylist(parsed.data)) === false) {
+      setEditorError('The playlist library is full. Delete one saved playlist, then try again.');
+
+      return;
+    }
     setEditorError('');
     setDraft(null);
   };

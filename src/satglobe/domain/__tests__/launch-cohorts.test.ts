@@ -82,4 +82,41 @@ describe('Starlink launch cohorts', () => {
     expect(buildStarlinkLaunchCohorts([object()], [story('renamed')])[0]?.featuredStory).toBeUndefined();
     expect(buildStarlinkLaunchCohorts([object()])[0]?.featuredStory).toBeUndefined();
   });
+
+  it('uses majority catalog metadata and discloses conflicting member values', () => {
+    const cohort = buildStarlinkLaunchCohorts([
+      object({
+        catalogId: '10',
+        internationalDesignator: '2025-243A',
+        launchDate: '2025 Dec 12',
+        launchVehicle: 'Chang Zheng 3B',
+      }),
+      object({
+        catalogId: '11',
+        internationalDesignator: '2025-243B',
+        launchDate: '2025-12-12T00:00:00.000Z',
+      }),
+      object({
+        catalogId: '12',
+        internationalDesignator: '2025-243C',
+        launchDate: '2025-12-12',
+      }),
+    ])[0]!;
+
+    expect(cohort.launchDate).toBe('2025-12-12');
+    expect(cohort.launchVehicle).toBe('Falcon 9');
+    expect(cohort.catalogMetadataWarning).toContain('Launch vehicle varies');
+    expect(cohort.catalogMetadataWarning).toContain('Falcon 9 (2 of 3 populated records)');
+  });
+
+  it('sorts mixed-format launch dates by calendar chronology', () => {
+    const cohorts = buildStarlinkLaunchCohorts([
+      object({ catalogId: '20', internationalDesignator: '2026-001A', launchDate: '2026 Jan 9' }),
+      object({ catalogId: '21', internationalDesignator: '2026-002A', launchDate: '2026 Jan 30' }),
+      object({ catalogId: '22', internationalDesignator: '2026-003A', launchDate: '2026 Feb 7' }),
+    ]);
+
+    expect(cohorts.map(({ id }) => id)).toEqual(['2026-003', '2026-002', '2026-001']);
+    expect(cohorts.map(({ launchDate }) => launchDate)).toEqual(['2026-02-07', '2026-01-30', '2026-01-09']);
+  });
 });

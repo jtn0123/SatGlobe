@@ -12,6 +12,7 @@ export type PlaylistPlaybackAction =
   | { type: 'load' }
   | { type: 'seek'; index: number }
   | { type: 'togglePlaying' }
+  | { type: 'pause'; progress: number }
   | { type: 'setProgress'; progress: number }
   | { type: 'finish' }
   | { type: 'stop' };
@@ -34,6 +35,8 @@ export function playlistPlaybackReducer(
       return { ...state, entryIndex: action.index, progress: 0 };
     case 'togglePlaying':
       return { ...state, playing: !state.playing };
+    case 'pause':
+      return { ...state, playing: false, progress: action.progress };
     case 'setProgress':
       return { ...state, progress: action.progress };
     case 'finish':
@@ -64,6 +67,7 @@ export function usePlaylistPlayback(
   const [playback, dispatch] = useReducer(playlistPlaybackReducer, initialPlaylistPlayback);
   const reducedMotion = useReducedMotion();
   const loadedPlaylistId = useRef<string | null>(null);
+  const playbackStartedAt = useRef<number | null>(null);
   const entryCount = playlist?.entries.length ?? 0;
   const entryIndex = entryCount > 0 ? Math.min(playback.entryIndex, entryCount - 1) : 0;
 
@@ -95,6 +99,17 @@ export function usePlaylistPlayback(
     if (!playlist || !enabled) {
       return;
     }
+    if (playback.playing) {
+      const entry = playlist.entries[entryIndex];
+      const startedAt = playbackStartedAt.current;
+      const progress = startedAt === null
+        ? playback.progress
+        : Math.min(1, Math.max(playback.progress, (performance.now() - startedAt) / entry.durationMs));
+
+      dispatch({ type: 'pause', progress });
+
+      return;
+    }
     const finished = !playback.playing && entryIndex === playlist.entries.length - 1 && playback.progress >= 1;
 
     if (finished) {
@@ -111,6 +126,8 @@ export function usePlaylistPlayback(
     }
     const entry = playlist.entries[entryIndex];
     const startedAt = performance.now() - playback.progress * entry.durationMs;
+
+    playbackStartedAt.current = startedAt;
     let advanced = false;
     const advance = () => {
       // A congested event loop can queue more than one interval callback
@@ -129,7 +146,12 @@ export function usePlaylistPlayback(
     if (reducedMotion) {
       const timer = window.setTimeout(advance, Math.max(0, (1 - playback.progress) * entry.durationMs));
 
-      return () => window.clearTimeout(timer);
+      return () => {
+        if (playbackStartedAt.current === startedAt) {
+          playbackStartedAt.current = null;
+        }
+        window.clearTimeout(timer);
+      };
     }
     const timer = window.setInterval(() => {
       const nextProgress = Math.min(1, (performance.now() - startedAt) / entry.durationMs);
@@ -142,7 +164,12 @@ export function usePlaylistPlayback(
       advance();
     }, 100);
 
-    return () => window.clearInterval(timer);
+    return () => {
+      if (playbackStartedAt.current === startedAt) {
+        playbackStartedAt.current = null;
+      }
+      window.clearInterval(timer);
+    };
   }, [applyEntry, enabled, entryIndex, playback.playing, playback.progress, playlist, reducedMotion]);
 
   return {

@@ -47,13 +47,21 @@ describe('LaunchTimelapse', () => {
     vi.useFakeTimers();
     const onYearChange = vi.fn();
 
-    render(<LaunchTimelapse bounds={{ minYear: 1960, maxYear: 2026 }} onYearChange={onYearChange} />);
-    expect(vi.getTimerCount()).toBe(0);
-    fireEvent.click(screen.getByRole('button', { name: 'Show launches through 1970' }));
+    const { rerender } = render(<LaunchTimelapse bounds={{ minYear: 1960, maxYear: 2026 }} onYearChange={onYearChange} />);
     const slider = screen.getByRole('slider', { name: 'Launch history year' });
+
+    expect(vi.getTimerCount()).toBe(0);
+    expect(screen.getByTestId('launch-timelapse-year').textContent).toBe('ALL LAUNCH YEARS');
+    expect(screen.getByTestId('launch-timelapse').getAttribute('data-year')).toBe('all');
+    expect(slider.getAttribute('aria-valuetext')).toBe('All launch years');
+    expect(slider.getAttribute('value')).toBe('-1');
+    expect(screen.getByRole('button', { name: 'Show launches through 1960' }).getAttribute('aria-current')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Show launches through 1970' }));
+    rerender(<LaunchTimelapse activeYear={1970} bounds={{ minYear: 1960, maxYear: 2026 }} onYearChange={onYearChange} />);
 
     expect(slider.getAttribute('aria-valuetext')).toBe('Through 1970');
     fireEvent.change(slider, { target: { value: 6 } });
+    rerender(<LaunchTimelapse activeYear={2020} bounds={{ minYear: 1960, maxYear: 2026 }} onYearChange={onYearChange} />);
 
     expect(onYearChange.mock.calls.map(([year]) => year)).toEqual([1970, 2020]);
     expect(screen.getByTestId('launch-timelapse').getAttribute('data-playing')).toBe('false');
@@ -61,6 +69,17 @@ describe('LaunchTimelapse', () => {
     expect(slider.getAttribute('aria-valuetext')).toBe('Through 2020');
     expect(screen.getByRole('button', { name: 'Show launches through 2020' }).getAttribute('aria-current')).toBe('step');
     expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('moves from the all-years state to the first real stop with Next', () => {
+    stubMotion(false);
+    const onYearChange = vi.fn();
+
+    render(<LaunchTimelapse bounds={{ minYear: 1960, maxYear: 2020 }} onYearChange={onYearChange} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Next launch decade' }));
+
+    expect(onYearChange).toHaveBeenCalledOnce();
+    expect(onYearChange).toHaveBeenCalledWith(1960);
   });
 
   it('starts at the truthful opening frame, advances at two steps per second, and owns no timer after finishing', () => {

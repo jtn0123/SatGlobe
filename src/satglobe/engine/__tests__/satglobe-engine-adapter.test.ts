@@ -599,6 +599,25 @@ describe('SatGlobeEngineAdapter', () => {
     expect(adapter.getState().visibleCount).toBe(2);
   });
 
+  it('reports the dots actually rendered by the Starlink encoding', () => {
+    adapter = bootAdapter([
+      fakeSat(),
+      fakeSat({ id: 2, sccNum: '99999', name: 'ONEWEB-0001', owner: 'OneWeb', country: 'GB' }),
+    ]);
+
+    expect(adapter.getState().visibleCount).toBe(2);
+    adapter.setEncoding('starlink');
+    expect(adapter.getState().visibleCount).toBe(1);
+
+    adapter.setHighlight(['99999']);
+    expect(adapter.getState().visibleCount).toBe(2);
+
+    adapter.setHighlight([]);
+    expect(adapter.getState().visibleCount).toBe(1);
+    adapter.setEncoding('object-type');
+    expect(adapter.getState().visibleCount).toBe(2);
+  });
+
   it('applies filters and encoding through one measured recolor and notification', () => {
     adapter = bootAdapter([
       fakeSat(),

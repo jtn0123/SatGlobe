@@ -53,6 +53,7 @@ describe('playlistPlaybackReducer', () => {
   it('seeks, toggles, stops, and finishes as one state machine', () => {
     expect(playlistPlaybackReducer(running, { type: 'seek', index: 0 })).toEqual({ entryIndex: 0, playing: true, progress: 0 });
     expect(playlistPlaybackReducer(running, { type: 'togglePlaying' }).playing).toBe(false);
+    expect(playlistPlaybackReducer(running, { type: 'pause', progress: 0.75 })).toEqual({ entryIndex: 1, playing: false, progress: 0.75 });
     expect(playlistPlaybackReducer(running, { type: 'stop' })).toEqual({ entryIndex: 1, playing: false, progress: 0 });
     expect(playlistPlaybackReducer(running, { type: 'finish' })).toEqual({ entryIndex: 1, playing: false, progress: 1 });
   });
@@ -131,6 +132,28 @@ describe('usePlaylistPlayback', () => {
     expect(interval).not.toHaveBeenCalled();
     expect(timeout).toHaveBeenCalledOnce();
     act(() => vi.advanceTimersByTime(1_000));
+    expect(onEntryApplied).toHaveBeenCalledWith(playlist.entries[1], 1);
+  });
+
+  it('resumes a reduced-motion hold from its elapsed progress', () => {
+    stubMotion(true);
+    vi.useFakeTimers();
+    const onEntryApplied = vi.fn();
+    const { result } = renderHook(() => usePlaylistPlayback(playlist, true, onEntryApplied));
+
+    act(() => result.current.togglePlaying());
+    act(() => vi.advanceTimersByTime(400));
+    act(() => result.current.togglePlaying());
+
+    expect(result.current.playback.playing).toBe(false);
+    expect(result.current.playback.progress).toBeCloseTo(0.4, 5);
+    act(() => vi.advanceTimersByTime(1_000));
+    expect(onEntryApplied).not.toHaveBeenCalled();
+
+    act(() => result.current.togglePlaying());
+    act(() => vi.advanceTimersByTime(599));
+    expect(onEntryApplied).not.toHaveBeenCalled();
+    act(() => vi.advanceTimersByTime(1));
     expect(onEntryApplied).toHaveBeenCalledWith(playlist.entries[1], 1);
   });
 

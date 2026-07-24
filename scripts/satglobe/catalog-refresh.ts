@@ -357,14 +357,19 @@ function mergeSource(
     const existing = catalog.get(id);
 
     try {
-      const incomingEpoch = parseOmmEpochUtc(omm.EPOCH).epochMs;
+      const merged = ommToCatalogRow(omm, existing);
 
-      if (existing && incomingEpoch < epochFromCatalog(existing)) {
+      /*
+       * A TLE retains only eight decimal places of epoch day. Compare the
+       * canonical epoch we can actually install, rather than the higher
+       * precision OMM input, so a duplicate that rounds upward by less than
+       * half a TLE unit is not mislabeled as an epoch regression.
+       */
+      if (existing && epochFromCatalog(merged) < epochFromCatalog(existing)) {
         rejections.push({ source: sourceId, catalogId: id, name: omm.OBJECT_NAME, reason: 'Epoch regression' });
 
         return;
       }
-      const merged = ommToCatalogRow(omm, existing);
       const before = existing ? JSON.stringify(existing) : '';
       const after = JSON.stringify(merged);
 

@@ -33,7 +33,7 @@ export function LaunchExplorer({
       return (year === 'all' || cohort.id.startsWith(year)) && (!needle || text.includes(needle));
     });
   }, [cohorts, query, year]);
-  const selected = cohorts.find(({ id }) => id === selectedCohortId);
+  const selected = visible.find(({ id }) => id === selectedCohortId);
 
   return (
     <section className="sg-launch-explorer" data-testid="launch-explorer">
@@ -68,6 +68,7 @@ export function LaunchExplorer({
         <div className="sg-cohort-summary" data-testid="cohort-summary">
           <div><strong>{selected.id}</strong><span>{formatNumber(selected.activeCount)} known active of {formatNumber(selected.catalogMemberCount)} retained members</span></div>
           <p>{selected.launchVehicle || 'Launch vehicle not listed'} · newest element {formatCalendarDate(selected.newestElementEpoch)}</p>
+          {selected.catalogMetadataWarning && <p data-testid="cohort-metadata-warning">{selected.catalogMetadataWarning}</p>}
           <div className="sg-cohort-actions">
             <button data-testid="open-cohort-members" onClick={() => onOpenMembers(selected)} type="button">Open members</button>
             {selected.featuredStory && <button data-testid="open-cohort-story" onClick={() => onOpenStory(selected)} type="button">Open sourced story beat</button>}

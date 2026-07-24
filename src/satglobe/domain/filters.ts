@@ -1,4 +1,5 @@
 import type { FilterState, ObjectKind, OrbitRegime } from './types';
+import { normalizeLaunchCohort } from './launch-designator';
 import { catalogLaunchYear } from './launch-years';
 
 /** The catalog fields required to evaluate a SatGlobe workshop filter. */
@@ -50,8 +51,9 @@ export function prepareFilterMatcher(filters: FilterState): FilterMatcher {
     }
     if (launchCohort) {
       const launchText = object.launchText ?? `${object.internationalDesignator} ${object.launchDate}`.toLocaleLowerCase();
+      const normalizedObjectCohort = normalizeLaunchCohort(object.internationalDesignator)?.toLocaleLowerCase() ?? '';
 
-      if (!launchText.includes(launchCohort)) {
+      if (!launchText.includes(launchCohort) && !normalizedObjectCohort.includes(launchCohort)) {
         return false;
       }
     }

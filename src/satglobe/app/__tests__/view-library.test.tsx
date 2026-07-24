@@ -71,6 +71,22 @@ describe('ViewLibrary', () => {
     expect(screen.queryByTestId('playlist-editor')).toBeNull();
   });
 
+  it('keeps a valid draft open when the playlist library is full', () => {
+    vi.spyOn(crypto, 'randomUUID').mockReturnValue('d2e48c5c-83c3-4fa0-9c55-ad587a4e2975');
+    const props = makeProps({ onSavePlaylist: vi.fn(() => false) });
+
+    render(<ViewLibrary {...props} />);
+    fireEvent.click(screen.getByTestId('open-playlist-editor'));
+    fireEvent.change(screen.getByTestId('playlist-name'), { target: { value: 'Keep this draft' } });
+    fireEvent.click(screen.getByTestId('add-playlist-view-0'));
+    fireEvent.click(screen.getByTestId('add-playlist-view-1'));
+    fireEvent.click(screen.getByTestId('save-playlist'));
+
+    expect(props.onSavePlaylist).toHaveBeenCalledOnce();
+    expect(screen.getByTestId('playlist-editor')).toBeTruthy();
+    expect(screen.getByRole('status').textContent).toContain('playlist library is full');
+  });
+
   it('edits and plays an existing sequence without changing its id', () => {
     const props = makeProps({ playlists: [playlist] });
 

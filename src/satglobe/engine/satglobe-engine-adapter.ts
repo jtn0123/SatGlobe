@@ -279,11 +279,11 @@ export class SatGlobeEngineAdapter {
       conjunctionHighlightActive: false,
       highlightedObjectCount: 0,
     }, false);
-    const visibleCount = filters === undefined
-      ? this.filterVisibleCatalogIds_.size
-      : measureSync(FILTER_APPLY_MEASURE, { cause }, () => this.rebuildFilterVisibility_());
+    if (filters !== undefined) {
+      measureSync(FILTER_APPLY_MEASURE, { cause }, () => this.rebuildFilterVisibility_());
+    }
 
-    this.applyVisualState_(visibleCount, cause);
+    this.applyVisualState_(this.visibleCountWithHighlight_(), cause);
   }
 
   /**
@@ -580,15 +580,39 @@ export class SatGlobeEngineAdapter {
 
   /** Adds only the bounded highlight delta to the cached filter-visible baseline. */
   private visibleCountWithHighlight_(): number {
-    let visibleCount = this.filterVisibleCatalogIds_.size;
+    let visibleCount = this.visibleCountForEncoding_();
 
     for (const catalogId of this.highlightedCatalogIds_) {
-      if (!this.filterVisibleCatalogIds_.has(catalogId)) {
+      if (!this.isVisibleWithoutHighlight_(catalogId)) {
         visibleCount++;
       }
     }
 
     return visibleCount;
+  }
+
+  /** Counts dots the active encoding actually renders, not only filter matches. */
+  private visibleCountForEncoding_(): number {
+    if (this.state_.encoding !== 'starlink') {
+      return this.filterVisibleCatalogIds_.size;
+    }
+    let visibleCount = 0;
+
+    for (const catalogId of this.filterVisibleCatalogIds_) {
+      if (this.objectsByCatalogId_.get(catalogId)?.isStarlink) {
+        visibleCount++;
+      }
+    }
+
+    return visibleCount;
+  }
+
+  /** Mirrors the color scheme's encoding-level hiding before highlight override. */
+  private isVisibleWithoutHighlight_(catalogId: string): boolean {
+    return this.filterVisibleCatalogIds_.has(catalogId) && (
+      this.state_.encoding !== 'starlink' ||
+      this.objectsByCatalogId_.get(catalogId)?.isStarlink === true
+    );
   }
 
   /** Normalizes the bounded public highlight API against the installed catalog. */

@@ -47,6 +47,14 @@ describe('matchesSatGlobeFilters', () => {
     expect(matchesSatGlobeFilters(object, withFilters({ launchCohort: '2019' }))).toBe(true);
   });
 
+  it('matches a canonical cohort filter against a short-form designator', () => {
+    expect(matchesSatGlobeFilters({
+      ...object,
+      internationalDesignator: '19029B',
+      launchText: '19029b 2019-05-24',
+    }, withFilters({ launchCohort: '2019-029' }))).toBe(true);
+  });
+
   it('applies a cumulative launch-year boundary and rejects unknown years', () => {
     expect(matchesSatGlobeFilters(object, withFilters({ launchYearMax: 2019 }))).toBe(true);
     expect(matchesSatGlobeFilters({ ...object, launchDate: '', internationalDesignator: '' }, withFilters({ launchYearMax: 2026 }))).toBe(false);

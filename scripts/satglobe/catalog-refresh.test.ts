@@ -398,6 +398,43 @@ describe('SatGlobe catalog refresh', () => {
     expect(summary.updated).toBe(0);
   });
 
+  it('accepts duplicate high-precision OMM epochs after canonical TLE rounding', async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'satglobe-catalog-rounding-'));
+    const output = path.join(directory, 'tle.json');
+    const activeInput = path.join(directory, 'active.csv');
+    const starlinkInput = path.join(directory, 'starlink.csv');
+    const socratesInput = path.join(directory, 'socrates.csv');
+    const duplicate = {
+      ...omm,
+      NORAD_CAT_ID: '799500777',
+      EPOCH: '2026-07-20T02:43:32.000016',
+    };
+
+    temporaryDirectories.push(directory);
+    await Promise.all([
+      copyFile(path.resolve('public/tle/tle.json'), output),
+      writeFile(activeInput, ommCsv([duplicate]), 'utf8'),
+      writeFile(starlinkInput, ommCsv([duplicate]), 'utf8'),
+      writeFile(socratesInput, socratesCsv(), 'utf8'),
+    ]);
+    const summary = await refreshCatalog(parseArgs([
+      '--verify-only',
+      '--output', output,
+      '--active-input', activeInput,
+      '--starlink-input', starlinkInput,
+      '--socrates-input', socratesInput,
+      '--socrates-updated-at', '2026-07-18T01:13:28.000Z',
+      '--socrates-retrieved-at', '2026-07-18T11:25:30.000Z',
+    ]));
+
+    expect(summary).toMatchObject({
+      added: 1,
+      unchanged: 1,
+      rejected: 0,
+      rejectionReasons: {},
+    });
+  });
+
   it('installs a strict v2 manifest whose provenance is coherent with accepted catalog bytes', async () => {
     vi.setSystemTime(CATALOG_REFRESH_TEST_TIME);
     const directory = await mkdtemp(path.join(tmpdir(), 'satglobe-catalog-manifest-'));

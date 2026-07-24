@@ -155,6 +155,8 @@ export interface LaunchCohortView {
   inclinationDegRange: [number, number] | null;
   newestElementEpoch: string;
   sourceLabels: string[];
+  /** Present when retained catalog members disagree on displayed launch metadata. */
+  catalogMetadataWarning?: string;
   /** Present only when both the authored story and beat still exist. */
   featuredStory?: {
     storyId: string;

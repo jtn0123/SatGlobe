@@ -10,6 +10,22 @@ export interface PlaylistImportResult {
   warnings: string[];
 }
 
+/** Adds or replaces one record without evicting an unrelated saved playlist. */
+export function upsertPersistedPlaylist(
+  playlists: readonly PlaylistV1[],
+  playlist: PlaylistV1,
+): PlaylistV1[] | null {
+  const existing = playlists.some(({ id }) => id === playlist.id);
+
+  if (!existing && playlists.length >= MAX_PERSISTED_PLAYLISTS) {
+    return null;
+  }
+
+  return existing
+    ? playlists.map((record) => (record.id === playlist.id ? playlist : record))
+    : [playlist, ...playlists];
+}
+
 /** Playlist steps are absolute Present views, never story reconstructions. */
 export function normalizePlaylistView(view: SavedViewV1): SavedViewV1 {
   return {

@@ -25,6 +25,7 @@ export function LaunchTimelapse({ bounds, activeYear, onYearChange }: Readonly<L
   const active = activeYear !== undefined;
   const lastIndex = stops.length - 1;
   const year = activeYear ?? stops[index];
+  const currentIndex = active ? index : -1;
 
   useEffect(() => {
     if (activeYear === undefined) {
@@ -96,15 +97,15 @@ export function LaunchTimelapse({ bounds, activeYear, onYearChange }: Readonly<L
       data-active={String(active)}
       data-playing={String(playing)}
       data-testid="launch-timelapse"
-      data-year={year}
+      data-year={active ? year : 'all'}
     >
       <header>
         <span>LAUNCH HISTORY / CUMULATIVE</span>
-        <strong data-testid="launch-timelapse-year">THROUGH {year}</strong>
+        <strong data-testid="launch-timelapse-year">{active ? `THROUGH ${year}` : 'ALL LAUNCH YEARS'}</strong>
         <small>{active ? 'Installed objects with a known launch year' : 'Choose a stop or play from the opening frame'}</small>
       </header>
       <div className="sg-launch-timelapse-transport">
-        <button aria-label="Previous launch decade" disabled={index === 0} onClick={() => applyIndex(index - 1)} type="button"><Icon name="previous" size={14} /></button>
+        <button aria-label="Previous launch decade" disabled={currentIndex <= 0} onClick={() => applyIndex(currentIndex - 1)} type="button"><Icon name="previous" size={14} /></button>
         <button
           aria-describedby={reducedMotion ? 'sg-launch-timelapse-motion-note' : undefined}
           aria-label={playing ? 'Pause launch history' : 'Play launch history'}
@@ -113,30 +114,30 @@ export function LaunchTimelapse({ bounds, activeYear, onYearChange }: Readonly<L
           onClick={togglePlaying}
           type="button"
         ><Icon name={playing ? 'pause' : 'play'} size={15} /></button>
-        <button aria-label="Next launch decade" disabled={index === lastIndex} onClick={() => applyIndex(index + 1)} type="button"><Icon name="next" size={14} /></button>
+        <button aria-label="Next launch decade" disabled={currentIndex === lastIndex} onClick={() => applyIndex(currentIndex + 1)} type="button"><Icon name="next" size={14} /></button>
         <div className="sg-launch-timelapse-scrub">
           <input
             aria-label="Launch history year"
-            aria-valuetext={`Through ${year}`}
+            aria-valuetext={active ? `Through ${year}` : 'All launch years'}
             max={lastIndex}
-            min={0}
+            min={-1}
             onChange={(event) => applyIndex(Number(event.currentTarget.value))}
             step={1}
             type="range"
-            value={index}
+            value={currentIndex}
           />
           <div aria-hidden="true" className="sg-launch-timelapse-ticks">
             {stops.map((stop, stopIndex) => <i className={stopIndex <= index && active ? 'is-past' : ''} key={stop} />)}
           </div>
         </div>
-        <span className="sg-launch-timelapse-counter">{String(index + 1).padStart(2, '0')} / {String(stops.length).padStart(2, '0')}</span>
+        <span className="sg-launch-timelapse-counter">{active ? String(index + 1).padStart(2, '0') : '--'} / {String(stops.length).padStart(2, '0')}</span>
       </div>
       <div className="sg-launch-timelapse-stops">
         {stops.map((stop, stopIndex) => (
           <button
             aria-label={`Show launches through ${stop}`}
-            aria-current={stopIndex === index ? 'step' : undefined}
-            className={stopIndex === index ? 'is-current' : ''}
+            aria-current={active && stopIndex === index ? 'step' : undefined}
+            className={active && stopIndex === index ? 'is-current' : ''}
             key={stop}
             onClick={() => applyIndex(stopIndex)}
             type="button"
