@@ -555,7 +555,11 @@ test.describe('SatGlobe workshop', () => {
     const timeline = page.getByTestId('launch-timelapse');
 
     await expect(timeline).toBeVisible();
+    const fullCatalogCount = await visibleCount();
+
     await page.getByRole('button', { name: 'Show launches through 1960' }).click();
+    await expect(timeline).toHaveAttribute('data-year', '1960');
+    await expect.poll(visibleCount).toBeLessThan(fullCatalogCount);
     const count1960 = await visibleCount();
 
     await page.evaluate((names) => {
@@ -564,6 +568,8 @@ test.describe('SatGlobe workshop', () => {
       }
     }, SATGLOBE_INTERACTION_MEASURES);
     await page.getByRole('button', { name: 'Show launches through 1970' }).click();
+    await expect(timeline).toHaveAttribute('data-year', '1970');
+    await expect.poll(visibleCount).toBeGreaterThan(count1960);
     const count1970 = await visibleCount();
     const stepMeasures = await page.evaluate((names) => {
       const result: Record<string, unknown[]> = {};
@@ -575,14 +581,14 @@ test.describe('SatGlobe workshop', () => {
       return result;
     }, [LAUNCH_TIMELAPSE_APPLY_MEASURE, FILTER_APPLY_MEASURE, RECOLOR_MEASURE, COUNT_UPDATE_MEASURE] as const);
 
-    expect(count1970).toBeGreaterThan(count1960);
     expect(stepMeasures[LAUNCH_TIMELAPSE_APPLY_MEASURE]).toEqual([{ year: 1970 }]);
     expect(stepMeasures[FILTER_APPLY_MEASURE]).toEqual([{ cause: 'combined' }]);
     expect(stepMeasures[RECOLOR_MEASURE]).toEqual([{ cause: 'combined' }]);
     expect(stepMeasures[COUNT_UPDATE_MEASURE]).toEqual([{ cause: 'combined' }]);
 
     await page.getByRole('button', { name: 'Show launches through 2020' }).click();
-    expect(await visibleCount()).toBeGreaterThan(count1970);
+    await expect(timeline).toHaveAttribute('data-year', '2020');
+    await expect.poll(visibleCount).toBeGreaterThan(count1970);
     await expect(page.getByTestId('encoding-select')).toHaveValue('launch-cohort');
 
     await page.evaluate((names) => {
