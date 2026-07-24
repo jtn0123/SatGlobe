@@ -1,6 +1,6 @@
 # SatGlobe roadmap and recovery ledger
 
-Last updated: 2026-07-24T04:03:37Z
+Last updated: 2026-07-24T04:05:54Z
 
 This file is the durable product roadmap and the live ledger for the approved
 legacy-work recovery. It is intentionally Markdown so every decision, test
@@ -80,7 +80,7 @@ objects below.
 
 | PR | Head SHA | Planned disposition | Status |
 | --- | --- | --- | --- |
-| #51 | `ca60edf50f3a97f5a82092f535db6495cb440994` | Port stability gates, atomic visual state, trusted timing, CI flake policy, and justified coverage | In progress |
+| #51 | `ca60edf50f3a97f5a82092f535db6495cb440994` | Port stability gates, atomic visual state, trusted timing, CI flake policy, and justified coverage | Ported |
 | #52 | `7134d9fd581bf5fe9312b22762e4e57a55c9fb5e` | Port typed linear algebra and remove `numeric` | In progress |
 | #53 | `37161ae8509ec9f67abd5d0660bdf25c7f1f44dc` | Port local view playlists | In progress |
 | #54 | `087c7884442912cc5aa275f1efd9f120e82e3094` | Port pure-SGP4/WASM profile gating | In progress |
@@ -128,7 +128,7 @@ reachable from `main`, an archive ref, or a verified replacement commit.
 - [x] `Verified` — Remove only reverified safe branches and the archived clean
   geometry worktree.
 - [ ] `In progress` — Recovery ledger and current handoff.
-- [ ] `In progress` — Stability and atomic visual state from #51.
+- [x] `Ported` — Stability and atomic visual state from #51.
 - [ ] `In progress` — Typed eval-free numeric replacement from #52.
 - [ ] `In progress` — Pure-SGP4/WASM profile gating from #54.
 - [ ] `In progress` — Strict CSP and emitted-script inspection from #57.
@@ -144,6 +144,12 @@ reachable from `main`, an archive ref, or a verified replacement commit.
 - [ ] `Pending` — Open the replacement draft PR and link every closed PR.
 - [ ] `Pending` — Integrate latest main, satisfy all mergeability gates, mark
   the PR ready, and stop before merge.
+
+## Replacement commit ledger
+
+| Legacy source | Consolidated replacement | Included behavior | Status |
+| --- | --- | --- | --- |
+| PR #51 | `dd8d0816` | Transactional visual updates, resilient timing, corrected Dependabot targets, CI flake policy, and test-backed coverage ratchet | Ported |
 
 ## Validation ledger
 
