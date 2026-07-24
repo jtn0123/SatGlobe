@@ -1,5 +1,6 @@
 import { Sgp4, type TleLine1, type TleLine2 } from '@ootk/src/main';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { Sgp4WasmPropagator as DisabledSgp4WasmPropagator } from '../../ootk/src/propagator/Sgp4WasmPropagator.disabled';
 import { propagatorBackendRuntime as disabledRuntime } from '../propagator-backend-runtime-disabled';
 import { propagatorBackendRuntime as enabledRuntime } from '../propagator-backend-runtime';
 
@@ -50,6 +51,13 @@ describe('propagator backend build boundary', () => {
     await expect(disabledRuntime.loadSgp4Wasm()).rejects.toThrow('not included in this build profile');
     await expect(disabledRuntime.loadSgp4XpWasm()).rejects.toThrow('not included in this build profile');
     expect(loaderMocks.loadSgp4Wasm).not.toHaveBeenCalled();
+  });
+
+  it('keeps the disabled public propagator facade explicit', () => {
+    expect(DisabledSgp4WasmPropagator.unavailableReason).toBe(
+      'Sgp4WasmPropagator is not included in this build profile.',
+    );
+    expect(() => new DisabledSgp4WasmPropagator()).toThrow(DisabledSgp4WasmPropagator.unavailableReason);
   });
 
   it('preserves the non-wasm SGP4 result', () => {
