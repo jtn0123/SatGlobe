@@ -396,15 +396,24 @@ describe('SatGlobeApp', () => {
   });
 
   it('uses arrow and space shortcuts to navigate and play a story', () => {
+    const nextBeat = storyLibrary[0].beats[1];
     const { methods } = renderApp();
 
     fireEvent.click(screen.getByTestId('story-mode'));
     expect(screen.getByTestId('story-deck').textContent).toContain('Before the shell');
+    methods.setVisualState.mockClear();
     methods.setFilters.mockClear();
+    methods.setEncoding.mockClear();
 
     fireEvent.keyDown(window, { key: 'ArrowRight' });
     expect(screen.getByTestId('story-deck').textContent).toContain('One launch, one catalog cohort');
-    expect(methods.setFilters).toHaveBeenCalledTimes(1);
+    expect(methods.setVisualState).toHaveBeenCalledTimes(1);
+    expect(methods.setVisualState).toHaveBeenCalledWith({
+      filters: expect.objectContaining({ launchCohort: nextBeat.launchCohort }),
+      encoding: nextBeat.encoding,
+    });
+    expect(methods.setFilters).not.toHaveBeenCalled();
+    expect(methods.setEncoding).not.toHaveBeenCalled();
 
     fireEvent.keyDown(window, { key: 'ArrowLeft' });
     expect(screen.getByTestId('story-deck').textContent).toContain('Before the shell');
@@ -587,9 +596,17 @@ describe('SatGlobeApp', () => {
     const { methods } = renderApp();
 
     fireEvent.click(screen.getByTestId('story-mode'));
+    methods.setVisualState.mockClear();
+    methods.setFilters.mockClear();
+    methods.setEncoding.mockClear();
     fireEvent.change(screen.getByTestId('story-picker'), { target: { value: cohortStory.id } });
 
-    expect(methods.setFilters).toHaveBeenCalledWith(expect.objectContaining({ launchCohort: cohortBeat.launchCohort }));
+    expect(methods.setVisualState).toHaveBeenCalledWith({
+      filters: expect.objectContaining({ launchCohort: cohortBeat.launchCohort }),
+      encoding: cohortBeat.encoding,
+    });
+    expect(methods.setFilters).not.toHaveBeenCalled();
+    expect(methods.setEncoding).not.toHaveBeenCalled();
   });
 
   it('clears the preceding orbit and draws the sparse subject authored for an ISS beat', () => {

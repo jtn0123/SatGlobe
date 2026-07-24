@@ -335,12 +335,11 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
     if (beat.simulationTimeOffsetHours !== undefined) {
       adapter.setSimulationTime(storySimulationTime(storyTimeAnchorRef.current, beat.simulationTimeOffsetHours));
     }
-    setFiltersImmediate(beatFilters);
+    setFiltersWithEncodingImmediate(beatFilters, beat.encoding);
     setScaleMode(beat.scaleMode);
     adapter.setScaleMode(beat.scaleMode);
     adapter.setCamera(beat.camera);
-    adapter.setEncoding(beat.encoding);
-  }, [adapter, setFiltersImmediate]);
+  }, [adapter, setFiltersWithEncodingImmediate]);
 
   const { playback, dispatch, applyBeat } = useStoryPlayback(story, mode === 'story', onBeatApplied);
 
