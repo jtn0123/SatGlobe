@@ -422,6 +422,18 @@ describe('SatGlobeApp', () => {
     expect(screen.getByTestId('story-play').getAttribute('aria-label')).toBe('Pause story');
   });
 
+  it('does not toggle Story playback when Space is pressed on a source link', () => {
+    renderApp();
+
+    fireEvent.click(screen.getByTestId('story-mode'));
+    fireEvent.click(screen.getByRole('button', { name: 'Sources · Facts' }));
+    const sourceLink = within(screen.getByRole('dialog', { name: 'Sources and technical facts' })).getByRole('link');
+
+    fireEvent.keyDown(sourceLink, { key: ' ' });
+
+    expect(screen.getByTestId('story-play').getAttribute('aria-label')).toBe('Play story');
+  });
+
   it('replays from the opening beat when playback is started at the end', () => {
     renderApp();
     const story = storyLibrary[0];

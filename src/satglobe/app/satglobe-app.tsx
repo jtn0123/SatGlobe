@@ -190,8 +190,13 @@ function handleGlobalShortcut(event: KeyboardEvent, ctx: ShortcutContext): void 
     ctx.applyBeat(ctx.beatIndex + 1);
   } else if (ctx.mode === 'story' && event.key === 'ArrowLeft') {
     ctx.applyBeat(ctx.beatIndex - 1);
-  } else if (ctx.mode === 'story' && event.key === ' ' && !(target instanceof window.HTMLButtonElement)) {
-    // A focused button keeps its native Space activation.
+  } else if (
+    ctx.mode === 'story' &&
+    event.key === ' ' &&
+    !(target instanceof window.HTMLButtonElement) &&
+    !(target instanceof window.HTMLAnchorElement)
+  ) {
+    // Focused interactive controls keep their native Space behavior.
     ctx.togglePlaying();
   } else {
     handled = false;
