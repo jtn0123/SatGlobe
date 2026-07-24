@@ -1,6 +1,6 @@
 # SatGlobe roadmap and recovery ledger
 
-Last updated: 2026-07-24T03:53:47Z
+Last updated: 2026-07-24T03:59:26Z
 
 This file is the durable product roadmap and the live ledger for the approved
 legacy-work recovery. It is intentionally Markdown so every decision, test
@@ -73,8 +73,10 @@ until their selected behavior has a tested replacement.
 
 ## Legacy PR disposition
 
-All PRs are still open at this initial ledger commit. The next authorized
-GitHub action is to close #51–#68 without merging.
+PRs #51–#68 were closed without merging at 2026-07-24T03:59:26Z after each
+received a preservation and disposition comment. GitHub was then re-queried:
+zero PRs remained open and all 18 closed heads still matched the recorded
+objects below.
 
 | PR | Head SHA | Planned disposition | Status |
 | --- | --- | --- | --- |
@@ -122,7 +124,7 @@ reachable from `main`, an archive ref, or a verified replacement commit.
 - [x] `Verified` — Create the clean recovery worktree from exact `origin/main`.
 - [x] `Verified` — Establish clean current-main unit, E2E, OOTK, story, build,
   and production-audit baselines.
-- [ ] `Pending` — Close legacy PRs #51–#68 without merging and record closure.
+- [x] `Verified` — Close legacy PRs #51–#68 without merging and record closure.
 - [ ] `Pending` — Remove only reverified safe branches and the archived clean
   geometry worktree.
 - [ ] `In progress` — Recovery ledger and current handoff.
@@ -154,6 +156,7 @@ reachable from `main`, an archive ref, or a verified replacement commit.
 | 2026-07-24T03:35:00Z | `7c67dd20050481e3b1b3b5cbb26e2a298526679d` | `npm run test:ootk` | Verified | 124 passed, 1 skipped files; 1,981 passed, 21 skipped tests |
 | 2026-07-24T03:53:47Z | `7c67dd20050481e3b1b3b5cbb26e2a298526679d` | `SATGLOBE_STORY_HEADLESS=1 npm run verify:stories` | Verified | Eight stories / 39 beats; `test-results/satglobe-story-shots/7c67dd200504-20260724T034238908Z-10f5fafe-3103-45d6-87c3-7fa4a97bfa54/manifest.json` |
 | 2026-07-24T03:49:00Z | `7c67dd20050481e3b1b3b5cbb26e2a298526679d` | `npm audit --omit=dev` | Verified | 0 production vulnerabilities across 36 production dependencies |
+| 2026-07-24T03:59:26Z | `1b99e255` | GitHub PR #51–#68 preservation comments, close operations, and live re-query | Verified | Zero open PRs; 18 closed PR head SHAs exactly matched this ledger |
 
 Every later validation entry must identify the exact tested commit. Raw
 benchmark and story artifacts remain ignored; governed evidence is committed
@@ -178,6 +181,7 @@ executable imported content, or required WebGPU path is introduced.
 | 2026-07-24T03:53:47Z | `7c67dd20050481e3b1b3b5cbb26e2a298526679d` | Forward-port selected behavior manually; do not merge the obsolete DAG wholesale | Verified |
 | 2026-07-24T03:53:47Z | `7c67dd20050481e3b1b3b5cbb26e2a298526679d` | Preserve old performance records as history but generate fresh evidence | Verified |
 | 2026-07-24T03:53:47Z | `7c67dd20050481e3b1b3b5cbb26e2a298526679d` | Keep geometry, dependency upgrades, saved-view v2, and broad future scope out of this PR | Deferred |
+| 2026-07-24T03:59:26Z | `1b99e255` | Close #51–#68 without merging after confirming every head remained archived | Verified |
 
 ## After the recovery gate
 
