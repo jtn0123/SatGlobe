@@ -1,6 +1,6 @@
 # SatGlobe roadmap and recovery ledger
 
-Last updated: 2026-07-24T05:15:12Z
+Last updated: 2026-07-24T05:19:35Z
 
 This file is the durable product roadmap and the live ledger for the approved
 legacy-work recovery. It is intentionally Markdown so every decision, test
@@ -220,6 +220,8 @@ reachable from `main`, an archive ref, or a verified replacement commit.
 | 2026-07-24T05:10:20Z | `45490afb` | Production audit, performance-ledger validation, build-budget check, and `git diff --check` | Verified | Zero production vulnerabilities; zero-record/two-profile ledger valid; 351.9 MiB dist and 12.8 MiB JavaScript within budget; clean diff check |
 | 2026-07-24T05:12:18Z | `45490afb` | Five-sample Apple M4 1440p hardware benchmark | Blocked | Raw report `benchmark-results/satglobe/2026-07-24T05-11-02Z.raw.json` incorrectly declared success while Starlink/conjunction long-task p95 values of 65/63 ms exceeded the governed 50 ms budget |
 | 2026-07-24T05:15:12Z | `a0256455` | Long-task gate and live-legend work-splitting regressions | Ported | Threshold legends skip catalog scans; highlight-only changes reuse the base legend; benchmark now enforces interaction long tasks. Three files / ten tests, strict typecheck, focused lint, and diff check passed; hardware rerun pending |
+| 2026-07-24T05:17:32Z | `bcda9acf` | Corrected five-sample Apple M4 1440p hardware benchmark | Blocked | Truthful raw report `benchmark-results/satglobe/2026-07-24T05-16-20Z.raw.json` failed: Starlink/conjunction longest-task p95 measured 57/67 ms against the unchanged 50 ms budget |
+| 2026-07-24T05:19:35Z | `ce2176ec` | Split synchronous renderer work from React-state publication | Ported | Engine transactions remain synchronous and atomic while shell mirroring becomes transition work in a separate browser task; three files / 50 tests, strict typecheck, focused lint, and diff check passed; hardware rerun pending |
 
 Every later validation entry must identify the exact tested commit. Raw
 benchmark and story artifacts remain ignored; governed evidence is committed
@@ -254,6 +256,7 @@ executable imported content, or required WebGPU path is introduced.
 | 2026-07-24T04:57:31Z | `ed26cf66` | Keep CI's fail-on-flake policy; fix the unstable camera assertion by measuring settled product behavior rather than weakening or disabling the gate | Ported |
 | 2026-07-24T05:01:39Z | `d9fb8075` | Accept the independent product review's four reproduced lifecycle/data-truth fixes and initialize performance governance with zero accepted current records until fresh measurements pass policy | Verified |
 | 2026-07-24T05:15:12Z | `a0256455` | Do not accept a raw report whose normal interactions exceed the declared long-task budget; split live-legend work away from renderer transactions instead of weakening the 50 ms policy | Ported |
+| 2026-07-24T05:19:35Z | `ce2176ec` | Preserve synchronous atomic renderer semantics but publish React mirrors as transitions so the two workloads cannot form one browser long task | Ported |
 
 ## After the recovery gate
 
