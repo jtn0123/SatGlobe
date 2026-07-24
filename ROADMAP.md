@@ -1,6 +1,6 @@
 # SatGlobe roadmap and recovery ledger
 
-Last updated: 2026-07-24T05:02:52Z
+Last updated: 2026-07-24T05:06:49Z
 
 This file is the durable product roadmap and the live ledger for the approved
 legacy-work recovery. It is intentionally Markdown so every decision, test
@@ -213,6 +213,8 @@ reachable from `main`, an archive ref, or a verified replacement commit.
 | 2026-07-24T04:57:58Z | `b7080695` | Performance governance validation | Verified | Four contract tests, 360 SatGlobe tests, TypeScript, strict typecheck, lint, production build, 352.0 MiB/12.8 MiB build budget, and empty-ledger validation passed; one-sample smoke was correctly rejected as evidence |
 | 2026-07-24T05:01:39Z | `d9fb8075` | `npm run test:satglobe -- --maxWorkers=1` on the consolidated head | Verified | 41 files / 365 tests passed, including catalog, stories, product review fixes, security policy, and performance contracts |
 | 2026-07-24T05:02:52Z | `2c5554be` | Sources-link keyboard regression suite | Verified | Integrated app file / 42 tests passed; Space on a focused citation link no longer bubbles into global Story playback |
+| 2026-07-24T05:04:40Z | `73acefe3` | `npm run verify:satglobe` | Verified | Normal and strict typecheck, story-walker boundary, full lint, 41 files / 366 tests, performance-ledger validation, production build, emitted-script policy, and 351.9 MiB/12.8 MiB build budget passed |
+| 2026-07-24T05:06:49Z | `73acefe3` | `CI=true npm run test:e2e:satglobe` | Verified | All 14 production-static offline Chromium journeys passed in 2.1 minutes with fail-on-flake enabled and no retry |
 
 Every later validation entry must identify the exact tested commit. Raw
 benchmark and story artifacts remain ignored; governed evidence is committed
