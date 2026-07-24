@@ -1,6 +1,6 @@
 # SatGlobe roadmap and recovery ledger
 
-Last updated: 2026-07-24T07:04:08Z
+Last updated: 2026-07-24T07:48:36Z
 
 This file is the durable product roadmap and the live ledger for the approved
 legacy-work recovery. It is intentionally Markdown so every decision, test
@@ -38,10 +38,16 @@ conflict-free, green in required CI and CodeQL, free of attributable new Sonar
 findings and unresolved review threads, and fully mapped in this ledger. That
 PR must not be merged without separate approval.
 
-Draft replacement PR
-[#84](https://github.com/jtn0123/SatGlobe/pull/84) was opened from
-`codex/satglobe-consolidated-recovery` at 2026-07-24T04:39:46Z. It remains
-draft while the final mergeability rescan and external review are in progress.
+Replacement PR [#84](https://github.com/jtn0123/SatGlobe/pull/84) was opened
+from `codex/satglobe-consolidated-recovery` at 2026-07-24T04:39:46Z and marked
+ready at 2026-07-24T07:16:07Z. Its final reviewed source commit is
+`af215c330d98226ef305e672d21b37ec7c2af743`. GitHub reports the PR non-draft,
+zero commits behind `main`, conflict-free, `MERGEABLE` / `CLEAN`, and green in
+every required check. CodeRabbit's required status passed but its substantive
+review was explicitly skipped because the approved one-PR consolidation has
+140 reviewable files, above its 100-file limit. Independent product and
+security/catalog reviews were completed instead; their findings were fixed and
+re-reviewed with zero remaining blockers or unresolved GitHub threads.
 
 ## Verified starting point
 
@@ -115,7 +121,7 @@ objects below.
 | Location or branch set | Purpose | Status |
 | --- | --- | --- |
 | `/Users/justin/.codex/worktrees/satglobe-recovery/SatGlobe` | Clean consolidation branch from exact current main | Verified |
-| `origin/codex/satglobe-consolidated-recovery` / draft PR #84 | Published replacement branch and GitHub review surface | In progress |
+| `origin/codex/satglobe-consolidated-recovery` / PR #84 | Non-draft, current, conflict-free replacement branch and GitHub review surface | Verified |
 | Seven `codex/recovery-*` lane worktrees and branches | Removed through Git after exact tip refs, replacement commits, and generated-only dirt were verified; archive refs retained | Verified |
 | `/Users/justin/Documents/SatGlobe` | Root checkout switched from archived first-play to exact `origin/main`; three existing `.Codex` audit/performance artifact sets remain untouched | Verified |
 | `.claude/worktrees/app-roadmap-performance-0642ff` | Removed through Git after the live nine-path diff and saved binary patch re-matched SHA-256 `5cb03505…`; archive commit and patch retained | Verified |
@@ -139,7 +145,7 @@ reachable from `main`, an archive ref, or a verified replacement commit.
 - [x] `Verified` — Close legacy PRs #51–#68 without merging and record closure.
 - [x] `Verified` — Remove only reverified safe branches and the archived clean
   geometry worktree.
-- [ ] `In progress` — Recovery ledger and current handoff.
+- [x] `Verified` — Recovery ledger and current handoff.
 - [x] `Ported` — Stability and atomic visual state from #51, including Story
   beat filter/encoding application through the same transaction.
 - [x] `Verified` — Typed eval-free numeric replacement from #52.
@@ -165,9 +171,9 @@ reachable from `main`, an archive ref, or a verified replacement commit.
   recovery, including production-static desktop E2E.
 - [x] `Verified` — Current performance governance and final documentation,
   including a truthful five-sample benchmark and two-minute hardware soak.
-- [x] `Verified` — Open replacement draft PR #84 and link it from every closed
+- [x] `Verified` — Open replacement PR #84 and link it from every closed
   PR #51–#68.
-- [ ] `Pending` — Integrate latest main, satisfy all mergeability gates, mark
+- [x] `Verified` — Integrate latest main, satisfy all mergeability gates, mark
   the PR ready, and stop before merge.
 
 ## Replacement commit ledger
@@ -187,6 +193,7 @@ reachable from `main`, an archive ref, or a verified replacement commit.
 | PR #62 | `a620e5ec` | One-pending-request next-frame WebGL capture and full-resolution canvas-only PNG download with failure cleanup | Verified |
 | First-play branch `e456209a` | `40f7726f`, `18762641`, `f391d306` | Shared launch-designator normalization and renderer color definitions, complete counted live legend including unknown cohorts, close-approach key, snapshot-aware searchable/year-filtered Starlink cohort exploration, and unchanged saved-view v1 | Verified |
 | Archived performance policy | `d9fb8075`, `a0256455`, `ce2176ec`, `b1e37273`, `0331398f` | Seven requested commands, immutable-record validation, five-sample benchmark, two-minute soak, truthful interaction gates, work-split runtime behavior, serialization-safe soak runner, repository-confined same-handle report reads, current build budgets, empty honest current-app ledger, and historical-only archived M4 claims | Verified |
+| Final independent review | `af215c33` | Canonical TLE epoch comparison, truthful inactive launch timeline, lossless playlist-cap handling and reduced-motion resume, rendered Starlink counts, deterministic/disclosed cohort metadata, chronological dates, normalized short-form cohort matching, and filtered-selection cleanup | Verified |
 
 ## Validation ledger
 
@@ -256,6 +263,11 @@ reachable from `main`, an archive ref, or a verified replacement commit.
 | 2026-07-24T07:03:30Z | `ef4998439883f658d505b6db3aa82269a6fdab43` | GitHub runs `30073702748` and `30073702752` | Verified | Current hosted head passed JavaScript/TypeScript analysis, CodeQL, typecheck/lint/test/build, full coverage in 8m51s, 14-journey offline E2E in 8m26s, OOTK, SGP4, and the isolated performance-contract ledger gate |
 | 2026-07-24T07:03:36Z | `ef4998439883f658d505b6db3aa82269a6fdab43` | SonarCloud PR #84 analysis | Verified | Quality gate OK on the exact head with zero bugs, zero vulnerabilities, and zero code smells |
 | 2026-07-24T07:04:08Z | `ef4998439883f658d505b6db3aa82269a6fdab43` | Latest-main and worktree refresh | Verified | `origin/main` remains `7c67dd20050481e3b1b3b5cbb26e2a298526679d`; the recovery branch is 0 commits behind and the worktree is clean before this evidence-only ledger update |
+| 2026-07-24T07:38:09Z | `af215c330d98226ef305e672d21b37ec7c2af743` | Independent final product and security/catalog review repairs | Verified | Both reviews completed with zero remaining blockers. Ten focused files / 149 tests and the five final cohort/filter files / 55 tests passed; normal TypeScript, focused lint, and `git diff --check` passed. `npm run verify:satglobe` then passed normal/strict typecheck, lint, story boundary, 41 files / 386 tests, ledger validation, production build, emitted-script policy, and 351.9 MiB / 12.8 MiB budgets; production-static E2E passed 14/14 |
+| 2026-07-24T07:39:04Z | `af215c330d98226ef305e672d21b37ec7c2af743` | Fresh five-page Apple M4 1440p hardware benchmark | Verified | Raw report `benchmark-results/satglobe/2026-07-24T07-39-04Z.raw.json`: 59.88 median FPS, 18.2 ms worst frame p95, zero interaction long tasks/runtime errors, playlist/launch p95 38.2/43.4 ms, and exactly one filter/recolor/count pass per applicable action |
+| 2026-07-24T07:40:26Z | `af215c330d98226ef305e672d21b37ec7c2af743` | Fresh governed two-minute Story soak | Verified | Raw report `benchmark-results/satglobe/2026-07-24T07-40-26Z.raw.json`: 120.014 seconds, 7,202 frames, 59.88 median FPS, 18.2 ms p95, zero slow frames/long tasks/context loss/runtime errors, and ending heap 54,810,973 bytes below start |
+| 2026-07-24T07:47:39Z | `af215c330d98226ef305e672d21b37ec7c2af743` | GitHub runs `30076134267` and `30076134277` plus SonarCloud PR #84 | Verified | Exact source head passed JavaScript/TypeScript analysis, CodeQL, typecheck/lint/test/build, full coverage, 14-journey offline E2E, OOTK, SGP4, performance contracts, and Sonar. Sonar's public PR metrics report gate `OK` with zero bugs, vulnerabilities, code smells, and security hotspots |
+| 2026-07-24T07:48:36Z | `af215c330d98226ef305e672d21b37ec7c2af743` | Final main, review, worktree, and GitHub mergeability refresh | Verified | Fresh fetch kept `origin/main` at `7c67dd20050481e3b1b3b5cbb26e2a298526679d`; branch is 0 behind. PR #84 is non-draft, `MERGEABLE` / `CLEAN`, all checks green, with zero review submissions and zero inline review threads. CodeRabbit passed but disclosed its 140-over-100-file skip; independent reviews supply the substantive evidence. Two worktrees remain and the recovery worktree is clean |
 
 Every later validation entry must identify the exact tested commit. Raw
 benchmark and story artifacts remain ignored; governed evidence is committed
@@ -284,7 +296,7 @@ executable imported content, or required WebGPU path is introduced.
 | 2026-07-24T04:03:37Z | `17dd31fc` | Use non-force local deletion from the current-main recovery worktree; use Git double-force only for the clean archived geometry worktree blocked by its registered uninitialized submodule | Verified |
 | 2026-07-24T04:36:12Z | `14f8fa8b` | Route Story beat filters and encoding through the transactional adapter boundary so authored playback cannot publish an intermediate visual state | Verified |
 | 2026-07-24T04:38:22Z | `497e030f` | Reject catalog transactions before installation unless manifest, catalog, and conjunction-feed provenance agree; replace the retired GLONASS citation with the current official UNOOSA publication | Verified |
-| 2026-07-24T04:39:46Z | `ecf5980a` | Publish the consolidated branch as draft PR #84 so CI and review can run before final readiness; draft status does not authorize merge | In progress |
+| 2026-07-24T04:39:46Z | `ecf5980a` | Publish the consolidated branch as draft PR #84 so CI and review can run before final readiness; draft status does not authorize merge | Verified |
 | 2026-07-24T04:43:30Z | `40f7726f` | Recover only first-play legend/cohort behavior that fits the current typed boundary; keep transient explorer state out of portable saved-view schema v1 | Ported |
 | 2026-07-24T04:53:52Z | `45391d1b` | Treat Sonar's two new implicit-sort reliability findings as attributable blockers and replace them with explicit locale-aware ordering | Verified |
 | 2026-07-24T04:57:31Z | `ed26cf66` | Keep CI's fail-on-flake policy; fix the unstable camera assertion by measuring settled product behavior rather than weakening or disabling the gate | Ported |
@@ -297,10 +309,13 @@ executable imported content, or required WebGPU path is introduced.
 | 2026-07-24T06:32:11Z | `f90e1fc4` | Constrain performance CLI inputs to the documented ignored report root and verify canonical paths so traversal and symlink escapes cannot reach arbitrary local files | Verified |
 | 2026-07-24T06:53:16Z | `0331398fe50ba14de4afeaafc054e22e7ce80b11` | Treat the repository root, not a canonicalized user-controlled report root, as the trust anchor; bind validation and reading to one nonblocking no-follow file handle so links, races, and FIFOs cannot escape or hang the CLI | Verified |
 | 2026-07-24T06:53:16Z | `0e54caabd0000b008e2351d215833a033c088c70` | Give only the trace-proven long playlist author/reload/play journey a 90-second hosted-runner budget; retain fail-on-flake and the original behavioral assertions | Verified |
+| 2026-07-24T07:38:09Z | `af215c330d98226ef305e672d21b37ec7c2af743` | Treat independent review findings as merge blockers even after all automated checks were green; repair the underlying data-truth and lifecycle contracts and rerun hardware evidence rather than waiving them | Verified |
+| 2026-07-24T07:48:36Z | `af215c330d98226ef305e672d21b37ec7c2af743` | Keep the user-approved single consolidated PR despite CodeRabbit's 100-file limit; record the bot skip plainly and use completed independent product and security/catalog reviews as substantive review evidence | Verified |
 
 ## After the recovery gate
 
-Only after the replacement PR is mergeable and separately approved:
+PR #84 has reached the recovery gate but remains intentionally unmerged. Only
+after separate approval to merge:
 
 1. Audit dependencies from current main rather than reviving #59/#61/#63–#68.
 2. Reassess the archived geometry cleanup as a small independent change.
