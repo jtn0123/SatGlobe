@@ -1,6 +1,6 @@
 # SatGlobe roadmap and recovery ledger
 
-Last updated: 2026-07-24T05:26:08Z
+Last updated: 2026-07-24T05:31:40Z
 
 This file is the durable product roadmap and the live ledger for the approved
 legacy-work recovery. It is intentionally Markdown so every decision, test
@@ -157,9 +157,8 @@ reachable from `main`, an archive ref, or a verified replacement commit.
   full-resolution runtime export E2E.
 - [x] `Verified` — Selective renderer-consistent legend and Starlink cohort
   recovery, including production-static desktop E2E.
-- [x] `Ported` — Current performance governance and final documentation;
-  the truthful five-sample benchmark is verified and the two-minute soak is
-  pending.
+- [x] `Verified` — Current performance governance and final documentation,
+  including a truthful five-sample benchmark and two-minute hardware soak.
 - [x] `Verified` — Open replacement draft PR #84 and link it from every closed
   PR #51–#68.
 - [ ] `Pending` — Integrate latest main, satisfy all mergeability gates, mark
@@ -181,7 +180,7 @@ reachable from `main`, an archive ref, or a verified replacement commit.
 | Guided-Story patch `5cb03505…` | `413add27`, `f53bb34d`, `2c5554be` | Bounded deterministic orbit cues, Story-only 60× time, complete 1× cleanup, layered Escape, source reset on pause/completion, native citation-link keyboard behavior, and one-second reduced-motion progress | Ported |
 | PR #62 | `a620e5ec` | One-pending-request next-frame WebGL capture and full-resolution canvas-only PNG download with failure cleanup | Verified |
 | First-play branch `e456209a` | `40f7726f`, `18762641`, `f391d306` | Shared launch-designator normalization and renderer color definitions, complete counted live legend including unknown cohorts, close-approach key, snapshot-aware searchable/year-filtered Starlink cohort exploration, and unchanged saved-view v1 | Verified |
-| Archived performance policy | `d9fb8075`, `a0256455`, `ce2176ec`, `b1e37273` | Seven requested commands, immutable-record validation, five-sample benchmark, two-minute soak, truthful interaction gates, work-split runtime behavior, serialization-safe soak runner, current build budgets, empty honest current-app ledger, and historical-only archived M4 claims | Ported |
+| Archived performance policy | `d9fb8075`, `a0256455`, `ce2176ec`, `b1e37273` | Seven requested commands, immutable-record validation, five-sample benchmark, two-minute soak, truthful interaction gates, work-split runtime behavior, serialization-safe soak runner, current build budgets, empty honest current-app ledger, and historical-only archived M4 claims | Verified |
 
 ## Validation ledger
 
@@ -227,7 +226,9 @@ reachable from `main`, an archive ref, or a verified replacement commit.
 | 2026-07-24T05:20:49Z | `8b9bf031` | Five-sample Apple M4 1440p hardware benchmark | Verified | Raw report `benchmark-results/satglobe/2026-07-24T05-20-49Z.raw.json`: hardware renderer, 59.88 median FPS, 17.6 ms frame p95, zero interaction long tasks, Starlink/conjunction response p95 58.8/60.6 ms, playlist/launch apply p95 39.9/45.8 ms, zero paused churn, one atomic filter/recolor/count pass, and zero runtime errors |
 | 2026-07-24T05:23:00Z | `8b9bf031` | Initial governed two-minute soak invocation | Blocked | The runner failed before measurement because its TypeScript keep-names transform injected an unavailable `__name` helper into the Playwright-serialized page callback |
 | 2026-07-24T05:24:19Z | `b1e37273` (report base `8b9bf031`) | One-second hardware soak callback smoke | Verified | Raw dirty-worktree report `benchmark-results/satglobe/2026-07-24T05-24-19Z.raw.json` exercised the exact callback committed in `b1e37273`: 1.011 seconds, 61 frames, 59.88 FPS, 17.4 ms frame p95, zero slow frames/long tasks/context loss/runtime errors; the run was correctly rejected only because one fresh page is below the five-sample evidence minimum |
-| 2026-07-24T05:26:08Z | `b1e37273` | Serialize the governed soak callback as browser-native source | Ported | Normal TypeScript, focused lint, diff check, and the one-second hardware smoke prove the callback executes without runner-private helpers; the required two-minute soak remains pending |
+| 2026-07-24T05:26:08Z | `b1e37273` | Serialize the governed soak callback as browser-native source | Verified | Normal TypeScript, focused lint, diff check, the one-second callback smoke, and the subsequent governed two-minute hardware soak all passed |
+| 2026-07-24T05:27:32Z | `9c650030` | `npm run benchmark:satglobe:soak` | Verified | Raw report `benchmark-results/satglobe/2026-07-24T05-27-32Z.raw.json`: five fresh pages plus 120.006 seconds of Story, 7,201 frames, 59.88 median FPS, 17.6 ms frame p95, zero slow frames/long tasks/context loss/runtime errors, and heap ended 47,705,387 bytes below its start |
+| 2026-07-24T05:31:40Z | `e287a469` | Remaining live Sonar issue inspection and focused repair | Verified | Replaced the flagged 32-bit range literal with `2 ** 32`, consolidated the duplicate visually-hidden selector, and passed three launch-designator/cohort/color files with 19 tests, focused lint, and `git diff --check`; the GitHub rescan remains pending |
 
 Every later validation entry must identify the exact tested commit. Raw
 benchmark and story artifacts remain ignored; governed evidence is committed
@@ -264,6 +265,7 @@ executable imported content, or required WebGPU path is introduced.
 | 2026-07-24T05:15:12Z | `a0256455` | Do not accept a raw report whose normal interactions exceed the declared long-task budget; split live-legend work away from renderer transactions instead of weakening the 50 ms policy | Ported |
 | 2026-07-24T05:19:35Z | `ce2176ec` | Preserve synchronous atomic renderer semantics but publish React mirrors as transitions so the two workloads cannot form one browser long task | Ported |
 | 2026-07-24T05:26:08Z | `b1e37273` | Keep the soak callback browser-native so Playwright cannot serialize TypeScript runner helpers that do not exist in the measured page | Ported |
+| 2026-07-24T05:31:40Z | `e287a469` | Treat all four attributable Sonar findings as mergeability blockers, including the numeric-grouping and duplicate-selector findings exposed after the initial sort repairs | Verified |
 
 ## After the recovery gate
 
