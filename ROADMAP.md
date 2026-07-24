@@ -1,6 +1,6 @@
 # SatGlobe roadmap and recovery ledger
 
-Last updated: 2026-07-24T04:41:27Z
+Last updated: 2026-07-24T04:43:30Z
 
 This file is the durable product roadmap and the live ledger for the approved
 legacy-work recovery. It is intentionally Markdown so every decision, test
@@ -154,7 +154,8 @@ reachable from `main`, an archive ref, or a verified replacement commit.
   verification are pending.
 - [x] `Ported` — Canvas snapshot export from #62; decoded runtime export E2E
   is pending.
-- [ ] `Pending` — Selective legend and Starlink cohort recovery.
+- [x] `Ported` — Selective renderer-consistent legend and Starlink cohort
+  recovery; runtime desktop/E2E verification is pending.
 - [ ] `Pending` — Current performance governance and final documentation.
 - [x] `Verified` — Open replacement draft PR #84 and link it from every closed
   PR #51–#68.
@@ -176,6 +177,7 @@ reachable from `main`, an archive ref, or a verified replacement commit.
 | PR #60 | `8df5c429` | Strict cumulative launch-year filtering, decade stops, atomic application, autoplay, and shared reactive reduced-motion handling | Ported |
 | Guided-Story patch `5cb03505…` | `413add27` | Bounded deterministic orbit cues, Story-only 60× time, complete 1× cleanup, layered Escape, source reset, and one-second reduced-motion progress | Ported |
 | PR #62 | `a620e5ec` | One-pending-request next-frame WebGL capture and full-resolution canvas-only PNG download with failure cleanup | Ported |
+| First-play branch `e456209a` | `40f7726f` | Shared launch-designator normalization and renderer color definitions, counted live legend, close-approach key, and searchable/year-filtered Starlink cohort exploration without changing saved-view v1 | Ported |
 
 ## Validation ledger
 
@@ -200,6 +202,7 @@ reachable from `main`, an archive ref, or a verified replacement commit.
 | 2026-07-24T04:38:22Z | `497e030f` | Catalog, conjunction, and Story-source regression suites | Verified | Three files / 65 tests passed; candidate artifacts are bound before install and the live official UNOOSA GLONASS source is pinned by regression |
 | 2026-07-24T04:39:46Z | `ecf5980a` | Push consolidated branch and open draft replacement PR #84 | Verified | GitHub created `https://github.com/jtn0123/SatGlobe/pull/84` against `main`; draft remained unmergeable while recovery gates are open |
 | 2026-07-24T04:41:27Z | `ecf5980a` | Add replacement follow-up to closed PRs #51–#68 | Verified | GitHub accepted one #84 link comment on each of all 18 preserved legacy PR conversations |
+| 2026-07-24T04:43:30Z | `40f7726f` | Eight legend, cohort, renderer-color, and integrated app suites plus strict SatGlobe typecheck | Verified | Eight files / 92 tests passed; strict typecheck passed with the inherited engine-import diagnostic filter only |
 
 Every later validation entry must identify the exact tested commit. Raw
 benchmark and story artifacts remain ignored; governed evidence is committed
@@ -229,6 +232,7 @@ executable imported content, or required WebGPU path is introduced.
 | 2026-07-24T04:36:12Z | `14f8fa8b` | Route Story beat filters and encoding through the transactional adapter boundary so authored playback cannot publish an intermediate visual state | Verified |
 | 2026-07-24T04:38:22Z | `497e030f` | Reject catalog transactions before installation unless manifest, catalog, and conjunction-feed provenance agree; replace the retired GLONASS citation with the current official UNOOSA publication | Verified |
 | 2026-07-24T04:39:46Z | `ecf5980a` | Publish the consolidated branch as draft PR #84 so CI and review can run before final readiness; draft status does not authorize merge | In progress |
+| 2026-07-24T04:43:30Z | `40f7726f` | Recover only first-play legend/cohort behavior that fits the current typed boundary; keep transient explorer state out of portable saved-view schema v1 | Ported |
 
 ## After the recovery gate
 
