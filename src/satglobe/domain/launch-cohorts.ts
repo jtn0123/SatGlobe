@@ -78,7 +78,8 @@ export function buildStarlinkLaunchCohorts(
       apogeeKmRange: finiteRange(members.map(({ apogeeKm }) => apogeeKm)),
       inclinationDegRange: finiteRange(members.map(({ inclinationDeg }) => inclinationDeg)),
       newestElementEpoch: newestIso(members.map(({ epoch }) => epoch)),
-      sourceLabels: [...new Set(members.map(({ source }) => source).filter(Boolean))].sort(),
+      sourceLabels: [...new Set(members.map(({ source }) => source).filter(Boolean))]
+        .sort((a, b) => a.localeCompare(b)),
       ...(featuredStory ? { featuredStory } : {}),
     };
   }).sort((a, b) => b.launchDate.localeCompare(a.launchDate) || b.id.localeCompare(a.id));

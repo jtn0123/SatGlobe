@@ -21,7 +21,7 @@ export function LaunchExplorer({
   const [query, setQuery] = useState('');
   const [year, setYear] = useState('all');
   const years = useMemo(
-    () => [...new Set(cohorts.map(({ id }) => id.slice(0, 4)))].sort().reverse(),
+    () => [...new Set(cohorts.map(({ id }) => id.slice(0, 4)))].sort((a, b) => b.localeCompare(a)),
     [cohorts],
   );
   const visible = useMemo(() => {
