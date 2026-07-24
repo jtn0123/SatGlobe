@@ -3,6 +3,7 @@ export type OrbitRegime = 'leo' | 'meo' | 'geo' | 'heo' | 'other';
 export type VisualEncoding = 'object-type' | 'orbit-regime' | 'launch-cohort' | 'orbital-plane' | 'data-age' | 'starlink';
 export type ScaleMode = 'semantic' | 'true';
 export type AppMode = 'workshop' | 'presentation' | 'story';
+export type LegendKind = 'categorical' | 'threshold' | 'cohort';
 
 export interface CameraPose {
   pitch: number;
@@ -136,6 +137,45 @@ export interface SpaceObjectView {
   launchText: string;
   ownershipText: string;
   searchText: string;
+}
+
+/** A launch-derived group summarized from objects retained in the installed catalog. */
+export interface LaunchCohortView {
+  id: string;
+  constellation: 'starlink';
+  launchDate: string;
+  launchVehicle: string;
+  owner: string;
+  country: string;
+  catalogMemberIds: string[];
+  catalogMemberCount: number;
+  activeCount: number;
+  perigeeKmRange: [number, number] | null;
+  apogeeKmRange: [number, number] | null;
+  inclinationDegRange: [number, number] | null;
+  newestElementEpoch: string;
+  sourceLabels: string[];
+  /** Present only when both the authored story and beat still exist. */
+  featuredStory?: {
+    storyId: string;
+    beatId: string;
+  };
+}
+
+export interface LegendItem {
+  id: string;
+  label: string;
+  color: string;
+  count?: number;
+  temporary?: boolean;
+}
+
+export interface VisualLegend {
+  encoding: VisualEncoding;
+  title: string;
+  kind: LegendKind;
+  items: LegendItem[];
+  disclosure?: string;
 }
 
 /** One side of a public SOCRATES close-approach prediction. Neither side is privileged. */

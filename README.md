@@ -9,6 +9,8 @@ The project is an early alpha. The first vertical slice is designed for a 1280×
 - Explore a checked-in catalog of more than 30,000 orbital objects and a curated public close-approach snapshot without runtime network access.
 - Search the local catalog by identity, launch designator, country, or operator, then filter the scene by object class, operational state, regime, and inclination.
 - Color the same scene by object type, regime, launch cohort, plane density, data age, or Starlink state.
+- Read a live color key derived from the renderer, including counted top launch cohorts and the temporary close-approach highlight.
+- Browse retained Starlink launch cohorts by year, vehicle, or designator, then open their current catalog members or a validated sourced story beat. Cohort counts are snapshot membership, not original deployment totals.
 - Inspect object identity, orbit, launch metadata, element epoch, catalog provenance, and resolved CelesTrak SOCRATES screening details.
 - Move between a dense Workshop, a quiet presentation view, and a sourced five-beat Starlink buildout story.
 - Export and import validated JSON views containing camera, time, filters, selection, scale, and presentation state.

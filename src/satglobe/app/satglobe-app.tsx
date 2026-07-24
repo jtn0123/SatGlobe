@@ -7,6 +7,7 @@ import {
   type AppMode,
   type EngineState,
   type FilterState,
+  type LaunchCohortView,
   type SavedViewV1,
   type ScaleMode,
   type SpaceObjectView,
@@ -30,6 +31,7 @@ import { StoryDeck } from './story-deck';
 import { TimeDock } from './time-dock';
 import { TopBar } from './top-bar';
 import { type StoryPlaybackAction, type StoryPlaybackState, useStoryPlayback } from './use-story-playback';
+import { useLaunchCohortExplorer } from './use-launch-cohort-explorer';
 import { useLaunchTimelapse } from './use-launch-timelapse';
 import { usePlaylistLibrary } from './use-playlist-library';
 import { useReducedMotion } from './use-reduced-motion';
@@ -291,6 +293,7 @@ function useSnapshotExport(
 }
 
 /** Coordinates SatGlobe's workshop, presentation, and story states. */
+// eslint-disable-next-line max-lines-per-function -- The shell composes isolated hooks; splitting its render contract would duplicate cross-mode state.
 export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
   const [engine, setEngine] = useState<EngineState>(adapter.getState());
   const [mode, setMode] = useState<AppMode>('workshop');
@@ -394,6 +397,37 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
   }, [adapter]);
   const setEncoding = useCallback((encoding: Parameters<SatGlobeEngineAdapter['setEncoding']>[0]) => adapter.setEncoding(encoding), [adapter]);
   const applyAuthoredView = useCallback(() => adapter.setCamera(beat.camera), [adapter, beat]);
+  const openCohortStory = useCallback((cohort: LaunchCohortView) => {
+    const link = cohort.featuredStory;
+    const linkedStory = link ? storyLibrary.find(({ id }) => id === link.storyId) : undefined;
+    const beatIndex = linkedStory && link ? linkedStory.beats.findIndex(({ id }) => id === link.beatId) : -1;
+
+    if (!linkedStory || beatIndex < 0) {
+      setNotice('That sourced story beat is not installed.');
+
+      return;
+    }
+    switchMode('story');
+    if (linkedStory.id === story.id) {
+      applyBeat(beatIndex);
+    } else {
+      pendingStoryBeatRef.current = { storyId: linkedStory.id, beatIndex };
+      setStoryId(linkedStory.id);
+    }
+  }, [applyBeat, story.id, switchMode]);
+  const launchExplorer = useLaunchCohortExplorer({
+    adapter,
+    engine,
+    filters,
+    stories: storyLibrary,
+    onNotice: setNotice,
+    onOpenStory: openCohortStory,
+    setFiltersWithEncodingImmediate,
+  });
+  const applyQuickLens = useCallback((lens: QuickLens) => {
+    launchExplorer.clearSelection();
+    quickLens(lens);
+  }, [launchExplorer, quickLens]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => handleGlobalShortcut(event, {
@@ -446,6 +480,7 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
   const applyView = useCallback((view: SavedViewV1) => {
     const { beat: restoredBeat, beatIndex: restoredBeatIndex, mode: restoredMode, notice: unavailableStoryNotice, story: restoredStory } = resolveSavedStory(view);
 
+    launchExplorer.clearSelection();
     if (restoredBeat) {
       storyTimeAnchorRef.current = storySimulationAnchor(view.simulationTime, restoredBeat.simulationTimeOffsetHours ?? 0);
     }
@@ -475,7 +510,7 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
     }
 
     return unavailableStoryNotice;
-  }, [adapter, applyBeat, setFiltersWithEncodingImmediate, story, switchMode]);
+  }, [adapter, applyBeat, launchExplorer.clearSelection, setFiltersWithEncodingImmediate, story, switchMode]);
 
   const playlistLibrary = usePlaylistLibrary({
     adapter,
@@ -524,15 +559,21 @@ export function SatGlobeApp({ adapter }: SatGlobeAppProps) {
         filters={filters}
         highlightedObjectCount={engine.highlightedObjectCount}
         inert={mode !== 'workshop'}
+        launchCohorts={launchExplorer.cohorts}
+        legend={launchExplorer.legend}
         onConjunctionLens={conjunctionLens}
         onEncodingChange={setEncoding}
+        onOpenCohortMembers={launchExplorer.openMembers}
+        onOpenCohortStory={launchExplorer.openStory}
         onQueryChange={setQuery}
-        onQuickLens={quickLens}
+        onQuickLens={applyQuickLens}
+        onSelectCohort={launchExplorer.select}
         onSelectResult={selectResult}
         query={query}
         results={results}
         setFiltersDebounced={setFiltersDebounced}
         setFiltersImmediate={setFiltersImmediate}
+        selectedCohortId={launchExplorer.selectedCohortId}
         visibleCount={engine.visibleCount}
         viewLibrary={playlistLibrary.viewLibrary}
       />

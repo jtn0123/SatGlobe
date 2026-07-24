@@ -3,13 +3,17 @@ import {
   DEFAULT_FILTERS,
   type ConjunctionState,
   type FilterState,
+  type LaunchCohortView,
   type ObjectKind,
   type OrbitRegime,
   type SpaceObjectView,
   type VisualEncoding,
+  type VisualLegend as VisualLegendModel,
 } from '../domain/types';
 import { Icon } from './icon';
+import { LaunchExplorer } from './launch-explorer';
 import { encodingLabels, formatNumber, objectKindLabels, regimeLabels } from './labels';
+import { VisualLegend } from './visual-legend';
 import { ViewLibrary, type ViewLibraryProps } from './view-library';
 
 export type QuickLens = 'starlink' | 'geo' | 'debris';
@@ -93,11 +97,17 @@ export type DiscoverPanelProps = Readonly<{
   conjunctions: ConjunctionState;
   conjunctionHighlightActive: boolean;
   highlightedObjectCount: number;
+  legend: VisualLegendModel;
+  launchCohorts: readonly LaunchCohortView[];
+  selectedCohortId?: string;
   viewLibrary: ViewLibraryProps;
   onQueryChange: (query: string) => void;
   onSelectResult: (catalogId: string) => void;
   onQuickLens: (lens: QuickLens) => void;
   onConjunctionLens: () => void;
+  onSelectCohort: (cohort: LaunchCohortView) => void;
+  onOpenCohortMembers: (cohort: LaunchCohortView) => void;
+  onOpenCohortStory: (cohort: LaunchCohortView) => void;
   setFiltersImmediate: (filters: FilterState) => void;
   setFiltersDebounced: (filters: FilterState) => void;
   onEncodingChange: (encoding: VisualEncoding) => void;
@@ -105,8 +115,10 @@ export type DiscoverPanelProps = Readonly<{
 
 /** The workshop's search, lens, filter, encoding, and saved-view instrument panel. */
 function DiscoverPanelBase({
-  inert, visibleCount, query, results, filters, encoding, conjunctions, conjunctionHighlightActive, highlightedObjectCount, viewLibrary,
-  onQueryChange, onSelectResult, onQuickLens, onConjunctionLens, setFiltersImmediate, setFiltersDebounced, onEncodingChange,
+  inert, visibleCount, query, results, filters, encoding, conjunctions, conjunctionHighlightActive, highlightedObjectCount,
+  legend, launchCohorts, selectedCohortId, viewLibrary,
+  onQueryChange, onSelectResult, onQuickLens, onConjunctionLens, onSelectCohort, onOpenCohortMembers, onOpenCohortStory,
+  setFiltersImmediate, setFiltersDebounced, onEncodingChange,
 }: DiscoverPanelProps) {
   const conjunctionLens = getConjunctionLensPresentation(
     conjunctions,
@@ -157,6 +169,17 @@ function DiscoverPanelBase({
           </button>
         </div>
       </section>
+
+      <details className="sg-launch-disclosure">
+        <summary>STARLINK LAUNCH COHORTS <span>{formatNumber(launchCohorts.length)}</span></summary>
+        <LaunchExplorer
+          cohorts={launchCohorts}
+          onOpenMembers={onOpenCohortMembers}
+          onOpenStory={onOpenCohortStory}
+          onSelect={onSelectCohort}
+          selectedCohortId={selectedCohortId}
+        />
+      </details>
 
       <section className="sg-filters">
         <div className="sg-section-heading"><span><Icon name="layers" size={15} /> FILTERS</span><button onClick={() => setFiltersImmediate(structuredClone(DEFAULT_FILTERS))} type="button">Reset</button></div>
@@ -231,6 +254,7 @@ function DiscoverPanelBase({
           {Object.entries(encodingLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
         </select>
       </section>
+      <VisualLegend legend={legend} />
 
       <ViewLibrary {...viewLibrary} />
       <details className="sg-legal">
