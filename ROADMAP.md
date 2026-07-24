@@ -1,6 +1,6 @@
 # SatGlobe roadmap and recovery ledger
 
-Last updated: 2026-07-24T06:53:16Z
+Last updated: 2026-07-24T07:04:08Z
 
 This file is the durable product roadmap and the live ledger for the approved
 legacy-work recovery. It is intentionally Markdown so every decision, test
@@ -253,6 +253,9 @@ reachable from `main`, an archive ref, or a verified replacement commit.
 | 2026-07-24T06:43:53Z | `14ee80133e8549f530fb350a96e7bc7ca1f29a7b` | GitHub run `30072618893` | Blocked | CodeQL, Sonar, typecheck/lint/test/build, full coverage, OOTK, SGP4, and performance contracts passed. Offline E2E reached the final playlist timing read after all behavior assertions but exhausted the generic 60-second test budget; the trace showed a 22.8-second reload and renderer-backed interactions rather than a product failure |
 | 2026-07-24T06:53:16Z | `0331398fe50ba14de4afeaafc054e22e7ce80b11` | Independent path-security re-review and focused policy validation | Verified | Repository-root and nested-junction escapes reject; raw-name aliases reject; validation and reading share one no-follow handle; post-open replacement stays bound to the original file; FIFOs open nonblocking and reject as non-regular in 77 ms. Twelve focused tests, exact lint, typecheck, base-aware ledger validation, real-report comparison, and diff check passed; the remaining nested-template Sonar finding was removed |
 | 2026-07-24T06:53:16Z | `0e54caabd0000b008e2351d215833a033c088c70` | Playlist recovery E2E repeated without retries | Verified | The trace-backed 90-second budget applies only to the deliberate author, reload, and playback journey. Three production-static runs passed in 1.0 minute with `--retries=0`; global retries and fail-on-flake policy remain unchanged |
+| 2026-07-24T07:03:30Z | `ef4998439883f658d505b6db3aa82269a6fdab43` | GitHub runs `30073702748` and `30073702752` | Verified | Current hosted head passed JavaScript/TypeScript analysis, CodeQL, typecheck/lint/test/build, full coverage in 8m51s, 14-journey offline E2E in 8m26s, OOTK, SGP4, and the isolated performance-contract ledger gate |
+| 2026-07-24T07:03:36Z | `ef4998439883f658d505b6db3aa82269a6fdab43` | SonarCloud PR #84 analysis | Verified | Quality gate OK on the exact head with zero bugs, zero vulnerabilities, and zero code smells |
+| 2026-07-24T07:04:08Z | `ef4998439883f658d505b6db3aa82269a6fdab43` | Latest-main and worktree refresh | Verified | `origin/main` remains `7c67dd20050481e3b1b3b5cbb26e2a298526679d`; the recovery branch is 0 commits behind and the worktree is clean before this evidence-only ledger update |
 
 Every later validation entry must identify the exact tested commit. Raw
 benchmark and story artifacts remain ignored; governed evidence is committed
