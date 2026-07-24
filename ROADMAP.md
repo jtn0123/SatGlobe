@@ -1,6 +1,6 @@
 # SatGlobe roadmap and recovery ledger
 
-Last updated: 2026-07-24T05:31:40Z
+Last updated: 2026-07-24T05:47:08Z
 
 This file is the durable product roadmap and the live ledger for the approved
 legacy-work recovery. It is intentionally Markdown so every decision, test
@@ -146,13 +146,13 @@ reachable from `main`, an archive ref, or a verified replacement commit.
   validation.
 - [x] `Verified` — Corrected catalog transaction from #56.
 - [x] `Verified` — GNSS and Landsat stories from #58, including a live official
-  UNOOSA replacement for the retired GLONASS source. The final full story walk
-  remains an overall mergeability gate.
+  UNOOSA replacement for the retired GLONASS source and the full visual story
+  walk.
 - [x] `Verified` — View playlists from #53, including production-static E2E.
 - [x] `Verified` — Launch-history time-lapse from #60, including
   production-static E2E.
-- [x] `Ported` — Guided-Story worktree recovery; production-static E2E is
-  verified and the final full story walk remains pending.
+- [x] `Verified` — Guided-Story worktree recovery, production-static E2E, and
+  the full visual story walk.
 - [x] `Verified` — Canvas snapshot export from #62, including decoded
   full-resolution runtime export E2E.
 - [x] `Verified` — Selective renderer-consistent legend and Starlink cohort
@@ -177,7 +177,7 @@ reachable from `main`, an archive ref, or a verified replacement commit.
 | PR #58 | `ad07e829`, `497e030f` | GNSS-family and Landsat-continuity manifests, verified representative IDs, and current official sources; library now ten stories / 51 beats | Verified |
 | PR #53 | `616dc0d0`, `bf27732c` | Strict 2–24-entry local playlists, atomic import/export, persistence, editing/reorder/delete, Present playback, reduced-motion behavior, and cleanup when Presentation ends | Verified |
 | PR #60 | `8df5c429` | Strict cumulative launch-year filtering, decade stops, atomic application, autoplay, and shared reactive reduced-motion handling | Verified |
-| Guided-Story patch `5cb03505…` | `413add27`, `f53bb34d`, `2c5554be` | Bounded deterministic orbit cues, Story-only 60× time, complete 1× cleanup, layered Escape, source reset on pause/completion, native citation-link keyboard behavior, and one-second reduced-motion progress | Ported |
+| Guided-Story patch `5cb03505…` | `413add27`, `f53bb34d`, `2c5554be` | Bounded deterministic orbit cues, Story-only 60× time, complete 1× cleanup, layered Escape, source reset on pause/completion, native citation-link keyboard behavior, and one-second reduced-motion progress | Verified |
 | PR #62 | `a620e5ec` | One-pending-request next-frame WebGL capture and full-resolution canvas-only PNG download with failure cleanup | Verified |
 | First-play branch `e456209a` | `40f7726f`, `18762641`, `f391d306` | Shared launch-designator normalization and renderer color definitions, complete counted live legend including unknown cohorts, close-approach key, snapshot-aware searchable/year-filtered Starlink cohort exploration, and unchanged saved-view v1 | Verified |
 | Archived performance policy | `d9fb8075`, `a0256455`, `ce2176ec`, `b1e37273` | Seven requested commands, immutable-record validation, five-sample benchmark, two-minute soak, truthful interaction gates, work-split runtime behavior, serialization-safe soak runner, current build budgets, empty honest current-app ledger, and historical-only archived M4 claims | Verified |
@@ -229,6 +229,7 @@ reachable from `main`, an archive ref, or a verified replacement commit.
 | 2026-07-24T05:26:08Z | `b1e37273` | Serialize the governed soak callback as browser-native source | Verified | Normal TypeScript, focused lint, diff check, the one-second callback smoke, and the subsequent governed two-minute hardware soak all passed |
 | 2026-07-24T05:27:32Z | `9c650030` | `npm run benchmark:satglobe:soak` | Verified | Raw report `benchmark-results/satglobe/2026-07-24T05-27-32Z.raw.json`: five fresh pages plus 120.006 seconds of Story, 7,201 frames, 59.88 median FPS, 17.6 ms frame p95, zero slow frames/long tasks/context loss/runtime errors, and heap ended 47,705,387 bytes below its start |
 | 2026-07-24T05:31:40Z | `e287a469` | Remaining live Sonar issue inspection and focused repair | Verified | Replaced the flagged 32-bit range literal with `2 ** 32`, consolidated the duplicate visually-hidden selector, and passed three launch-designator/cohort/color files with 19 tests, focused lint, and `git diff --check`; the GitHub rescan remains pending |
+| 2026-07-24T05:47:08Z | `c99ce10e` | `SATGLOBE_STORY_HEADLESS=1 npm run verify:stories` | Verified | Fresh production build captured all ten stories / 51 beats without a semantic or runtime failure; manifest `test-results/satglobe-story-shots/c99ce10e828e-20260724T053234041Z-edddb937-3e83-4827-9901-292928a476eb/manifest.json` |
 
 Every later validation entry must identify the exact tested commit. Raw
 benchmark and story artifacts remain ignored; governed evidence is committed
