@@ -84,10 +84,10 @@ objects below.
 | #52 | `7134d9fd581bf5fe9312b22762e4e57a55c9fb5e` | Port typed linear algebra and remove `numeric` | Verified |
 | #53 | `37161ae8509ec9f67abd5d0660bdf25c7f1f44dc` | Port local view playlists | Ported |
 | #54 | `087c7884442912cc5aa275f1efd9f120e82e3094` | Port pure-SGP4/WASM profile gating | Verified |
-| #55 | `d452bde92d34a7fbd98ce69558b531d388408f62` | Port catalog provenance schema and UTC invariants | Blocked |
+| #55 | `d452bde92d34a7fbd98ce69558b531d388408f62` | Port catalog provenance schema and UTC invariants | Verified |
 | #56 | `908f3c83cba4366f3af825ea79a7d1c5a0b773b2` | Reproduce and verify the six corrected catalog artifacts | Verified |
 | #57 | `fc467f61126624105d908845695d40642541ebb8` | Port strict CSP and emitted-script inspection | Verified |
-| #58 | `db4b97ecc8e15d855ed7f4e5c677a76cf907a888` | Port GNSS and Landsat stories after source/ID verification | Blocked |
+| #58 | `db4b97ecc8e15d855ed7f4e5c677a76cf907a888` | Port GNSS and Landsat stories after source/ID verification | Verified |
 | #59 | `3af7f2b6e96f52151e980994339197b33b9093f2` | Replace with a fresh audit from current main | Deferred |
 | #60 | `9bb7d3fff13be46c9e625bf04a706656df583307` | Port cumulative launch-history time-lapse | Ported |
 | #61 | `30dad92dd6796b059380a40ba7add2b05b91e20c` | Replace with a fresh audit from current main | Deferred |
@@ -135,11 +135,13 @@ reachable from `main`, an archive ref, or a verified replacement commit.
   per-worker Az/Range fleet activation.
 - [x] `Verified` — Strict CSP and emitted-script inspection from #57, including
   escaped/aliased global eval and locally shadowed safe names.
-- [ ] `Blocked` — Catalog provenance schema v2 from #55: pre-install
-  cross-artifact coherence and deterministic test timing are being fixed.
+- [x] `Verified` — Catalog provenance schema v2 from #55, including
+  pre-install catalog/feed/manifest coherence and deterministic large-fixture
+  validation.
 - [x] `Verified` — Corrected catalog transaction from #56.
-- [ ] `Blocked` — GNSS and Landsat stories from #58: the dead GLONASS source is
-  being replaced before the final full story walk.
+- [x] `Verified` — GNSS and Landsat stories from #58, including a live official
+  UNOOSA replacement for the retired GLONASS source. The final full story walk
+  remains an overall mergeability gate.
 - [x] `Ported` — View playlists from #53; runtime E2E is pending.
 - [x] `Ported` — Launch-history time-lapse from #60; runtime E2E is pending.
 - [x] `Ported` — Guided-Story worktree recovery; runtime E2E and full story
@@ -160,9 +162,9 @@ reachable from `main`, an archive ref, or a verified replacement commit.
 | PR #52 | `ae2c94e3`, `712af510` | Typed finite-safe vector/matrix helpers, migrated callers, and complete removal of `numeric`, its types, and `_numeric` | Verified |
 | PR #54 | `0a3fae26`, `ae12b02f`, `a193a9b8`, `66fa6c27` | Typed propagator facade, nine worker gates including the Az/Range fleet, recursive whole-output WASM-glue policy, and build-policy errors | Verified |
 | PR #57 | `9fa11775`, `8d5f2981`, `39ae5981` | SatGlobe-only Zod jitless mode, eval-free OBJ alias, scope-aware AST emitted-script guard, and exact strict CSP | Verified |
-| PR #55 | `bb834479`, `2a300cf6` | Strict v1/v2 manifest parsing, v2 time provenance, UTC epoch handling, coherent snapshot/checksum validation, and offline fallback | Blocked |
+| PR #55 | `bb834479`, `2a300cf6`, `8813cf38` | Strict v1/v2 parsing with v2-only installation, v2 time provenance, UTC epoch handling, candidate catalog/feed/manifest coherence, deterministic large-artifact validation, and offline fallback | Verified |
 | PR #56 | `e342cd7b` | Exact six-artifact transaction: schema v2, 35,049 objects, zero rejects, and catalog SHA-256 `9fae7a2fa46004ae13fa863890547f9947036bfcfe8357ef9a7d67bbf6076a1b` | Verified |
-| PR #58 | `ad07e829` | GNSS-family and Landsat-continuity manifests; library now ten stories / 51 beats | Blocked |
+| PR #58 | `ad07e829`, `497e030f` | GNSS-family and Landsat-continuity manifests, verified representative IDs, and current official sources; library now ten stories / 51 beats | Verified |
 | PR #53 | `616dc0d0` | Strict 2–24-entry local playlists, atomic import/export, persistence, editing/reorder/delete, Present playback, and reduced-motion behavior | Ported |
 | PR #60 | `8df5c429` | Strict cumulative launch-year filtering, decade stops, atomic application, autoplay, and shared reactive reduced-motion handling | Ported |
 | Guided-Story patch `5cb03505…` | `413add27` | Bounded deterministic orbit cues, Story-only 60× time, complete 1× cleanup, layered Escape, source reset, and one-second reduced-motion progress | Ported |
@@ -187,6 +189,8 @@ reachable from `main`, an archive ref, or a verified replacement commit.
 | 2026-07-24T04:21:25Z | `7b517fd0` | Independent security and catalog lane review | Blocked | Az/Range WASM activation, eval scanner coverage/scope, pre-install cross-artifact coherence, deterministic catalog test clock, strict installed-v2 test, and dead GNSS source require focused fixes |
 | 2026-07-24T04:27:27Z | `39ae5981c163ec74117c696bbffaadc82b1eb83f` | Focused security-review regression suite | Verified | Three files / 27 tests passed: Az/Range fleet activation, base worker configuration, and scope-aware emitted-eval policy |
 | 2026-07-24T04:36:12Z | `14f8fa8b` | `npx vitest run src/satglobe/app/__tests__/satglobe-app.test.tsx --maxWorkers=1` | Verified | One file / 41 tests; Story navigation now proves one `setVisualState` call and no separate filter or encoding mutation |
+| 2026-07-24T04:37:10Z | `92abb7c1` | TopBar snapshot fixture test and `npm run typecheck:satglobe-strict` | Verified | Two focused tests passed; strict SatGlobe typecheck passed with 1,901 inherited engine-import diagnostics filtered |
+| 2026-07-24T04:38:22Z | `497e030f` | Catalog, conjunction, and Story-source regression suites | Verified | Three files / 65 tests passed; candidate artifacts are bound before install and the live official UNOOSA GLONASS source is pinned by regression |
 
 Every later validation entry must identify the exact tested commit. Raw
 benchmark and story artifacts remain ignored; governed evidence is committed
@@ -214,6 +218,7 @@ executable imported content, or required WebGPU path is introduced.
 | 2026-07-24T03:59:26Z | `1b99e255` | Close #51–#68 without merging after confirming every head remained archived | Verified |
 | 2026-07-24T04:03:37Z | `17dd31fc` | Use non-force local deletion from the current-main recovery worktree; use Git double-force only for the clean archived geometry worktree blocked by its registered uninitialized submodule | Verified |
 | 2026-07-24T04:36:12Z | `14f8fa8b` | Route Story beat filters and encoding through the transactional adapter boundary so authored playback cannot publish an intermediate visual state | Verified |
+| 2026-07-24T04:38:22Z | `497e030f` | Reject catalog transactions before installation unless manifest, catalog, and conjunction-feed provenance agree; replace the retired GLONASS citation with the current official UNOOSA publication | Verified |
 
 ## After the recovery gate
 
