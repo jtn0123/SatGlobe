@@ -143,6 +143,40 @@ describe('calculateDops_method', () => {
     expect(dops.tdop).toMatchSnapshot();
   });
 
+  it('matches the established DOP values for the reference geometry', () => {
+    expect(DopMath.calculateDops(goodAzElList.slice(0, 4))).toEqual({
+      pdop: '33.61',
+      hdop: '13.03',
+      gdop: '39.96',
+      vdop: '30.98',
+      tdop: '21.60',
+    });
+  });
+
+  it('returns the existing sentinel values for singular satellite geometry', () => {
+    const repeatedDirection = Array.from({ length: 4 }, () => ({ az: 90 as Degrees, el: 45 as Degrees }));
+
+    expect(DopMath.calculateDops(repeatedDirection)).toEqual({
+      pdop: '50.00',
+      hdop: '50.00',
+      gdop: '50.00',
+      vdop: '50.00',
+      tdop: '50.00',
+    });
+  });
+
+  it('returns the existing sentinel values for non-finite look angles', () => {
+    const invalidGeometry = [...goodAzElList.slice(0, 3), { az: Number.NaN as Degrees, el: 45 as Degrees }];
+
+    expect(DopMath.calculateDops(invalidGeometry)).toEqual({
+      pdop: '50.00',
+      hdop: '50.00',
+      gdop: '50.00',
+      vdop: '50.00',
+      tdop: '50.00',
+    });
+  });
+
   // Tests that default DOP values are returned when less than 4 GPS satellites are provided
   it('test_less_than_four_gps_satellites', () => {
     const azElList = goodAzElList.slice(0, 3);

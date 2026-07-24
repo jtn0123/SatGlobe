@@ -36,6 +36,16 @@ function ascendingNodeDegrees(row: InstalledCatalogRow): number {
   return Number(row.tle2.slice(17, 25));
 }
 
+/** Reads the orbital period from the TLE mean motion. */
+function orbitalPeriodMinutes(row: InstalledCatalogRow): number {
+  return 1_440 / Number(row.tle2.slice(52, 63));
+}
+
+/** Mirrors the catalog payload statuses accepted by SatGlobe's active filter. */
+function isActivePayload(row: InstalledCatalogRow): boolean {
+  return row.type === 1 && ['+', 'P', 'B', 'S', 'X'].includes(row.status ?? '');
+}
+
 describe('Starlink buildout story', () => {
   it('is a complete, sourced five-beat manifest', () => {
     expect(storyManifestV1Schema.parse(starlinkBuildoutStory)).toBeTruthy();
@@ -53,14 +63,43 @@ describe('Starlink buildout story', () => {
 });
 
 describe('story library', () => {
-  it('ships eight parsed stories with unique ids and observed endings', () => {
-    expect(storyLibrary).toHaveLength(8);
+  it('ships ten parsed stories with unique ids and observed endings', () => {
+    expect(storyLibrary).toHaveLength(10);
     expect(new Set(storyLibrary.map(({ id }) => id)).size).toBe(storyLibrary.length);
 
     for (const story of storyLibrary) {
       expect(storyManifestV1Schema.parse(story)).toBeTruthy();
       expect(story.beats.at(-1)?.reconstruction).toBe('observed');
     }
+  });
+
+  it('ships Wave 3 as two sourced six-beat stories', () => {
+    const wave3 = storyLibrary.filter(({ id }) => ['gnss-families', 'landsat-continuity'].includes(id));
+
+    expect(wave3.map(({ id }) => id)).toEqual(['gnss-families', 'landsat-continuity']);
+    for (const story of wave3) {
+      expect(story.beats).toHaveLength(6);
+      expect(story.beats.at(-1)?.reconstruction).toBe('observed');
+      expect(story.sources.every(({ retrievedAt, url }) =>
+        ['2026-07-18', '2026-07-23'].includes(retrievedAt) && url.startsWith('https://'))).toBe(true);
+    }
+  });
+
+  it('cites the current official UNOOSA publication for GLONASS architecture', () => {
+    const story = storyLibrary.find(({ id }) => id === 'gnss-families')!;
+    const source = story.sources.find(({ id }) => id === 'federal-space-agency-glonass');
+    const fact = story.facts.find(({ id }) => id === 'glonass-architecture');
+
+    expect(source).toMatchObject({
+      title: 'The Interoperable Global Navigation Satellite Systems Space Service Volume, Second Edition',
+      url: 'https://www.unoosa.org/res/oosadoc/data/documents/2021/stspace/stspace75rev_1_0_html/st_space_75rev01E.pdf',
+      retrievedAt: '2026-07-23',
+      publisher: 'United Nations Office for Outer Space Affairs',
+    });
+    expect(fact).toMatchObject({
+      sourceIds: ['federal-space-agency-glonass'],
+      text: expect.stringContaining('24 satellites in three roughly circular planes'),
+    });
   });
 
   it('keeps source, fact, and beat ids unique within every story', () => {
@@ -168,6 +207,91 @@ describe('story library', () => {
     expect(ascendingNodes.every(Number.isFinite)).toBe(true);
     expect(Math.min(...circularGaps)).toBeGreaterThan(45);
     expect(Math.max(...circularGaps)).toBeLessThan(75);
+  });
+
+  it('keeps every Wave 3 subject filter and orbit cue aligned with the installed catalog', () => {
+    const rowsById = new Map(installedCatalog.map((row) => [catalogId(row), row]));
+    const wave3 = storyLibrary.filter(({ id }) => ['gnss-families', 'landsat-continuity'].includes(id));
+
+    for (const story of wave3) {
+      for (const beat of story.beats) {
+        const matchingRows = beat.constellation
+          ? installedCatalog.filter(({ name }) => name?.toLocaleLowerCase().includes(beat.constellation!))
+          : [];
+
+        if (beat.constellation) {
+          const statusRows = beat.filterOverrides?.status === 'active'
+            ? matchingRows.filter(isActivePayload)
+            : matchingRows;
+
+          expect(statusRows.length, `${story.id}/${beat.id} has no installed subject`).toBeGreaterThan(0);
+        }
+
+        const ids = [...(beat.orbitCatalogId ? [beat.orbitCatalogId] : []), ...(beat.orbitCatalogIds ?? [])];
+
+        for (const id of ids) {
+          const row = rowsById.get(id);
+
+          expect(row, `${story.id}/${beat.id} is missing catalog ${id}`).toBeDefined();
+          if (beat.constellation) {
+            expect(row?.name?.toLocaleLowerCase()).toContain(beat.constellation);
+          }
+          if (beat.filterOverrides?.status === 'active') {
+            expect(isActivePayload(row!), `${story.id}/${beat.id} uses inactive catalog ${id}`).toBe(true);
+          }
+        }
+      }
+    }
+  });
+
+  it('keeps the GNSS plane and hybrid-orbit cues physically distinct', () => {
+    const rowsById = new Map(installedCatalog.map((row) => [catalogId(row), row]));
+    const story = storyLibrary.find(({ id }) => id === 'gnss-families')!;
+    const beat = (id: string) => story.beats.find((candidate) => candidate.id === id)!;
+    const installedRows = (ids: readonly string[]) => ids.map((id) => rowsById.get(id)!);
+    const circularGaps = (rows: readonly InstalledCatalogRow[]) => {
+      const nodes = rows.map(ascendingNodeDegrees).sort((left, right) => left - right);
+
+      return nodes.map((node, index) => {
+        const next = nodes[(index + 1) % nodes.length] + (index === nodes.length - 1 ? 360 : 0);
+
+        return next - node;
+      });
+    };
+    const glonass = installedRows(beat('glonass-three-planes').orbitCatalogIds!);
+    const galileo = installedRows(beat('galileo-three-planes').orbitCatalogIds!);
+
+    for (const familyRows of [glonass, galileo]) {
+      const gaps = circularGaps(familyRows);
+
+      expect(Math.min(...gaps)).toBeGreaterThan(110);
+      expect(Math.max(...gaps)).toBeLessThan(130);
+    }
+
+    const [beidouMeo, beidouIgso, beidouGeo] = installedRows(beat('beidou-hybrid').orbitCatalogIds!);
+
+    expect(orbitalPeriodMinutes(beidouMeo)).toBeLessThan(1_000);
+    expect(orbitalPeriodMinutes(beidouIgso)).toBeGreaterThan(1_200);
+    expect(orbitalPeriodMinutes(beidouGeo)).toBeGreaterThan(1_200);
+    expect(Number(beidouIgso.tle2.slice(8, 16))).toBeGreaterThan(45);
+    expect(Number(beidouGeo.tle2.slice(8, 16))).toBeLessThan(5);
+  });
+
+  it('keeps Landsat history separate from the two active installed records', () => {
+    const story = storyLibrary.find(({ id }) => id === 'landsat-continuity')!;
+    const finalBeat = story.beats.at(-1)!;
+    const landsatRows = installedCatalog.filter(({ name }) => name?.startsWith('LANDSAT '));
+    const activeIds = landsatRows.filter(isActivePayload).map(catalogId);
+
+    expect(landsatRows.map(catalogId)).toEqual(['6126', '7615', '10702', '14780', '25682', '39084', '49260']);
+    expect(activeIds).toEqual(['39084', '49260']);
+    expect(finalBeat).toMatchObject({
+      constellation: 'landsat',
+      encoding: 'data-age',
+      filterOverrides: { objectKinds: ['payload'], status: 'active', regimes: ['leo'] },
+      orbitCatalogIds: ['39084', '49260'],
+      reconstruction: 'observed',
+    });
   });
 
   it('rejects unknown fields at every authored manifest layer', () => {

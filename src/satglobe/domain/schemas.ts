@@ -23,6 +23,7 @@ export const filterStateSchema = z.object({
   altitudeKm: numericRangeSchema,
   inclinationDeg: numericRangeSchema,
   launchCohort: z.string().max(120),
+  launchYearMax: z.number().int().min(1957).max(9_999).optional(),
   constellation: z.string().max(120),
   countryOrOperator: z.string().max(120),
 }).strict();
@@ -42,6 +43,19 @@ export const savedViewV1Schema = z.object({
     storyId: z.string().optional(),
     storyBeat: z.number().int().nonnegative().optional(),
   }).strict(),
+}).strict();
+
+export const playlistEntryV1Schema = z.object({
+  view: savedViewV1Schema,
+  caption: z.string().trim().min(1).max(280),
+  durationMs: z.number().int().min(1_000).max(120_000),
+}).strict();
+
+export const playlistV1Schema = z.object({
+  schemaVersion: z.literal(1),
+  id: z.uuid(),
+  name: z.string().trim().min(1).max(120),
+  entries: z.array(playlistEntryV1Schema).min(2).max(24),
 }).strict();
 
 const sourceSchema = z.object({
@@ -85,6 +99,7 @@ const beatSchema = z.object({
     .max(12)
     .refine((ids) => new Set(ids).size === ids.length, 'Expected unique catalog ids')
     .optional(),
+  orbitMatchLimit: z.number().int().min(1).max(8).optional(),
   filterOverrides: z.object({
     objectKinds: z.array(z.enum(['payload', 'rocket-body', 'debris', 'other'])).min(1).optional(),
     status: z.enum(['all', 'active', 'inactive']).optional(),

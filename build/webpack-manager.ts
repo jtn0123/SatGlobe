@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { shortCommitSha } from './lib/build-provenance';
 import { BuildConfig } from './lib/config-manager';
 import { fixedGitExecutable } from './lib/fixed-executables';
+import { disabledPropagatorRuntimeAliases } from './lib/propagator-build-profile';
 import { reporter } from './lib/reporter';
 export class WebpackManager {
   static readonly DEFAULT_MODE = 'development';
@@ -141,10 +142,16 @@ export class WebpackManager {
    * Returns the base configuration for webpack.
    */
   private static createBaseConfig_(dirName: string): Configuration {
+    const rootDir = resolve(dirName, '..');
+
     return {
       resolve: {
         extensions: ['.ts', '.tsx', '.js'],
         alias: {
+          ...disabledPropagatorRuntimeAliases(rootDir, this.config.propagatorBackend),
+          ...(this.config.edition === 'satglobe'
+            ? { 'webgl-obj-loader$': resolve(rootDir, 'node_modules/webgl-obj-loader/dist/webgl-obj-loader.js') }
+            : {}),
           '@app': `${dirName}/../src`,
           '@engine': `${dirName}/../src/engine`,
           '@ootk': `${dirName}/../src/engine/ootk`,

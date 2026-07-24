@@ -3,6 +3,7 @@ export type OrbitRegime = 'leo' | 'meo' | 'geo' | 'heo' | 'other';
 export type VisualEncoding = 'object-type' | 'orbit-regime' | 'launch-cohort' | 'orbital-plane' | 'data-age' | 'starlink';
 export type ScaleMode = 'semantic' | 'true';
 export type AppMode = 'workshop' | 'presentation' | 'story';
+export type LegendKind = 'categorical' | 'threshold' | 'cohort';
 
 export interface CameraPose {
   pitch: number;
@@ -22,6 +23,8 @@ export interface FilterState {
   altitudeKm: NumericRange;
   inclinationDeg: NumericRange;
   launchCohort: string;
+  /** Cumulative launch-history boundary; absent means no upper-year filter. */
+  launchYearMax?: number;
   constellation: string;
   countryOrOperator: string;
 }
@@ -43,6 +46,20 @@ export interface SavedViewV1 {
   selectedObjectIds: string[];
   scaleMode: ScaleMode;
   presentation: PresentationState;
+}
+
+export interface PlaylistEntryV1 {
+  view: SavedViewV1;
+  caption: string;
+  durationMs: number;
+}
+
+/** Portable, local-first sequence of absolute views. Playback state is never persisted. */
+export interface PlaylistV1 {
+  schemaVersion: 1;
+  id: string;
+  name: string;
+  entries: PlaylistEntryV1[];
 }
 
 export interface DataSourceRecord {
@@ -98,6 +115,8 @@ export interface SpaceObjectView {
   status: string;
   internationalDesignator: string;
   launchDate: string;
+  /** Strict year derived from the designator, with ISO launch date as fallback. */
+  launchYear?: number | null;
   launchVehicle: string;
   owner: string;
   country: string;
@@ -118,6 +137,47 @@ export interface SpaceObjectView {
   launchText: string;
   ownershipText: string;
   searchText: string;
+}
+
+/** A launch-derived group summarized from objects retained in the installed catalog. */
+export interface LaunchCohortView {
+  id: string;
+  constellation: 'starlink';
+  launchDate: string;
+  launchVehicle: string;
+  owner: string;
+  country: string;
+  catalogMemberIds: string[];
+  catalogMemberCount: number;
+  activeCount: number;
+  perigeeKmRange: [number, number] | null;
+  apogeeKmRange: [number, number] | null;
+  inclinationDegRange: [number, number] | null;
+  newestElementEpoch: string;
+  sourceLabels: string[];
+  /** Present when retained catalog members disagree on displayed launch metadata. */
+  catalogMetadataWarning?: string;
+  /** Present only when both the authored story and beat still exist. */
+  featuredStory?: {
+    storyId: string;
+    beatId: string;
+  };
+}
+
+export interface LegendItem {
+  id: string;
+  label: string;
+  color: string;
+  count?: number;
+  temporary?: boolean;
+}
+
+export interface VisualLegend {
+  encoding: VisualEncoding;
+  title: string;
+  kind: LegendKind;
+  items: LegendItem[];
+  disclosure?: string;
 }
 
 /** One side of a public SOCRATES close-approach prediction. Neither side is privileged. */
@@ -253,6 +313,11 @@ export interface StoryBeat {
   orbitCatalogId?: string;
   /** Optional catalog objects whose propagated orbit lines make a multi-plane story subject legible. */
   orbitCatalogIds?: string[];
+  /**
+   * Optional cap of beat-filter-matched objects whose orbit lines are drawn,
+   * for subjects where stable catalog ids cannot be authored.
+   */
+  orbitMatchLimit?: number;
   /** Optional per-beat departures from DEFAULT_FILTERS (e.g. showing debris for a collision chapter). */
   filterOverrides?: Pick<Partial<FilterState>, 'objectKinds' | 'status' | 'regimes'>;
   reconstruction: 'observed' | 'reconstructed';

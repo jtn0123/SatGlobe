@@ -25,6 +25,7 @@ export const ErrorCodes = {
   ENV_CONFIG: 'ENV_CONFIG',
   FILE_NOT_FOUND: 'FILE_NOT_FOUND',
   PROFILE_NOT_FOUND: 'PROFILE_NOT_FOUND',
+  BUNDLE_POLICY: 'BUNDLE_POLICY',
 } as const;
 
 export enum ConsoleStyles {

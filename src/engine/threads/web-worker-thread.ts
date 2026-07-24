@@ -81,7 +81,10 @@ export abstract class WebWorkerThreadManager {
    * webworker/shared/sgp4-wasm-backend-handler.ts; all others ignore the
    * message (its string `typ` cannot collide with numeric message enums).
    */
-  private sendSgp4WasmBackendConfig_(): void {
+  protected sendSgp4WasmBackendConfig_(worker: Worker | null = this.worker_): void {
+    if (!worker) {
+      return;
+    }
     const backend = settingsManager.propagatorBackend;
 
     if (backend !== 'sgp4-wasm' && backend !== 'sgp4-xp-wasm') {
@@ -97,7 +100,7 @@ export abstract class WebWorkerThreadManager {
       wasmUrl: `${baseUrl}${isXp ? 'Sgp4Prop.xp.wasm' : 'Sgp4Prop.wasm'}`,
     };
 
-    this.postMessage(msg);
+    worker.postMessage(msg);
   }
 
   protected initNodeConfig_(workerStub: Worker | undefined, workerScriptUrl: string) {

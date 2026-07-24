@@ -1,17 +1,20 @@
-import { memo, useRef, useState } from 'react';
-import { downloadSavedView } from '../domain/saved-view';
+import { memo } from 'react';
 import {
   DEFAULT_FILTERS,
   type ConjunctionState,
   type FilterState,
+  type LaunchCohortView,
   type ObjectKind,
   type OrbitRegime,
-  type SavedViewV1,
   type SpaceObjectView,
   type VisualEncoding,
+  type VisualLegend as VisualLegendModel,
 } from '../domain/types';
 import { Icon } from './icon';
+import { LaunchExplorer } from './launch-explorer';
 import { encodingLabels, formatNumber, objectKindLabels, regimeLabels } from './labels';
+import { VisualLegend } from './visual-legend';
+import { ViewLibrary, type ViewLibraryProps } from './view-library';
 
 export type QuickLens = 'starlink' | 'geo' | 'debris';
 
@@ -94,28 +97,29 @@ export type DiscoverPanelProps = Readonly<{
   conjunctions: ConjunctionState;
   conjunctionHighlightActive: boolean;
   highlightedObjectCount: number;
-  savedViews: SavedViewV1[];
+  legend: VisualLegendModel;
+  launchCohorts: readonly LaunchCohortView[];
+  selectedCohortId?: string;
+  viewLibrary: ViewLibraryProps;
   onQueryChange: (query: string) => void;
   onSelectResult: (catalogId: string) => void;
   onQuickLens: (lens: QuickLens) => void;
   onConjunctionLens: () => void;
+  onSelectCohort: (cohort: LaunchCohortView) => void;
+  onOpenCohortMembers: (cohort: LaunchCohortView) => void;
+  onOpenCohortStory: (cohort: LaunchCohortView) => void;
   setFiltersImmediate: (filters: FilterState) => void;
   setFiltersDebounced: (filters: FilterState) => void;
   onEncodingChange: (encoding: VisualEncoding) => void;
-  onSaveView: () => void;
-  onApplyView: (view: SavedViewV1) => void;
-  createView: () => SavedViewV1;
-  onImportFile: (file?: File) => Promise<void> | void;
 }>;
 
 /** The workshop's search, lens, filter, encoding, and saved-view instrument panel. */
 function DiscoverPanelBase({
-  inert, visibleCount, query, results, filters, encoding, conjunctions, conjunctionHighlightActive, highlightedObjectCount, savedViews,
-  onQueryChange, onSelectResult, onQuickLens, onConjunctionLens, setFiltersImmediate, setFiltersDebounced, onEncodingChange,
-  onSaveView, onApplyView, createView, onImportFile,
+  inert, visibleCount, query, results, filters, encoding, conjunctions, conjunctionHighlightActive, highlightedObjectCount,
+  legend, launchCohorts, selectedCohortId, viewLibrary,
+  onQueryChange, onSelectResult, onQuickLens, onConjunctionLens, onSelectCohort, onOpenCohortMembers, onOpenCohortStory,
+  setFiltersImmediate, setFiltersDebounced, onEncodingChange,
 }: DiscoverPanelProps) {
-  const fileInput = useRef<HTMLInputElement>(null);
-  const [importing, setImporting] = useState(false);
   const conjunctionLens = getConjunctionLensPresentation(
     conjunctions,
     conjunctionHighlightActive,
@@ -165,6 +169,17 @@ function DiscoverPanelBase({
           </button>
         </div>
       </section>
+
+      <details className="sg-launch-disclosure">
+        <summary>STARLINK LAUNCH COHORTS <span>{formatNumber(launchCohorts.length)}</span></summary>
+        <LaunchExplorer
+          cohorts={launchCohorts}
+          onOpenMembers={onOpenCohortMembers}
+          onOpenStory={onOpenCohortStory}
+          onSelect={onSelectCohort}
+          selectedCohortId={selectedCohortId}
+        />
+      </details>
 
       <section className="sg-filters">
         <div className="sg-section-heading"><span><Icon name="layers" size={15} /> FILTERS</span><button onClick={() => setFiltersImmediate(structuredClone(DEFAULT_FILTERS))} type="button">Reset</button></div>
@@ -239,26 +254,9 @@ function DiscoverPanelBase({
           {Object.entries(encodingLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
         </select>
       </section>
+      <VisualLegend legend={legend} />
 
-      <section className="sg-saved-views">
-        <div className="sg-section-heading"><span><Icon name="bookmark" size={15} /> SAVED VIEWS</span><button onClick={onSaveView} type="button">+ Save current</button></div>
-        {savedViews.length === 0 ? <p>Camera, time, filters, selection, scale, and presentation mode travel together.</p> : savedViews.slice(0, 2).map((view) => <button key={view.name} onClick={() => onApplyView(view)} type="button"><strong>{view.name}</strong><small>{encodingLabels[view.encoding]}</small></button>)}
-        <div className="sg-portable-actions">
-          <button data-testid="export-view" onClick={() => downloadSavedView(createView())} type="button"><Icon name="export" size={14} /> Export JSON</button>
-          <button aria-busy={importing || undefined} disabled={importing} onClick={() => fileInput.current?.click()} type="button"><Icon name="import" size={14} /> {importing ? 'Importing…' : 'Import'}</button>
-          <input accept="application/json,.json" data-testid="import-view" onChange={async (event) => {
-            setImporting(true);
-            try {
-              await onImportFile(event.target.files?.[0]);
-            } finally {
-              setImporting(false);
-              if (fileInput.current) {
-                fileInput.current.value = '';
-              }
-            }
-          }} ref={fileInput} type="file" />
-        </div>
-      </section>
+      <ViewLibrary {...viewLibrary} />
       <details className="sg-legal">
         <summary>Data, source & legal</summary>
         <p>SatGlobe is a modified KeepTrack source fork. KeepTrack © Kruczek Labs LLC and contributors; earlier ThingsInSpace work © James Yoder. AGPL-3.0, without warranty.</p>

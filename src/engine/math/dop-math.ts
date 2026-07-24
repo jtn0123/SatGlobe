@@ -1,9 +1,9 @@
-import numeric from 'numeric';
 import { AzEl, DEG2RAD, Degrees, Satellite, Kilometers, MILLISECONDS_PER_SECOND, ecef2rae, eci2ecef } from '@ootk/src/main';
 import { t7e } from '@app/locales/keys';
 import { SatMath } from '../../app/analysis/sat-math';
 import { dateFormat } from '../utils/dateFormat';
 import { getEl } from '../utils/get-el';
+import { invertMatrix4, type Matrix4 } from './linear-algebra';
 
 export type DopValues = {
   pdop: string;
@@ -70,22 +70,47 @@ export abstract class DopMath {
       return dops;
     }
 
-    const A = numeric.rep([nsat, 4], 0) as number[][];
+    const normalMatrix: Matrix4 = [
+      [0, 0, 0, 0],
+      [0, 0, 0, 0],
+      [0, 0, 0, 0],
+      [0, 0, 0, 0],
+    ];
 
-    for (let n = 1; n <= nsat; n++) {
-      const { az, el } = azElList[n - 1];
+    for (const { az, el } of azElList) {
+      if (!Number.isFinite(az) || !Number.isFinite(el)) {
+        return dops;
+      }
 
-      const B = [Math.cos(el * DEG2RAD) * Math.sin(az * DEG2RAD), Math.cos(el * DEG2RAD) * Math.cos(az * DEG2RAD), Math.sin(el * DEG2RAD), 1];
+      const geometryRow = [
+        Math.cos(el * DEG2RAD) * Math.sin(az * DEG2RAD),
+        Math.cos(el * DEG2RAD) * Math.cos(az * DEG2RAD),
+        Math.sin(el * DEG2RAD),
+        1,
+      ] as const;
 
-      numeric.setBlock(A, [n - 1, 0], [n - 1, 3], [B]);
+      for (let row = 0; row < 4; row++) {
+        for (let column = 0; column < 4; column++) {
+          normalMatrix[row][column] += geometryRow[row] * geometryRow[column];
+        }
+      }
     }
-    const Q = <number[][]>numeric.dot(numeric.transpose(A), A);
-    const Qinv = numeric.inv(Q);
+
+    const Qinv = invertMatrix4(normalMatrix);
+
+    if (!Qinv) {
+      return dops;
+    }
+
     const pdop = Math.sqrt(Qinv[0][0] + Qinv[1][1] + Qinv[2][2]);
     const hdop = Math.sqrt(Qinv[0][0] + Qinv[1][1]);
     const gdop = Math.sqrt(Qinv[0][0] + Qinv[1][1] + Qinv[2][2] + Qinv[3][3]);
     const vdop = Math.sqrt(Qinv[2][2]);
     const tdop = Math.sqrt(Qinv[3][3]);
+
+    if (![pdop, hdop, gdop, vdop, tdop].every(Number.isFinite)) {
+      return dops;
+    }
 
     dops.pdop = (Math.round(pdop * 100) / 100).toFixed(2);
     dops.hdop = (Math.round(hdop * 100) / 100).toFixed(2);

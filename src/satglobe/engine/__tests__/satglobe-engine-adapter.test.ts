@@ -3,6 +3,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EventBusEvent } from '@app/engine/events/event-bus-events';
 import type { ConjunctionFeedV1 } from '../../domain/types';
 import {
+  COUNT_UPDATE_MEASURE,
+  FILTER_APPLY_MEASURE,
+  RECOLOR_MEASURE,
+} from '../../runtime/performance-measure';
+import {
   SatGlobeEngineAdapter,
   type SatGlobeEngineAdapterOptions,
 } from '../satglobe-engine-adapter';
@@ -39,6 +44,7 @@ interface FakeServices {
   };
   colorSchemes: { registerScheme: ReturnType<typeof vi.fn>; setColorScheme: ReturnType<typeof vi.fn> };
   orbits: { addInViewOrbit: ReturnType<typeof vi.fn>; clearInViewOrbit: ReturnType<typeof vi.fn> };
+  renderer: { cancelFrameCapture: ReturnType<typeof vi.fn>; captureNextFrame: ReturnType<typeof vi.fn> };
 }
 
 /*
@@ -104,6 +110,7 @@ vi.mock('@app/engine/core/service-locator', () => ({
     getMainCamera: () => services.camera,
     getColorSchemeManager: () => services.colorSchemes,
     getOrbitManager: () => services.orbits,
+    getRenderer: () => services.renderer,
   },
 }));
 
@@ -232,6 +239,7 @@ describe('SatGlobeEngineAdapter', () => {
     };
     services.colorSchemes = { registerScheme: vi.fn(), setColorScheme: vi.fn() };
     services.orbits = { addInViewOrbit: vi.fn(), clearInViewOrbit: vi.fn() };
+    services.renderer = { cancelFrameCapture: vi.fn(), captureNextFrame: vi.fn() };
   });
 
   afterEach(() => {
@@ -591,6 +599,62 @@ describe('SatGlobeEngineAdapter', () => {
     expect(adapter.getState().visibleCount).toBe(2);
   });
 
+  it('reports the dots actually rendered by the Starlink encoding', () => {
+    adapter = bootAdapter([
+      fakeSat(),
+      fakeSat({ id: 2, sccNum: '99999', name: 'ONEWEB-0001', owner: 'OneWeb', country: 'GB' }),
+    ]);
+
+    expect(adapter.getState().visibleCount).toBe(2);
+    adapter.setEncoding('starlink');
+    expect(adapter.getState().visibleCount).toBe(1);
+
+    adapter.setHighlight(['99999']);
+    expect(adapter.getState().visibleCount).toBe(2);
+
+    adapter.setHighlight([]);
+    expect(adapter.getState().visibleCount).toBe(1);
+    adapter.setEncoding('object-type');
+    expect(adapter.getState().visibleCount).toBe(2);
+  });
+
+  it('applies filters and encoding through one measured recolor and notification', () => {
+    adapter = bootAdapter([
+      fakeSat(),
+      fakeSat({ id: 2, sccNum: '30001', name: 'COSMOS 2251 DEB', type: SpaceObjectType.DEBRIS, status: PayloadStatus.NONOPERATIONAL }),
+    ]);
+    const filters = structuredClone(adapter.getState().filters);
+
+    filters.objectKinds = ['payload', 'debris'];
+    filters.status = 'all';
+    const filterSweep = vi.spyOn(
+      adapter as unknown as { rebuildFilterVisibility_: () => number },
+      'rebuildFilterVisibility_',
+    );
+    const listener = vi.fn();
+
+    adapter.subscribe(listener);
+    listener.mockClear();
+    services.colorSchemes.setColorScheme.mockClear();
+    const measure = vi.spyOn(performance, 'measure');
+
+    adapter.setVisualState({ filters, encoding: 'orbit-regime' });
+    const measurements = measure.mock.calls;
+
+    measure.mockRestore();
+
+    expect(adapter.getState()).toMatchObject({ filters, encoding: 'orbit-regime', visibleCount: 2 });
+    expect(filterSweep).toHaveBeenCalledOnce();
+    expect(services.colorSchemes.setColorScheme).toHaveBeenCalledOnce();
+    expect(listener).toHaveBeenCalledOnce();
+    for (const name of [FILTER_APPLY_MEASURE, RECOLOR_MEASURE, COUNT_UPDATE_MEASURE]) {
+      const entries = measurements.filter(([entryName]) => entryName === name);
+
+      expect(entries).toHaveLength(1);
+      expect(entries[0][1]).toEqual(expect.objectContaining({ detail: { cause: 'combined' } }));
+    }
+  });
+
   it('canonicalizes known highlight ids and forces exactly one recolor per distinct pair', () => {
     adapter = bootAdapter([
       fakeSat(),
@@ -708,6 +772,20 @@ describe('SatGlobeEngineAdapter', () => {
     );
   });
 
+  it('forwards snapshot fulfillment and rejection through the renderer seam', async () => {
+    const png = new Blob(['png'], { type: 'image/png' });
+
+    services.renderer.captureNextFrame.mockResolvedValueOnce(png);
+    adapter = bootAdapter([fakeSat()]);
+
+    await expect(adapter.captureSnapshot()).resolves.toBe(png);
+    expect(services.renderer.captureNextFrame).toHaveBeenCalledOnce();
+
+    services.renderer.captureNextFrame.mockRejectedValueOnce(new Error('context lost'));
+    await expect(adapter.captureSnapshot()).rejects.toThrow('context lost');
+    expect(services.renderer.captureNextFrame).toHaveBeenCalledTimes(2);
+  });
+
   it('publishes the rendered camera pose instead of stale destination targets', () => {
     adapter = bootAdapter([fakeSat()]);
     services.camera.state.camPitch = -0.21;
@@ -769,6 +847,7 @@ describe('SatGlobeEngineAdapter', () => {
 
     expect(registered).toBeGreaterThan(0);
     adapter.dispose();
+    expect(services.renderer.cancelFrameCapture).toHaveBeenCalledOnce();
     adapter = null;
 
     const remaining = [...busHandlers.values()].reduce((total, handlers) => total + handlers.size, 0);

@@ -5,6 +5,7 @@ import type { SettingsManager } from './settings/settings';
 import { PluginRegistry } from './engine/core/plugin-registry';
 import { ServiceLocator } from './engine/core/service-locator';
 import { EventBus } from './engine/events/event-bus';
+import { propagatorBackendRuntime } from './engine/utils/propagator-backend-runtime';
 import { copyTsvToClipboard, saveCsv, saveVariable, saveXlsx } from './engine/utils/saveVariable';
 import type { Sgp4Wasm, Sgp4XpWasm } from '@ootk/src/main';
 
@@ -37,7 +38,6 @@ declare global {
 
     keepTrackApi: KeepTrackApi;
     dataLayer?: unknown[]; // For Google Tag Manager / gtag
-    _numeric: unknown;
     satellite: SatMath;
   }
 }
@@ -113,10 +113,10 @@ export class KeepTrackApi {
    * artifacts served from dist/wasm/sgp4prop/ when present locally). Loaded
    * lazily so the wasm loader stays out of the static import graph.
    */
-  loadSgp4Wasm = async (): Promise<Sgp4Wasm> => (await import('./engine/utils/sgp4-wasm-loader')).loadSgp4Wasm();
-  loadSgp4XpWasm = async (): Promise<Sgp4XpWasm> => (await import('./engine/utils/sgp4-wasm-loader')).loadSgp4XpWasm();
+  loadSgp4Wasm = (): Promise<Sgp4Wasm> => propagatorBackendRuntime.loadSgp4Wasm();
+  loadSgp4XpWasm = (): Promise<Sgp4XpWasm> => propagatorBackendRuntime.loadSgp4XpWasm();
   /** Whether main-thread Sgp4 propagation is routed through the wasm backend. */
-  isWasmPropagatorActive = async (): Promise<boolean> => (await import('./engine/utils/sgp4-wasm-loader')).isWasmPropagatorActive();
+  isWasmPropagatorActive = (): Promise<boolean> => propagatorBackendRuntime.isWasmPropagatorActive();
 }
 
 export const keepTrackApi = new KeepTrackApi();

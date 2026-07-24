@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "policyVersion": 1,
+  "changeJustification": "Initial policy for the recovered combined SatGlobe application. Historical first-play measurements are not imported as current evidence.",
+  "warningPercent": 10,
+  "failurePercent": 20,
+  "confirmationRuns": 2,
+  "catalogObjectCountTolerancePercent": 5,
+  "absoluteBudgets": {
+    "idleMedianFps": 55,
+    "steadyFrameP95Ms": 22,
+    "interactionP95Ms": 100,
+    "longTaskMaxMs": 50,
+    "soakFrameP95Ms": 22,
+    "soakSlowFramePercent": 5,
+    "soakHeapGrowthBytes": 67108864,
+    "maximumDistBytes": 402653184,
+    "maximumJavaScriptBytes": 16777216,
+    "maximumJavaScriptAssetBytes": 6815744
+  }
+}

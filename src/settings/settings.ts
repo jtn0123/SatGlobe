@@ -103,6 +103,7 @@ const PROPERTY_CATEGORY_MAP: Record<string, keyof SettingsManager> = {
   modelsOnSatelliteViewOverride: 'graphics',
   noMeshManager: 'graphics',
   isDisableAsyncReadPixels: 'graphics',
+  isPreserveDrawingBuffer: 'graphics',
   debugMobilePicking: 'graphics',
 
   // UI
