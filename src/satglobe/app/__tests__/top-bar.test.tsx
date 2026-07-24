@@ -12,8 +12,10 @@ function renderTopBar(newestElementAge: number | null) {
       newestElementAge={newestElementAge}
       objectCount={35_049}
       onModeChange={vi.fn()}
+      onSnapshot={vi.fn()}
       onStoryOpen={vi.fn()}
       ready
+      snapshotBusy={false}
       storyCount={8}
     />,
   );
