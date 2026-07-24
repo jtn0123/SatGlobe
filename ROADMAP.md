@@ -1,6 +1,6 @@
 # SatGlobe roadmap and recovery ledger
 
-Last updated: 2026-07-24T04:27:27Z
+Last updated: 2026-07-24T04:41:27Z
 
 This file is the durable product roadmap and the live ledger for the approved
 legacy-work recovery. It is intentionally Markdown so every decision, test
@@ -37,6 +37,11 @@ The stop condition is a non-draft replacement PR that is current with `main`,
 conflict-free, green in required CI and CodeQL, free of attributable new Sonar
 findings and unresolved review threads, and fully mapped in this ledger. That
 PR must not be merged without separate approval.
+
+Draft replacement PR
+[#84](https://github.com/jtn0123/SatGlobe/pull/84) was opened from
+`codex/satglobe-consolidated-recovery` at 2026-07-24T04:39:46Z. It remains
+draft while the last recovery lane and mergeability gates are in progress.
 
 ## Verified starting point
 
@@ -104,6 +109,7 @@ objects below.
 | Location or branch set | Purpose | Status |
 | --- | --- | --- |
 | `/Users/justin/.codex/worktrees/satglobe-recovery/SatGlobe` | Clean consolidation branch from exact current main | Verified |
+| `origin/codex/satglobe-consolidated-recovery` / draft PR #84 | Published replacement branch and GitHub review surface | In progress |
 | `codex/recovery-security-lane` | Isolated #52/#54/#57 forward-port | In progress |
 | `codex/recovery-catalog-lane` | Isolated #55/#56/#58 forward-port | In progress |
 | `codex/recovery-product-lane` | Isolated #51/#53/#60/guided/#62 forward-port | In progress |
@@ -150,7 +156,8 @@ reachable from `main`, an archive ref, or a verified replacement commit.
   is pending.
 - [ ] `Pending` — Selective legend and Starlink cohort recovery.
 - [ ] `Pending` — Current performance governance and final documentation.
-- [ ] `Pending` — Open the replacement draft PR and link every closed PR.
+- [x] `Verified` — Open replacement draft PR #84 and link it from every closed
+  PR #51–#68.
 - [ ] `Pending` — Integrate latest main, satisfy all mergeability gates, mark
   the PR ready, and stop before merge.
 
@@ -191,6 +198,8 @@ reachable from `main`, an archive ref, or a verified replacement commit.
 | 2026-07-24T04:36:12Z | `14f8fa8b` | `npx vitest run src/satglobe/app/__tests__/satglobe-app.test.tsx --maxWorkers=1` | Verified | One file / 41 tests; Story navigation now proves one `setVisualState` call and no separate filter or encoding mutation |
 | 2026-07-24T04:37:10Z | `92abb7c1` | TopBar snapshot fixture test and `npm run typecheck:satglobe-strict` | Verified | Two focused tests passed; strict SatGlobe typecheck passed with 1,901 inherited engine-import diagnostics filtered |
 | 2026-07-24T04:38:22Z | `497e030f` | Catalog, conjunction, and Story-source regression suites | Verified | Three files / 65 tests passed; candidate artifacts are bound before install and the live official UNOOSA GLONASS source is pinned by regression |
+| 2026-07-24T04:39:46Z | `ecf5980a` | Push consolidated branch and open draft replacement PR #84 | Verified | GitHub created `https://github.com/jtn0123/SatGlobe/pull/84` against `main`; draft remained unmergeable while recovery gates are open |
+| 2026-07-24T04:41:27Z | `ecf5980a` | Add replacement follow-up to closed PRs #51–#68 | Verified | GitHub accepted one #84 link comment on each of all 18 preserved legacy PR conversations |
 
 Every later validation entry must identify the exact tested commit. Raw
 benchmark and story artifacts remain ignored; governed evidence is committed
@@ -219,6 +228,7 @@ executable imported content, or required WebGPU path is introduced.
 | 2026-07-24T04:03:37Z | `17dd31fc` | Use non-force local deletion from the current-main recovery worktree; use Git double-force only for the clean archived geometry worktree blocked by its registered uninitialized submodule | Verified |
 | 2026-07-24T04:36:12Z | `14f8fa8b` | Route Story beat filters and encoding through the transactional adapter boundary so authored playback cannot publish an intermediate visual state | Verified |
 | 2026-07-24T04:38:22Z | `497e030f` | Reject catalog transactions before installation unless manifest, catalog, and conjunction-feed provenance agree; replace the retired GLONASS citation with the current official UNOOSA publication | Verified |
+| 2026-07-24T04:39:46Z | `ecf5980a` | Publish the consolidated branch as draft PR #84 so CI and review can run before final readiness; draft status does not authorize merge | In progress |
 
 ## After the recovery gate
 
