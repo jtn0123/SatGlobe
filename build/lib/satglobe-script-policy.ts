@@ -1,4 +1,4 @@
-import { parseSync } from '@babel/core';
+import { parseSync, traverse } from '@babel/core';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { BuildError, ErrorCodes } from './build-error';
@@ -8,14 +8,20 @@ export interface SatGlobeScriptInspection {
   evalOffenders: string[];
 }
 
-const NONCOMPUTED_KEY_NODE_TYPES = new Set([
-  'ClassAccessorProperty',
-  'ClassMethod',
-  'ClassProperty',
-  'ObjectMethod',
-  'ObjectProperty',
-]);
 const GLOBAL_OBJECT_NAMES = new Set(['globalThis', 'self', 'window']);
+
+interface AstBinding {
+  constant: boolean;
+  path: AstPath;
+}
+
+interface AstPath {
+  get: (key: string) => AstPath | AstPath[];
+  isReferencedIdentifier: (options?: { name?: string }) => boolean;
+  node: unknown;
+  scope: { getBinding: (name: string) => AstBinding | undefined };
+  stop: () => void;
+}
 
 /** Lists every emitted JavaScript asset, including workers and copied runtime trees. */
 const listJavaScriptAssets = (distDir: string, currentDir = distDir): string[] => readdirSync(currentDir, { withFileTypes: true })
@@ -46,16 +52,6 @@ function isEvalProperty(value: unknown): boolean {
   }
 }
 
-/** Returns whether an AST expression names a browser global object. */
-function isGlobalObject(value: unknown): boolean {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    return false;
-  }
-  const node = value as Record<string, unknown>;
-
-  return node.type === 'Identifier' && GLOBAL_OBJECT_NAMES.has(String(node.name));
-}
-
 /** Returns whether an object pattern binds the global evaluator under any local name. */
 function objectPatternSelectsEval(value: unknown): boolean {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -77,65 +73,112 @@ function objectPatternSelectsEval(value: unknown): boolean {
   });
 }
 
-/** Detects declarations and assignments that rename eval from a browser global. */
-function destructuresGlobalEval(node: Record<string, unknown>): boolean {
-  if (node.type === 'VariableDeclarator') {
-    return isGlobalObject(node.init) && objectPatternSelectsEval(node.id);
+/** Returns the singular AST child for a named field. */
+function getChildPath(path: AstPath, key: string): AstPath | null {
+  const child = path.get(key);
+
+  return Array.isArray(child) ? null : child;
+}
+
+/** Resolves direct browser globals and immutable aliases such as `const root = globalThis`. */
+function resolvesGlobalObject(path: AstPath, seenBindings = new Set<AstBinding>()): boolean {
+  if (!path.node || typeof path.node !== 'object' || Array.isArray(path.node)) {
+    return false;
   }
-  if (node.type === 'AssignmentExpression' && node.operator === '=') {
-    return isGlobalObject(node.right) && objectPatternSelectsEval(node.left);
+  const node = path.node as Record<string, unknown>;
+
+  if (node.type !== 'Identifier') {
+    return false;
+  }
+  const name = String(node.name);
+  const binding = path.scope.getBinding(name);
+
+  if (!binding) {
+    return GLOBAL_OBJECT_NAMES.has(name);
+  }
+  if (!binding.constant || seenBindings.has(binding)) {
+    return false;
+  }
+  const declaration = binding.path.node;
+
+  if (!declaration || typeof declaration !== 'object' || Array.isArray(declaration)) {
+    return false;
+  }
+  if ((declaration as Record<string, unknown>).type !== 'VariableDeclarator') {
+    return false;
+  }
+  const initializer = getChildPath(binding.path, 'init');
+
+  if (!initializer?.node) {
+    return false;
+  }
+  seenBindings.add(binding);
+
+  return resolvesGlobalObject(initializer, seenBindings);
+}
+
+/** Detects declarations and assignments that rename eval from a browser global or alias. */
+function destructuresGlobalEval(path: AstPath, node: Record<string, unknown>): boolean {
+  if (node.type === 'VariableDeclarator' && objectPatternSelectsEval(node.id)) {
+    const initializer = getChildPath(path, 'init');
+
+    return initializer !== null && resolvesGlobalObject(initializer);
+  }
+  if (node.type === 'AssignmentExpression' && node.operator === '=' && objectPatternSelectsEval(node.left)) {
+    const value = getChildPath(path, 'right');
+
+    return value !== null && resolvesGlobalObject(value);
   }
 
   return false;
 }
 
-/** Excludes property/method names while retaining shorthand values and computed expressions. */
-function shouldSkipChild(node: Record<string, unknown>, key: string): boolean {
-  if (['loc', 'start', 'end', 'extra'].includes(key)) {
-    return true;
-  }
-  if (key === 'property' && (node.type === 'MemberExpression' || node.type === 'OptionalMemberExpression')) {
-    return node.computed !== true;
-  }
-  if (key === 'key' && NONCOMPUTED_KEY_NODE_TYPES.has(String(node.type))) {
-    return node.computed !== true;
-  }
+/** Finds executable references to built-in eval while respecting lexical shadowing. */
+function containsEvalReference(ast: NonNullable<ReturnType<typeof parseSync>>): boolean {
+  let found = false;
 
-  return key === 'label' && ['BreakStatement', 'ContinueStatement', 'LabeledStatement'].includes(String(node.type));
+  traverse(ast, {
+    enter(path: AstPath) {
+      if (!path.node || typeof path.node !== 'object' || Array.isArray(path.node)) {
+        return;
+      }
+      const node = path.node as Record<string, unknown>;
+
+      if (
+        node.type === 'Identifier'
+        && node.name === 'eval'
+        && path.isReferencedIdentifier({ name: 'eval' })
+        && !path.scope.getBinding('eval')
+      ) {
+        found = true;
+        path.stop();
+
+        return;
+      }
+      if (destructuresGlobalEval(path, node)) {
+        found = true;
+        path.stop();
+
+        return;
+      }
+      const isMember = node.type === 'MemberExpression' || node.type === 'OptionalMemberExpression';
+
+      if (isMember && isEvalProperty(node.property)) {
+        const object = getChildPath(path, 'object');
+
+        if (object && resolvesGlobalObject(object)) {
+          found = true;
+          path.stop();
+        }
+      }
+    },
+  });
+
+  return found;
 }
 
-/** Finds any executable reference to built-in eval, including an alias initializer. */
-function containsEvalReference(value: unknown): boolean {
-  if (!value || typeof value !== 'object') {
-    return false;
-  }
-  if (Array.isArray(value)) {
-    return value.some(containsEvalReference);
-  }
-  const node = value as Record<string, unknown>;
-
-  if (destructuresGlobalEval(node)) {
-    return true;
-  }
-  if (node.type === 'Identifier' && node.name === 'eval') {
-    return true;
-  }
-  const isMember = node.type === 'MemberExpression' || node.type === 'OptionalMemberExpression';
-
-  if (isMember && isGlobalObject(node.object) && isEvalProperty(node.property)) {
-    return true;
-  }
-
-  return Object.entries(node)
-    .filter(([key]) => !shouldSkipChild(node, key))
-    .some(([, child]) => containsEvalReference(child));
-}
-
-/** Parses JavaScript so strings and comments mentioning eval are not treated as executable calls. */
+/** Parses JavaScript so strings, comments, and locally shadowed eval names remain allowed. */
 function containsExecutableEval(source: string, filename: string): boolean {
-  if (!source.includes('eval')) {
-    return false;
-  }
   let ast: ReturnType<typeof parseSync>;
 
   try {

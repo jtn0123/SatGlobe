@@ -67,4 +67,34 @@ describe('SatGlobe emitted script policy', () => {
 
     expect(assertSatGlobeScriptPolicy(distDir)).toEqual({ assetCount: 2, evalOffenders: [] });
   });
+
+  it('finds escaped and global-alias eval without rejecting locally shadowed names', () => {
+    const distDir = makeDistDir();
+
+    mkdirSync(join(distDir, 'nested'));
+    writeFileSync(join(distDir, 'js', 'escaped.js'), '\\u0065val("escaped identifier")');
+    writeFileSync(
+      join(distDir, 'nested', 'aliased.js'),
+      'const root = globalThis; const runtime = root; runtime.\\u0065val("aliased global")',
+    );
+    writeFileSync(
+      join(distDir, 'nested', 'destructured-alias.js'),
+      'const root = self; const { eval: invoke } = root; invoke("aliased destructure")',
+    );
+    writeFileSync(
+      join(distDir, 'js', 'shadowed.js'),
+      [
+        'function callLocal(eval) { return eval("local function"); }',
+        'const tool = { eval: (value) => value };',
+        'const localRoot = tool;',
+        'localRoot.eval("local property");',
+        'function callLocalWindow(window) { return window.eval("local object"); }',
+      ].join(' '),
+    );
+
+    expect(inspectSatGlobeScripts(distDir)).toEqual({
+      assetCount: 4,
+      evalOffenders: ['js/escaped.js', 'nested/aliased.js', 'nested/destructured-alias.js'],
+    });
+  });
 });
