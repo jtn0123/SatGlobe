@@ -1,6 +1,6 @@
 # SatGlobe roadmap and recovery ledger
 
-Last updated: 2026-07-24T05:06:49Z
+Last updated: 2026-07-24T05:15:12Z
 
 This file is the durable product roadmap and the live ledger for the approved
 legacy-work recovery. It is intentionally Markdown so every decision, test
@@ -215,6 +215,11 @@ reachable from `main`, an archive ref, or a verified replacement commit.
 | 2026-07-24T05:02:52Z | `2c5554be` | Sources-link keyboard regression suite | Verified | Integrated app file / 42 tests passed; Space on a focused citation link no longer bubbles into global Story playback |
 | 2026-07-24T05:04:40Z | `73acefe3` | `npm run verify:satglobe` | Verified | Normal and strict typecheck, story-walker boundary, full lint, 41 files / 366 tests, performance-ledger validation, production build, emitted-script policy, and 351.9 MiB/12.8 MiB build budget passed |
 | 2026-07-24T05:06:49Z | `73acefe3` | `CI=true npm run test:e2e:satglobe` | Verified | All 14 production-static offline Chromium journeys passed in 2.1 minutes with fail-on-flake enabled and no retry |
+| 2026-07-24T05:07:31Z | `45490afb` | `npm run test:ootk` | Verified | 124 passed / one skipped files; 1,981 passed / 21 skipped tests |
+| 2026-07-24T05:10:12Z | `45490afb` | `CI=true npm test` | Verified | 446 files / 5,904 passed, eight skipped, and one todo |
+| 2026-07-24T05:10:20Z | `45490afb` | Production audit, performance-ledger validation, build-budget check, and `git diff --check` | Verified | Zero production vulnerabilities; zero-record/two-profile ledger valid; 351.9 MiB dist and 12.8 MiB JavaScript within budget; clean diff check |
+| 2026-07-24T05:12:18Z | `45490afb` | Five-sample Apple M4 1440p hardware benchmark | Blocked | Raw report `benchmark-results/satglobe/2026-07-24T05-11-02Z.raw.json` incorrectly declared success while Starlink/conjunction long-task p95 values of 65/63 ms exceeded the governed 50 ms budget |
+| 2026-07-24T05:15:12Z | `a0256455` | Long-task gate and live-legend work-splitting regressions | Ported | Threshold legends skip catalog scans; highlight-only changes reuse the base legend; benchmark now enforces interaction long tasks. Three files / ten tests, strict typecheck, focused lint, and diff check passed; hardware rerun pending |
 
 Every later validation entry must identify the exact tested commit. Raw
 benchmark and story artifacts remain ignored; governed evidence is committed
@@ -248,6 +253,7 @@ executable imported content, or required WebGPU path is introduced.
 | 2026-07-24T04:53:52Z | `45391d1b` | Treat Sonar's two new implicit-sort reliability findings as attributable blockers and replace them with explicit locale-aware ordering | Verified |
 | 2026-07-24T04:57:31Z | `ed26cf66` | Keep CI's fail-on-flake policy; fix the unstable camera assertion by measuring settled product behavior rather than weakening or disabling the gate | Ported |
 | 2026-07-24T05:01:39Z | `d9fb8075` | Accept the independent product review's four reproduced lifecycle/data-truth fixes and initialize performance governance with zero accepted current records until fresh measurements pass policy | Verified |
+| 2026-07-24T05:15:12Z | `a0256455` | Do not accept a raw report whose normal interactions exceed the declared long-task budget; split live-legend work away from renderer transactions instead of weakening the 50 ms policy | Ported |
 
 ## After the recovery gate
 
