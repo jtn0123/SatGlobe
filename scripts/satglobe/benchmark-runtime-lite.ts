@@ -110,6 +110,17 @@ interface ApplyPhaseSample {
   recolorCauses: string[];
 }
 
+interface SoakPageResult {
+  frameIntervals: number[];
+  longTasks: number[];
+  measuredDurationMs: number;
+  contextLossCount: number;
+  contextRestoreCount: number;
+  startHeap: number | null;
+  endHeap: number | null;
+  peakHeap: number | null;
+}
+
 /** Summarizes samples into the distribution shape the baseline reports use. */
 function dist(samples: number[]): Dist {
   const s = [...samples].sort((a, b) => a - b);
@@ -525,9 +536,16 @@ async function measureSoak(browser: Browser, requestedDurationMs: number) {
   await waitForReady(page);
   await page.getByTestId('story-mode').click();
   await page.waitForTimeout(1_000);
-  const result = await page.evaluate(async (durationMs) => {
-    const frameIntervals: number[] = [];
-    const longTasks: number[] = [];
+  /*
+   * Keep this callback as browser-native source. The TypeScript runner's
+   * keep-names transform injects its private `__name` helper into nested
+   * functions, which does not exist when Playwright serializes the callback
+   * into the page.
+   */
+  const result = await page.evaluate<SoakPageResult>(`(async () => {
+    const durationMs = ${JSON.stringify(requestedDurationMs)};
+    const frameIntervals = [];
+    const longTasks = [];
     const canvas = document.querySelector('canvas');
     let contextLossCount = 0;
     let contextRestoreCount = 0;
@@ -541,7 +559,7 @@ async function measureSoak(browser: Browser, requestedDurationMs: number) {
       : new PerformanceObserver((list) => list.getEntries().forEach((entry) => longTasks.push(entry.duration)));
 
     observer?.observe({ type: 'longtask', buffered: false });
-    const memory = performance as Performance & { memory?: { usedJSHeapSize: number } };
+    const memory = performance;
     const startHeap = memory.memory?.usedJSHeapSize ?? null;
     let peakHeap = startHeap;
     const heapTimer = window.setInterval(() => {
@@ -554,8 +572,8 @@ async function measureSoak(browser: Browser, requestedDurationMs: number) {
     const startedAt = performance.now();
     let previous = startedAt;
 
-    await new Promise<void>((resolve) => {
-      const tick = (now: number) => {
+    await new Promise((resolve) => {
+      const tick = (now) => {
         frameIntervals.push(now - previous);
         previous = now;
         if (now - startedAt >= durationMs) {
@@ -585,7 +603,7 @@ async function measureSoak(browser: Browser, requestedDurationMs: number) {
       endHeap,
       peakHeap,
     };
-  }, requestedDurationMs);
+  })()`);
   const frames = summarizeFrames(result.frameIntervals);
   const slowFrameCount = result.frameIntervals.filter((interval) => interval > 22).length;
   const summary = {
