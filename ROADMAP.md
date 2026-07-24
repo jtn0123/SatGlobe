@@ -1,6 +1,6 @@
 # SatGlobe roadmap and recovery ledger
 
-Last updated: 2026-07-24T04:05:54Z
+Last updated: 2026-07-24T04:10:09Z
 
 This file is the durable product roadmap and the live ledger for the approved
 legacy-work recovery. It is intentionally Markdown so every decision, test
@@ -81,12 +81,12 @@ objects below.
 | PR | Head SHA | Planned disposition | Status |
 | --- | --- | --- | --- |
 | #51 | `ca60edf50f3a97f5a82092f535db6495cb440994` | Port stability gates, atomic visual state, trusted timing, CI flake policy, and justified coverage | Ported |
-| #52 | `7134d9fd581bf5fe9312b22762e4e57a55c9fb5e` | Port typed linear algebra and remove `numeric` | In progress |
+| #52 | `7134d9fd581bf5fe9312b22762e4e57a55c9fb5e` | Port typed linear algebra and remove `numeric` | Verified |
 | #53 | `37161ae8509ec9f67abd5d0660bdf25c7f1f44dc` | Port local view playlists | In progress |
-| #54 | `087c7884442912cc5aa275f1efd9f120e82e3094` | Port pure-SGP4/WASM profile gating | In progress |
+| #54 | `087c7884442912cc5aa275f1efd9f120e82e3094` | Port pure-SGP4/WASM profile gating | Verified |
 | #55 | `d452bde92d34a7fbd98ce69558b531d388408f62` | Port catalog provenance schema and UTC invariants | In progress |
 | #56 | `908f3c83cba4366f3af825ea79a7d1c5a0b773b2` | Reproduce and verify the six corrected catalog artifacts | In progress |
-| #57 | `fc467f61126624105d908845695d40642541ebb8` | Port strict CSP and emitted-script inspection | In progress |
+| #57 | `fc467f61126624105d908845695d40642541ebb8` | Port strict CSP and emitted-script inspection | Verified |
 | #58 | `db4b97ecc8e15d855ed7f4e5c677a76cf907a888` | Port GNSS and Landsat stories after source/ID verification | In progress |
 | #59 | `3af7f2b6e96f52151e980994339197b33b9093f2` | Replace with a fresh audit from current main | Deferred |
 | #60 | `9bb7d3fff13be46c9e625bf04a706656df583307` | Port cumulative launch-history time-lapse | In progress |
@@ -129,9 +129,9 @@ reachable from `main`, an archive ref, or a verified replacement commit.
   geometry worktree.
 - [ ] `In progress` — Recovery ledger and current handoff.
 - [x] `Ported` — Stability and atomic visual state from #51.
-- [ ] `In progress` — Typed eval-free numeric replacement from #52.
-- [ ] `In progress` — Pure-SGP4/WASM profile gating from #54.
-- [ ] `In progress` — Strict CSP and emitted-script inspection from #57.
+- [x] `Verified` — Typed eval-free numeric replacement from #52.
+- [x] `Verified` — Pure-SGP4/WASM profile gating from #54.
+- [x] `Verified` — Strict CSP and emitted-script inspection from #57.
 - [ ] `In progress` — Catalog provenance schema v2 from #55.
 - [ ] `In progress` — Corrected catalog transaction from #56.
 - [ ] `In progress` — GNSS and Landsat stories from #58.
@@ -150,6 +150,9 @@ reachable from `main`, an archive ref, or a verified replacement commit.
 | Legacy source | Consolidated replacement | Included behavior | Status |
 | --- | --- | --- | --- |
 | PR #51 | `dd8d0816` | Transactional visual updates, resilient timing, corrected Dependabot targets, CI flake policy, and test-backed coverage ratchet | Ported |
+| PR #52 | `ae2c94e3`, `712af510` | Typed finite-safe vector/matrix helpers, migrated callers, and complete removal of `numeric`, its types, and `_numeric` | Verified |
+| PR #54 | `0a3fae26`, `ae12b02f`, `a193a9b8` | Typed propagator facade, nine worker gates, recursive whole-output WASM-glue policy, and build-policy errors | Verified |
+| PR #57 | `9fa11775`, `8d5f2981` | SatGlobe-only Zod jitless mode, eval-free OBJ alias, AST emitted-script guard, and exact strict CSP | Verified |
 
 ## Validation ledger
 
@@ -164,6 +167,7 @@ reachable from `main`, an archive ref, or a verified replacement commit.
 | 2026-07-24T03:49:00Z | `7c67dd20050481e3b1b3b5cbb26e2a298526679d` | `npm audit --omit=dev` | Verified | 0 production vulnerabilities across 36 production dependencies |
 | 2026-07-24T03:59:26Z | `1b99e255` | GitHub PR #51–#68 preservation comments, close operations, and live re-query | Verified | Zero open PRs; 18 closed PR head SHAs exactly matched this ledger |
 | 2026-07-24T04:03:37Z | `17dd31fc` | Remote/local branch and geometry-worktree cleanup | Verified | Six merged remote heads and 33 main-ancestor local heads removed; geometry remains at archive ref `8f901564` |
+| 2026-07-24T04:10:09Z | `8d5f29813b440b6e2ac69f0f257d0ae8991a52af` | Focused numeric, caller, propagator-profile, bundle-policy, CSP, and Zod tests | Verified | Eight files / 85 tests passed after integration |
 
 Every later validation entry must identify the exact tested commit. Raw
 benchmark and story artifacts remain ignored; governed evidence is committed
