@@ -23,7 +23,7 @@ jobs:
     timeout-minutes: 120
     steps:
       - name: Check out source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       # Scoped LFS pull: fetch only the catalog snapshot. Two pre-existing
       # astroux png pointers have no blobs in this fork's LFS storage (GitHub

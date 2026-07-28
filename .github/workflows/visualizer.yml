@@ -10,7 +10,7 @@ jobs:
 
     steps:
       - name: Get Code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Repo Visualizer
         uses: githubocto/repo-visualizer@a999615bdab757559bf94bda1fe6eef232765f85 # v0.9.1

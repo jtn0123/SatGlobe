@@ -24,7 +24,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Check out source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       # Scoped LFS pull: fetch only the catalog snapshot. Two pre-existing
       # astroux png pointers have no blobs in this fork's LFS storage (GitHub
@@ -57,7 +57,7 @@ jobs:
     timeout-minutes: 45
     steps:
       - name: Check out source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       # Scoped LFS pull: fetch only the catalog snapshot. Two pre-existing
       # astroux png pointers have no blobs in this fork's LFS storage (GitHub
@@ -98,7 +98,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Check out source and performance history
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -134,7 +134,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Check out source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       # Scoped LFS pull: fetch only the catalog snapshot. Two pre-existing
       # astroux png pointers have no blobs in this fork's LFS storage (GitHub
@@ -183,7 +183,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Check out source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           # This job needs no LFS pull or push, so drop the token from git config.
           persist-credentials: false
@@ -209,7 +209,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Check out source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       # Scoped LFS pull: fetch only the catalog snapshot. Two pre-existing
       # astroux png pointers have no blobs in this fork's LFS storage (GitHub
