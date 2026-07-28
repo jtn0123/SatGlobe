@@ -6,7 +6,6 @@
   "compilerOptions": {
     "noEmit": true,
     "strictNullChecks": true,
-    "ignoreDeprecations": "6.0",
     "types": [
       "vitest/globals",
       "google-publisher-tag"

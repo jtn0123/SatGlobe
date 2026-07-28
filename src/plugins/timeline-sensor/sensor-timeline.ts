@@ -696,13 +696,11 @@ export class SensorTimeline extends KeepTrackPlugin {
         }
 
         // If it exits the FoV, then it wont be back for another orbit
-        if (isExitFov) {
-          if (!this.detailedPlot) {
-            if (satellite.semiMajorAxis > 30000) {
-              i += satellite.period * 60 * 0.5;
-            } else {
-              i += satellite.period * 60 * 0.75;
-            }
+        if (isExitFov && !this.detailedPlot) {
+          if (satellite.semiMajorAxis > 30000) {
+            i += satellite.period * 60 * 0.5;
+          } else {
+            i += satellite.period * 60 * 0.75;
           }
         }
 
@@ -745,27 +743,23 @@ export class SensorTimeline extends KeepTrackPlugin {
             isStationExitNight = false;
           }
 
-          if (this.useWeather) {
-            // Check if weather is good
-
-            if (weatherStatusThisIter === WeatherStatus.CLEAR && !isWeatherGood) {
-              startGoodWeatherTime = now;
-              isWeatherGood = true;
-              isWeatherBecomeGood = true;
-            }
-            if (weatherStatusThisIter !== WeatherStatus.CLEAR && isWeatherGood) {
-              isWeatherBecomeBad = true;
-              isWeatherGood = false;
-            }
-            if ((isWeatherBecomeGood && isWeatherBecomeBad) || (isWeatherBecomeGood && i === durationInSeconds - this.angleCalculationInterval_)) {
-              ClearSkies.passes.push({
-                start: startGoodWeatherTime,
-                end: now,
-              });
-              isWeatherBecomeGood = false;
-              isWeatherBecomeBad = false;
-            }
-
+          // Check if weather is good
+          if (this.useWeather && weatherStatusThisIter === WeatherStatus.CLEAR && !isWeatherGood) {
+            startGoodWeatherTime = now;
+            isWeatherGood = true;
+            isWeatherBecomeGood = true;
+          }
+          if (this.useWeather && weatherStatusThisIter !== WeatherStatus.CLEAR && isWeatherGood) {
+            isWeatherBecomeBad = true;
+            isWeatherGood = false;
+          }
+          if (this.useWeather && ((isWeatherBecomeGood && isWeatherBecomeBad) || (isWeatherBecomeGood && i === durationInSeconds - this.angleCalculationInterval_))) {
+            ClearSkies.passes.push({
+              start: startGoodWeatherTime,
+              end: now,
+            });
+            isWeatherBecomeGood = false;
+            isWeatherBecomeBad = false;
           }
 
         }
