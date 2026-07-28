@@ -1,10 +1,29 @@
 # SonarCloud policy
 
-SatGlobe uses SonarCloud automatic analysis for broad static analysis and the repository's blocking ESLint, TypeScript, unit, OOTK, E2E, and build gates for executable verification. Run `npm run sonar:cloud-report` to print the current unresolved-issue inventory or add `-- --json` for machine-readable output.
+SatGlobe uses CI-based SonarCloud analysis for broad static analysis and LCOV
+coverage import. The `Full unit suite with coverage` job generates
+`coverage/lcov.info`, then runs the pinned SonarQube scanner in the same
+workspace. The repository's blocking ESLint, TypeScript, unit, OOTK, E2E, and
+build gates remain the executable verification layer.
+
+The SonarCloud project uses key `jtn0123_SatGlobe` in organization
+`jtn0123ismysonar`. Automatic analysis must remain disabled under
+**Administration > Analysis Method**, because SonarCloud does not support
+coverage import in automatic analysis and does not allow automatic and
+CI-based analysis to run together. GitHub Actions stores the project analysis
+token as the `SONAR_TOKEN` repository secret.
+
+Run `npm run sonar:cloud-report` to print the current unresolved-issue
+inventory or add `-- --json` for machine-readable output.
 
 ## Analysis scope
 
-The cloud scanner intentionally excludes `src/engine/ootk/.github/**`. Those files are retained provenance from the vendored OOTK project; GitHub does not execute nested workflow directories in the parent SatGlobe repository. Because automatic analysis does not support this wildcard in `.sonarcloud.properties`, the pattern is configured under **Administration > General Settings > Analysis Scope > Files > Source File Exclusions** in the SonarCloud project settings. The declarative story manifests remain included in normal analysis but excluded from copy-paste detection because their repeated beat/fact/source structure is the authored data schema.
+The cloud scanner intentionally excludes `src/engine/ootk/.github/**` in
+`sonar-project.properties`. Those files are retained provenance from the
+vendored OOTK project; GitHub does not execute nested workflow directories in
+the parent SatGlobe repository. The declarative story manifests remain
+included in normal analysis but excluded from copy-paste detection because
+their repeated beat/fact/source structure is the authored data schema.
 
 ## Rule dispositions
 
@@ -43,4 +62,9 @@ The following line-level disposition is kept next to the affected command with `
 
 ## Quality gate
 
-After the valid legacy findings are cleared, the built-in Sonar quality gate is assigned to the project so new bugs, vulnerabilities, unreviewed security findings, and maintainability regressions are visible on every pull request. Automatic analysis reads `.sonarcloud.properties`; the local `.sonar-project.properties` file is for the optional Docker-hosted SonarQube workflow.
+After the valid legacy findings are cleared, the built-in Sonar quality gate
+is assigned to the project so new bugs, vulnerabilities, unreviewed security
+findings, maintainability regressions, and coverage changes are visible on
+trusted pull requests. CI-based analysis reads `sonar-project.properties`.
+The dot-prefixed `.sonar-project.properties` file remains separate for the
+optional Docker-hosted local SonarQube workflow.
