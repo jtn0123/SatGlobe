@@ -218,8 +218,8 @@ export class GraphicsSettings {
    * creation). True (default) lets the Screenshot/ScreenRecorder plugins read the
    * canvas outside the render callback, but forces the compositor to copy —
    * rather than swap — the drawing buffer every frame and blocks tile-memory
-   * discard on mobile GPUs. Profiles that ship no canvas-capture UI (e.g. the
-   * companion embed) should set this false for a per-frame bandwidth win.
+   * discard on mobile GPUs. Profiles that either ship no capture UI or read the
+   * completed frame synchronously in the render callback should set this false.
    */
   isPreserveDrawingBuffer = true;
   /**

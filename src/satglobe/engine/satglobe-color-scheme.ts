@@ -1,30 +1,20 @@
-import { ColorInformation, Pickable, rgbaArray } from '@app/engine/core/interfaces';
+import { ColorInformation, Pickable } from '@app/engine/core/interfaces';
 import { BaseObject, Satellite } from '@ootk/src/main';
 import { ColorScheme, ColorSchemeParams } from '@app/engine/rendering/color-schemes/color-scheme';
 import { GpAgeColorScheme } from '@app/engine/rendering/color-schemes/gp-age-color-scheme';
 import { OrbitalPlaneDensityColorScheme } from '@app/engine/rendering/color-schemes/orbital-plane-density-color-scheme';
 import { prepareFilterMatcher, type FilterableSpaceObject, type FilterMatcher } from '../domain/filters';
+import {
+  CONJUNCTION_HIGHLIGHT_COLOR,
+  OBJECT_COLORS,
+  REGIME_COLORS,
+  STARLINK_COLORS,
+} from '../domain/encodings';
 import { classifyOrbit } from '../domain/orbits';
-import type { FilterState, ObjectKind, OrbitRegime, VisualEncoding } from '../domain/types';
+import type { FilterState, OrbitRegime, VisualEncoding } from '../domain/types';
 import { launchCohortColor } from './launch-cohort-color';
 import { isKnownActivePayloadStatus, objectKindFromSpaceObjectType } from './satglobe-object-state';
 
-const regimeColors: Record<OrbitRegime, rgbaArray> = {
-  leo: [0.54, 0.84, 0.81, 0.9],
-  meo: [0.91, 0.79, 0.5, 0.9],
-  geo: [0.94, 0.55, 0.42, 0.9],
-  heo: [0.66, 0.59, 0.82, 0.9],
-  other: [0.72, 0.75, 0.72, 0.72],
-};
-
-const objectColors: Record<ObjectKind, rgbaArray> = {
-  payload: [0.43, 0.78, 0.74, 0.68],
-  'rocket-body': [0.9, 0.67, 0.36, 0.76],
-  debris: [0.62, 0.66, 0.64, 0.42],
-  other: [0.72, 0.72, 0.69, 0.5],
-};
-
-const conjunctionHighlightColor: rgbaArray = [1, 0.78, 0.3, 1];
 const conjunctionContextAlpha = 0.16;
 
 export class SatGlobeColorScheme extends ColorScheme {
@@ -51,11 +41,11 @@ export class SatGlobeColorScheme extends ColorScheme {
 
   constructor(filters: FilterState, encoding: VisualEncoding, highlightedCatalogIds: ReadonlySet<string> = new Set()) {
     super({
-      satglobeLeo: regimeColors.leo,
-      satglobeMeo: regimeColors.meo,
-      satglobeGeo: regimeColors.geo,
-      satglobeHeo: regimeColors.heo,
-      satglobeOther: regimeColors.other,
+      satglobeLeo: REGIME_COLORS.leo,
+      satglobeMeo: REGIME_COLORS.meo,
+      satglobeGeo: REGIME_COLORS.geo,
+      satglobeHeo: REGIME_COLORS.heo,
+      satglobeOther: REGIME_COLORS.other,
     });
     this.encoding_ = encoding;
     this.matcher_ = prepareFilterMatcher(filters);
@@ -99,7 +89,7 @@ export class SatGlobeColorScheme extends ColorScheme {
     }
 
     if (isHighlighted) {
-      return { color: conjunctionHighlightColor, pickable: Pickable.Yes };
+      return { color: CONJUNCTION_HIGHLIGHT_COLOR, pickable: Pickable.Yes };
     }
 
     const encoded = this.encodedColor_(obj, sat, regime, params);
@@ -124,11 +114,11 @@ export class SatGlobeColorScheme extends ColorScheme {
 
   private encodedColor_(obj: BaseObject, sat: Satellite, regime: OrbitRegime, params?: ColorSchemeParams): ColorInformation {
     if (this.encoding_ === 'orbit-regime') {
-      return { color: regimeColors[regime], pickable: Pickable.Yes };
+      return { color: REGIME_COLORS[regime], pickable: Pickable.Yes };
     }
 
     if (this.encoding_ === 'object-type') {
-      return { color: objectColors[objectKindFromSpaceObjectType(obj.type)], pickable: Pickable.Yes };
+      return { color: OBJECT_COLORS[objectKindFromSpaceObjectType(obj.type)], pickable: Pickable.Yes };
     }
 
     if (this.encoding_ === 'launch-cohort') {
@@ -144,7 +134,7 @@ export class SatGlobeColorScheme extends ColorScheme {
       }
 
       return {
-        color: isOperational ? [0.48, 0.86, 0.81, 0.9] : [0.91, 0.72, 0.42, 0.86],
+        color: isOperational ? STARLINK_COLORS.operational : STARLINK_COLORS.other,
         pickable: Pickable.Yes,
       };
     }
@@ -152,7 +142,7 @@ export class SatGlobeColorScheme extends ColorScheme {
     const delegatedScheme = this.schemes_[this.encoding_ as keyof typeof this.schemes_];
 
     if (!delegatedScheme) {
-      return { color: objectColors[objectKindFromSpaceObjectType(obj.type)], pickable: Pickable.Yes };
+      return { color: OBJECT_COLORS[objectKindFromSpaceObjectType(obj.type)], pickable: Pickable.Yes };
     }
 
     return delegatedScheme.update(obj, params);

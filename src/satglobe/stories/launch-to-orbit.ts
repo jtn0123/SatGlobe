@@ -111,6 +111,8 @@ export const launchToOrbitStory: StoryManifestV1 = storyManifestV1Schema.parse({
       encoding: 'object-type',
       launchCohort: '2026-027',
       filterOverrides: { objectKinds: ['rocket-body', 'debris'], status: 'all', regimes: ['leo'] },
+      // Both records ride cohort-derived orbit lines; their marks alone can hide behind Earth.
+      orbitMatchLimit: 2,
       reconstruction: 'reconstructed',
       scaleMode: 'semantic',
     },
@@ -125,6 +127,8 @@ export const launchToOrbitStory: StoryManifestV1 = storyManifestV1Schema.parse({
       camera: { pitch: 0.55, yaw: 1.9, zoom: 0.72 },
       encoding: 'orbit-regime',
       filterOverrides: { regimes: ['heo'] },
+      // The narration's "highly elliptical" claim needs visible ellipses, not dots.
+      orbitMatchLimit: 4,
       reconstruction: 'reconstructed',
       scaleMode: 'semantic',
     },

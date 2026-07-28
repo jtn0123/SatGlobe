@@ -1,8 +1,18 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Download, type Page } from '@playwright/test';
+import { SATGLOBE_CSP } from '../../../build/dev-server-response';
 import { conjunctionFeedV1Schema } from '../domain/conjunctions';
 import type { ConjunctionFeedV1, ConjunctionObjectRef } from '../domain/types';
+import {
+  COUNT_UPDATE_MEASURE,
+  FILTER_APPLY_MEASURE,
+  LAUNCH_TIMELAPSE_APPLY_MEASURE,
+  LENS_APPLY_MEASURE,
+  PLAYLIST_APPLY_MEASURE,
+  RECOLOR_MEASURE,
+  SATGLOBE_INTERACTION_MEASURES,
+} from '../runtime/performance-measure';
 
 interface InstalledCatalogRow {
   name?: string;
@@ -21,6 +31,94 @@ interface WorkshopTestContext {
 
 const workshopContextByPage = new WeakMap<Page, WorkshopTestContext>();
 let bundledFixtureSubjectsPromise: Promise<BundledFixtureSubjects> | null = null;
+
+interface CanvasBackingSize {
+  height: number;
+  width: number;
+}
+
+/** Reads the PNG header and asks Chromium to decode and sample the exported pixels. */
+async function expectDecodedSnapshot(
+  page: Page,
+  download: Download,
+  expectedContext: string,
+  backingSize: CanvasBackingSize,
+): Promise<void> {
+  const filePath = await download.path();
+
+  if (!filePath) {
+    throw new Error('Playwright did not retain the downloaded PNG.');
+  }
+  const bytes = await readFile(filePath);
+
+  expect(download.suggestedFilename()).toMatch(new RegExp(`^satglobe-${expectedContext}-\\d{8}T\\d{6}Z\\.png$`, 'u'));
+  expect([...bytes.subarray(0, 8)]).toEqual([137, 80, 78, 71, 13, 10, 26, 10]);
+  expect(bytes.readUInt32BE(8)).toBe(13);
+  expect(bytes.subarray(12, 16).toString('ascii')).toBe('IHDR');
+  expect(bytes.readUInt32BE(16)).toBe(backingSize.width);
+  expect(bytes.readUInt32BE(20)).toBe(backingSize.height);
+
+  const decoded = await page.evaluate(async (base64) => {
+    const binary = atob(base64);
+    const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
+    const bitmap = await createImageBitmap(new Blob([bytes], { type: 'image/png' }));
+    const sample = document.createElement('canvas');
+
+    sample.width = 64;
+    sample.height = 64;
+    const context = sample.getContext('2d', { willReadFrequently: true });
+
+    if (!context) {
+      bitmap.close();
+      throw new Error('Chromium could not create a 2D sampling context.');
+    }
+    context.drawImage(bitmap, 0, 0, sample.width, sample.height);
+    const pixels = context.getImageData(0, 0, sample.width, sample.height).data;
+    let luminanceTotal = 0;
+    let luminanceSquaredTotal = 0;
+    let opaquePixels = 0;
+
+    for (let offset = 0; offset < pixels.length; offset += 4) {
+      const luminance = pixels[offset] * 0.2126 + pixels[offset + 1] * 0.7152 + pixels[offset + 2] * 0.0722;
+
+      luminanceTotal += luminance;
+      luminanceSquaredTotal += luminance * luminance;
+      if (pixels[offset + 3] > 0) {
+        opaquePixels++;
+      }
+    }
+    const sampleCount = pixels.length / 4;
+    const mean = luminanceTotal / sampleCount;
+    const decodedSize = { height: bitmap.height, width: bitmap.width };
+
+    bitmap.close();
+
+    return {
+      height: decodedSize.height,
+      opaquePixels,
+      variance: luminanceSquaredTotal / sampleCount - mean * mean,
+      width: decodedSize.width,
+    };
+  }, bytes.toString('base64'));
+
+  expect(decoded.width).toBe(backingSize.width);
+  expect(decoded.height).toBe(backingSize.height);
+  expect(decoded.opaquePixels).toBeGreaterThan(0);
+  expect(decoded.variance).toBeGreaterThan(0.01);
+}
+
+/** Captures the current production frame and validates its backing-store dimensions. */
+async function captureAndExpectSnapshot(page: Page, expectedContext: string): Promise<void> {
+  const backingSize = await page.locator('#keeptrack-canvas').evaluate((canvas) => ({
+    height: (canvas as HTMLCanvasElement).height,
+    width: (canvas as HTMLCanvasElement).width,
+  }));
+  const pendingDownload = page.waitForEvent('download');
+
+  await page.getByTestId('snapshot-export').click();
+  await expectDecodedSnapshot(page, await pendingDownload, expectedContext, backingSize);
+  await expect(page.getByTestId('app-notice')).toContainText('Downloaded canvas-only snapshot');
+}
 
 /** Shares one immutable catalog read across the production journeys. */
 function loadBundledFixtureSubjects(): Promise<BundledFixtureSubjects> {
@@ -114,6 +212,70 @@ function buildConjunctionFixture(subjects: BundledFixtureSubjects, now = new Dat
     ],
   };
 }
+
+test.describe('SatGlobe production-static script policy', () => {
+  test.skip(!process.env.CI, 'Strict CSP acceptance requires the prebuilt production-static server.'); // NOSONAR: S1607 - local E2E serves a watch build, not audited static output.
+
+  test('boots workers, lenses, and a story with the exact CSP and no violations', async ({ page }) => {
+    const consoleErrors: string[] = [];
+    const pageErrors: string[] = [];
+    const workerUrls: string[] = [];
+
+    page.on('console', (message) => {
+      if (message.type() === 'error') {
+        consoleErrors.push(message.text());
+      }
+    });
+    page.on('pageerror', (error) => pageErrors.push(error.message));
+    page.on('worker', (worker) => workerUrls.push(worker.url()));
+    await page.addInitScript(() => {
+      const state = window as Window & { __satGlobeCspViolations?: string[] };
+
+      state.__satGlobeCspViolations = [];
+      document.addEventListener('securitypolicyviolation', (event) => {
+        state.__satGlobeCspViolations?.push(`${event.effectiveDirective}: ${event.blockedURI}`);
+      });
+    });
+
+    const response = await page.goto('/');
+    const csp = response?.headers()['content-security-policy'];
+
+    expect(response?.ok()).toBe(true);
+    expect(csp).toBe(SATGLOBE_CSP);
+    expect(csp).not.toContain('\'unsafe-eval\'');
+    expect((await page.request.get('/__reload-client.js')).status()).toBe(404);
+    await expect(page.getByTestId('satglobe-app')).toBeVisible();
+    await expect(page.getByTestId('catalog-status')).toContainText('OBJECTS · LOCAL CATALOG', { timeout: 45_000 });
+    await page.waitForFunction(() => window.keepTrack?.isReady === true, undefined, { timeout: 45_000 });
+    await expect.poll(() => workerUrls.length).toBeGreaterThan(0);
+    const registeredThreads = await page.evaluate(() => window.keepTrack.threads
+      .map(({ WEB_WORKER_CODE, isReady }) => ({ WEB_WORKER_CODE, isReady })));
+
+    expect(registeredThreads.length).toBeGreaterThan(0);
+    expect(registeredThreads.every(({ WEB_WORKER_CODE, isReady }) => WEB_WORKER_CODE.length > 0 && isReady)).toBe(true);
+
+    await page.getByTestId('starlink-lens').click();
+    await expect(page.getByTestId('encoding-select')).toHaveValue('orbital-plane');
+    const conjunctionLens = page.getByTestId('conjunction-lens');
+
+    await expect(conjunctionLens).toBeEnabled({ timeout: 45_000 });
+    await conjunctionLens.click();
+    await expect(conjunctionLens).toHaveAttribute('aria-pressed', 'true');
+    await page.getByTestId('story-mode').click();
+    await expect(page.getByTestId('story-deck')).toBeVisible();
+    await page.getByRole('button', { name: 'Next beat' }).click();
+    await expect(page.getByTestId('story-deck')).toContainText('One launch, one catalog cohort');
+
+    const cspViolations = await page.evaluate(() =>
+      (window as Window & { __satGlobeCspViolations?: string[] }).__satGlobeCspViolations ?? [],
+    );
+
+    expect(workerUrls).not.toEqual([]);
+    expect(cspViolations).toEqual([]);
+    expect(consoleErrors).toEqual([]);
+    expect(pageErrors).toEqual([]);
+  });
+});
 
 test.describe('SatGlobe workshop', () => {
   test.beforeEach(async ({ page }) => {
@@ -213,10 +375,60 @@ test.describe('SatGlobe workshop', () => {
     expect(conjunctionFeedV1Schema.parse(await response.json()).conjunctions.length).toBeGreaterThan(0);
   });
 
+  test('exports decoded full-resolution PNG frames without retaining the drawing buffer', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 720 });
+    const contextSettings = await page.locator('#keeptrack-canvas').evaluate((canvas) => {
+      const gl = (canvas as HTMLCanvasElement).getContext('webgl2');
+
+      return {
+        actual: gl?.getContextAttributes()?.preserveDrawingBuffer,
+        configured: window.settingsManager.isPreserveDrawingBuffer,
+      };
+    });
+
+    expect(contextSettings).toEqual({ actual: false, configured: false });
+
+    await page.getByRole('button', { name: 'Present' }).click();
+    await expect(page.getByText('A living orbital environment')).toBeVisible();
+    await captureAndExpectSnapshot(page, 'view');
+
+    await page.getByTestId('story-mode').click();
+    await expect(page.getByTestId('story-deck')).toContainText('Before the shell');
+    await page.getByRole('button', { name: 'Next beat' }).click();
+    await expect(page.getByTestId('story-deck')).toContainText('One launch, one catalog cohort');
+    const storyId = await page.getByTestId('story-picker').inputValue();
+
+    await captureAndExpectSnapshot(page, storyId);
+  });
+
   test('filters, inspects, presents, tells a story, and exports a view', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 720 });
+    await page.evaluate((names) => {
+      for (const name of names) {
+        performance.clearMeasures(name);
+      }
+    }, SATGLOBE_INTERACTION_MEASURES);
     await page.getByTestId('starlink-lens').click();
     await expect(page.getByTestId('encoding-select')).toHaveValue('orbital-plane');
+    const visualMeasures = await page.evaluate((names) => {
+      const result: Record<string, unknown[]> = {};
+
+      for (const name of names) {
+        const details: unknown[] = [];
+
+        for (const entry of performance.getEntriesByName(name) as PerformanceMeasure[]) {
+          details.push(entry.detail);
+        }
+        result[name] = details;
+      }
+
+      return result;
+    }, [LENS_APPLY_MEASURE, FILTER_APPLY_MEASURE, RECOLOR_MEASURE, COUNT_UPDATE_MEASURE] as const);
+
+    expect(visualMeasures[LENS_APPLY_MEASURE]).toEqual([{ lens: 'starlink' }]);
+    expect(visualMeasures[FILTER_APPLY_MEASURE]).toEqual([{ cause: 'combined' }]);
+    expect(visualMeasures[RECOLOR_MEASURE]).toEqual([{ cause: 'combined' }]);
+    expect(visualMeasures[COUNT_UPDATE_MEASURE]).toEqual([{ cause: 'combined' }]);
 
     const search = page.getByTestId('catalog-search');
     const readZoom = () => page.evaluate(() => window.satGlobe?.getState().camera.zoom ?? Number.NaN);
@@ -238,7 +450,11 @@ test.describe('SatGlobe workshop', () => {
     await search.fill('STARLINK-1008');
     await page.getByTestId('search-results').getByRole('button').first().click();
     await expect(page.getByTestId('object-inspector')).toContainText('STARLINK');
-    await expect.poll(readZoom).toBeCloseTo(cameraBeforeSelection?.zoom ?? 0, 4);
+    // Selection must not start a focus zoom. Let the preceding authored-camera
+    // easing finish, then compare at a product-relevant tolerance instead of
+    // racing sub-pixel floating-point drift on the current frame.
+    await expect.poll(readAnimationFrameZoomDelta).toBeLessThan(0.00005);
+    expect(await readZoom()).toBeCloseTo(cameraBeforeSelection?.zoom ?? 0, 3);
     expect(await page.evaluate(() => window.settingsManager.isFocusOnSatelliteWhenSelected)).toBe(false);
     expect(await page.evaluate(() => window.settingsManager.noMeshManager)).toBe(true);
     await expect(page.getByTestId('scale-disclosure')).toContainText('SEMANTIC SCALE');
@@ -258,6 +474,157 @@ test.describe('SatGlobe workshop', () => {
     await expect(page.getByTestId('story-play')).toHaveAttribute('aria-label', 'Pause story');
     await page.getByRole('button', { name: 'Open workshop' }).click();
     await expect(page.getByTestId('discover-panel')).toBeVisible();
+  });
+
+  test('authors, reloads, and plays a two-view mission sequence with one recolor per step', async ({ page }) => {
+    test.setTimeout(90_000);
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.setViewportSize({ width: 2560, height: 1440 });
+    await page.getByRole('button', { name: '+ Save current' }).click();
+    await expect(page.getByTestId('app-notice')).toContainText('Saved');
+    await page.getByText('GEO belt', { exact: true }).click();
+    await expect(page.getByTestId('encoding-select')).toHaveValue('orbit-regime');
+    await page.getByRole('button', { name: '+ Save current' }).click();
+
+    await page.getByTestId('open-playlist-editor').click();
+    await page.getByTestId('playlist-name').fill('Two-stop orbit briefing');
+    await page.getByTestId('add-playlist-view-0').click();
+    await page.getByTestId('add-playlist-view-1').click();
+    await page.getByTestId('playlist-caption-0').fill('Begin at the high ring.');
+    await page.getByTestId('playlist-caption-1').fill('Return to the active catalog.');
+    await page.getByTestId('playlist-duration-0').fill('1');
+    await page.getByTestId('playlist-duration-1').fill('1');
+    await page.getByTestId('save-playlist').click();
+    await expect(page.getByTestId('app-notice')).toContainText('Saved playlist');
+
+    await page.reload();
+    await expect(page.getByTestId('catalog-status')).toContainText('OBJECTS · LOCAL CATALOG', { timeout: 45_000 });
+    await page.getByTestId('playlist-record').filter({ hasText: 'Two-stop orbit briefing' }).locator(':scope > button').click();
+    const deck = page.getByTestId('playlist-deck');
+
+    await expect(deck).toHaveAttribute('data-playing', 'false');
+    await expect(deck).toHaveAttribute('data-entry-index', '0');
+    await expect(page.getByTestId('playlist-caption')).toHaveText('Begin at the high ring.');
+    await expect(page.getByTestId('encoding-select')).toHaveValue('orbit-regime');
+    await expect(page.getByTestId('story-deck')).toHaveCount(0);
+    await expect(page.getByText('Sources · Facts')).toHaveCount(0);
+    await expect(page.getByTestId('discover-panel')).toBeHidden();
+    await expect(page.getByTestId('object-inspector')).toBeHidden();
+    await expect(page.locator('.sg-time-dock')).toBeHidden();
+    await expect(page.locator('.sg-presentation-title')).toHaveCount(0);
+
+    // The presentation time dock must not intercept the transport at desktop scale.
+    await page.getByTestId('playlist-next').click();
+    await expect(deck).toHaveAttribute('data-entry-index', '1');
+    await page.getByRole('button', { name: 'Previous playlist view' }).click();
+    await expect(deck).toHaveAttribute('data-entry-index', '0');
+
+    await page.evaluate((names) => {
+      for (const name of names) {
+        performance.clearMeasures(name);
+      }
+    }, SATGLOBE_INTERACTION_MEASURES);
+    await page.getByTestId('playlist-play').click();
+    await expect(deck).toHaveAttribute('data-entry-index', '1', { timeout: 5_000 });
+    await expect(deck).toHaveAttribute('data-playing', 'false');
+    await expect(page.getByTestId('playlist-caption')).toHaveText('Return to the active catalog.');
+    await expect(page.getByTestId('encoding-select')).toHaveValue('object-type');
+    const stepMeasures = await page.evaluate((names) => {
+      const result: Record<string, unknown[]> = {};
+
+      for (const name of names) {
+        const details: unknown[] = [];
+
+        for (const entry of performance.getEntriesByName(name) as PerformanceMeasure[]) {
+          details.push(entry.detail);
+        }
+        result[name] = details;
+      }
+
+      return result;
+    }, [PLAYLIST_APPLY_MEASURE, FILTER_APPLY_MEASURE, RECOLOR_MEASURE, COUNT_UPDATE_MEASURE] as const);
+
+    expect(stepMeasures[PLAYLIST_APPLY_MEASURE]).toEqual([expect.objectContaining({ entryIndex: 1 })]);
+    expect(stepMeasures[FILTER_APPLY_MEASURE]).toEqual([{ cause: 'combined' }]);
+    expect(stepMeasures[RECOLOR_MEASURE]).toEqual([{ cause: 'combined' }]);
+    expect(stepMeasures[COUNT_UPDATE_MEASURE]).toEqual([{ cause: 'combined' }]);
+  });
+
+  test('scrubs cumulative launch history monotonically with one visual pass and no paused churn', async ({ page }) => {
+    await page.setViewportSize({ width: 2560, height: 1440 });
+    const visibleCount = async () => Number((await page.getByTestId('visible-count').textContent())?.replace(/,/gu, '').match(/\d+/u)?.[0]);
+    const timeline = page.getByTestId('launch-timelapse');
+
+    await expect(timeline).toBeVisible();
+    const fullCatalogCount = await visibleCount();
+
+    await page.getByRole('button', { name: 'Show launches through 1960' }).click();
+    await expect(timeline).toHaveAttribute('data-year', '1960');
+    await expect.poll(visibleCount).toBeLessThan(fullCatalogCount);
+    const count1960 = await visibleCount();
+
+    await page.evaluate((names) => {
+      for (const name of names) {
+        performance.clearMeasures(name);
+      }
+    }, SATGLOBE_INTERACTION_MEASURES);
+    await page.getByRole('button', { name: 'Show launches through 1970' }).click();
+    await expect(timeline).toHaveAttribute('data-year', '1970');
+    await expect.poll(visibleCount).toBeGreaterThan(count1960);
+    const count1970 = await visibleCount();
+    const stepMeasures = await page.evaluate((names) => {
+      const result: Record<string, unknown[]> = {};
+
+      for (const name of names) {
+        result[name] = (performance.getEntriesByName(name) as PerformanceMeasure[]).map(({ detail }) => detail);
+      }
+
+      return result;
+    }, [LAUNCH_TIMELAPSE_APPLY_MEASURE, FILTER_APPLY_MEASURE, RECOLOR_MEASURE, COUNT_UPDATE_MEASURE] as const);
+
+    expect(stepMeasures[LAUNCH_TIMELAPSE_APPLY_MEASURE]).toEqual([{ year: 1970 }]);
+    expect(stepMeasures[FILTER_APPLY_MEASURE]).toEqual([{ cause: 'combined' }]);
+    expect(stepMeasures[RECOLOR_MEASURE]).toEqual([{ cause: 'combined' }]);
+    expect(stepMeasures[COUNT_UPDATE_MEASURE]).toEqual([{ cause: 'combined' }]);
+
+    await page.getByRole('button', { name: 'Show launches through 2020' }).click();
+    await expect(timeline).toHaveAttribute('data-year', '2020');
+    await expect.poll(visibleCount).toBeGreaterThan(count1970);
+    await expect(page.getByTestId('encoding-select')).toHaveValue('launch-cohort');
+
+    await page.evaluate((names) => {
+      for (const name of names) {
+        performance.clearMeasures(name);
+      }
+    }, SATGLOBE_INTERACTION_MEASURES);
+    // Absence is the behavior under test: observe longer than the 500 ms autoplay tick,
+    // because there is no positive condition for Playwright to await while paused.
+    await page.waitForTimeout(750); // NOSONAR -- intentional no-churn observation window.
+    expect(await page.evaluate((names) => names.every((name) => performance.getEntriesByName(name).length === 0), SATGLOBE_INTERACTION_MEASURES)).toBe(true);
+
+    await page.getByRole('button', { name: 'Present' }).click();
+    await expect(timeline).toBeVisible();
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await expect(page.getByRole('button', { name: 'Play launch history' })).toBeDisabled();
+    await page.getByRole('button', { name: 'Show launches through 1970' }).click();
+    await expect(timeline).toHaveAttribute('data-year', '1970');
+
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.getByRole('button', { name: 'Workshop', exact: true }).click();
+    const expectTimelineClearOfDiscover = async (width: number) => {
+      await page.setViewportSize({ width, height: 720 });
+      const timelineBox = await timeline.boundingBox();
+      const discoverBox = await page.getByTestId('discover-panel').boundingBox();
+
+      expect(timelineBox).not.toBeNull();
+      expect(discoverBox).not.toBeNull();
+      expect(timelineBox!.x).toBeGreaterThanOrEqual(discoverBox!.x + discoverBox!.width + 12);
+    };
+
+    await expectTimelineClearOfDiscover(800);
+    await expectTimelineClearOfDiscover(1_000);
+    await page.getByTestId('catalog-search').click();
+    await expect(page.getByTestId('catalog-search')).toBeFocused();
   });
 
   test('keeps presentation typography legible at 4K', async ({ page }) => {

@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { conjunctionFeedV1Schema } from '../../src/satglobe/domain/conjunctions';
-import { catalogIdFromTle } from './catalog-refresh';
+import { catalogIdFromTle, validateCatalogManifest } from './catalog-refresh';
 import {
   loadSocratesSource,
   parseSocratesCsv,
@@ -120,16 +120,9 @@ describe('SOCRATES refresh', () => {
     const feed = conjunctionFeedV1Schema.parse(JSON.parse(
       await readFile(path.resolve('public/tle/satglobe/conjunctions.json'), 'utf8'),
     ));
-    const manifest = JSON.parse(await readFile(path.resolve('public/tle/satglobe/manifest.json'), 'utf8')) as {
-      checksum: string;
-      conjunctions: {
-        snapshotId: string;
-        eventCount: number;
-        updatedAt: string;
-        retrievedAt: string;
-        checksum: string;
-      };
-    };
+    const catalogJson = await readFile(path.resolve('public/tle/tle.json'), 'utf8');
+    const manifestJson = await readFile(path.resolve('public/tle/satglobe/manifest.json'), 'utf8');
+    const manifest = validateCatalogManifest(catalogJson, manifestJson);
     const summary = JSON.parse(await readFile(path.resolve('public/tle/satglobe/summary.json'), 'utf8')) as {
       conjunctionCount: number;
       conjunctionSnapshotId: string;
@@ -143,6 +136,7 @@ describe('SOCRATES refresh', () => {
       retrievedAt: feed.source.retrievedAt,
       checksum: feed.source.checksum,
     });
+    expect(manifest.schemaVersion).toBe(2);
     expect(summary).toMatchObject({
       conjunctionCount: feed.conjunctions.length,
       conjunctionSnapshotId: feed.snapshotId,

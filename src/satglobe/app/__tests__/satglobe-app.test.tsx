@@ -1,6 +1,7 @@
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { StrictMode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { DEFAULT_CAMERA, DEFAULT_FILTERS, type AvailableConjunctionState, type SavedViewV1, type SpaceObjectView } from '../../domain/types';
+import { DEFAULT_CAMERA, DEFAULT_FILTERS, type AvailableConjunctionState, type PlaylistV1, type SavedViewV1, type SpaceObjectView } from '../../domain/types';
 import { storyLibrary } from '../../stories';
 import { SatGlobeApp } from '../satglobe-app';
 import { makeAdapter } from './test-adapter';
@@ -10,9 +11,11 @@ const mutatingMethodNames = [
   'clearSelection',
   'setSimulationTime',
   'setPlaybackRate',
+  'captureSnapshot',
   'setCamera',
   'setFilters',
   'setEncoding',
+  'setVisualState',
   'setHighlight',
   'setScaleMode',
   'drawOrbit',
@@ -68,6 +71,33 @@ function stubWebGl(available = true) {
   );
 }
 
+/** Supplies a live reduced-motion preference to shell-level playback tests. */
+function stubMotion(reducedMotion: boolean) {
+  let matches = reducedMotion;
+  const listeners = new Set<() => void>();
+  const mediaQuery = {
+    get matches() {
+      return matches;
+    },
+    media: '(prefers-reduced-motion: reduce)',
+    onchange: null,
+    addEventListener: vi.fn((_type: string, listener: () => void) => listeners.add(listener)),
+    removeEventListener: vi.fn((_type: string, listener: () => void) => listeners.delete(listener)),
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  };
+
+  vi.spyOn(window, 'matchMedia').mockImplementation(() => mediaQuery);
+
+  return {
+    setReducedMotion(next: boolean) {
+      matches = next;
+      listeners.forEach((listener) => listener());
+    },
+  };
+}
+
 /** Renders a ready shell with a constructor-free adapter by default. */
 function renderApp(options: Parameters<typeof makeAdapter>[0] = {}) {
   stubWebGl();
@@ -113,6 +143,19 @@ async function importPreset(raw: string) {
   return screen.getByTestId('app-notice');
 }
 
+/** Selects a portable-playlist file and waits for its user-visible result. */
+async function importPlaylistFile(raw: string) {
+  const file = new File([raw], 'playlist.json', { type: 'application/json' });
+
+  Object.defineProperty(file, 'text', { value: vi.fn().mockResolvedValue(raw) });
+  fireEvent.change(screen.getByTestId('import-playlist'), { target: { files: [file] } });
+  await vi.waitFor(() => {
+    screen.getByTestId('app-notice');
+  });
+
+  return screen.getByTestId('app-notice');
+}
+
 describe('SatGlobeApp', () => {
   afterEach(() => {
     cleanup();
@@ -146,6 +189,42 @@ describe('SatGlobeApp', () => {
     expect(screen.queryByText('Preparing the orbital environment')).toBeNull();
   });
 
+  it('applies cumulative launch history through one combined visual update in Workshop and Present', () => {
+    const firstLaunch = { ...selectedObject, catalogId: '5', internationalDesignator: '1958-002B', launchDate: '1958-03-17' };
+    const newestLaunch = { ...selectedObject, catalogId: '99999', internationalDesignator: '2026-027A', launchDate: '2026-02-03' };
+    const { methods } = renderApp({ objects: [firstLaunch, newestLaunch] });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show launches through 1970' }));
+    expect(methods.setVisualState).toHaveBeenCalledOnce();
+    expect(methods.setVisualState).toHaveBeenCalledWith({
+      encoding: 'launch-cohort',
+      filters: expect.objectContaining({
+        launchYearMax: 1970,
+        objectKinds: ['payload', 'rocket-body', 'debris', 'other'],
+        status: 'all',
+      }),
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Present' }));
+    expect(screen.getByTestId('launch-timelapse')).toBeTruthy();
+    fireEvent.click(screen.getByTestId('story-mode'));
+    expect(screen.queryByTestId('launch-timelapse')).toBeNull();
+  });
+
+  it('deactivates launch history when a quick lens replaces its cumulative filter', () => {
+    const firstLaunch = { ...selectedObject, catalogId: '5', internationalDesignator: '1958-002B', launchDate: '1958-03-17' };
+    const newestLaunch = { ...selectedObject, catalogId: '99999', internationalDesignator: '2026-027A', launchDate: '2026-02-03' };
+
+    renderApp({ objects: [firstLaunch, newestLaunch] });
+    fireEvent.click(screen.getByRole('button', { name: 'Show launches through 1970' }));
+    expect(screen.getByTestId('launch-timelapse').getAttribute('data-active')).toBe('true');
+
+    fireEvent.click(screen.getByTestId('starlink-lens'));
+
+    expect(screen.getByTestId('launch-timelapse').getAttribute('data-active')).toBe('false');
+    expect(screen.getByTestId('launch-timelapse').getAttribute('data-playing')).toBe('false');
+  });
+
   it('announces notices without replacing the dismiss button semantics', () => {
     renderApp();
     fireEvent.click(screen.getByRole('button', { name: '+ Save current' }));
@@ -159,6 +238,136 @@ describe('SatGlobeApp', () => {
 
     fireEvent.click(dismiss);
     expect(screen.queryByTestId('app-notice')).toBeNull();
+  });
+
+  it('guards one canvas snapshot through encoding, download, and accessible success', async () => {
+    let finishCapture: ((blob: Blob) => void) | null = null;
+    let downloadedFilename = '';
+    const downloadClick = vi.fn();
+    const createObjectURL = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:satglobe-snapshot');
+    const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+    const { methods } = renderApp();
+
+    vi.spyOn(document.body, 'append').mockImplementation((...nodes) => {
+      const anchor = nodes[0] as HTMLAnchorElement;
+
+      downloadedFilename = anchor.download;
+      anchor.click = downloadClick;
+    });
+
+    methods.captureSnapshot.mockImplementationOnce(() => new Promise((resolve) => {
+      finishCapture = resolve;
+    }));
+    const button = screen.getByTestId('snapshot-export') as HTMLButtonElement;
+
+    fireEvent.click(button);
+    fireEvent.click(button);
+
+    expect(methods.captureSnapshot).toHaveBeenCalledOnce();
+    expect(button.disabled).toBe(true);
+    expect(button.getAttribute('aria-busy')).toBe('true');
+    expect(button.getAttribute('aria-label')).toBe('Preparing canvas snapshot');
+
+    await act(async () => {
+      finishCapture!(new Blob(['png'], { type: 'image/png' }));
+      await Promise.resolve();
+    });
+    const status = within(screen.getByTestId('app-notice')).getByRole('status');
+
+    expect(status.textContent).toContain('Downloaded canvas-only snapshot');
+
+    expect(button.disabled).toBe(false);
+    expect(button.getAttribute('aria-busy')).toBeNull();
+    expect(createObjectURL).toHaveBeenCalledOnce();
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:satglobe-snapshot');
+    expect(downloadClick).toHaveBeenCalledOnce();
+    expect(downloadedFilename).toMatch(/^satglobe-view-\d{8}T\d{6}Z\.png$/u);
+    expect(status.textContent).toContain('Interface panels and captions were not included');
+  });
+
+  it('announces snapshot failure assertively and leaves no download behind', async () => {
+    const createObjectURL = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:unused');
+    const { methods } = renderApp();
+
+    methods.captureSnapshot.mockRejectedValueOnce(new Error('WebGL context lost'));
+    fireEvent.click(screen.getByTestId('snapshot-export'));
+
+    await vi.waitFor(() => expect(screen.getByRole('alert').textContent).toContain('Snapshot failed'));
+
+    expect(screen.getByRole('alert').textContent).toContain('WebGL context lost');
+    expect(screen.getByRole('alert').textContent).toContain('No file was downloaded');
+    expect(createObjectURL).not.toHaveBeenCalled();
+    expect((screen.getByTestId('snapshot-export') as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it('settles the snapshot guard when the adapter throws before returning a promise', async () => {
+    const { methods } = renderApp();
+
+    methods.captureSnapshot.mockImplementationOnce(() => {
+      throw new Error('Renderer unavailable');
+    });
+    const button = screen.getByTestId('snapshot-export') as HTMLButtonElement;
+
+    fireEvent.click(button);
+    await vi.waitFor(() => expect(screen.getByRole('alert').textContent).toContain('Renderer unavailable'));
+
+    expect(button.disabled).toBe(false);
+    expect(button.getAttribute('aria-busy')).toBeNull();
+  });
+
+  it('does not download or update shell state when capture settles after unmount', async () => {
+    let finishCapture: ((blob: Blob) => void) | null = null;
+    const createObjectURL = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:unused');
+
+    stubWebGl();
+    const testAdapter = makeAdapter();
+
+    testAdapter.methods.captureSnapshot.mockImplementationOnce(() => new Promise((resolve) => {
+      finishCapture = resolve;
+    }));
+    const { unmount } = render(<SatGlobeApp adapter={testAdapter.adapter} />);
+
+    fireEvent.click(screen.getByTestId('snapshot-export'));
+    unmount();
+    await act(async () => {
+      finishCapture!(new Blob(['png'], { type: 'image/png' }));
+      await Promise.resolve();
+    });
+
+    expect(createObjectURL).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('satglobe-app')).toBeNull();
+  });
+
+  it('keeps snapshot settlement live through the StrictMode effect probe', async () => {
+    const createObjectURL = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:satglobe-snapshot');
+    const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+
+    stubWebGl();
+    const testAdapter = makeAdapter();
+
+    vi.spyOn(document.body, 'append').mockImplementation((...nodes) => {
+      (nodes[0] as HTMLAnchorElement).click = vi.fn();
+    });
+    render(<StrictMode><SatGlobeApp adapter={testAdapter.adapter} /></StrictMode>);
+
+    fireEvent.click(screen.getByTestId('snapshot-export'));
+    await vi.waitFor(() => expect(createObjectURL).toHaveBeenCalledOnce());
+
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:satglobe-snapshot');
+    expect(within(screen.getByTestId('app-notice')).getByRole('status').textContent).toContain('Downloaded canvas-only snapshot');
+  });
+
+  it('keeps the guarded camera action available in Workshop, Present, and Story', () => {
+    renderApp();
+    const snapshot = () => screen.getByRole('button', { name: 'Download canvas snapshot' });
+
+    expect(snapshot()).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Present' }));
+    expect(snapshot()).toBeTruthy();
+    fireEvent.click(screen.getByTestId('story-mode'));
+    fireEvent.click(screen.getByRole('button', { name: 'Next beat' }));
+    expect(snapshot()).toBeTruthy();
+    expect(snapshot().getAttribute('title')).toContain('rendered canvas only');
   });
 
   it('handles the global search, legend, presentation, and escape shortcuts', () => {
@@ -177,27 +386,52 @@ describe('SatGlobeApp', () => {
     fireEvent.keyDown(window, { key: 'f' });
     expect(app.classList.contains('sg-mode-presentation')).toBe(true);
 
+    // Escape peels one layer per press: the open legend first, the mode second.
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(screen.queryByTestId('keyboard-legend')).toBeNull();
+    expect(app.classList.contains('sg-mode-presentation')).toBe(true);
+
     fireEvent.keyDown(window, { key: 'Escape' });
     expect(app.classList.contains('sg-mode-workshop')).toBe(true);
-    expect(screen.queryByTestId('keyboard-legend')).toBeNull();
   });
 
   it('uses arrow and space shortcuts to navigate and play a story', () => {
+    const nextBeat = storyLibrary[0].beats[1];
     const { methods } = renderApp();
 
     fireEvent.click(screen.getByTestId('story-mode'));
     expect(screen.getByTestId('story-deck').textContent).toContain('Before the shell');
+    methods.setVisualState.mockClear();
     methods.setFilters.mockClear();
+    methods.setEncoding.mockClear();
 
     fireEvent.keyDown(window, { key: 'ArrowRight' });
     expect(screen.getByTestId('story-deck').textContent).toContain('One launch, one catalog cohort');
-    expect(methods.setFilters).toHaveBeenCalledTimes(1);
+    expect(methods.setVisualState).toHaveBeenCalledTimes(1);
+    expect(methods.setVisualState).toHaveBeenCalledWith({
+      filters: expect.objectContaining({ launchCohort: nextBeat.launchCohort }),
+      encoding: nextBeat.encoding,
+    });
+    expect(methods.setFilters).not.toHaveBeenCalled();
+    expect(methods.setEncoding).not.toHaveBeenCalled();
 
     fireEvent.keyDown(window, { key: 'ArrowLeft' });
     expect(screen.getByTestId('story-deck').textContent).toContain('Before the shell');
 
     fireEvent.keyDown(window, { key: ' ' });
     expect(screen.getByTestId('story-play').getAttribute('aria-label')).toBe('Pause story');
+  });
+
+  it('does not toggle Story playback when Space is pressed on a source link', () => {
+    renderApp();
+
+    fireEvent.click(screen.getByTestId('story-mode'));
+    fireEvent.click(screen.getByRole('button', { name: 'Sources · Facts' }));
+    const sourceLink = within(screen.getByRole('dialog', { name: 'Sources and technical facts' })).getByRole('link');
+
+    fireEvent.keyDown(sourceLink, { key: ' ' });
+
+    expect(screen.getByTestId('story-play').getAttribute('aria-label')).toBe('Play story');
   });
 
   it('replays from the opening beat when playback is started at the end', () => {
@@ -226,6 +460,56 @@ describe('SatGlobeApp', () => {
     fireEvent.keyDown(dialog, { key: 'Escape' });
 
     expect(app.classList.contains('sg-mode-story')).toBe(true);
+    expect(screen.queryByRole('dialog', { name: 'Sources and technical facts' })).toBeNull();
+  });
+
+  it('closes only the sources drawer when Escape is pressed outside the dialog', () => {
+    renderApp();
+    const app = screen.getByTestId('satglobe-app');
+
+    fireEvent.click(screen.getByTestId('story-mode'));
+    fireEvent.click(screen.getByRole('button', { name: 'Sources · Facts' }));
+    expect(screen.getByRole('dialog', { name: 'Sources and technical facts' })).toBeTruthy();
+
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(app.classList.contains('sg-mode-story')).toBe(true);
+    expect(screen.queryByRole('dialog', { name: 'Sources and technical facts' })).toBeNull();
+
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(app.classList.contains('sg-mode-workshop')).toBe(true);
+  });
+
+  it('runs 60x only during active Story playback and reacts to reduced motion', () => {
+    const motion = stubMotion(false);
+    const { methods } = renderApp();
+
+    fireEvent.click(screen.getByTestId('story-mode'));
+    expect(methods.setPlaybackRate).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByTestId('story-play'));
+    expect(methods.setPlaybackRate).toHaveBeenLastCalledWith(60);
+
+    act(() => motion.setReducedMotion(true));
+    expect(methods.setPlaybackRate).toHaveBeenLastCalledWith(1);
+
+    act(() => motion.setReducedMotion(false));
+    expect(methods.setPlaybackRate).toHaveBeenLastCalledWith(60);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open workshop' }));
+    expect(methods.setPlaybackRate).toHaveBeenLastCalledWith(1);
+  });
+
+  it('does not resurrect the sources drawer when Story mode is re-entered', () => {
+    renderApp();
+
+    fireEvent.click(screen.getByTestId('story-mode'));
+    fireEvent.click(screen.getByRole('button', { name: 'Sources · Facts' }));
+    expect(screen.getByRole('dialog', { name: 'Sources and technical facts' })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open workshop' }));
+    fireEvent.click(screen.getByTestId('story-mode'));
+
+    expect(screen.getByTestId('story-deck')).toBeTruthy();
     expect(screen.queryByRole('dialog', { name: 'Sources and technical facts' })).toBeNull();
   });
 
@@ -324,9 +608,17 @@ describe('SatGlobeApp', () => {
     const { methods } = renderApp();
 
     fireEvent.click(screen.getByTestId('story-mode'));
+    methods.setVisualState.mockClear();
+    methods.setFilters.mockClear();
+    methods.setEncoding.mockClear();
     fireEvent.change(screen.getByTestId('story-picker'), { target: { value: cohortStory.id } });
 
-    expect(methods.setFilters).toHaveBeenCalledWith(expect.objectContaining({ launchCohort: cohortBeat.launchCohort }));
+    expect(methods.setVisualState).toHaveBeenCalledWith({
+      filters: expect.objectContaining({ launchCohort: cohortBeat.launchCohort }),
+      encoding: cohortBeat.encoding,
+    });
+    expect(methods.setFilters).not.toHaveBeenCalled();
+    expect(methods.setEncoding).not.toHaveBeenCalled();
   });
 
   it('clears the preceding orbit and draws the sparse subject authored for an ISS beat', () => {
@@ -358,6 +650,32 @@ describe('SatGlobeApp', () => {
 
     expect(methods.clearOrbits).toHaveBeenCalledTimes(1);
     expect(methods.drawOrbit.mock.calls.map(([catalogId]) => catalogId)).toEqual(sixPlanesBeat.orbitCatalogIds);
+  });
+
+  it('draws capped filter-matched orbit cues for beats without stable authored ids', () => {
+    const heoStory = storyLibrary.find(({ id }) => id === 'launch-to-orbit')!;
+    const heoBeat = heoStory.beats.find(({ id }) => id === 'transfer-population')!;
+    const heo = (catalogId: string, overrides: Partial<SpaceObjectView> = {}): SpaceObjectView =>
+      ({ ...selectedObject, catalogId, regime: 'heo', apogeeKm: 39_000, ...overrides });
+    const { methods } = renderApp({
+      objects: [
+        heo('101'),
+        { ...selectedObject, catalogId: '102' },
+        heo('103', { kind: 'debris' }),
+        heo('104'),
+        heo('105'),
+        heo('106'),
+        heo('107'),
+      ],
+    });
+
+    expect(heoBeat.orbitMatchLimit).toBe(4);
+    fireEvent.click(screen.getByTestId('story-mode'));
+    fireEvent.change(screen.getByTestId('story-picker'), { target: { value: heoStory.id } });
+    methods.drawOrbit.mockClear();
+    fireEvent.click(screen.getByRole('button', { name: `Go to ${heoBeat.title}` }));
+
+    expect(methods.drawOrbit.mock.calls.map(([catalogId]) => catalogId)).toEqual(['101', '104', '105', '106']);
   });
 
   it('restores a saved story id and absolute offset-beat time without applying the offset twice', async () => {
@@ -420,12 +738,12 @@ describe('SatGlobeApp', () => {
     expect(screen.queryByTestId('story-deck')).toBeNull();
     expect(methods.setSimulationTime).toHaveBeenCalledTimes(1);
     expect(methods.setSimulationTime).toHaveBeenCalledWith(savedView.simulationTime);
-    expect(methods.setFilters).toHaveBeenCalledTimes(1);
-    expect(methods.setFilters).toHaveBeenCalledWith(savedView.filters);
+    expect(methods.setVisualState).toHaveBeenCalledTimes(1);
+    expect(methods.setVisualState).toHaveBeenCalledWith({ filters: savedView.filters, encoding: savedView.encoding });
     expect(methods.setCamera).toHaveBeenCalledTimes(1);
     expect(methods.setCamera).toHaveBeenCalledWith(savedView.camera);
-    expect(methods.setEncoding).toHaveBeenCalledTimes(1);
-    expect(methods.setEncoding).toHaveBeenCalledWith(savedView.encoding);
+    expect(methods.setFilters).not.toHaveBeenCalled();
+    expect(methods.setEncoding).not.toHaveBeenCalled();
     expect(methods.setScaleMode).toHaveBeenCalledTimes(1);
     expect(methods.setScaleMode).toHaveBeenCalledWith(savedView.scaleMode);
     expect(methods.clearSelection).toHaveBeenCalledTimes(1);
@@ -446,14 +764,157 @@ describe('SatGlobeApp', () => {
     expect(app.classList.contains('sg-mode-presentation')).toBe(false);
   });
 
-  it('applies a quick lens exactly once through the immediate filter path', () => {
+  it('applies a quick lens through one combined visual-state update', () => {
     const { methods } = renderApp();
 
     fireEvent.click(screen.getByTestId('starlink-lens'));
 
-    expect(methods.setFilters).toHaveBeenCalledTimes(1);
-    expect(methods.setFilters).toHaveBeenCalledWith(expect.objectContaining({ constellation: 'starlink' }));
-    expect(methods.setEncoding).toHaveBeenCalledWith('orbital-plane');
+    expect(methods.setVisualState).toHaveBeenCalledOnce();
+    expect(methods.setVisualState).toHaveBeenCalledWith({
+      filters: expect.objectContaining({ constellation: 'starlink' }),
+      encoding: 'orbital-plane',
+    });
+    expect(methods.setFilters).not.toHaveBeenCalled();
+    expect(methods.setEncoding).not.toHaveBeenCalled();
+  });
+
+  it('plays persisted views as a paused Presentation sequence with one visual update per step', () => {
+    const firstView: SavedViewV1 = {
+      schemaVersion: 1,
+      name: 'Opening field',
+      camera: DEFAULT_CAMERA,
+      simulationTime: '2026-07-18T12:00:00.000Z',
+      filters: { ...structuredClone(DEFAULT_FILTERS), status: 'all' },
+      encoding: 'object-type',
+      selectedObjectIds: [],
+      scaleMode: 'semantic',
+      presentation: { mode: 'story', panelsVisible: false, storyId: storyLibrary[0].id, storyBeat: 1 },
+    };
+    const secondView: SavedViewV1 = {
+      ...firstView,
+      name: 'Closing ring',
+      filters: { ...structuredClone(DEFAULT_FILTERS), regimes: ['geo'] },
+      encoding: 'orbit-regime',
+      scaleMode: 'true',
+    };
+    const playlist: PlaylistV1 = {
+      schemaVersion: 1,
+      id: '870bb249-6c6d-4771-8505-da74b2f393f2',
+      name: 'Two-view briefing',
+      entries: [
+        { view: firstView, caption: 'Begin in the whole field.', durationMs: 6_000 },
+        { view: secondView, caption: 'Finish at geosynchronous altitude.', durationMs: 7_000 },
+      ],
+    };
+
+    localStorage.setItem('satglobe.playlists.v1', JSON.stringify([playlist]));
+    const { methods } = renderApp();
+
+    fireEvent.click(screen.getByTestId(`play-playlist-${playlist.id}`));
+
+    expect(screen.getByTestId('satglobe-app').classList.contains('sg-mode-presentation')).toBe(true);
+    expect(screen.getByTestId('satglobe-app').classList.contains('sg-playlist-active')).toBe(true);
+    expect(screen.getByTestId('playlist-deck').getAttribute('data-playing')).toBe('false');
+    expect(screen.getByTestId('playlist-caption').textContent).toBe('Begin in the whole field.');
+    expect(screen.queryByTestId('story-deck')).toBeNull();
+    expect(document.querySelector('.sg-presentation-title')).toBeNull();
+    expect(screen.queryByText('Sources · Facts')).toBeNull();
+    expect(methods.setVisualState).toHaveBeenCalledTimes(1);
+    expect(methods.setVisualState).toHaveBeenLastCalledWith({ filters: firstView.filters, encoding: firstView.encoding });
+
+    fireEvent.click(screen.getByTestId('playlist-next'));
+
+    expect(screen.getByTestId('playlist-caption').textContent).toBe('Finish at geosynchronous altitude.');
+    expect(methods.setVisualState).toHaveBeenCalledTimes(2);
+    expect(methods.setVisualState).toHaveBeenLastCalledWith({ filters: secondView.filters, encoding: secondView.encoding });
+    expect(methods.setFilters).not.toHaveBeenCalled();
+    expect(methods.setEncoding).not.toHaveBeenCalled();
+
+    fireEvent.click(within(screen.getByTestId('playlist-deck')).getByRole('button', { name: 'Open workshop' }));
+    expect(screen.getByTestId('satglobe-app').classList.contains('sg-playlist-active')).toBe(false);
+    fireEvent.click(screen.getByRole('button', { name: 'Present' }));
+    expect(screen.queryByTestId('playlist-deck')).toBeNull();
+    expect(document.querySelector('.sg-presentation-title')).not.toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /^Workshop$/u }));
+    fireEvent.click(screen.getByTestId(`play-playlist-${playlist.id}`));
+
+    expect(screen.getByTestId('playlist-deck').getAttribute('data-entry-index')).toBe('0');
+    expect(screen.getByTestId('playlist-caption').textContent).toBe('Begin in the whole field.');
+    expect(methods.setVisualState).toHaveBeenCalledTimes(3);
+    expect(methods.setVisualState).toHaveBeenLastCalledWith({ filters: firstView.filters, encoding: firstView.encoding });
+  });
+
+  it('loads a persisted playlist after remount without resuming playback', () => {
+    const savedView: SavedViewV1 = {
+      schemaVersion: 1,
+      name: 'Portable view',
+      camera: DEFAULT_CAMERA,
+      simulationTime: '2026-07-18T12:00:00.000Z',
+      filters: structuredClone(DEFAULT_FILTERS),
+      encoding: 'object-type',
+      selectedObjectIds: [],
+      scaleMode: 'semantic',
+      presentation: { mode: 'presentation', panelsVisible: false },
+    };
+    const playlist: PlaylistV1 = {
+      schemaVersion: 1,
+      id: 'b340ac9e-8fa5-412f-94aa-58645dc9b341',
+      name: 'Reload-safe briefing',
+      entries: [
+        { view: savedView, caption: 'One', durationMs: 6_000 },
+        { view: savedView, caption: 'Two', durationMs: 6_000 },
+      ],
+    };
+
+    localStorage.setItem('satglobe.playlists.v1', JSON.stringify([playlist]));
+    renderApp();
+    expect(screen.getByText(playlist.name)).toBeTruthy();
+    expect(screen.queryByTestId('playlist-deck')).toBeNull();
+
+    cleanup();
+    renderApp();
+    expect(screen.getByText(playlist.name)).toBeTruthy();
+    expect(screen.queryByTestId('playlist-deck')).toBeNull();
+  });
+
+  it('rejects a hostile playlist atomically with a notice', async () => {
+    const existingView: SavedViewV1 = {
+      schemaVersion: 1,
+      name: 'Trusted view',
+      camera: DEFAULT_CAMERA,
+      simulationTime: '2026-07-18T12:00:00.000Z',
+      filters: structuredClone(DEFAULT_FILTERS),
+      encoding: 'object-type',
+      selectedObjectIds: [],
+      scaleMode: 'semantic',
+      presentation: { mode: 'presentation', panelsVisible: false },
+    };
+    const existingPlaylist: PlaylistV1 = {
+      schemaVersion: 1,
+      id: '0a46f600-7cce-4a84-8305-7fd7737a1afd',
+      name: 'Trusted sequence',
+      entries: [
+        { view: existingView, caption: 'Trusted opening', durationMs: 6_000 },
+        { view: existingView, caption: 'Trusted close', durationMs: 6_000 },
+      ],
+    };
+
+    localStorage.setItem('satglobe.playlists.v1', JSON.stringify([existingPlaylist]));
+    const { methods } = renderApp();
+    const persistedBeforeImport = localStorage.getItem('satglobe.playlists.v1');
+    const notice = await importPlaylistFile(JSON.stringify({
+      schemaVersion: 1,
+      id: 'fd4a58d9-6605-4cd8-b4c3-844dc2942257',
+      name: 'Hostile',
+      entries: [{ script: 'alert(1)' }, { script: 'alert(2)' }],
+    }));
+
+    expect(notice.textContent).toContain('This playlist is invalid');
+    expect(notice.textContent).toContain('No application state was changed.');
+    expect(screen.getByText(existingPlaylist.name)).toBeTruthy();
+    expect(screen.queryByText('Hostile')).toBeNull();
+    expect(localStorage.getItem('satglobe.playlists.v1')).toBe(persistedBeforeImport);
+    expectNoAdapterMutations(methods);
   });
 
   it('toggles the conjunction lens on and off while preserving filters and encoding', () => {

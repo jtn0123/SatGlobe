@@ -59,6 +59,7 @@ import { DemoManager } from './engine/utils/demo-mode';
 import { html } from './engine/utils/development/formatter';
 import { getEl } from './engine/utils/get-el';
 import { isThisNode } from './engine/utils/isThisNode';
+import { propagatorBackendRuntime } from './engine/utils/propagator-backend-runtime';
 import { keepTrackApi } from './keepTrackApi';
 import { settingsManager, SettingsManagerOverride } from './settings/settings';
 
@@ -112,8 +113,7 @@ export class KeepTrack {
      * backend (no-op for the default 'sgp4'). Fire-and-forget: satKeys attach
      * lazily, so propagation upgrades seamlessly once the runtime is ready.
      */
-    import('./engine/utils/sgp4-wasm-loader')
-      .then(({ activateConfiguredPropagatorBackend }) => activateConfiguredPropagatorBackend())
+    propagatorBackendRuntime.activateConfiguredPropagatorBackend()
       .catch(() => {
         // Failures are logged inside activateConfiguredPropagatorBackend
       });
@@ -489,4 +489,3 @@ theodore.kruczek at gmail dot com.
     }
   }
 }
-

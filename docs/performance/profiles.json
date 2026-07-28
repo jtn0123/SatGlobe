@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "profiles": [
+    {
+      "id": "apple-m4-1440p",
+      "title": "Apple M4, native 2560x1440",
+      "viewportWidth": 2560,
+      "viewportHeight": 1440,
+      "renderScale": 1,
+      "rendererPattern": "Apple M4",
+      "minimumSamples": 5,
+      "baselineRecordId": null
+    },
+    {
+      "id": "apple-m4-scaled-4k",
+      "title": "Apple M4, scaled 3840x2160",
+      "viewportWidth": 3840,
+      "viewportHeight": 2160,
+      "renderScale": 0.67,
+      "rendererPattern": "Apple M4",
+      "minimumSamples": 5,
+      "baselineRecordId": null
+    }
+  ]
+}

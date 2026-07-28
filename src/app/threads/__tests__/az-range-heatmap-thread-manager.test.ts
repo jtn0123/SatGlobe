@@ -1,10 +1,30 @@
+import { settingsManager } from '@app/settings/settings';
+import {
+  SGP4_WASM_BACKEND_MSG_TYPE,
+} from '@app/webworker/shared/sgp4-wasm-backend-messages';
 import { AzRangeMsgType, AzRangeOutMsgType } from '@app/webworker/az-range-heatmap-messages';
-import { describe, expect, it, vi } from 'vitest';
+import * as isThisNodeMod from '@app/engine/utils/isThisNode';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   AzRangeCallbacks,
   AzRangeHeatmapThreadManager,
   AzRangeParams,
 } from '../az-range-heatmap-thread-manager';
+
+const originalBackend = settingsManager.propagatorBackend;
+const originalInstallDirectory = settingsManager.installDirectory;
+
+class BrowserWorkerStub {
+  static instances: BrowserWorkerStub[] = [];
+  onerror: ((event: ErrorEvent) => void) | null = null;
+  onmessage: ((event: MessageEvent) => void) | null = null;
+  readonly postMessage = vi.fn();
+  readonly terminate = vi.fn();
+
+  constructor(readonly url: string) {
+    BrowserWorkerStub.instances.push(this);
+  }
+}
 
 /** A Worker stub whose postMessage/terminate are spies, passed to init() as workerStub. */
 const makeWorkerStub = () => ({
@@ -51,6 +71,14 @@ const emptyBins = () => [[0, 0], [0, 0]];
 
 interface OnMessageable { onMessage(e: { data: unknown }): void }
 
+afterEach(() => {
+  settingsManager.propagatorBackend = originalBackend;
+  settingsManager.installDirectory = originalInstallDirectory;
+  BrowserWorkerStub.instances = [];
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
+
 describe('AzRangeHeatmapThreadManager', () => {
   describe('lifecycle', () => {
     it('uses the provided worker stub on the Node path', () => {
@@ -66,6 +94,44 @@ describe('AzRangeHeatmapThreadManager', () => {
 
       expect(worker.terminate).toHaveBeenCalled();
       expect(mgr.worker).toBeNull();
+    });
+
+    it('configures every browser worker for the selected WASM propagator', () => {
+      vi.spyOn(isThisNodeMod, 'isThisNode').mockReturnValue(false);
+      vi.stubGlobal('navigator', { hardwareConcurrency: 3 });
+      vi.stubGlobal('Worker', BrowserWorkerStub);
+      settingsManager.installDirectory = '/satglobe/';
+      settingsManager.propagatorBackend = 'sgp4-xp-wasm';
+      const mgr = new AzRangeHeatmapThreadManager([]);
+
+      mgr.init();
+
+      expect(BrowserWorkerStub.instances).toHaveLength(3);
+      for (const worker of BrowserWorkerStub.instances) {
+        expect(worker.url).toBe('./js/azRangeHeatmapWorker.js');
+        expect(worker.postMessage).toHaveBeenCalledOnce();
+        expect(worker.postMessage).toHaveBeenCalledWith({
+          typ: SGP4_WASM_BACKEND_MSG_TYPE,
+          backend: 'sgp4-xp-wasm',
+          glueUrl: '/satglobe/wasm/sgp4prop/Sgp4Prop.xp.js',
+          wasmUrl: '/satglobe/wasm/sgp4prop/Sgp4Prop.xp.wasm',
+        });
+      }
+    });
+
+    it('does not configure browser workers for the default JavaScript propagator', () => {
+      vi.spyOn(isThisNodeMod, 'isThisNode').mockReturnValue(false);
+      vi.stubGlobal('navigator', { hardwareConcurrency: 2 });
+      vi.stubGlobal('Worker', BrowserWorkerStub);
+      settingsManager.propagatorBackend = 'sgp4';
+      const mgr = new AzRangeHeatmapThreadManager([]);
+
+      mgr.init();
+
+      expect(BrowserWorkerStub.instances).toHaveLength(2);
+      for (const worker of BrowserWorkerStub.instances) {
+        expect(worker.postMessage).not.toHaveBeenCalled();
+      }
     });
   });
 

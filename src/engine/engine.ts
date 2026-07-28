@@ -182,6 +182,7 @@ export class Engine {
 
     profiler.beginCpu(CpuStage.drawSubmit);
     ViewportManager.getInstance().renderAll(this.renderer, this.scene, this.camera);
+    this.renderer.flushNextFrameCapture();
     profiler.endCpu(CpuStage.drawSubmit);
 
     this.sendCameraDataToWorker_();

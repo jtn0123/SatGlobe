@@ -5,9 +5,12 @@ import { readFileSync } from 'node:fs';
 import { relative, resolve } from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { BuildError, ConsoleStyles, ErrorCodes, handleBuildError, logWithStyle } from './lib/build-error';
-import { ConfigManager } from './lib/config-manager';
+import { BuildConfig, ConfigManager } from './lib/config-manager';
 import { FileSystemManager } from './lib/filesystem-manager';
+import { assertPropagatorBundleProfile } from './lib/propagator-bundle-guard';
+import { shouldCopyProWasmArtifacts } from './lib/propagator-build-profile';
 import { reporter } from './lib/reporter';
+import { assertSatGlobeScriptPolicy } from './lib/satglobe-script-policy';
 import { VersionManager } from './lib/version-manager';
 import { WebpackManager } from './webpack-manager';
 
@@ -64,14 +67,14 @@ class BuildManager {
         fileManager.copyDirectory('src/plugins-pro/examples', 'dist/examples', { isOptional: true, recursive: true });
 
         /*
-         * Bundle the USSF Astro Standards Sgp4Prop WebAssembly artifacts for Pro
-         * builds only. They live in the proprietary plugins-pro submodule
+         * Bundle the USSF Astro Standards Sgp4Prop WebAssembly artifacts only for
+         * WASM-enabled Pro builds. They live in the proprietary plugins-pro submodule
          * (src/plugins-pro/wasm/sgp4prop/) together with LICENSE.txt (the USSF
          * Open Source Agreement), which is copied alongside so a copy of the
          * Agreement travels with each distribution (Agreement 3.A.1). OSS builds
          * ship without them and fall back to ootk's pure-TypeScript SGP4.
          */
-        if (config.isPro) {
+        if (shouldCopyProWasmArtifacts(config)) {
           fileManager.copyDirectory('src/plugins-pro/wasm/sgp4prop', 'dist/wasm/sgp4prop', { isOptional: true, recursive: true });
         }
 
@@ -118,7 +121,7 @@ class BuildManager {
         logWithStyle('Watching for changes...', ConsoleStyles.INFO);
         BuildManager.watchCompilers(compiler);
       } else {
-        BuildManager.runCompilers(compiler, startedAt);
+        BuildManager.runCompilers(compiler, startedAt, config);
       }
     } catch (error) {
       handleBuildError(error);
@@ -174,11 +177,15 @@ class BuildManager {
   private static hintExternalPluginFailure(stats: MultiStats) {
     const errorsText = JSON.stringify(stats.toJson({ errors: true, all: false }).children ?? []);
     const names = new Set<string>();
-    const re = /src[\\/]plugins-external[\\/]([^\\/"]+)/gu;
+    const re = /src[\\/]plugins-external[\\/](?<pluginName>[^\\/"]+)/gu;
     let m: RegExpExecArray | null = re.exec(errorsText);
 
     while (m !== null) {
-      names.add(m[1]);
+      const pluginName = m.groups?.pluginName;
+
+      if (pluginName) {
+        names.add(pluginName);
+      }
       m = re.exec(errorsText);
     }
 
@@ -217,7 +224,7 @@ class BuildManager {
   /**
    * Runs the compilers once
    */
-  static runCompilers(compilers: MultiCompiler, startedAt: number) {
+  static runCompilers(compilers: MultiCompiler, startedAt: number, config: BuildConfig) {
     compilers.run((err: Error | null, stats?: MultiStats) => {
       BuildManager.handleCompilerResults(err, stats);
 
@@ -232,6 +239,17 @@ class BuildManager {
         if (failed || closeErr) {
           // A failed compile must exit non-zero so CI catches it here rather than
           // serving an app-less dist to the downstream smoke tests.
+          logWithStyle('Build failed.', ConsoleStyles.ERROR);
+          process.exit(1);
+        }
+
+        try {
+          assertPropagatorBundleProfile(resolve('dist'), config.propagatorBackend);
+          if (config.edition === 'satglobe') {
+            assertSatGlobeScriptPolicy(resolve('dist'));
+          }
+        } catch (bundleError) {
+          handleBuildError(bundleError, false);
           logWithStyle('Build failed.', ConsoleStyles.ERROR);
           process.exit(1);
         }

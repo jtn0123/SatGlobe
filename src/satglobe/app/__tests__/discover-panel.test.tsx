@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DiscoverPanel, getQuickLensState, type DiscoverPanelProps } from '../discover-panel';
 import { INITIAL_CONJUNCTION_STATE, createUnavailableConjunctionState } from '../../domain/conjunctions';
+import { buildVisualLegend } from '../../domain/encodings';
 import { DEFAULT_FILTERS, type AvailableConjunctionState, type FilterState, type ResolvedConjunctionPair, type SpaceObjectView } from '../../domain/types';
 
 const NON_DEFAULT_FILTERS: FilterState = {
@@ -50,18 +51,30 @@ const makeProps = (overrides: Partial<DiscoverPanelProps> = {}): DiscoverPanelPr
   conjunctions: INITIAL_CONJUNCTION_STATE,
   conjunctionHighlightActive: false,
   highlightedObjectCount: 0,
-  savedViews: [],
+  launchCohorts: [],
+  legend: buildVisualLegend('object-type', [], DEFAULT_FILTERS),
+  viewLibrary: {
+    savedViews: [],
+    playlists: [],
+    createView: vi.fn(),
+    onApplyView: vi.fn(),
+    onDeletePlaylist: vi.fn(),
+    onImportPlaylistFile: vi.fn(),
+    onImportViewFile: vi.fn(),
+    onPlayPlaylist: vi.fn(),
+    onSavePlaylist: vi.fn(),
+    onSaveView: vi.fn(),
+  },
   onQueryChange: vi.fn(),
   onSelectResult: vi.fn(),
   onQuickLens: vi.fn(),
   onConjunctionLens: vi.fn(),
+  onSelectCohort: vi.fn(),
+  onOpenCohortMembers: vi.fn(),
+  onOpenCohortStory: vi.fn(),
   setFiltersImmediate: vi.fn(),
   setFiltersDebounced: vi.fn(),
   onEncodingChange: vi.fn(),
-  onSaveView: vi.fn(),
-  onApplyView: vi.fn(),
-  createView: vi.fn(),
-  onImportFile: vi.fn(),
   ...overrides,
 });
 

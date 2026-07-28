@@ -27,6 +27,12 @@ import { MeshManager } from './mesh-manager';
 import { showFatalError } from './show-fatal-error';
 import { ViewportManager } from './viewport-manager';
 
+interface PendingFrameCapture {
+  flushed: boolean;
+  reject: (error: Error) => void;
+  resolve: (blob: Blob) => void;
+}
+
 export class WebGLRenderer {
   private isRotationEvent_: boolean;
   private satLabelModeLastTime_ = 0;
@@ -34,6 +40,7 @@ export class WebGLRenderer {
   isContextLost = false;
   private isResizePendingAfterContextRestore_ = false;
   private contextLostRecoveryTimeoutId_: number | null = null;
+  private pendingFrameCapture_: PendingFrameCapture | null = null;
   private static readonly CONTEXT_LOST_RECOVERY_TIMEOUT_MS = 5000;
 
   /** A canvas where the renderer draws its output. */
@@ -133,6 +140,95 @@ export class WebGLRenderer {
     scene.render(this, camera);
   }
 
+  /** Queues one PNG read from the next fully rendered on-screen frame. */
+  captureNextFrame(): Promise<Blob> {
+    if (this.pendingFrameCapture_ !== null) {
+      return Promise.reject(new Error('A frame capture is already in progress.'));
+    }
+    if (!this.domElement) {
+      return Promise.reject(new Error('The WebGL canvas is unavailable.'));
+    }
+    if (this.isFrameCaptureContextUnavailable_()) {
+      return Promise.reject(new Error('The WebGL context is unavailable.'));
+    }
+    if (typeof this.domElement.toBlob !== 'function') {
+      return Promise.reject(new Error('This browser cannot encode the WebGL canvas as PNG.'));
+    }
+
+    return new Promise<Blob>((resolve, reject) => {
+      this.pendingFrameCapture_ = { flushed: false, reject, resolve };
+    });
+  }
+
+  /** Rejects a queued or encoding frame when its consumer is torn down. */
+  cancelFrameCapture(): void {
+    this.rejectPendingFrameCapture_('The frame capture was cancelled during teardown.');
+  }
+
+  /** Flushes the queued read exactly once while the completed drawing buffer is current. */
+  flushNextFrameCapture(): void {
+    const capture = this.pendingFrameCapture_;
+
+    if (capture === null || capture.flushed) {
+      return;
+    }
+    capture.flushed = true;
+    const rejectCapture = (message: string): void => {
+      if (this.pendingFrameCapture_ === capture) {
+        this.pendingFrameCapture_ = null;
+      }
+      capture.reject(new Error(message));
+    };
+
+    if (!this.domElement) {
+      rejectCapture('The WebGL canvas is unavailable.');
+
+      return;
+    }
+    if (this.isFrameCaptureContextUnavailable_()) {
+      rejectCapture('The WebGL context was lost before the frame could be captured.');
+
+      return;
+    }
+
+    try {
+      this.domElement.toBlob((blob) => {
+        if (this.pendingFrameCapture_ !== capture) {
+          return;
+        }
+        this.pendingFrameCapture_ = null;
+        if (blob === null) {
+          capture.reject(new Error('The browser returned an empty PNG snapshot.'));
+
+          return;
+        }
+        capture.resolve(blob);
+      }, 'image/png');
+    } catch (error) {
+      rejectCapture(`The PNG snapshot could not be encoded: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  /** Treats context inspection failures as an unavailable capture surface. */
+  private isFrameCaptureContextUnavailable_(): boolean {
+    try {
+      return !this.gl || this.isContextLost || this.gl.isContextLost?.() === true;
+    } catch {
+      return true;
+    }
+  }
+
+  /** Rejects an outstanding request when the renderer can no longer settle it. */
+  private rejectPendingFrameCapture_(message: string): void {
+    const capture = this.pendingFrameCapture_;
+
+    if (capture === null) {
+      return;
+    }
+    this.pendingFrameCapture_ = null;
+    capture.reject(new Error(message));
+  }
+
   private resetGLState_() {
     const gl = this.gl;
 
@@ -147,6 +243,7 @@ export class WebGLRenderer {
     e.preventDefault(); // allows the context to be restored
     errorManagerInstance.info('WebGL Context Lost');
     this.isContextLost = true;
+    this.rejectPendingFrameCapture_('The WebGL context was lost before the frame could be captured.');
 
     // The browser owns context restoration — there's no API to force it. If `webglcontextrestored`
     // never fires, surface a one-shot prompt so the user knows a refresh is the only path forward.

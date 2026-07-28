@@ -29,6 +29,7 @@ const rejectedFilters: Array<[string, Partial<FilterState>]> = [
   ['maximum altitude', { altitudeKm: { min: 0, max: 551 } }],
   ['inclination', { inclinationDeg: { min: 54, max: 180 } }],
   ['launch cohort', { launchCohort: '2024-001' }],
+  ['maximum launch year', { launchYearMax: 2018 }],
   ['constellation', { constellation: 'oneweb' }],
   ['country or operator', { countryOrOperator: 'esa' }],
 ];
@@ -40,6 +41,23 @@ describe('matchesSatGlobeFilters', () => {
       constellation: 'starlink',
       countryOrOperator: 'spacex',
     }))).toBe(true);
+  });
+
+  it('treats a four-digit cohort as a year-prefix match', () => {
+    expect(matchesSatGlobeFilters(object, withFilters({ launchCohort: '2019' }))).toBe(true);
+  });
+
+  it('matches a canonical cohort filter against a short-form designator', () => {
+    expect(matchesSatGlobeFilters({
+      ...object,
+      internationalDesignator: '19029B',
+      launchText: '19029b 2019-05-24',
+    }, withFilters({ launchCohort: '2019-029' }))).toBe(true);
+  });
+
+  it('applies a cumulative launch-year boundary and rejects unknown years', () => {
+    expect(matchesSatGlobeFilters(object, withFilters({ launchYearMax: 2019 }))).toBe(true);
+    expect(matchesSatGlobeFilters({ ...object, launchDate: '', internationalDesignator: '' }, withFilters({ launchYearMax: 2026 }))).toBe(false);
   });
 
   it.each(rejectedFilters)('rejects a nonmatching %s filter', (_label, overrides) => {
@@ -77,6 +95,7 @@ describe('prepareFilterMatcher', () => {
       name: 'RAW NAME IGNORED',
       internationalDesignator: 'ignored',
       launchDate: 'ignored',
+      launchYear: 2019,
       country: 'ignored',
       owner: 'ignored',
       nameText: 'starlink-1008',

@@ -100,6 +100,8 @@ export const starlinkBuildoutStory: StoryManifestV1 = storyManifestV1Schema.pars
       encoding: 'launch-cohort',
       constellation: 'starlink',
       launchCohort: '2021-021',
+      // One cohort-derived path anchors the sparse marks to their shared shell.
+      orbitMatchLimit: 1,
       reconstruction: 'observed',
       scaleMode: 'semantic',
     },

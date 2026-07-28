@@ -59,17 +59,13 @@ import {
   RIC,
 } from '@ootk/src/main';
 import { DetailedSensor } from '@app/app/sensors/DetailedSensor';
+import { dotProduct3 } from '@app/engine/math/linear-algebra';
 import { vec3 } from 'gl-matrix';
-import numeric from 'numeric';
 import { EciArr3 } from '../../engine/core/interfaces';
 import type { Sun } from '../../engine/rendering/draw-manager/sun';
 import { DISTANCE_TO_SUN } from '../../engine/utils/constants';
 import { errorManagerInstance } from '../../engine/utils/errorManager';
 import { jday, lon2yaw } from '../../engine/utils/transforms';
-
-if (!global) {
-  window._numeric = numeric; // numeric will break if it is not available globally
-}
 
 export type StringifiedNumber = `${number}.${number}`;
 
@@ -253,7 +249,7 @@ export abstract class SatMath {
     }
 
     const phaseAngle = Math.acos(
-      <number>numeric.dot([-sat.position.x, -sat.position.y, -sat.position.z], [sat.position.x + sun.eci.x, -sat.position.y + sun.eci.y, -sat.position.z + sun.eci.z]) /
+      dotProduct3([-sat.position.x, -sat.position.y, -sat.position.z], [sat.position.x + sun.eci.x, -sat.position.y + sun.eci.y, -sat.position.z + sun.eci.z]) /
       (Math.sqrt((-sat.position.x) ** 2 + (-sat.position.y) ** 2 + (-sat.position.z) ** 2) *
         Math.sqrt((-sat.position.x + sun.eci.x) ** 2 + (-sat.position.y + sun.eci.y) ** 2 + (-sat.position.z + sun.eci.z) ** 2)),
     );

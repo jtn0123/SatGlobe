@@ -44,6 +44,7 @@ export default defineConfig({
   globalTeardown: './test/e2e/coverage-teardown.ts',
   fullyParallel: !process.env.CI,
   forbidOnly: !!process.env.CI,
+  failOnFlakyTests: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   workers: process.env.CI ? 1 : 6,
   reporter: reportersForEnvironment(process.env),

@@ -1,5 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import './runtime/zod-policy';
 import { SatGlobeErrorBoundary } from './app/error-boundary';
 import { SatGlobeApp } from './app/satglobe-app';
 import { SatGlobeEngineAdapter } from './engine/satglobe-engine-adapter';

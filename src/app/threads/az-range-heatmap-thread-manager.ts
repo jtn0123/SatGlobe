@@ -92,6 +92,7 @@ export class AzRangeHeatmapThreadManager extends WebWorkerThreadManager {
         this.callbacks_.onError(e.message || 'Worker error');
         this.callbacks_ = null;
       };
+      this.sendSgp4WasmBackendConfig_(w);
       this.fleet_.push(w);
     }
 

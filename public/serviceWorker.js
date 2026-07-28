@@ -133,6 +133,29 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
+  // --- Installed catalog JSON: network-first with cache fallback ---
+  // These stable URLs are replaced in place by catalog refreshes. Serving a
+  // cached response before revalidation can mix catalog, manifest, and
+  // conjunction snapshots from different refreshes in the same session.
+  if (isStableCatalogJson(url)) {
+    e.respondWith(
+      fetchWithTimeout(e.request, 8000)
+        .then((response) => {
+          if (response.ok && response.status !== 206) {
+            const clone = response.clone();
+            const cacheWrite = caches.open(currentCacheName).then((cache) => cache.put(e.request, clone));
+
+            e.waitUntil(cacheWrite);
+          }
+
+          return response;
+        })
+        .catch(() => caches.match(e.request).then((cached) => cached || new Response('', { status: 504, statusText: 'Gateway Timeout' }))),
+    );
+
+    return;
+  }
+
   // --- Settings files: network-first so profile overrides apply immediately,
   //     with cache fallback for offline. settingsOverride.js controls runtime
   //     flags (isAutoStart, plugin enables, data sources) and must never be stale.
@@ -208,6 +231,10 @@ function fetchWithTimeout(request, ms) {
   const id = setTimeout(() => controller.abort(), ms);
 
   return fetch(request, { signal: controller.signal }).finally(() => clearTimeout(id));
+}
+
+function isStableCatalogJson(url) {
+  return (/^\/tle\/(?:[^/]+|satglobe\/[^/]+)\.json$/u).test(url.pathname);
 }
 
 function isStaticAsset(url) {

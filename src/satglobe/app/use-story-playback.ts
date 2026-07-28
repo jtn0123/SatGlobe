@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useReducer } from 'react';
 import type { StoryBeat, StoryManifestV1 } from '../domain/types';
+import { useReducedMotion } from './use-reduced-motion';
 
 export interface StoryPlaybackState {
   beatIndex: number;
@@ -32,13 +33,17 @@ export function storyPlaybackReducer(state: StoryPlaybackState, action: StoryPla
     case 'seek':
       return { ...state, beatIndex: action.index, progress: 0 };
     case 'togglePlaying':
-      return { ...state, playing: !state.playing };
+      return {
+        ...state,
+        playing: !state.playing,
+        showSources: state.playing ? false : state.showSources,
+      };
     case 'toggleSources':
       return { ...state, showSources: !state.showSources };
     case 'setProgress':
       return { ...state, progress: action.progress };
     case 'stop':
-      return { ...state, playing: false, progress: 0 };
+      return { ...state, playing: false, progress: 0, showSources: false };
     default:
       return state;
   }
@@ -59,6 +64,7 @@ export function useStoryPlayback(
   applyBeat: (index: number) => void;
 } {
   const [playback, dispatch] = useReducer(storyPlaybackReducer, initialStoryPlayback);
+  const reducedMotion = useReducedMotion();
   /*
    * The beat index can momentarily exceed a newly selected story's length
    * (switching from a 5-beat story at beat 5 to a 4-beat one) - every consumer
@@ -88,20 +94,15 @@ export function useStoryPlayback(
     };
 
     /*
-     * prefers-reduced-motion: play still works, but each beat holds and then
-     * jumps (one discrete step per beat) instead of animating progress ticks.
+     * Reduced motion keeps playback functional while advancing the scrubber in
+     * discrete one-second steps. A silent hold reads as a broken play button.
      */
-    if (typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      const remainingMs = Math.max(0, (1 - progress) * beat.durationMs);
-      const timer = window.setTimeout(() => {
-        dispatch({ type: 'setProgress', progress: 1 });
-        advance();
-      }, remainingMs);
-
-      return () => window.clearTimeout(timer);
-    }
-
-    const startedAt = performance.now() - progress * beat.durationMs;
+    /*
+     * A beat never begins complete. Progress >= 1 can only be a stale
+     * completion dispatch from the outgoing interval after a seek reset.
+     */
+    const safeProgress = progress >= 1 ? 0 : progress;
+    const startedAt = performance.now() - safeProgress * beat.durationMs;
     const timer = window.setInterval(() => {
       const nextProgress = Math.min(1, (performance.now() - startedAt) / beat.durationMs);
 
@@ -109,10 +110,10 @@ export function useStoryPlayback(
       if (nextProgress >= 1) {
         advance();
       }
-    }, 100);
+    }, reducedMotion ? 1_000 : 100);
 
     return () => window.clearInterval(timer);
-  }, [applyBeat, beat.durationMs, beatIndex, isStoryMode, playing, progress, story.beats.length]);
+  }, [applyBeat, beat.durationMs, beatIndex, isStoryMode, playing, progress, reducedMotion, story.beats.length]);
 
   return { playback: { ...playback, beatIndex }, dispatch, applyBeat };
 }

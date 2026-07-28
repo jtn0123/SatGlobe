@@ -10,7 +10,7 @@ export const SATGLOBE_CSP = [
   'default-src \'self\' blob:',
   'img-src \'self\' data: blob:',
   'style-src \'self\' \'unsafe-inline\'',
-  'script-src \'self\' \'unsafe-eval\' blob:',
+  'script-src \'self\' blob:',
   'worker-src \'self\' blob:',
   'connect-src \'self\'',
   'font-src \'self\'',
