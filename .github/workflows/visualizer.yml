@@ -3,6 +3,9 @@ name: Create Visualizer Svg
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   update-visualizer:
     name: Update Visualizer

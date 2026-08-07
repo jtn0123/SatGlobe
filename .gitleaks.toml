@@ -1,0 +1,79 @@
+# Gitleaks configuration for SatGlobe
+# Reduces false positives for this specific project.
+#
+# The rules below are deliberately wider than the obvious `password = "..."`
+# shape. A rule that matches only quoted assignments will miss a bare
+# `TOKEN=<digits>` in a helper script; shell scripts assign secrets bare and
+# abbreviate the variable name, so the rules have to cover that too.
+
+title = "SatGlobe gitleaks config"
+
+[allowlist]
+description = "Allowlisted files and patterns"
+
+# Example/sample files only. Note there is deliberately no blanket '.*\.md$'
+# entry: docs are exactly where a copy-pasted working command tends to land.
+paths = [
+    '''\.env\.example$''',
+
+    # Orbital element sets. TLE / SOCRATES / Vimpel records are long runs of
+    # digits (catalog numbers, epochs, mean motion, checksums) that trip
+    # entropy-based generic-secret detection on every refresh of the data.
+    '''(?i)(^|/)public/tle/.*\.(json|txt)$''',
+    '''(?i)(^|/)TLE\.(json|txt)$''',
+]
+
+# Placeholder values, not real credentials.
+regexes = [
+    '''(?i)your[_-]?[a-z]*[_-]?(pass|key|token)''',
+    '''(?i)YOUR_[A-Z_]*(PASS|SSID|TOKEN|KEY)''',
+    '''(?i)(changeme|placeholder|example|redacted|xxxxx+)''',
+    '''\$\{[A-Z_]+\}''',       # ${API_TOKEN} style indirection
+    '''\$[A-Z_]{3,}''',        # $API_TOKEN style indirection
+    '''["']?:\?[A-Z_ ]+not set''',  # ${VAR:?VAR not set} shell guards
+]
+
+# Bare shell-style assignment of a credential: PASS=hunter2, API_TOKEN=...,
+# DEPLOY_SECRET=... Unquoted or quoted, any variable name ending in
+# PASS/PASSWD/PASSWORD/SECRET/TOKEN.
+#
+# Deliberately CASE-SENSITIVE, unlike the ESP32-Garage-Fan original. That repo
+# is shell and C, where a case-insensitive match is free. This repo is
+# TypeScript, where `(?i)` turns `[A-Z0-9_]*PASS` into a match for every
+# camelCase identifier in the codebase -- `nextPass`, `maxElPass`, `firstToken`,
+# `dateToken` and friends produced 68 hits on a clean tree. A scanner that cries
+# wolf 68 times gets switched off, so the SCREAMING_SNAKE env/shell shape (which
+# is the shape that actually leaked) is matched here, and lower-case credential
+# assignments are covered by `credential-string-literal` below.
+[[rules]]
+id = "bare-credential-assignment"
+description = "Bare credential assignment (shell/env style)"
+regex = '''\b[A-Z0-9_]*(?:PASS(?:WD|WORD)?|SECRET|TOKEN)\s*=\s*["']?([^\s"'#$][^\s"'#]*)'''
+secretGroup = 1
+# Keywords are a lower-cased substring prefilter, not part of the match.
+keywords = ["pass", "secret", "token"]
+
+# Any-case credential assigned a quoted string literal: apiKey = "...",
+# password: '...'. Requires a quoted value of some length and entropy so that
+# `isFirstPass = true` and `token = parts[0]` do not trip it.
+[[rules]]
+id = "credential-string-literal"
+description = "Credential assigned a string literal"
+regex = '''(?i)\b(?:pass(?:wd|word)|secret|token|api[_-]?key)["']?\s*[:=]\s*["']([^"'\s]{8,})["']'''
+secretGroup = 1
+entropy = 3.5
+keywords = ["pass", "secret", "token", "key"]
+
+[[rules]]
+id = "generic-api-key"
+description = "Generic API Key"
+regex = '''(?i)(?:api[_\s]?key|apikey)["']?\s*[:=]\s*["']([a-zA-Z0-9]{32,})["']'''
+secretGroup = 1
+entropy = 4.5
+keywords = ["api", "key"]
+
+[rules.allowlist]
+paths = [
+    '''.*\.example''',
+    '''.*\.sample''',
+]
