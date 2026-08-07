@@ -31,6 +31,13 @@ regexes = [
     '''\$\{[A-Z_]+\}''',       # ${API_TOKEN} style indirection
     '''\$[A-Z_]{3,}''',        # $API_TOKEN style indirection
     '''["']?:\?[A-Z_ ]+not set''',  # ${VAR:?VAR not set} shell guards
+
+    # <your-token> -- angle-bracket placeholders are fill-in-the-blanks.
+    '''^<''',
+
+    # Value is a call, not a literal: TOKEN = makeTestToken("x"). A leaked
+    # credential is a literal; a call is indirection, which is what we want.
+    '''^[A-Za-z_][A-Za-z0-9_.]*\(''',
 ]
 
 # Bare shell-style assignment of a credential: PASS=hunter2, API_TOKEN=...,
@@ -45,10 +52,16 @@ regexes = [
 # wolf 68 times gets switched off, so the SCREAMING_SNAKE env/shell shape (which
 # is the shape that actually leaked) is matched here, and lower-case credential
 # assignments are covered by `credential-string-literal` below.
+#
+# The value must be at least 6 characters, so that separator and sentinel
+# constants (`TOKEN = '|'` and the like) do not read as credentials. Six is
+# well under any real password, so nothing that matters is given up. Build
+# output is deliberately not allowlisted: a Vite build inlines env values, and
+# a secret baked into a bundle is exactly the leak worth catching.
 [[rules]]
 id = "bare-credential-assignment"
 description = "Bare credential assignment (shell/env style)"
-regex = '''\b[A-Z0-9_]*(?:PASS(?:WD|WORD)?|SECRET|TOKEN)\s*=\s*["']?([^\s"'#$][^\s"'#]*)'''
+regex = '''\b[A-Z0-9_]*(?:PASS(?:WD|WORD)?|SECRET|TOKEN)\s*=\s*["']?([^\s"'#$][^\s"'#]{5,})'''
 secretGroup = 1
 # Keywords are a lower-cased substring prefilter, not part of the match.
 keywords = ["pass", "secret", "token"]
