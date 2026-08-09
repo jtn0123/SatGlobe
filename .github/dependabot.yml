@@ -22,6 +22,14 @@ updates:
         update-types:
           - 'minor'
           - 'patch'
+      # Babel 8 is a lockstep family: @babel/core, preset-env and every
+      # plugin must move together or npm ci fails on peer ranges. One PR
+      # per package can never go green, so majors ship as one group.
+      babel-majors:
+        patterns:
+          - '@babel/*'
+        update-types:
+          - 'major'
 
   - package-ecosystem: 'github-actions'
     directory: '/'
