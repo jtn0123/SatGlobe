@@ -1,0 +1,14 @@
+# Verified false positives from the scheduled full-history scan.
+# Each entry was inspected by hand (2026-08-09, approved by Justin 2026-08-10);
+# none is a live credential. Push/PR scans are unaffected and stay strict.
+#
+# Supabase anon keys are public by design: they ship inside the client bundle
+# and authorization is enforced server-side by Row Level Security. The two
+# deleted .env files carried the same key before it moved into configs/.
+914d7985940f5891c6b2fb6f7d91eb05452bfb45:configs/pro/profile.env:jwt:7
+29684788669409a365df85520d79736506782eeb:configs/offline/profile.env:jwt:4
+566900587812a1b2a85923342685153a24e423f2:.env.celestrak:jwt:14
+566900587812a1b2a85923342685153a24e423f2:.env.app:jwt:14
+# Plain public endpoint URL (no userinfo, no query, no token in the path);
+# the rule fires on the variable name plus string length, not on any secret.
+83bc7b8a08b52162f50afc741d2e56b02b10c91c:src/settings/data-settings.ts:credential-string-literal:63
