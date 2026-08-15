@@ -122,10 +122,10 @@
     "url": "git+https://github.com/jtn0123/SatGlobe.git"
   },
   "devDependencies": {
-    "@babel/core": "^7.23.0",
-    "@babel/plugin-transform-modules-commonjs": "^7.29.7",
-    "@babel/preset-env": "^7.29.7",
-    "@babel/preset-typescript": "^7.29.7",
+    "@babel/core": "^8.0.1",
+    "@babel/plugin-transform-modules-commonjs": "^8.0.1",
+    "@babel/preset-env": "^8.0.2",
+    "@babel/preset-typescript": "^8.0.1",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.62.1",
     "@rspack/cli": "^2.1.8",
