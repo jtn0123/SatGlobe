@@ -161,7 +161,7 @@
     "css-loader": "^7.1.4",
     "dotenv-webpack": "^9.0.0",
     "eslint": "^10.8.1",
-    "eslint-plugin-jsdoc": "^63.3.3",
+    "eslint-plugin-jsdoc": "^64.2.0",
     "globals": "^17.11.0",
     "gremlins.js": "^2.2.0",
     "happy-dom": "^20.11.6",
