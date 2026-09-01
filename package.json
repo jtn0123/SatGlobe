@@ -158,13 +158,13 @@
     "babel-loader": "^10.1.1",
     "conventional-changelog-conventionalcommits": "^10.4.0",
     "cross-env": "^10.1.0",
-    "css-loader": "^7.1.4",
+    "css-loader": "^7.1.5",
     "dotenv-webpack": "^9.0.0",
     "eslint": "^10.9.1",
     "eslint-plugin-jsdoc": "^64.2.1",
     "globals": "^17.11.0",
     "gremlins.js": "^2.2.0",
-    "happy-dom": "^20.11.12",
+    "happy-dom": "^20.11.15",
     "husky": "^9.1.7",
     "imports-loader": "^5.0.0",
     "jsdom": "^30.0.1",
@@ -189,7 +189,7 @@
     "webgl-mock": "^0.1.7",
     "webpackbar": "^7.0.0",
     "worker-loader": "^3.0.8",
-    "wrangler": "4.127.0"
+    "wrangler": "4.127.1"
   },
   "dependencies": {
     "@e965/xlsx": "0.20.3",
@@ -213,7 +213,7 @@
     "requestidlecallback-polyfill": "^1.0.2",
     "uuid": "^14.0.2",
     "webgl-obj-loader": "^2.0.8",
-    "zod": "^4.4.3"
+    "zod": "^4.5.2"
   },
   "overrides": {
     "esbuild": "0.28.1"
