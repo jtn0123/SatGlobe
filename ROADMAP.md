@@ -329,3 +329,27 @@ after separate approval to merge:
 Cislunar/Lagrange views, phone-first layouts, accounts, cloud sync,
 collaboration, desktop wrappers, arbitrary-date reconstruction, and saved-view
 schema v2 remain outside this recovery.
+
+## Dependency PR #129 validation — 2026-09-06
+
+Candidate `d25048163a7bb5ee1e104b473c7f88a80755e6db` includes current main
+and the grouped minor/patch dependency updates. Validation observed at
+2026-09-06T05:40Z on macOS with Node 24:
+
+- Clean dependency install, translations, both TypeScript gates, story-walker
+  validation, and lint passed.
+- The default focused run had one 5-second catalog-test timeout under concurrent
+  host load. The unchanged suite with `--maxWorkers=2` passed all 386 tests.
+- Production build, emitted-script/CSP checks, bundle budgets, and performance
+  ledger validation passed. No new hardware performance record is claimed.
+- The vendored orbital-math suite passed 1,981 tests with existing skips intact.
+- Production-static offline E2E is not yet accepted: the playlist journey timed
+  out during engine initialization after reload, then during retry setup.
+  Timeouts, assertions, and fail-on-flake policy remain unchanged. Fresh hosted
+  CI and investigation of this local failure are required before merge.
+- Full application unit tests are in progress. This is a validation checkpoint,
+  not a declaration that the merge gate is complete.
+
+Local evidence: `/tmp/sat129-verify.log`, `/tmp/sat129-limited-tests.log`,
+`/tmp/sat129-build.log`, `/tmp/sat129-ootk.log`, `/tmp/sat129-e2e.log`, and
+`/tmp/sat129-full-tests.log`.
