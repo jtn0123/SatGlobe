@@ -195,27 +195,27 @@ export abstract class DopMath {
     let tr = tbl.insertRow();
     let tdT = tr.insertCell();
 
-    tdT.appendChild(document.createTextNode(t7e('plugins.DopsPlugin.table.time')));
+    tdT.textContent = t7e('plugins.DopsPlugin.table.time');
     let tdH = tr.insertCell();
 
-    tdH.appendChild(document.createTextNode(t7e('plugins.DopsPlugin.table.hdop')));
+    tdH.textContent = t7e('plugins.DopsPlugin.table.hdop');
     let tdP = tr.insertCell();
 
-    tdP.appendChild(document.createTextNode(t7e('plugins.DopsPlugin.table.pdop')));
+    tdP.textContent = t7e('plugins.DopsPlugin.table.pdop');
     let tdG = tr.insertCell();
 
-    tdG.appendChild(document.createTextNode(t7e('plugins.DopsPlugin.table.gdop')));
+    tdG.textContent = t7e('plugins.DopsPlugin.table.gdop');
 
     for (const result of dopsResults) {
       tr = tbl.insertRow();
       tdT = tr.insertCell();
-      tdT.appendChild(document.createTextNode(dateFormat(result.time, 'isoDateTime', true)));
+      tdT.textContent = dateFormat(result.time, 'isoDateTime', true);
       tdH = tr.insertCell();
-      tdH.appendChild(document.createTextNode(result.dops.hdop));
+      tdH.textContent = result.dops.hdop;
       tdP = tr.insertCell();
-      tdP.appendChild(document.createTextNode(result.dops.pdop));
+      tdP.textContent = result.dops.pdop;
       tdG = tr.insertCell();
-      tdG.appendChild(document.createTextNode(result.dops.gdop));
+      tdG.textContent = result.dops.gdop;
     }
   }
 
