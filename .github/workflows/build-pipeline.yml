@@ -86,9 +86,13 @@ jobs:
         run: ./node_modules/.bin/vitest run --coverage
 
       - name: Scan source and LCOV with SonarQube Cloud
+        # Dispatched runs on other branches (catalog-refresh.yml) would be
+        # reported to SonarQube Cloud as main, so only main is scanned there.
         if: >-
-          github.event_name != 'pull_request' ||
-          (github.actor != 'dependabot[bot]' &&
+          github.event_name == 'push' ||
+          (github.event_name != 'pull_request' && github.ref == 'refs/heads/main') ||
+          (github.event_name == 'pull_request' &&
+          github.actor != 'dependabot[bot]' &&
           github.event.pull_request.head.repo.full_name == github.repository)
         uses: SonarSource/sonarqube-scan-action@ba9859eae8dd6bd29e412f25ddbbef3d032000f4 # v8.2.2
         continue-on-error: true  # a dead SONAR_TOKEN must not gate a PR
