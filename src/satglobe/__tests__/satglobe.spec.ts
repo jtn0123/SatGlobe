@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { expect, test, type Download, type Page } from '@playwright/test';
 import { SATGLOBE_CSP } from '../../../build/dev-server-response';
+import { convertA5to6Digit } from '../../engine/ootk/src/coordinate/alpha5';
 import { conjunctionFeedV1Schema } from '../domain/conjunctions';
 import type { ConjunctionFeedV1, ConjunctionObjectRef } from '../domain/types';
 import {
@@ -667,9 +668,10 @@ test.describe('SatGlobe packaged conjunction integration', () => {
     const externalRequests: string[] = [];
     const response = await request.get('/tle/satglobe/conjunctions.json');
     const feed = conjunctionFeedV1Schema.parse(await response.json());
-    const bundledCatalog = await (await request.get('/tle/tle.json')).json() as { tle1: string }[];
+    const bundledCatalog = await (await request.get('/tle/tle.json')).json() as { tle1: string; satglobeCatalogId?: string }[];
     const normalizeId = (id: string) => id.trim().replace(/^0+(?=.)/u, '');
-    const bundledCatalogIds = new Set(bundledCatalog.map((entry) => normalizeId(entry.tle1.slice(2, 7))));
+    // Objects numbered 100000+ carry Alpha-5 IDs in their TLE (e.g. A0418 -> 100418).
+    const bundledCatalogIds = new Set(bundledCatalog.map((entry) => normalizeId(entry.satglobeCatalogId ?? convertA5to6Digit(entry.tle1.slice(2, 7)))));
 
     expect(response.ok()).toBe(true);
     expect(feed.conjunctions.length).toBeGreaterThan(0);
@@ -703,10 +705,16 @@ test.describe('SatGlobe packaged conjunction integration', () => {
     await expect.poll(async () => Number(await lens.getAttribute('data-dropped-pair-count')) - (await pairsWithRetiredObjects()).length)
       .toBe(0);
     const retiredPairs = new Set(await pairsWithRetiredObjects());
-    const encounter = feed.conjunctions.find((pair) => !retiredPairs.has(`${pair.object1.catalogId}/${pair.object2.catalogId}`));
+    const livePairs = feed.conjunctions.filter((pair) => !retiredPairs.has(`${pair.object1.catalogId}/${pair.object2.catalogId}`));
+    const encounterCounts = new Map<string, number>();
+
+    livePairs.forEach(({ object1, object2 }) => [object1.catalogId, object2.catalogId]
+      .forEach((catalogId) => encounterCounts.set(catalogId, (encounterCounts.get(catalogId) ?? 0) + 1)));
+    // An object in several pairs shows its soonest approach, so inspect one with a single encounter.
+    const encounter = livePairs.find((pair) => encounterCounts.get(pair.object1.catalogId) === 1);
 
     if (!encounter) {
-      throw new Error('At least one packaged conjunction pair must still resolve against the live catalog.');
+      throw new Error('At least one packaged conjunction pair with a single-encounter object must still resolve against the live catalog.');
     }
     await lens.click();
     await expect.poll(async () => Number(await lens.getAttribute('data-highlighted-count'))).toBeGreaterThan(0);
