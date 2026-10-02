@@ -64,8 +64,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if git diff --quiet -- public/tle; then
-            echo "Catalog unchanged; nothing to propose."
+          # Every refresh rewrites timestamps and delta counts, so compare the
+          # data itself: catalog bytes and the SOCRATES snapshot.
+          manifest=public/tle/satglobe/manifest.json
+          if git diff --quiet -- public/tle/satglobe/catalog.sha256 &&
+            [ "$(git show "HEAD:$manifest" | jq -r .conjunctions.snapshotId)" = "$(jq -r .conjunctions.snapshotId "$manifest")" ]; then
+            echo "Catalog and conjunction data unchanged; nothing to propose."
             exit 0
           fi
           snapshot="$(jq -r .snapshotId public/tle/satglobe/manifest.json)"
