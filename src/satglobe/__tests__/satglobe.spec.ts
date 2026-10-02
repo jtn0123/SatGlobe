@@ -667,12 +667,15 @@ test.describe('SatGlobe packaged conjunction integration', () => {
     const externalRequests: string[] = [];
     const response = await request.get('/tle/satglobe/conjunctions.json');
     const feed = conjunctionFeedV1Schema.parse(await response.json());
-    const encounter = feed.conjunctions[0];
+    const bundledCatalog = await (await request.get('/tle/tle.json')).json() as { tle1: string }[];
+    const normalizeId = (id: string) => id.trim().replace(/^0+(?=.)/u, '');
+    const bundledCatalogIds = new Set(bundledCatalog.map((entry) => normalizeId(entry.tle1.slice(2, 7))));
 
     expect(response.ok()).toBe(true);
-    if (!encounter) {
-      throw new Error('The packaged conjunction artifact must contain at least one event.');
-    }
+    expect(feed.conjunctions.length).toBeGreaterThan(0);
+    // The packaged screening artifact and catalog are a frozen pair: every referenced object must exist.
+    expect(feed.conjunctions.flatMap((pair) => [pair.object1.catalogId, pair.object2.catalogId])
+      .filter((catalogId) => !bundledCatalogIds.has(normalizeId(catalogId)))).toEqual([]);
     page.on('request', (browserRequest) => {
       const url = new URL(browserRequest.url());
 
@@ -686,7 +689,25 @@ test.describe('SatGlobe packaged conjunction integration', () => {
 
     await expect(lens).toBeEnabled({ timeout: 45_000 });
     await expect(lens).toHaveAttribute('data-conjunction-status', /^(?:current|stale|archival)$/u);
-    await expect(lens).toHaveAttribute('data-dropped-pair-count', '0');
+    /*
+     * The sat-cruncher worker propagates at wall-clock time and retires objects
+     * whose frozen elements have decayed out of SGP4, so an aging snapshot may
+     * legitimately drop pairs. The lens must account for exactly those pairs.
+     */
+    const pairsWithRetiredObjects = () => page.evaluate((pairs) => {
+      const live = new Set(window.satGlobe?.getObjects().map((object) => object.catalogId));
+
+      return pairs.filter(([id1, id2]) => !live.has(id1) || !live.has(id2)).map(([id1, id2]) => `${id1}/${id2}`);
+    }, feed.conjunctions.map((pair) => [pair.object1.catalogId, pair.object2.catalogId] as const));
+
+    await expect.poll(async () => Number(await lens.getAttribute('data-dropped-pair-count')) - (await pairsWithRetiredObjects()).length)
+      .toBe(0);
+    const retiredPairs = new Set(await pairsWithRetiredObjects());
+    const encounter = feed.conjunctions.find((pair) => !retiredPairs.has(`${pair.object1.catalogId}/${pair.object2.catalogId}`));
+
+    if (!encounter) {
+      throw new Error('At least one packaged conjunction pair must still resolve against the live catalog.');
+    }
     await lens.click();
     await expect.poll(async () => Number(await lens.getAttribute('data-highlighted-count'))).toBeGreaterThan(0);
 
