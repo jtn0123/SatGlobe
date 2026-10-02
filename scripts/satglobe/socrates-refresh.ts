@@ -107,6 +107,12 @@ interface LoadSocratesOptions {
 interface ParseSocratesOptions {
   now: Date;
   source: SocratesSourceV1;
+  /**
+   * Catalog the feed will ship alongside. SOCRATES screens the full public
+   * catalog (debris included) while the bundled snapshot does not, so events
+   * involving objects the catalog cannot render are dropped before ranking.
+   */
+  catalogIds?: { has(catalogId: string): boolean };
 }
 
 function sha256(value: string | Uint8Array): string {
@@ -397,7 +403,15 @@ export function parseSocratesCsv(raw: string, options: ParseSocratesOptions): So
   if (futureConjunctions.length === 0) {
     throw new Error('SOCRATES source contains no future conjunctions; previous snapshot retained.');
   }
-  const conjunctions = futureConjunctions.sort(compareRisk).slice(0, SOCRATES_MAX_CONJUNCTIONS);
+  const { catalogIds } = options;
+  const renderableConjunctions = catalogIds
+    ? futureConjunctions.filter(({ object1, object2 }) => catalogIds.has(object1.catalogId) && catalogIds.has(object2.catalogId))
+    : futureConjunctions;
+
+  if (renderableConjunctions.length === 0) {
+    throw new Error('SOCRATES source contains no future conjunctions between catalog objects; previous snapshot retained.');
+  }
+  const conjunctions = renderableConjunctions.sort(compareRisk).slice(0, SOCRATES_MAX_CONJUNCTIONS);
   const snapshotId = `socrates-${options.source.updatedAt.slice(0, 10)}-${options.source.checksum.slice(0, 12)}`;
   const feed: SocratesFeedV1 = {
     schemaVersion: 1,
@@ -799,11 +813,4 @@ export async function loadSocratesSource(options: LoadSocratesOptions = {}): Pro
   }
 
   return loaded;
-}
-
-export async function buildSocratesFeed(options: LoadSocratesOptions = {}): Promise<SocratesFeedV1> {
-  const now = options.now ?? new Date();
-  const loaded = await loadSocratesSource({ ...options, now });
-
-  return parseSocratesCsv(loaded.raw, { now, source: loaded.source });
 }

@@ -13,7 +13,7 @@ import {
   type CatalogRefreshManifest,
   type CatalogRefreshManifestV2,
 } from './catalog-manifest';
-import { buildSocratesFeed, validateSocratesFeed, type SocratesFeedV1 } from './socrates-refresh';
+import { loadSocratesSource, parseSocratesCsv, validateSocratesFeed, type SocratesFeedV1 } from './socrates-refresh';
 
 /* eslint-disable jsdoc/require-jsdoc -- Refresh helpers are private or expose self-describing typed contracts. */
 
@@ -991,7 +991,7 @@ export async function refreshCatalog(options: RefreshOptions): Promise<CatalogRe
   const catalog = validateBaseCatalog(baseRows);
   const previousObjectCount = catalog.size;
   const refreshStartedAt = new Date();
-  const [activeRaw, starlinkRaw, conjunctionFeed] = await Promise.all([
+  const [activeRaw, starlinkRaw, socratesSource] = await Promise.all([
     loadSource(
       options.activeInput,
       ACTIVE_URL,
@@ -1008,7 +1008,7 @@ export async function refreshCatalog(options: RefreshOptions): Promise<CatalogRe
       !options.verifyOnly,
       (raw) => validateOmmSource(raw, 'celestrak-starlink'),
     ),
-    buildSocratesFeed({
+    loadSocratesSource({
       input: options.socratesInput,
       inputUpdatedAt: options.socratesUpdatedAt,
       inputRetrievedAt: options.socratesRetrievedAt,
@@ -1021,6 +1021,13 @@ export async function refreshCatalog(options: RefreshOptions): Promise<CatalogRe
   const rejected = [...active.rejected, ...starlink.rejected];
   const activeStats = mergeSource('celestrak-active', active.rows, catalog, rejected);
   const starlinkStats = mergeSource('celestrak-starlink', starlink.rows, catalog, rejected);
+  // Rank screening events only after the merge so the curated feed never names
+  // an object (typically untracked debris) the installed catalog cannot show.
+  const conjunctionFeed = parseSocratesCsv(socratesSource.raw, {
+    now: refreshStartedAt,
+    source: socratesSource.source,
+    catalogIds: catalog,
+  });
   const rows = stableCatalogRows(catalog);
   const rejectionReasons = summarizeRejections(rejected);
 

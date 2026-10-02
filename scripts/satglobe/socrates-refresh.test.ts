@@ -278,6 +278,23 @@ row({
     expect(feed.conjunctions.some((conjunction) => conjunction.object1.catalogId === '100')).toBe(false);
   });
 
+  it('ranks only events whose objects are both in the shipped catalog', () => {
+    const rows = [
+      row({ NORAD_CAT_ID_2: '69673', OBJECT_NAME_2: 'CZ-2F DEB', MAX_PROB: '0.9' }),
+      row({ NORAD_CAT_ID_1: '69674', OBJECT_NAME_1: 'CZ-2F DEB', NORAD_CAT_ID_2: '64737', MAX_PROB: '0.8' }),
+      row({ MAX_PROB: '0.1' }),
+    ];
+    const catalogIds = new Set(['62392', '64737']);
+    const feed = parseSocratesCsv(csv(rows), { now: NOW, source: SOURCE, catalogIds });
+
+    expect(feed.conjunctions).toHaveLength(1);
+    expect(feed.conjunctions[0].object1.catalogId).toBe('62392');
+    expect(feed.conjunctions[0].object2.catalogId).toBe('64737');
+    expect(parseSocratesCsv(csv(rows), { now: NOW, source: SOURCE }).conjunctions).toHaveLength(3);
+    expect(() => parseSocratesCsv(csv(rows.slice(0, 2)), { now: NOW, source: SOURCE, catalogIds }))
+      .toThrow(/no future conjunctions between catalog objects/u);
+  });
+
   it('rejects self-pairs and duplicate unordered pair-plus-TCA rows', () => {
     expect(() => parseSocratesCsv(csv([row({ NORAD_CAT_ID_2: '62392' })]), { now: NOW, source: SOURCE }))
       .toThrow(/self-conjunction/u);
