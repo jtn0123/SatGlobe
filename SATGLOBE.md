@@ -47,7 +47,9 @@ npm run catalog:verify
 npm run catalog:refresh
 ```
 
-The command starts with KeepTrack’s enriched catalog, merges CelesTrak OMM-compatible CSV for active objects and Starlink, and curates up to 25 future SOCRATES close-approach records from CelesTrak's official `sort-minRange.csv`. It treats catalog identifiers as strings, interprets CelesTrak's timezone-less OMM epochs strictly as UTC, rejects duplicate IDs and malformed elements, blocks every epoch regression, checks suspicious object-count drops, strictly validates screening provenance, and derives deterministic snapshot IDs from accepted catalog bytes.
+The `Catalog refresh` workflow (`.github/workflows/catalog-refresh.yml`) runs this weekly (and on manual dispatch) on CI and proposes the result as a pull request on `automation/catalog-refresh`; nothing reaches `main` until that PR passes the required checks and is merged.
+
+The command starts with KeepTrack’s enriched catalog, merges CelesTrak OMM-compatible CSV for active objects and Starlink, and curates up to 25 future SOCRATES close-approach records between objects present in the merged catalog from CelesTrak's official `sort-minRange.csv`. It treats catalog identifiers as strings, interprets CelesTrak's timezone-less OMM epochs strictly as UTC, rejects duplicate IDs and malformed elements, blocks every epoch regression, checks suspicious object-count drops, strictly validates screening provenance, and derives deterministic snapshot IDs from accepted catalog bytes.
 
 CelesTrak OMM group downloads use a two-hour local cache. SOCRATES checks provider metadata on an eight-hour gate and preserves its original retrieval timestamp when provider bytes are unchanged. `catalog:verify` is deliberately write-free; `catalog:refresh` validates all candidate outputs before a manifest-last staged install. Delete `.cache/satglobe` only when a genuinely fresh provider request is required. A successful install writes:
 
