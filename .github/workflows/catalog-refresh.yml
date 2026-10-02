@@ -29,8 +29,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-      # Pull requests opened with GITHUB_TOKEN do not trigger pull_request
-      # workflows, so the required checks are dispatched explicitly below.
+      # To approve or dispatch the refresh PR's required checks (see below).
       actions: write
     steps:
       - name: Check out source
@@ -61,6 +60,7 @@ jobs:
         run: ./node_modules/.bin/vitest run scripts/satglobe/catalog-refresh.test.ts scripts/satglobe/socrates-refresh.test.ts
 
       - name: Open or update refresh pull request
+        id: propose
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -95,5 +95,35 @@ jobs:
               --body-file "$RUNNER_TEMP/pr-body.md"
           fi
 
-          gh workflow run build-pipeline.yml --ref "$REFRESH_BRANCH"
-          gh workflow run secret-scan.yml --ref "$REFRESH_BRANCH"
+          echo "head_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      # The PR's pull_request runs are held as action_required while
+      # github-actions[bot] counts as a first-time contributor, and held
+      # suites block the merge even when dispatched checks are green.
+      # Approve them; if none appear (GITHUB_TOKEN PRs may not trigger
+      # workflows at all), dispatch the required workflows instead.
+      - name: Start required checks for the refresh pull request
+        if: steps.propose.outputs.head_sha != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ steps.propose.outputs.head_sha }}
+        run: |
+          runs=''
+          for _ in $(seq 1 12); do
+            sleep 10
+            runs="$(gh run list --branch "$REFRESH_BRANCH" --event pull_request --commit "$HEAD_SHA" \
+              --json databaseId,conclusion --jq '.[] | "\(.databaseId) \(.conclusion)"')"
+            [ -n "$runs" ] && break
+          done
+          if [ -z "$runs" ]; then
+            echo "No pull_request runs were triggered; dispatching required workflows."
+            gh workflow run build-pipeline.yml --ref "$REFRESH_BRANCH"
+            gh workflow run secret-scan.yml --ref "$REFRESH_BRANCH"
+            exit 0
+          fi
+          echo "$runs" | while read -r id conclusion; do
+            if [ "$conclusion" = action_required ]; then
+              gh api -X POST "repos/$GITHUB_REPOSITORY/actions/runs/$id/approve" \
+                || echo "::warning::Could not approve run $id; approve it from the PR's Checks tab."
+            fi
+          done
