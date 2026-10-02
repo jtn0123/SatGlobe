@@ -1,13 +1,13 @@
 {
   "schemaVersion": 2,
-  "refreshedAt": "2026-07-18T18:43:08.703Z",
-  "newestElementEpoch": "2026-07-20T02:43:32.333Z",
-  "previousObjectCount": 33337,
-  "objectCount": 35049,
-  "added": 1712,
-  "updated": 14353,
+  "refreshedAt": "2026-10-02T14:57:29.687Z",
+  "newestElementEpoch": "2026-10-04T19:13:46.581Z",
+  "previousObjectCount": 35049,
+  "objectCount": 35791,
+  "added": 742,
+  "updated": 15894,
   "rejected": 0,
   "rejectionReasons": {},
   "conjunctionCount": 25,
-  "conjunctionSnapshotId": "socrates-2026-07-18-7a4c6bc517f0"
+  "conjunctionSnapshotId": "socrates-2026-10-02-3c4328845946"
 }

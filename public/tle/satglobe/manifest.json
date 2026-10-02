@@ -1,41 +1,41 @@
 {
   "schemaVersion": 2,
-  "snapshotId": "satglobe-2026-07-20-9fae7a2fa460",
-  "refreshedAt": "2026-07-18T18:43:08.703Z",
-  "newestElementEpoch": "2026-07-20T02:43:32.333Z",
-  "previousObjectCount": 33337,
-  "objectCount": 35049,
-  "added": 1712,
-  "updated": 14353,
-  "unchanged": 10784,
+  "snapshotId": "satglobe-2026-10-04-aceef65771b3",
+  "refreshedAt": "2026-10-02T14:57:29.687Z",
+  "newestElementEpoch": "2026-10-04T19:13:46.581Z",
+  "previousObjectCount": 35049,
+  "objectCount": 35791,
+  "added": 742,
+  "updated": 15894,
+  "unchanged": 11125,
   "rejected": 0,
   "rejectionReasons": {},
   "sources": [
     {
       "id": "keeptrack-enriched",
       "url": "https://github.com/thkruz/keeptrack.space",
-      "recordCount": 33337,
-      "checksum": "1feb86bc2ade78c790df18bcbb59b4b035af99d895fa888b11683ef4d7e6391f"
+      "recordCount": 35049,
+      "checksum": "9fae7a2fa46004ae13fa863890547f9947036bfcfe8357ef9a7d67bbf6076a1b"
     },
     {
       "id": "celestrak-active",
       "url": "https://celestrak.org/NORAD/elements/gp.php?GROUP=ACTIVE&FORMAT=CSV",
-      "recordCount": 16065,
-      "checksum": "db91b7e0508ced3642254e22a3eaee6b3304976aeef0ece4c7a78eed5a68caf2"
+      "recordCount": 16636,
+      "checksum": "22452c47ba23c5208701b2cd2f96717ff1eaaf4157588b7ea0a6c27f010f0867"
     },
     {
       "id": "celestrak-starlink",
       "url": "https://celestrak.org/NORAD/elements/gp.php?GROUP=STARLINK&FORMAT=CSV",
-      "recordCount": 10784,
-      "checksum": "4b4b739d162ea1243dfabe1904b7f536e51b55e31954865b6bf4290d54eef158"
+      "recordCount": 11125,
+      "checksum": "cee7bc6f11a7bd94ad4d20b9c8e1b32fb62cfc66ddf02930465a00c42205344a"
     }
   ],
   "conjunctions": {
-    "snapshotId": "socrates-2026-07-18-7a4c6bc517f0",
+    "snapshotId": "socrates-2026-10-02-3c4328845946",
     "eventCount": 25,
-    "updatedAt": "2026-07-18T01:13:28.000Z",
-    "retrievedAt": "2026-07-18T11:25:30.000Z",
-    "checksum": "7a4c6bc517f09e20a19a831faaa26bc532f013324f60a0c9d05bb5325e68f88d"
+    "updatedAt": "2026-10-02T12:06:16.000Z",
+    "retrievedAt": "2026-10-02T14:57:13.584Z",
+    "checksum": "3c4328845946e557abb5837f873a26f43ebd1dd3a6e0c869acbb75af4ecfab50"
   },
-  "checksum": "9fae7a2fa46004ae13fa863890547f9947036bfcfe8357ef9a7d67bbf6076a1b"
+  "checksum": "aceef65771b3a3a20dd6e5c5ab1abce83855033e96ad6a98cd10ae666eeee004"
 }
