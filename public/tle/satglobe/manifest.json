@@ -1,21 +1,21 @@
 {
   "schemaVersion": 2,
   "snapshotId": "satglobe-2026-10-04-aceef65771b3",
-  "refreshedAt": "2026-10-02T14:57:29.687Z",
+  "refreshedAt": "2026-10-02T15:38:12.753Z",
   "newestElementEpoch": "2026-10-04T19:13:46.581Z",
-  "previousObjectCount": 35049,
+  "previousObjectCount": 35791,
   "objectCount": 35791,
-  "added": 742,
-  "updated": 15894,
-  "unchanged": 11125,
+  "added": 0,
+  "updated": 0,
+  "unchanged": 27761,
   "rejected": 0,
   "rejectionReasons": {},
   "sources": [
     {
       "id": "keeptrack-enriched",
       "url": "https://github.com/thkruz/keeptrack.space",
-      "recordCount": 35049,
-      "checksum": "9fae7a2fa46004ae13fa863890547f9947036bfcfe8357ef9a7d67bbf6076a1b"
+      "recordCount": 35791,
+      "checksum": "aceef65771b3a3a20dd6e5c5ab1abce83855033e96ad6a98cd10ae666eeee004"
     },
     {
       "id": "celestrak-active",
@@ -34,7 +34,7 @@
     "snapshotId": "socrates-2026-10-02-3c4328845946",
     "eventCount": 25,
     "updatedAt": "2026-10-02T12:06:16.000Z",
-    "retrievedAt": "2026-10-02T14:57:13.584Z",
+    "retrievedAt": "2026-10-02T15:37:59.945Z",
     "checksum": "3c4328845946e557abb5837f873a26f43ebd1dd3a6e0c869acbb75af4ecfab50"
   },
   "checksum": "aceef65771b3a3a20dd6e5c5ab1abce83855033e96ad6a98cd10ae666eeee004"

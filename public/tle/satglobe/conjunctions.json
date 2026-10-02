@@ -6,7 +6,7 @@
     "provider": "CelesTrak",
     "rawUrl": "https://celestrak.org/SOCRATES/sort-minRange.csv",
     "updatedAt": "2026-10-02T12:06:16.000Z",
-    "retrievedAt": "2026-10-02T14:57:13.584Z",
+    "retrievedAt": "2026-10-02T15:37:59.945Z",
     "checksum": "3c4328845946e557abb5837f873a26f43ebd1dd3a6e0c869acbb75af4ecfab50"
   },
   "conjunctions": [
