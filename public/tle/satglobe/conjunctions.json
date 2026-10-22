@@ -1,464 +1,464 @@
 {
   "schemaVersion": 1,
-  "snapshotId": "socrates-2026-10-02-3c4328845946",
-  "generatedAt": "2026-10-02T12:06:16.000Z",
+  "snapshotId": "socrates-2026-10-19-f8ed5d2221ff",
+  "generatedAt": "2026-10-19T12:44:18.000Z",
   "source": {
     "provider": "CelesTrak",
     "rawUrl": "https://celestrak.org/SOCRATES/sort-minRange.csv",
-    "updatedAt": "2026-10-02T12:06:16.000Z",
-    "retrievedAt": "2026-10-02T14:57:13.584Z",
-    "checksum": "3c4328845946e557abb5837f873a26f43ebd1dd3a6e0c869acbb75af4ecfab50"
+    "updatedAt": "2026-10-19T12:44:18.000Z",
+    "retrievedAt": "2026-10-19T14:43:49.319Z",
+    "checksum": "f8ed5d2221ff7b8f1d7ab6f7efbcd2e67aebe1e0422387d67ca1c861b5d1b216"
   },
   "conjunctions": [
     {
-      "id": "27809d0157b2825ca200e02c",
+      "id": "69a0d24d1592319963b2f4d3",
       "object1": {
-        "catalogId": "55598",
-        "name": "STARLINK-5756 [P]",
-        "dseDays": 6.456
+        "catalogId": "58409",
+        "name": "STARLINK-30940 [+]",
+        "dseDays": 3.95
       },
       "object2": {
-        "catalogId": "57469",
-        "name": "STARLINK-30171 [+]",
-        "dseDays": 6.131
+        "catalogId": "34006",
+        "name": "COSMOS 2251 DEB [-]",
+        "dseDays": 4.164
       },
-      "timeOfClosestApproach": "2026-10-07T04:07:15.629Z",
-      "missDistanceKm": 0.018,
-      "relativeSpeedKmS": 1.349,
+      "timeOfClosestApproach": "2026-10-22T10:11:49.340Z",
+      "missDistanceKm": 0.01,
+      "relativeSpeedKmS": 12.579,
       "maximumProbability": 1,
       "dilutionThreshold": 0
     },
     {
-      "id": "b076ed8c1070170169d3c8f7",
+      "id": "c3463bd3ed2f708ec0b16986",
       "object1": {
-        "catalogId": "50192",
-        "name": "STARLINK-3259 [+]",
-        "dseDays": 6.589
+        "catalogId": "48096",
+        "name": "STARLINK-2417 [P]",
+        "dseDays": 5.396
       },
       "object2": {
-        "catalogId": "100418",
-        "name": "STARLINK-37703 [+]",
-        "dseDays": 6.179
+        "catalogId": "59391",
+        "name": "STARLINK-31644 [+]",
+        "dseDays": 5.059
       },
-      "timeOfClosestApproach": "2026-10-07T04:17:55.407Z",
-      "missDistanceKm": 0.018,
-      "relativeSpeedKmS": 11.012,
+      "timeOfClosestApproach": "2026-10-23T13:53:47.833Z",
+      "missDistanceKm": 0.016,
+      "relativeSpeedKmS": 8.673,
       "maximumProbability": 1,
       "dilutionThreshold": 0
     },
     {
-      "id": "3fd8ff4fa0d6038ed8fe3d0c",
+      "id": "c810d3dc9051d9e579430604",
       "object1": {
-        "catalogId": "65923",
-        "name": "STARLINK-35484 [+]",
-        "dseDays": 3.958
+        "catalogId": "53005",
+        "name": "STARLINK-4288 [+]",
+        "dseDays": 6.039
       },
       "object2": {
-        "catalogId": "100053",
-        "name": "STARLINK-37796 [+]",
-        "dseDays": 3.956
+        "catalogId": "100473",
+        "name": "STARLINK-36282 [+]",
+        "dseDays": 5.457
       },
-      "timeOfClosestApproach": "2026-10-05T00:25:12.752Z",
+      "timeOfClosestApproach": "2026-10-24T01:15:30.103Z",
+      "missDistanceKm": 0.016,
+      "relativeSpeedKmS": 4.44,
+      "maximumProbability": 1,
+      "dilutionThreshold": 0
+    },
+    {
+      "id": "b10f24eba49bf04ba8184a17",
+      "object1": {
+        "catalogId": "68774",
+        "name": "STARLINK-37381 [+]",
+        "dseDays": 5.645
+      },
+      "object2": {
+        "catalogId": "100385",
+        "name": "STARLINK-38083 [+]",
+        "dseDays": 5.089
+      },
+      "timeOfClosestApproach": "2026-10-23T16:21:53.935Z",
+      "missDistanceKm": 0.018,
+      "relativeSpeedKmS": 15.139,
+      "maximumProbability": 1,
+      "dilutionThreshold": 0
+    },
+    {
+      "id": "e53abcf9284c8bc160d4af2d",
+      "object1": {
+        "catalogId": "53190",
+        "name": "STARLINK-4332 [+]",
+        "dseDays": 1.876
+      },
+      "object2": {
+        "catalogId": "100235",
+        "name": "STARLINK-38126 [+]",
+        "dseDays": 2.072
+      },
+      "timeOfClosestApproach": "2026-10-19T23:19:31.227Z",
+      "missDistanceKm": 0.019,
+      "relativeSpeedKmS": 0.647,
+      "maximumProbability": 1,
+      "dilutionThreshold": 0
+    },
+    {
+      "id": "eb3e3fb47e3bf06875ad6b58",
+      "object1": {
+        "catalogId": "63045",
+        "name": "STARLINK-32828 [+]",
+        "dseDays": 6.933
+      },
+      "object2": {
+        "catalogId": "100491",
+        "name": "STARLINK-37751 [+]",
+        "dseDays": 6.516
+      },
+      "timeOfClosestApproach": "2026-10-25T00:17:41.956Z",
+      "missDistanceKm": 0.022,
+      "relativeSpeedKmS": 12.012,
+      "maximumProbability": 0.3974,
+      "dilutionThreshold": 0.007
+    },
+    {
+      "id": "c37a70be868464e9973f76e8",
+      "object1": {
+        "catalogId": "56329",
+        "name": "STARLINK-5984 [+]",
+        "dseDays": 6.123
+      },
+      "object2": {
+        "catalogId": "100201",
+        "name": "STARLINK-38178 [+]",
+        "dseDays": 6.308
+      },
+      "timeOfClosestApproach": "2026-10-24T14:09:52.353Z",
       "missDistanceKm": 0.023,
-      "relativeSpeedKmS": 2.14,
-      "maximumProbability": 0.4106,
+      "relativeSpeedKmS": 14.728,
+      "maximumProbability": 0.3138,
+      "dilutionThreshold": 0.01
+    },
+    {
+      "id": "30288cf89c3af1c0ab6d676a",
+      "object1": {
+        "catalogId": "69957",
+        "name": "STARLINK-37919 [+]",
+        "dseDays": 5.385
+      },
+      "object2": {
+        "catalogId": "100297",
+        "name": "STARLINK-37741 [+]",
+        "dseDays": 5.003
+      },
+      "timeOfClosestApproach": "2026-10-23T12:46:36.174Z",
+      "missDistanceKm": 0.017,
+      "relativeSpeedKmS": 7.549,
+      "maximumProbability": 0.2575,
+      "dilutionThreshold": 0.005
+    },
+    {
+      "id": "ed08edecfc1ab922a1bc8971",
+      "object1": {
+        "catalogId": "52850",
+        "name": "STARLINK-4187 [+]",
+        "dseDays": 4.523
+      },
+      "object2": {
+        "catalogId": "60562",
+        "name": "HYPERFIELD-1A [+]",
+        "dseDays": 4.987
+      },
+      "timeOfClosestApproach": "2026-10-23T00:33:20.655Z",
+      "missDistanceKm": 0.021,
+      "relativeSpeedKmS": 9.049,
+      "maximumProbability": 0.1852,
       "dilutionThreshold": 0.006
     },
     {
-      "id": "9be18409d975ed1f94b14e31",
+      "id": "d071176a810143947c726d8c",
       "object1": {
-        "catalogId": "66902",
-        "name": "STARLINK-35983 [+]",
-        "dseDays": 4.28
+        "catalogId": "65280",
+        "name": "STARLINK-35001 [+]",
+        "dseDays": 7.016
       },
       "object2": {
-        "catalogId": "89304",
-        "name": "UNKNOWN [-]",
-        "dseDays": 4.909
+        "catalogId": "100322",
+        "name": "STARLINK-38281 [+]",
+        "dseDays": 6.98
       },
-      "timeOfClosestApproach": "2026-10-05T05:04:57.543Z",
-      "missDistanceKm": 0.013,
-      "relativeSpeedKmS": 12.426,
-      "maximumProbability": 0.3631,
-      "dilutionThreshold": 0.004
+      "timeOfClosestApproach": "2026-10-25T01:58:17.200Z",
+      "missDistanceKm": 0.03,
+      "relativeSpeedKmS": 15.133,
+      "maximumProbability": 0.1768,
+      "dilutionThreshold": 0.017
     },
     {
-      "id": "74d2211309c043c9d29ba367",
+      "id": "59b417c2182829407b3dc576",
       "object1": {
-        "catalogId": "55598",
-        "name": "STARLINK-5756 [P]",
-        "dseDays": 2.592
+        "catalogId": "60097",
+        "name": "STARLINK-32003 [+]",
+        "dseDays": 3.536
       },
       "object2": {
-        "catalogId": "59357",
-        "name": "STARLINK-31557 [+]",
-        "dseDays": 3.13
+        "catalogId": "100293",
+        "name": "STARLINK-37812 [+]",
+        "dseDays": 3.4
       },
-      "timeOfClosestApproach": "2026-10-03T07:23:07.056Z",
-      "missDistanceKm": 0.032,
-      "relativeSpeedKmS": 7.884,
-      "maximumProbability": 0.2504,
-      "dilutionThreshold": 0.009
+      "timeOfClosestApproach": "2026-10-21T23:00:57.290Z",
+      "missDistanceKm": 0.045,
+      "relativeSpeedKmS": 4.984,
+      "maximumProbability": 0.1602,
+      "dilutionThreshold": 0.012
     },
     {
-      "id": "4e089ad181ce17999ca76a91",
+      "id": "033ef3efd860a9a2cf4aa630",
       "object1": {
-        "catalogId": "60922",
-        "name": "STARLINK-32274 [+]",
-        "dseDays": 2.365
+        "catalogId": "68621",
+        "name": "STARLINK-37269 [+]",
+        "dseDays": 6.508
       },
       "object2": {
-        "catalogId": "63238",
-        "name": "TEVEL2-7 [+]",
-        "dseDays": 2.356
+        "catalogId": "100183",
+        "name": "STARLINK-38142 [+]",
+        "dseDays": 6.9
       },
-      "timeOfClosestApproach": "2026-10-03T00:44:45.215Z",
-      "missDistanceKm": 0.018,
-      "relativeSpeedKmS": 13.712,
-      "maximumProbability": 0.1894,
+      "timeOfClosestApproach": "2026-10-24T20:05:44.421Z",
+      "missDistanceKm": 0.046,
+      "relativeSpeedKmS": 0.631,
+      "maximumProbability": 0.1571,
+      "dilutionThreshold": 0.012
+    },
+    {
+      "id": "e8e9c47e1bff51c9699825ed",
+      "object1": {
+        "catalogId": "65701",
+        "name": "STARLINK-35046 [+]",
+        "dseDays": 3.878
+      },
+      "object2": {
+        "catalogId": "100028",
+        "name": "STARLINK-37844 [+]",
+        "dseDays": 3.97
+      },
+      "timeOfClosestApproach": "2026-10-22T04:39:25.599Z",
+      "missDistanceKm": 0.022,
+      "relativeSpeedKmS": 12.032,
+      "maximumProbability": 0.1569,
       "dilutionThreshold": 0.008
     },
     {
-      "id": "73306359ad513411c5ad2893",
+      "id": "64fc804d15aa5a640acb7453",
       "object1": {
-        "catalogId": "62868",
-        "name": "STARLINK-32822 [+]",
-        "dseDays": 7.507
+        "catalogId": "60995",
+        "name": "STARLINK-11269 [+]",
+        "dseDays": 3.492
       },
       "object2": {
-        "catalogId": "100423",
-        "name": "STARLINK-37698 [+]",
-        "dseDays": 8.027
+        "catalogId": "100759",
+        "name": "STARLINK-38399 [+]",
+        "dseDays": 3.865
       },
-      "timeOfClosestApproach": "2026-10-08T10:23:37.424Z",
-      "missDistanceKm": 0.049,
-      "relativeSpeedKmS": 0.465,
-      "maximumProbability": 0.142,
-      "dilutionThreshold": 0.012
+      "timeOfClosestApproach": "2026-10-21T20:21:48.215Z",
+      "missDistanceKm": 0.04,
+      "relativeSpeedKmS": 11.997,
+      "maximumProbability": 0.1553,
+      "dilutionThreshold": 0.014
     },
     {
-      "id": "d677a88d475e3a035df8717b",
+      "id": "a2a50cc0fbb7c57f71444c36",
       "object1": {
-        "catalogId": "57023",
-        "name": "OBJECT V [+]",
-        "dseDays": 2.516
+        "catalogId": "51874",
+        "name": "STARLINK-3574 [+]",
+        "dseDays": 3.872
       },
       "object2": {
-        "catalogId": "66631",
-        "name": "STARLINK-35965 [+]",
-        "dseDays": 2.594
+        "catalogId": "100039",
+        "name": "STARLINK-37693 [+]",
+        "dseDays": 4.107
       },
-      "timeOfClosestApproach": "2026-10-03T13:17:54.217Z",
-      "missDistanceKm": 0.026,
-      "relativeSpeedKmS": 14.048,
-      "maximumProbability": 0.0897,
-      "dilutionThreshold": 0.012
+      "timeOfClosestApproach": "2026-10-22T07:14:34.946Z",
+      "missDistanceKm": 0.046,
+      "relativeSpeedKmS": 11.92,
+      "maximumProbability": 0.1239,
+      "dilutionThreshold": 0.016
     },
     {
-      "id": "8d1b4c03adedd76a1a65994e",
+      "id": "3c3b89d839d22e47cac0e6d4",
       "object1": {
-        "catalogId": "56397",
-        "name": "STARLINK-6271 [P]",
-        "dseDays": 7.828
+        "catalogId": "69332",
+        "name": "STARLINK-37833 [+]",
+        "dseDays": 3.409
       },
       "object2": {
-        "catalogId": "62739",
-        "name": "STARLINK-32796 [+]",
-        "dseDays": 8.029
+        "catalogId": "100230",
+        "name": "STARLINK-38053 [+]",
+        "dseDays": 2.757
       },
-      "timeOfClosestApproach": "2026-10-08T18:46:45.901Z",
-      "missDistanceKm": 0.067,
-      "relativeSpeedKmS": 2.982,
-      "maximumProbability": 0.08401,
-      "dilutionThreshold": 0.017
+      "timeOfClosestApproach": "2026-10-21T08:52:18.707Z",
+      "missDistanceKm": 0.053,
+      "relativeSpeedKmS": 2.931,
+      "maximumProbability": 0.1223,
+      "dilutionThreshold": 0.014
     },
     {
-      "id": "91d987b5d1bc1e81721fe444",
+      "id": "700a49639878e4256c7a9cf0",
       "object1": {
-        "catalogId": "58721",
-        "name": "STARLINK-30972 [+]",
-        "dseDays": 4.606
+        "catalogId": "63049",
+        "name": "STARLINK-32829 [+]",
+        "dseDays": 6.217
       },
       "object2": {
-        "catalogId": "100056",
-        "name": "STARLINK-37650 [+]",
-        "dseDays": 4.611
+        "catalogId": "100491",
+        "name": "STARLINK-37751 [+]",
+        "dseDays": 5.799
       },
-      "timeOfClosestApproach": "2026-10-05T03:17:02.363Z",
-      "missDistanceKm": 0.066,
-      "relativeSpeedKmS": 4.779,
-      "maximumProbability": 0.08376,
-      "dilutionThreshold": 0.017
+      "timeOfClosestApproach": "2026-10-24T07:05:55.421Z",
+      "missDistanceKm": 0.046,
+      "relativeSpeedKmS": 12.039,
+      "maximumProbability": 0.1219,
+      "dilutionThreshold": 0.016
     },
     {
-      "id": "ef61f069ddd4d95dd49ea031",
+      "id": "d5d187dbdf415eae8c501a15",
       "object1": {
-        "catalogId": "68805",
-        "name": "STARLINK-36832 [+]",
-        "dseDays": 6.973
+        "catalogId": "67871",
+        "name": "STARLINK-36769 [+]",
+        "dseDays": 5.646
       },
       "object2": {
-        "catalogId": "100251",
-        "name": "STARLINK-38168 [+]",
-        "dseDays": 6.718
+        "catalogId": "100417",
+        "name": "STARLINK-37774 [+]",
+        "dseDays": 5.98
       },
-      "timeOfClosestApproach": "2026-10-07T23:13:18.078Z",
-      "missDistanceKm": 0.054,
-      "relativeSpeedKmS": 14.925,
-      "maximumProbability": 0.05715,
-      "dilutionThreshold": 0.032
+      "timeOfClosestApproach": "2026-10-23T23:01:51.465Z",
+      "missDistanceKm": 0.057,
+      "relativeSpeedKmS": 7.191,
+      "maximumProbability": 0.1039,
+      "dilutionThreshold": 0.016
     },
     {
-      "id": "e379508dcf22f825666b1ae4",
+      "id": "474f9b6b048ba3b6df1e7879",
       "object1": {
-        "catalogId": "64160",
-        "name": "STARLINK-34339 [+]",
-        "dseDays": 7.146
+        "catalogId": "44390",
+        "name": "ICEYE-X4 [+]",
+        "dseDays": 4.034
       },
       "object2": {
-        "catalogId": "100013",
-        "name": "STARLINK-37719 [+]",
-        "dseDays": 6.601
+        "catalogId": "68862",
+        "name": "STARLINK-37453 [+]",
+        "dseDays": 4.159
       },
-      "timeOfClosestApproach": "2026-10-07T20:24:46.392Z",
-      "missDistanceKm": 0.052,
-      "relativeSpeedKmS": 15.167,
-      "maximumProbability": 0.05669,
-      "dilutionThreshold": 0.034
-    },
-    {
-      "id": "428bdcb9b4cc67d51783e005",
-      "object1": {
-        "catalogId": "69531",
-        "name": "STARLINK-37897 [+]",
-        "dseDays": 7.544
-      },
-      "object2": {
-        "catalogId": "100408",
-        "name": "STARLINK-38026 [+]",
-        "dseDays": 7.562
-      },
-      "timeOfClosestApproach": "2026-10-08T13:29:54.833Z",
-      "missDistanceKm": 0.08,
-      "relativeSpeedKmS": 7.526,
-      "maximumProbability": 0.05659,
-      "dilutionThreshold": 0.022
-    },
-    {
-      "id": "d0fb8070303e5d7b3dfe0ea3",
-      "object1": {
-        "catalogId": "69567",
-        "name": "STARLINK-37934 [+]",
-        "dseDays": 5.4
-      },
-      "object2": {
-        "catalogId": "100160",
-        "name": "STARLINK-38198 [+]",
-        "dseDays": 5.661
-      },
-      "timeOfClosestApproach": "2026-10-06T11:14:36.241Z",
-      "missDistanceKm": 0.084,
-      "relativeSpeedKmS": 0.615,
-      "maximumProbability": 0.05649,
-      "dilutionThreshold": 0.021
-    },
-    {
-      "id": "c4824ca7c4fc7e97c6f9c8a4",
-      "object1": {
-        "catalogId": "65916",
-        "name": "STARLINK-35521 [+]",
-        "dseDays": 3.762
-      },
-      "object2": {
-        "catalogId": "100055",
-        "name": "STARLINK-37605 [+]",
-        "dseDays": 4.281
-      },
-      "timeOfClosestApproach": "2026-10-04T19:28:40.395Z",
-      "missDistanceKm": 0.085,
-      "relativeSpeedKmS": 2.065,
-      "maximumProbability": 0.05541,
-      "dilutionThreshold": 0.021
-    },
-    {
-      "id": "5c720cd8e48f3a455f35a78b",
-      "object1": {
-        "catalogId": "69568",
-        "name": "STARLINK-37938 [+]",
-        "dseDays": 7.781
-      },
-      "object2": {
-        "catalogId": "100151",
-        "name": "STARLINK-38173 [+]",
-        "dseDays": 8.173
-      },
-      "timeOfClosestApproach": "2026-10-08T20:20:21.868Z",
-      "missDistanceKm": 0.086,
-      "relativeSpeedKmS": 0.616,
-      "maximumProbability": 0.05421,
-      "dilutionThreshold": 0.021
-    },
-    {
-      "id": "2714e493564a09f81f38c545",
-      "object1": {
-        "catalogId": "66288",
-        "name": "STARLINK-34896 [+]",
-        "dseDays": 3.207
-      },
-      "object2": {
-        "catalogId": "100040",
-        "name": "STARLINK-37714 [+]",
-        "dseDays": 3.208
-      },
-      "timeOfClosestApproach": "2026-10-03T17:40:08.102Z",
-      "missDistanceKm": 0.087,
-      "relativeSpeedKmS": 0.488,
-      "maximumProbability": 0.0531,
-      "dilutionThreshold": 0.021
-    },
-    {
-      "id": "22f034539780a2f32461ece4",
-      "object1": {
-        "catalogId": "49740",
-        "name": "STARLINK-3226 [+]",
-        "dseDays": 5.994
-      },
-      "object2": {
-        "catalogId": "100440",
-        "name": "STARLINK-38204 [+]",
-        "dseDays": 5.803
-      },
-      "timeOfClosestApproach": "2026-10-07T01:16:24.688Z",
-      "missDistanceKm": 0.072,
-      "relativeSpeedKmS": 12.078,
-      "maximumProbability": 0.05294,
-      "dilutionThreshold": 0.026
-    },
-    {
-      "id": "e3253ce101551f2f388ed611",
-      "object1": {
-        "catalogId": "67667",
-        "name": "STARLINK-36622 [+]",
-        "dseDays": 6.713
-      },
-      "object2": {
-        "catalogId": "100319",
-        "name": "STARLINK-38294 [+]",
-        "dseDays": 6.892
-      },
-      "timeOfClosestApproach": "2026-10-07T18:36:02.155Z",
-      "missDistanceKm": 0.056,
-      "relativeSpeedKmS": 15.015,
-      "maximumProbability": 0.05197,
-      "dilutionThreshold": 0.034
-    },
-    {
-      "id": "e15d5a282b46ef1a27f55c02",
-      "object1": {
-        "catalogId": "58469",
-        "name": "ION SCV-015 [+]",
-        "dseDays": 3.589
-      },
-      "object2": {
-        "catalogId": "63042",
-        "name": "STARLINK-32795 [+]",
-        "dseDays": 3.845
-      },
-      "timeOfClosestApproach": "2026-10-04T21:06:04.344Z",
-      "missDistanceKm": 0.048,
-      "relativeSpeedKmS": 5.832,
-      "maximumProbability": 0.04952,
-      "dilutionThreshold": 0.012
-    },
-    {
-      "id": "4c51dc54d405233df2417791",
-      "object1": {
-        "catalogId": "43711",
-        "name": "SHIYAN-6 01 (SY-6 01) [+]",
-        "dseDays": 7.535
-      },
-      "object2": {
-        "catalogId": "67722",
-        "name": "STARLINK-36796 [+]",
-        "dseDays": 8.108
-      },
-      "timeOfClosestApproach": "2026-10-08T20:05:00.513Z",
-      "missDistanceKm": 0.05,
-      "relativeSpeedKmS": 4.981,
-      "maximumProbability": 0.04677,
-      "dilutionThreshold": 0.013
-    },
-    {
-      "id": "1f4abf6a980e187233c177ef",
-      "object1": {
-        "catalogId": "64485",
-        "name": "STARLINK-34409 [+]",
-        "dseDays": 6.566
-      },
-      "object2": {
-        "catalogId": "100049",
-        "name": "STARLINK-37848 [+]",
-        "dseDays": 6.688
-      },
-      "timeOfClosestApproach": "2026-10-07T12:09:28.774Z",
-      "missDistanceKm": 0.09,
-      "relativeSpeedKmS": 6.862,
-      "maximumProbability": 0.04545,
-      "dilutionThreshold": 0.024
-    },
-    {
-      "id": "8f0baaf8a6bb08d549a90103",
-      "object1": {
-        "catalogId": "45212",
-        "name": "STARLINK-1231 [P]",
-        "dseDays": 3.111
-      },
-      "object2": {
-        "catalogId": "60260",
-        "name": "STARLINK-32125 [+]",
-        "dseDays": 3.043
-      },
-      "timeOfClosestApproach": "2026-10-04T01:09:34.567Z",
-      "missDistanceKm": 0.097,
+      "timeOfClosestApproach": "2026-10-22T16:01:30.158Z",
+      "missDistanceKm": 0.033,
       "relativeSpeedKmS": 3.635,
-      "maximumProbability": 0.04229,
-      "dilutionThreshold": 0.024
+      "maximumProbability": 0.1026,
+      "dilutionThreshold": 0.008
     },
     {
-      "id": "cf76af96358aa8e77af2c18f",
+      "id": "bca1ecde9d96fbefa32e93c1",
       "object1": {
-        "catalogId": "53224",
-        "name": "STARLINK-4356 [+]",
-        "dseDays": 4.16
+        "catalogId": "68747",
+        "name": "STARLINK-37268 [+]",
+        "dseDays": 5.106
       },
       "object2": {
-        "catalogId": "100170",
-        "name": "STARLINK-38217 [+]",
-        "dseDays": 4.225
+        "catalogId": "100186",
+        "name": "STARLINK-38159 [+]",
+        "dseDays": 4.91
       },
-      "timeOfClosestApproach": "2026-10-04T20:32:23.536Z",
-      "missDistanceKm": 0.099,
-      "relativeSpeedKmS": 2.916,
-      "maximumProbability": 0.04082,
-      "dilutionThreshold": 0.024
+      "timeOfClosestApproach": "2026-10-23T04:05:47.130Z",
+      "missDistanceKm": 0.062,
+      "relativeSpeedKmS": 2.555,
+      "maximumProbability": 0.09615,
+      "dilutionThreshold": 0.016
     },
     {
-      "id": "98bc9a45ef6e7372d8977312",
+      "id": "34ee8b27336b6399881f1705",
       "object1": {
-        "catalogId": "59962",
-        "name": "STARLINK-31980 [+]",
-        "dseDays": 3.892
+        "catalogId": "65250",
+        "name": "STARLINK-34973 [+]",
+        "dseDays": 3.083
       },
       "object2": {
-        "catalogId": "100480",
-        "name": "STARLINK-37939 [+]",
-        "dseDays": 3.696
+        "catalogId": "100267",
+        "name": "STARLINK-38212 [+]",
+        "dseDays": 2.822
       },
-      "timeOfClosestApproach": "2026-10-04T09:20:40.721Z",
-      "missDistanceKm": 0.103,
-      "relativeSpeedKmS": 0.439,
-      "maximumProbability": 0.03887,
-      "dilutionThreshold": 0.025
+      "timeOfClosestApproach": "2026-10-21T10:01:39.090Z",
+      "missDistanceKm": 0.069,
+      "relativeSpeedKmS": 0.649,
+      "maximumProbability": 0.0805,
+      "dilutionThreshold": 0.017
+    },
+    {
+      "id": "da2ee49e0aba9854e8c6838a",
+      "object1": {
+        "catalogId": "69445",
+        "name": "STARLINK-37641 [+]",
+        "dseDays": 6.729
+      },
+      "object2": {
+        "catalogId": "100493",
+        "name": "STARLINK-38004 [+]",
+        "dseDays": 7.241
+      },
+      "timeOfClosestApproach": "2026-10-25T00:48:06.775Z",
+      "missDistanceKm": 0.066,
+      "relativeSpeedKmS": 7.563,
+      "maximumProbability": 0.07892,
+      "dilutionThreshold": 0.018
+    },
+    {
+      "id": "cc4bc6cc0bd920d7c3b37ad7",
+      "object1": {
+        "catalogId": "68239",
+        "name": "STARLINK-37096 [+]",
+        "dseDays": 4.653
+      },
+      "object2": {
+        "catalogId": "100278",
+        "name": "STARLINK-37674 [+]",
+        "dseDays": 4.563
+      },
+      "timeOfClosestApproach": "2026-10-23T02:30:23.583Z",
+      "missDistanceKm": 0.059,
+      "relativeSpeedKmS": 11.963,
+      "maximumProbability": 0.07857,
+      "dilutionThreshold": 0.021
+    },
+    {
+      "id": "99983b957e1b3ec0988d1702",
+      "object1": {
+        "catalogId": "52667",
+        "name": "STARLINK-4076 [+]",
+        "dseDays": 4.328
+      },
+      "object2": {
+        "catalogId": "100043",
+        "name": "STARLINK-38023 [+]",
+        "dseDays": 4.445
+      },
+      "timeOfClosestApproach": "2026-10-22T15:51:58.786Z",
+      "missDistanceKm": 0.07,
+      "relativeSpeedKmS": 0.413,
+      "maximumProbability": 0.07844,
+      "dilutionThreshold": 0.017
+    },
+    {
+      "id": "09cee361230b3c5e122f64ef",
+      "object1": {
+        "catalogId": "62321",
+        "name": "STARLINK-32645 [+]",
+        "dseDays": 6.982
+      },
+      "object2": {
+        "catalogId": "100412",
+        "name": "STARLINK-38011 [+]",
+        "dseDays": 6.727
+      },
+      "timeOfClosestApproach": "2026-10-24T19:53:27.230Z",
+      "missDistanceKm": 0.069,
+      "relativeSpeedKmS": 4.996,
+      "maximumProbability": 0.0779,
+      "dilutionThreshold": 0.018
     }
   ]
 }
