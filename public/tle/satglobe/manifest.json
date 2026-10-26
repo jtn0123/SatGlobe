@@ -1,41 +1,41 @@
 {
   "schemaVersion": 2,
-  "snapshotId": "satglobe-2026-10-04-aceef65771b3",
-  "refreshedAt": "2026-10-02T14:57:29.687Z",
-  "newestElementEpoch": "2026-10-04T19:13:46.581Z",
-  "previousObjectCount": 35049,
-  "objectCount": 35791,
-  "added": 742,
-  "updated": 15894,
-  "unchanged": 11125,
+  "snapshotId": "satglobe-2026-10-28-70b32e4417d7",
+  "refreshedAt": "2026-10-26T14:21:11.210Z",
+  "newestElementEpoch": "2026-10-28T14:21:45.771Z",
+  "previousObjectCount": 35791,
+  "objectCount": 36011,
+  "added": 220,
+  "updated": 16571,
+  "unchanged": 11110,
   "rejected": 0,
   "rejectionReasons": {},
   "sources": [
     {
       "id": "keeptrack-enriched",
       "url": "https://github.com/thkruz/keeptrack.space",
-      "recordCount": 35049,
-      "checksum": "9fae7a2fa46004ae13fa863890547f9947036bfcfe8357ef9a7d67bbf6076a1b"
+      "recordCount": 35791,
+      "checksum": "aceef65771b3a3a20dd6e5c5ab1abce83855033e96ad6a98cd10ae666eeee004"
     },
     {
       "id": "celestrak-active",
       "url": "https://celestrak.org/NORAD/elements/gp.php?GROUP=ACTIVE&FORMAT=CSV",
-      "recordCount": 16636,
-      "checksum": "22452c47ba23c5208701b2cd2f96717ff1eaaf4157588b7ea0a6c27f010f0867"
+      "recordCount": 16792,
+      "checksum": "148089779dbef7b654e56cf4883ae6f4b6593e43e56a03143d01c7f6c0c59dda"
     },
     {
       "id": "celestrak-starlink",
       "url": "https://celestrak.org/NORAD/elements/gp.php?GROUP=STARLINK&FORMAT=CSV",
-      "recordCount": 11125,
-      "checksum": "cee7bc6f11a7bd94ad4d20b9c8e1b32fb62cfc66ddf02930465a00c42205344a"
+      "recordCount": 11109,
+      "checksum": "85fdf264935ada65ed59053d1495ecd67628efb5603041bf7dce9354a027162b"
     }
   ],
   "conjunctions": {
-    "snapshotId": "socrates-2026-10-02-3c4328845946",
+    "snapshotId": "socrates-2026-10-26-622152184a91",
     "eventCount": 25,
-    "updatedAt": "2026-10-02T12:06:16.000Z",
-    "retrievedAt": "2026-10-02T14:57:13.584Z",
-    "checksum": "3c4328845946e557abb5837f873a26f43ebd1dd3a6e0c869acbb75af4ecfab50"
+    "updatedAt": "2026-10-26T10:12:45.000Z",
+    "retrievedAt": "2026-10-26T14:21:01.056Z",
+    "checksum": "622152184a9119512ba2f17852abc1ae8b5365c147701fa70899b71539cc5d89"
   },
-  "checksum": "aceef65771b3a3a20dd6e5c5ab1abce83855033e96ad6a98cd10ae666eeee004"
+  "checksum": "70b32e4417d740930bc9ced43c8b32ab1dd8d5390d92cc07fd9a73d1cbcfaebe"
 }
