@@ -329,3 +329,9 @@ after separate approval to merge:
 Cislunar/Lagrange views, phone-first layouts, accounts, cloud sync,
 collaboration, desktop wrappers, arbitrary-date reconstruction, and saved-view
 schema v2 remain outside this recovery.
+
+## Dependency maintenance - 2026-11-11T01:02:55.951361+00:00
+
+- Verified source: `3ba6d8839329537ca2c4d1282ca23f705c75e8b4`. Compatible updates cover fast-uri, undici, happy-dom 21, dotenv 18, the pinned workflow actions, and the Vitest 4.1.12/coverage pair.
+- Local verification on Node 26.8.1: `npm run verify:satglobe` passed (41 files / 387 tests, strict types, lint, performance-ledger validation, production build and bundle budget); `npm run test:coverage` passed (447 files / 5,929 tests, 7 existing skips and 1 todo); `npm run test:ootk` passed. No accepted performance record was changed. Required hosted Node 24 checks and offline E2E remain pending.
+- Deferred: Vitest 5.1.0 with its matching coverage plugin fails all 41 focused files before test execution because `test/vitest-setup.ts` assigns a read-only `Window.document` property. The test-harness migration is separate work; no tests, coverage floors, or required checks were disabled.
